@@ -1,5 +1,4 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React, { useEffect, useRef, useState } from 'react';
 import { Flex, Box } from '@chakra-ui/react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -11,16 +10,39 @@ import Sidebar from 'src/components/sidebar/Sidebar'
 import Editor from 'src/components/editor/Editor'
 import { InspectorProvider } from 'src/contexts/inspector-context'
 import Inspector from 'src/components/inspector/Inspector'
-import ResponsiveToolBar from 'src/components/ResponsiveToolBar'
 import { useSelector } from 'react-redux'
 import { getEditorWidth } from 'src/core/selectors/app'
+import GridLayout from "react-grid-layout";
 
-const root = ReactDOM.createRoot(document.getElementById('root')!);
+import '/node_modules/react-grid-layout/css/styles.css'
+import '/node_modules/react-resizable/css/styles.css'
 
 const App = () => {
     const editorWidth = useSelector(getEditorWidth)
-
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [containerWidth, setContainerWidth] = useState(0)
+    const [containerHeight, setContainerHeight] = useState(0)
+    const tmpH = containerRef.current?.getBoundingClientRect().height
+    const tmpW = containerRef.current?.getBoundingClientRect().width
     useShortcuts()
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (containerRef.current?.getBoundingClientRect().width !== containerWidth)
+                setContainerWidth(containerRef.current.getBoundingClientRect().width)
+            if (containerRef.current?.getBoundingClientRect().height !== containerHeight)
+                setContainerHeight(containerRef.current.getBoundingClientRect().height)
+        }
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    useEffect(() => {
+        if (containerRef.current.getBoundingClientRect().width !== containerWidth)
+            setContainerWidth(containerRef.current.getBoundingClientRect().width)
+        if (containerRef.current.getBoundingClientRect().height !== containerHeight)
+            setContainerHeight(containerRef.current.getBoundingClientRect().height)
+    }, [tmpH, tmpW])
 
     return (
         <>
@@ -32,49 +54,45 @@ const App = () => {
             <Loader />
             <Header />
             <DndProvider backend={HTML5Backend}>
-                <Flex h="calc(100vh - 3rem)">
-                    <Sidebar />
-                    <Box bg="#edf2f6" flex={1} position="relative">
-                        <ResponsiveToolBar />
-                        <Flex
-                            w={editorWidth}
-                            transition="all ease 0.5s"
-                            h="100%"
-                            align="center"
-                            justify="center"
-                            alignItems="stretch"
-                            pt={12}
-                            m="0 auto"
-                        >
-                            <Editor />
-                        </Flex>
-                    </Box>
-{/*                     <style>
-                        {`
-              .inspector, .header, .sidebar, .themer, .customPropsMenu, .paramSelector, .paramsMenu, .chakra-popover__popper {
-                font-family: sans-serif !important;
-              }
-              .editor {
-                background-color: var(--chakra-colors-chakra-body-bg) !important;
-              }
-              .chakra-slider__thumb {
-                color: var(--chakra-colors-black) !important;
-              }
-              `}
-                    </style> */}
-                    <Box
-                        maxH="calc(100vh - 3rem)"
-                        flex="0 0 15rem"
-                        bg="#f7fafc"
-                        overflowY="auto"
-                        overflowX="visible"
-                        borderLeft="1px solid #cad5de"
-                        className="inspector"
+                <Flex ref={containerRef} w='100vw' h="calc(100dvh - 7rem)">
+                    {containerWidth > 0 && containerHeight > 0 && <GridLayout
+                        className="layout"
+                        cols={12}
+                        rowHeight={200}
+                        width={containerWidth}
                     >
-                        <InspectorProvider>
-                            <Inspector />
-                        </InspectorProvider>
-                    </Box>
+                        <Box key="Sidebar" overflow='hidden' data-grid={{ x: 0, y: 0, w: 2, h: Math.floor(containerHeight / 200),  static: true }}>
+                            <Sidebar />
+                        </Box>
+                        <Box key="Editor" data-grid={{ x: 2, y: 0, w: 7, h: Math.floor(containerHeight / 200),/*  minW: 2, maxW: 10, */ static: true  }}>
+                            <Flex
+                                w={editorWidth}
+                                bg="#edf2f6"
+                                transition="all ease 0.5s"
+                                h="100%"
+                                align="center"
+                                justify="center"
+                                alignItems="stretch"
+                                m="0 auto"
+                            >
+                                <Editor />
+                            </Flex>
+                        </Box>
+                        <Box key="Inspector" data-grid={{ x: 10, y: 0, w: 3, h: Math.floor(containerHeight / 200) ,  static: true}}>
+                            <Box
+                                flex="0 0 15rem"
+                                bg="#f7fafc"
+                                overflowY="auto"
+                                overflowX="visible"
+                                borderLeft="1px solid #cad5de"
+                                className="inspector"
+                            >
+                                <InspectorProvider>
+                                    <Inspector />
+                                </InspectorProvider>
+                            </Box>
+                        </Box>
+                    </GridLayout>}
                 </Flex>
             </DndProvider>
         </>

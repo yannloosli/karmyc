@@ -36,10 +36,11 @@ import { getComponents } from 'src/core/selectors/components'
 import {
     getCustomComponents,
 } from 'src/core/selectors/customComponents'
-import { getShowLayout, getShowCode } from 'src/core/selectors/app'
+import { getShowLayout } from 'src/core/selectors/app'
 import HeaderMenu from 'src/components/headerMenu/HeaderMenu'
 import { FaReact } from 'react-icons/fa'
 import Themer from './themer/Themer'
+import ResponsiveToolBar from './ResponsiveToolBar'
 
 const CodeSandboxButton = () => {
     const components = useSelector(getComponents)
@@ -125,7 +126,6 @@ const CodeSandboxButton = () => {
 
 const Header = () => {
     const showLayout = useSelector(getShowLayout)
-    const showCode = useSelector(getShowCode)
     const dispatch = useDispatch()
 
     return (
@@ -140,10 +140,10 @@ const Header = () => {
             >
                 <AspectRatio
                     maxW="12rem"
-                    w='100%' 
+                    w='100%'
                     ratio={107 / 33}
                 >
-                    {/* @ts-expect-error "!important" not in type */} 
+                    {/* @ts-expect-error "!important" not in type */}
                     <Image src='/karmyc_logo.svg' alt="Karmyc" objectFit='contain !important' />
                 </AspectRatio>
 
@@ -183,42 +183,10 @@ const Header = () => {
                                 />
                             </LightMode>
                         </FormControl>
-
-                        <FormControl display="flex" flexDirection="row" alignItems="center">
-                            <Tooltip
-                                zIndex={100}
-                                hasArrow
-                                bg="yellow.100"
-                                aria-label="Code Panel help"
-                                fontFamily="sans-serif"
-                                fontSize="xs"
-                                label="Code Panel shows the generated code for the current component"
-                            >
-                                <FormLabel
-                                    color="gray.200"
-                                    fontSize="xs"
-                                    mr={2}
-                                    mb={0}
-                                    htmlFor="code"
-                                    pb={0}
-                                    whiteSpace="nowrap"
-                                >
-                                    Code panel
-                                </FormLabel>
-                            </Tooltip>
-                            <LightMode>
-                                <Switch
-                                    isChecked={showCode}
-                                    id="code"
-                                    colorScheme="teal"
-                                    onChange={() => dispatch.app.toggleCodePanel()}
-                                    size="sm"
-                                />
-                            </LightMode>
-                        </FormControl>
                     </HStack>
                     <Themer />
                     <Spacer />
+                    <ResponsiveToolBar />
                     <Stack direction="row">
                         <CodeSandboxButton />
                         <Popover>
@@ -274,7 +242,7 @@ const Header = () => {
                     direction="row"
                     spacing="2"
                 >
-                    <Link isExternal href="https://github.com/yannloosli/karmyc">
+                    <Link isExternal={true} href="https://github.com/yannloosli/karmyc">
                         <Box as={DiGithubBadge} size={32} color="gray.200" />
                     </Link>
                 </Stack>

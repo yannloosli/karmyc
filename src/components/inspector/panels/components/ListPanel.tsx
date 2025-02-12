@@ -4,7 +4,7 @@ import { Select } from '@chakra-ui/react'
 import { useForm } from 'src/hooks/useForm'
 import usePropsSelector from 'src/hooks/usePropsSelector'
 
-const CodePanel = () => {
+const ListPanel = () => {
   const { setValueFromEvent } = useForm()
   const styleType = usePropsSelector('styleType')
 
@@ -32,4 +32,4 @@ const CodePanel = () => {
   )
 }
 
-export default memo(CodePanel)
+export default memo(ListPanel)

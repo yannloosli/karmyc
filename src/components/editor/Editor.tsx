@@ -1,13 +1,11 @@
 import React, { memo, useState, useEffect, useRef } from 'react'
 import { Box, Text, Link, theme as baseTheme, ChakraProvider } from '@chakra-ui/react'
 import { useDropComponent } from 'src/hooks/useDropComponent'
-import SplitPane, { Pane } from 'split-pane-react'
-import CodePanel from 'src/components/CodePanel'
 import { useSelector } from 'react-redux'
 import useDispatch from 'src/hooks/useDispatch'
 import { getComponents } from 'src/core/selectors/components'
 import { getNewTheme } from 'src/core/selectors/customComponents'
-import { getShowLayout, getShowCode } from 'src/core/selectors/app'
+import { getShowLayout } from 'src/core/selectors/app'
 import ComponentPreview from 'src/components/editor/ComponentPreview'
 import { omit } from 'lodash'
 import myTheme from './myTheme'
@@ -35,8 +33,6 @@ export const convertToPascal = (filePath: string) => {
 }
 
 const Editor: React.FC = () => {
-    const [sizes, setSizes] = useState([100, '50%', 'auto']);
-    const showCode = useSelector(getShowCode)
     const showLayout = useSelector(getShowLayout)
     const components = useSelector(getComponents)
     const newThemeState = useSelector(getNewTheme)
@@ -63,7 +59,7 @@ const Editor: React.FC = () => {
     }
 
     const Playground = (
-        <ChakraProvider theme={myTheme(newThemeState)} resetCSS={false}>
+        <ChakraProvider theme={myTheme(newThemeState)} resetCSS={false} cssVarsRoot="#root">
             {/* <Fonts
                 headingFontFamily={newThemeState.headingFontFamily}
                 bodyFontFamily={newThemeState.bodyFontFamily}
@@ -83,7 +79,6 @@ const Editor: React.FC = () => {
                 justifyContent="center"
                 alignItems="center"
                 overflow="auto"
-                // @ts-expect-error ref is not assignable to type
                 ref={drop(ref)}
                 position="relative"
                 flexDirection="column"
@@ -112,27 +107,10 @@ const Editor: React.FC = () => {
         </ChakraProvider>
     )
 
-    if (!showCode) {
-        return Playground
-    }
+    return Playground
 
-    return (
-        // @ts-ignore
-        <SplitPane
-            split='horizontal'
-            sizes={sizes}
-            onChange={setSizes}
-        >
-            <Pane minSize={50} maxSize='50%'>
-                <div>
-                    {Playground}
-                </div>
-            </Pane>
-            <div>
-                <CodePanel />
-            </div>
-        </SplitPane>
-    );
+
+
 }
 
 export default memo(Editor)

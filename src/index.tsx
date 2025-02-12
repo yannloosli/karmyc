@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import { ChakraProvider } from '@chakra-ui/react'
 import 'react-color-picker/index.css'
 import '@reach/combobox/styles.css'
-import 'split-pane-react/esm/themes/default.css';
 import App from './app'
 import { store } from 'src/core/store'
 import { Provider } from 'react-redux'
@@ -12,7 +11,7 @@ import 'react-color-picker/index.css'
 import '@reach/combobox/styles.css'
 
 const Root = () => (
-    <ChakraProvider resetCSS theme={theme}>
+    <ChakraProvider resetCSS theme={theme} cssVarsRoot={undefined}>
         <Provider store={store}>
             <React.Suspense fallback={<div>Loading... </div>}>
                 <App />

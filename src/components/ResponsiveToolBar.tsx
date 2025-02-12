@@ -12,44 +12,44 @@ const ResponsiveToolBar = () => {
   const theme = useTheme()
   const editorWidth = useSelector(getEditorWidth)
 
+ const activeColor = '#b644ff'
+ const inactiveColor = 'whiteAlpha.500'
+
   return (
     <Flex
       w="100%"
-      p={4}
-      backgroundSize="20px 20px"
-      bgColor="#edf2f6"
       align="center"
       justify="center"
-      position="absolute"
-      zIndex={5}
-      boxShadow="lg"
     >
       <IconButton
         icon={<HiOutlineDesktopComputer />}
         size="lg"
         fontSize="30px"
-        color={editorWidth === '100%' ? 'teal.500' : 'black.500'}
+        variant="ghost"
+        color={editorWidth === '100%' ? activeColor : inactiveColor}
         aria-label="Desktop version"
         onClick={() => dispatch.app.updateEditorWidth({ width: '100%' })}
-      />
+        />
 
       <IconButton
         icon={<MdOutlineTabletMac />}
         size="lg"
-        color={editorWidth === theme.breakpoints.md ? 'teal.500' : 'black.500'}
+        color={editorWidth === theme.breakpoints.md ? activeColor : inactiveColor}
         fontSize="30px"
+        variant="ghost"
         aria-label="Tablet version"
         mx={12}
         onClick={() =>
           dispatch.app.updateEditorWidth({ width: theme.breakpoints.md })
         }
-      />
+        />
 
       <IconButton
         icon={<ImMobile />}
         size="lg"
-        color={editorWidth === theme.breakpoints.sm ? 'teal.500' : 'black.500'}
+        color={editorWidth === theme.breakpoints.sm ? activeColor : inactiveColor}
         fontSize="30px"
+        variant="ghost"
         aria-label="Mobile version"
         onClick={() =>
           dispatch.app.updateEditorWidth({ width: theme.breakpoints.sm })

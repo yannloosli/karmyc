@@ -18,16 +18,16 @@ const Menu = () => {
         <DarkMode>
             <Box
                 className="sidebar"
-                maxH="calc(100vh - 3rem)"
+                maxH="calc(100dvh - 6rem)"
                 overflowY="auto"
-                overflowX="visible"
+                overflowX="none"
                 boxShadow="xl"
                 flex="0 0 14rem"
                 m={0}
                 p={0}
                 as="menu"
                 backgroundColor="#2e3748"
-                width="15rem"
+                width="100%"
             >
                 <Box p={0} pb={0} position="sticky" w="100%" bgColor="#2e3748" top={0} zIndex={2}>
                     <InputGroup size="sm" mb={0}>

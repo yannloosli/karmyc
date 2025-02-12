@@ -77,11 +77,11 @@ const HeaderMenu = () => {
             </MenuItemLink>
 
             <MenuDivider />
-            <MenuItemLink isExternal href="https://v0.openchakra.app">
+            <MenuItemLink isExternal={true}  href="https://v0.openchakra.app">
               <Box mr={2} as={GoArchive} />
               Chakra v0 Editor
             </MenuItemLink>
-            <MenuItemLink isExternal href="https://v1.openchakra.app">
+            <MenuItemLink isExternal={true}  href="https://v1.openchakra.app">
               <Box mr={2} as={GoArchive} />
               Chakra v1 Editor
             </MenuItemLink>

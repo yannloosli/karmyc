@@ -7,7 +7,6 @@ import { useHotkeys } from 'react-hotkeys-hook'
 const keyMap = {
   DELETE_NODE: 'Backspace, del',
   TOGGLE_BUILDER_MODE: 'b',
-  TOGGLE_CODE_PANEL: 'c',
   UNDO: 'ctrl+z, command+z',
   REDO: 'ctrl+y, cmd+y',
   UNSELECT: 'esc',
@@ -35,13 +34,6 @@ const useShortcuts = () => {
     if (event && hasNoSpecialKeyPressed(event)) {
       event.preventDefault()
       dispatch.app.toggleBuilderMode()
-    }
-  }
-
-  const toggleCodePanel = (event: KeyboardEvent | undefined) => {
-    if (event && hasNoSpecialKeyPressed(event)) {
-      event.preventDefault()
-      dispatch.app.toggleCodePanel()
     }
   }
 
@@ -86,7 +78,6 @@ const useShortcuts = () => {
 
   useHotkeys(keyMap.DELETE_NODE, deleteNode, {}, [selected.id])
   useHotkeys(keyMap.TOGGLE_BUILDER_MODE, toggleBuilderMode)
-  useHotkeys(keyMap.TOGGLE_CODE_PANEL, toggleCodePanel)
   useHotkeys(keyMap.UNDO, undo)
   useHotkeys(keyMap.REDO, redo)
   useHotkeys(keyMap.UNSELECT, onUnselect)
