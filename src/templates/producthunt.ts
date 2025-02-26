@@ -3,14 +3,14 @@ export const productHunt: IComponents = {
     id: 'root',
     parent: 'root',
     type: 'Box',
-    children: ['comp-root', 'comp-K6IB1AANA79Y6'],
+    children: ['rootComponents', 'comp-K6IB1AANA79Y6'],
     props: {
       backgroundColor: '#f3f3f3',
     },
     params: []
   },
-  'comp-root': {
-    id: 'comp-root',
+  'rootComponents': {
+    id: 'rootComponents',
     props: {
       backgroundColor: 'white',
       display: 'flex',
@@ -138,7 +138,7 @@ export const productHunt: IComponents = {
       'comp-K6IAW325BUPFG',
     ],
     type: 'Stack',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Stack',
   },
   'comp-K6IAV6E1J71L7': {
@@ -195,7 +195,7 @@ export const productHunt: IComponents = {
     props: {},
     children: ['comp-K6IAX6IXQ7CAC'],
     type: 'Stack',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Stack',
   },
   'comp-K6IAX6IXQ7CAC': {

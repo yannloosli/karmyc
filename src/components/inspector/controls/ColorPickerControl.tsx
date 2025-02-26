@@ -16,11 +16,13 @@ import {
   Portal,
   theme,
 } from '@chakra-ui/react'
-import ColorPicker from 'coloreact'
+import ColorPicker from '../inputs/ColorPicker'
 import HuesPickerControl from './HuesPickerControl'
 import { useForm } from 'src/hooks/useForm'
 import omit from 'lodash/omit'
-import usePropsSelector from 'src/hooks/usePropsSelector'
+import { createSelector } from '@reduxjs/toolkit'
+import { useSelector } from 'react-redux'
+import { RootState } from '@/store/store'
 
 type ColorPickerPropType = {
   withFullColor?: boolean
@@ -31,8 +33,25 @@ type ColorPickerPropType = {
   updateGradient?: (value: string, index: number) => Promise<void>
 }
 
+// Cache pour les sélecteurs par nom
+const selectorsCache = new Map<string, any>()
+
+// Créer un sélecteur mémorisé pour chaque nom
+const createColorSelector = (name: string) => {
+  if (!selectorsCache.has(name)) {
+    selectorsCache.set(
+      name,
+      createSelector(
+        [(state: RootState) => (state.components as any).present.components],
+        (components) => components[name] || ''
+      )
+    )
+  }
+  return selectorsCache.get(name)!
+}
+
 const ColorPickerControl = (props: ColorPickerPropType) => {
-  const themeColors: any = omit(theme.colors, [
+  const themeColors: Record<string, any> = omit(theme.colors, [
     'transparent',
     'current',
     'black',
@@ -40,10 +59,10 @@ const ColorPickerControl = (props: ColorPickerPropType) => {
   ])
 
   const { setValue, setValueFromEvent } = useForm()
-  const value = usePropsSelector(props.name)
+  const value = useSelector(createColorSelector(props.name))
 
   let propsIconButton: any = { bg: value }
-  if (value && themeColors[value]) {
+  if (value && typeof value === 'string' && themeColors[value]) {
     propsIconButton = { colorScheme: value }
   }
 
@@ -110,17 +129,13 @@ const ColorPickerControl = (props: ColorPickerPropType) => {
                     <TabPanel p={0}>
                       <Box position="relative" height="150px">
                         <ColorPicker
-                          color={props.gradient ? props.gradientColor : value}
-                          onChange={(color: any) => {
+                          value={(props.gradient ? props.gradientColor : value) as string}
+                          onChange={(newColor) => {
                             props.gradient
-                              ? props.updateGradient!(
-                                  `#${color.hex}`,
-                                  props.index!,
-                                )
-                              : setValue(props.name, `#${color.hex}`)
+                              ? props.updateGradient!(newColor, props.index!)
+                              : setValue(props.name, newColor)
                           }}
                         />
-                        );
                       </Box>
                     </TabPanel>
                   </TabPanels>
@@ -162,11 +177,12 @@ const ColorPickerControl = (props: ColorPickerPropType) => {
         />
       ) : (
         <Input
-          width="100px"
+          width="200px"
           size="sm"
-          name={props.name}
+          borderColor="gray.200"
+          name="bgColor"
           onChange={setValueFromEvent}
-          value={value}
+          value={value as string}
         />
       )}
     </>

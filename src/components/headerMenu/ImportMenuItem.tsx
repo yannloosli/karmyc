@@ -2,10 +2,10 @@ import React from 'react'
 import { MenuItem, Box } from '@chakra-ui/react'
 import { FiUpload } from 'react-icons/fi'
 import { loadFromJSON } from 'src/utils/import'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 
 const ImportMenuItem = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   return (
     <MenuItem

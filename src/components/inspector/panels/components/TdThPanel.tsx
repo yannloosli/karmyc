@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 import ChildrenControl from 'src/components/inspector/controls/ChildrenControl'
 import SwitchControl from 'src/components/inspector/controls/SwitchControl'
 

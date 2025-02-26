@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { MenuItem, Box } from '@chakra-ui/react'
 import { FaSave } from 'react-icons/fa'
 import { saveAsJSON } from 'src/utils/import'
-import { getComponents } from 'src/core/selectors/components'
+import { getComponents } from '@/store/selectors/components'
 
 const ExportMenuItem = () => {
   const components = useSelector(getComponents)

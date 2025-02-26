@@ -1,4 +1,4 @@
-import React, { useState, memo, useEffect, useMemo } from 'react'
+import React, { useState, memo, useCallback, useMemo } from 'react'
 import {
   Link,
   Box,
@@ -20,28 +20,33 @@ import {
   Text,
 } from '@chakra-ui/react'
 import { CopyIcon, CheckIcon, EditIcon } from '@chakra-ui/icons'
-import Panels from 'src/components/inspector/panels/Panels'
+import Panels from './panels/Panels'
 import { GoRepo, GoCode } from 'react-icons/go'
 import { FiTrash2 } from 'react-icons/fi'
 import { IoMdRefresh } from 'react-icons/io'
 import { useSelector } from 'react-redux'
-import useDispatch from 'src/hooks/useDispatch'
-import StylesPanel from 'src/components/inspector/panels/StylesPanel'
+import { useAppDispatch } from '../../hooks/useAppDispatch'
+import StylesPanel from './panels/StylesPanel'
 import {
   getSelectedComponent,
   getComponents,
   getSelectedComponentId,
   getComponentNames,
-} from 'src/core/selectors/components'
+} from '@/store/selectors/components'
 import ActionButton from './ActionButton'
-import { generateComponentCode, formatCode } from 'src/utils/code'
-import useClipboard from 'src/hooks/useClipboard'
-import { useInspectorUpdate } from 'src/contexts/inspector-context'
-import { componentsList } from 'src/componentsList'
-import {
-  getCustomComponentNames,
-} from 'src/core/selectors/customComponents'
-import { ComponentWithRefs } from 'src/custom-components/refComponents'
+import { generateComponentCode, formatCode } from '../../utils/code'
+import useClipboard from '../../hooks/useClipboard'
+import { useInspectorUpdate } from '../../contexts/inspector-context'
+import { componentsList } from '../../componentsList'
+import { getCustomComponentNames } from '@/store/selectors/customComponents'
+import { ComponentWithRefs } from '../../custom-components/refComponents'
+import { 
+  deleteComponent, 
+  deleteParams,
+  setComponentName,
+  resetProps,
+  duplicate
+} from '../../store/slices/componentsSlice'
 
 const CodeActionButton = memo(() => {
   const [isLoading, setIsLoading] = useState(false)
@@ -52,7 +57,6 @@ const CodeActionButton = memo(() => {
 
   const parentId = components[selectedId].parent
   const parent = { ...components[parentId] }
-  // Do not copy sibling components from parent
   parent.children = [selectedId]
 
   return (
@@ -79,33 +83,45 @@ const CodeActionButton = memo(() => {
 CodeActionButton.displayName = 'CodeActionButton'
 
 const Inspector = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const component = useSelector(getSelectedComponent)
   const components = useSelector(getComponents)
   const { isOpen, onOpen, onClose } = useDisclosure()
   const [componentName, onChangeComponentName] = useState('')
   const componentsNames = useSelector(getComponentNames)
   const customComponentsNames = useSelector(getCustomComponentNames)
-
   const { clearActiveProps } = useInspectorUpdate()
 
-  const saveComponent = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    dispatch.components.setComponentName({
-      componentId: component.id,
-      name: componentName,
-    })
-    onClose()
-    onChangeComponentName('')
-  }
+  const handleChildrenDelete = useCallback((children: string[]) => {
+    if (children) {
+      children.forEach(childId => {
+        if (
+          Object.keys(ComponentWithRefs).includes(childId.split('-')[0]) &&
+          components[childId].props['ref']
+        ) {
+          dispatch(deleteParams({
+            id: 'root',
+            name: components[childId].props['ref'].slice(1, -1),
+          }))
+        }
+        if (components[childId].children) {
+          handleChildrenDelete(components[childId].children)
+        }
+      })
+    }
+  }, [components, dispatch])
+
   const isValidComponentName = useMemo(() => {
     return (
       !!componentName.match(/^[A-Z]\w*$/g) &&
       !componentsNames.includes(componentName) &&
-      // @ts-ignore
       !componentsList.includes(componentName)
     )
   }, [componentName, componentsNames])
+
+  if (!component) {
+    return null
+  }
 
   const { type, rootParentType, id, children } = component
 
@@ -116,42 +132,29 @@ const Inspector = () => {
   const docType = rootParentType || type
   const componentHasChildren = children.length > 0
 
-  useEffect(() => {
-    clearActiveProps()
-  }, [clearActiveProps])
-
-  const handleChildrenDelete = (children: string[]) => {
-    if (children) {
-      children.forEach(childId => {
-        if (
-          Object.keys(ComponentWithRefs).includes(childId.split('-')[0]) &&
-          components[childId].props['ref']
-        ) {
-          dispatch.components.deleteParams({
-            id: 'root',
-            name: components[childId].props['ref'].slice(1, -1),
-          })
-        }
-        if (components[childId].children) {
-          handleChildrenDelete(components[childId].children)
-        }
-      })
-    }
-  }
-
   const onDelete = () => {
-    dispatch.components.deleteComponent(component.id)
+    dispatch(deleteComponent(component.id))
     if (
       Object.keys(ComponentWithRefs).includes(type) &&
       component.props['ref']
     ) {
-      dispatch.components.deleteParams({
+      dispatch(deleteParams({
         id: 'root',
         name: component.props['ref'].slice(1, -1),
-      })
+      }))
     }
 
     handleChildrenDelete(component.children)
+  }
+
+  const saveComponent = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    dispatch(setComponentName({
+      componentId: component.id,
+      name: componentName,
+    }))
+    onClose()
+    onChangeComponentName('')
   }
 
   return (
@@ -200,13 +203,13 @@ const Inspector = () => {
             )}
             <ActionButton
               label="Duplicate"
-              onClick={() => dispatch.components.duplicate()}
+              onClick={() => dispatch(duplicate())}
               icon={<CopyIcon path="" />}
             />
             <ActionButton
               label="Reset props"
               icon={<IoMdRefresh />}
-              onClick={() => dispatch.components.resetProps(component.id)}
+              onClick={() => dispatch(resetProps(component.id))}
             />
             <ActionButton
               label="Chakra UI Doc"

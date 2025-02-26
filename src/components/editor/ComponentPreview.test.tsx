@@ -1,35 +1,43 @@
 import React from 'react'
 import { render } from '@testing-library/react'
-import { init } from '@rematch/core'
 import { Provider } from 'react-redux'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { ChakraProvider } from '@chakra-ui/react'
-import theme from '@chakra-ui/theme'
+import { configureStore } from '@reduxjs/toolkit'
+import undoable from 'redux-undo'
 
 import ComponentPreview from './ComponentPreview'
-import { storeConfig } from 'src/core/store'
+import componentsReducer from '../../store/slices/componentsSlice'
+import appReducer from '../../store/slices/appSlice'
+import customComponentsReducer from '../../store/slices/customComponentsSlice'
+
+function createTestStore(initialState = {}) {
+  return configureStore({
+    reducer: {
+      app: undoable(appReducer),
+      components: undoable(componentsReducer),
+      customComponents: undoable(customComponentsReducer)
+    },
+    preloadedState: initialState
+  })
+}
 
 function renderWithRedux(
-  components: React.ReactNode,
+  ui: React.ReactNode,
   {
-    // @ts-ignore
-    initialState,
-    // @ts-ignore
-    store = init(storeConfig),
-  } = {},
+    initialState = {},
+    store = createTestStore(initialState)
+  } = {}
 ) {
   return {
     ...render(
       <ChakraProvider>
         <DndProvider backend={HTML5Backend}>
-          <Provider store={store}>{components}</Provider>
+          <Provider store={store}>{ui}</Provider>
         </DndProvider>
-      </ChakraProvider>,
+      </ChakraProvider>
     ),
-    // adding `store` to the returned utilities to allow us
-    // to reference it in our tests (just try to avoid using
-    // this to test implementation details).
     store,
   }
 }
@@ -55,52 +63,36 @@ const componentsToTest = [
   'Tag',
   'Switch',
   'FormLabel',
-  // 'Tab',
   'Input',
   'Radio',
-  //'ListItem',
-  //'ListIcon',
-  // 'AlertIcon',
-  // 'AccordionIcon',
   'Box',
   'SimpleGrid',
   'Flex',
-  // 'AccordionPanel',
-  // 'AccordionItem',
   'FormControl',
-  // 'Tabs',
-  // 'TabList',
-  // 'TabPanels',
   'List',
   'Avatar',
   'AvatarGroup',
   'Alert',
   'Stack',
   'Accordion',
-  // 'AccordionButton',
   'RadioGroup',
   'Select',
   'InputGroup',
   'PopoverMeta',
-
-  // 'AccordionHeader',
   'MenuMeta',
 ]
 
 test.each(componentsToTest)('Component Preview for %s', componentName => {
-  // const spy = jest.spyOn(global.console, 'error')
-  // @ts-ignore
-  const store = init(storeConfig)
-  store.dispatch.components.addComponent({
-    // @ts-ignore
-    parentName: 'root',
-    type: componentName,
-    rootParentType: componentName,
-    testId: 'test',
+  const store = createTestStore()
+  store.dispatch({
+    type: 'components/addComponent',
+    payload: {
+      parentName: 'root',
+      type: componentName,
+      rootParentType: componentName,
+      testId: 'test'
+    }
   })
 
-  // console.log(componentName, store.getState().components.present.components);
-  // @ts-ignore
-  renderWithRedux(<ComponentPreview componentName="test" />, { store })
-  // expect(spy).not.toHaveBeenCalled();
+  renderWithRedux(<ComponentPreview componentName="test" index={0} />, { store })
 })

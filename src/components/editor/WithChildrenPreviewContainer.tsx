@@ -4,7 +4,7 @@ import { useDropComponent } from 'src/hooks/useDropComponent'
 import ComponentPreview from 'src/components/editor/ComponentPreview'
 import { Box } from '@chakra-ui/react'
 import { useSelector } from 'react-redux'
-import { getIsSortHovered } from 'src/core/selectors/components'
+import { getIsSortHovered } from '@/store/selectors/components'
 
 const WithChildrenPreviewContainer: React.FC<{
   component: IComponent

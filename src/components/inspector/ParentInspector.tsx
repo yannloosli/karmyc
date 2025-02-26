@@ -1,12 +1,12 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { getSelectedComponentParent } from 'src/core/selectors/components'
+import { getSelectedComponentParent } from '@/store/selectors/components'
 import ElementListItem from 'src/components/inspector/elements-list/ElementListItem'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 
 const ParentInspector = () => {
   const parentComponent = useSelector(getSelectedComponentParent)
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   const onSelect = () => {
     dispatch.components.select(parentComponent.id)

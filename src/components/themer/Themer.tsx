@@ -17,7 +17,7 @@ import {
 } from '@chakra-ui/react'
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { getNewTheme } from 'src/core/selectors/customComponents'
+import { getNewTheme } from '@/store/selectors/customComponents'
 import ThemeColorPalette from './ThemeColorPalette'
 import ThemeFonts from './ThemeFonts'
 import { GiLargePaintBrush } from 'react-icons/gi'

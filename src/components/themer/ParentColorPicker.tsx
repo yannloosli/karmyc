@@ -1,4 +1,4 @@
-import ColorPicker from 'coloreact'
+import ColorPicker from '../inspector/inputs/ColorPicker'
 import {
   Box,
   Tooltip,
@@ -21,8 +21,10 @@ import {
   SliderThumb,
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { themeColors } from '../editor/Editor'
+import { updateNewTheme } from '../../store/slices/customComponentsSlice'
+import { NewThemeType } from '../../store/slices/customComponentsSlice'
 
 const ColorSchemePicker = ({
   propType,
@@ -31,7 +33,7 @@ const ColorSchemePicker = ({
   propType: string
   withFullColor?: boolean
 }) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const [hue, setHue] = useState(500)
   return (
     <>
@@ -56,10 +58,10 @@ const ColorSchemePicker = ({
                 aria-label="Color"
                 size="xs"
                 onClick={() => {
-                  dispatch.customComponents.updateNewTheme(
-                    propType,
+                  dispatch(updateNewTheme({
+                    propType: propType as keyof NewThemeType,
                     fullThemeColor,
-                  )
+                  }))
                 }}
               />
             </Tooltip>
@@ -102,7 +104,7 @@ const ParentColorPicker = ({
   selectedColor: string
   propType: string
 }) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   let propsIconButton: any = { bg: selectedColor }
   if (!withFullColor) {
@@ -138,14 +140,12 @@ const ParentColorPicker = ({
                   <TabPanel p={0}>
                     <Box position="relative" h={150} w={150}>
                       <ColorPicker
-                        opacity
-                        color={selectedColor.split('.')[0]}
-                        onChange={(color: any) => {}}
-                        onComplete={(color: any) => {
-                          dispatch.customComponents.updateNewTheme(
-                            propType,
-                            color.rgbString,
-                          )
+                        value={selectedColor?.split('.')[0]}
+                        onChange={(newColor) => {
+                          dispatch(updateNewTheme({
+                            propType: propType as keyof NewThemeType,
+                            value: newColor
+                          }))
                         }}
                       />
                     </Box>
@@ -164,7 +164,10 @@ const ParentColorPicker = ({
         borderColor="gray.200"
         name="bgColor"
         onChange={e => {
-          dispatch.customComponents.updateNewTheme(propType, e.target.value)
+          dispatch(updateNewTheme({
+            propType: propType as keyof NewThemeType,
+            value: e.target.value
+          }))
         }}
         value={selectedColor}
       />

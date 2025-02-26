@@ -3,6 +3,8 @@ import filter from 'lodash/filter'
 import icons from 'src/iconsList'
 import { CustomDictionary } from 'src/core/models/customComponents'
 import { convertToPascal } from 'src/components/editor/Editor'
+import { ComponentState } from '../store/slices/componentsSlice'
+import { CustomComponent } from '../store/slices/customComponentsSlice'
 
 const capitalize = (value: string) => {
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -468,8 +470,8 @@ export const generateMainTsx = (params: any, fileName: string) => {
 }
 
 export const generateCode = async (
-  components: IComponents,
-  currentComponents: CustomDictionary,
+  components: Record<string, ComponentState>,
+  componentsList: Record<string, CustomComponent>
 ) => {
   let code = buildBlock({ component: components.root, components })
   let componentsCodes = buildComponents(components)
@@ -487,7 +489,7 @@ export const generateCode = async (
               components[name].type !== 'Conditional' &&
               components[name].type !== 'Loop' &&
               components[name].type !== 'Box' &&
-              !Object.keys(currentComponents).includes(components[name].type)
+              !Object.keys(componentsList).includes(components[name].type)
           )
           .map(name => components[name].type),
       ),
@@ -514,13 +516,13 @@ export const generateCode = async (
           name =>
             name !== 'root' &&
             components[name].type !== 'Conditional' &&
-            Object.keys(currentComponents).includes(components[name].type),
+            Object.keys(componentsList).includes(components[name].type),
         )
         .map(
           name =>
             `import { ${convertToPascal(
-              currentComponents[components[name].type],
-            )} } from '@tiui/${currentComponents[components[name].type]
+              componentsList[components[name].type].template
+            )} } from '@tiui/${componentsList[components[name].type].template
               .slice(3)
               .replaceAll('/', '.')}';`,
         ),
@@ -875,22 +877,6 @@ export const generatePanel = async (
     value={justifyContent${param.name} || ''}
     onChange={setValueFromEvent}
   >
-    <option>flex-start</option>
-    <option>center</option>
-    <option>flex-end</option>
-    <option>space-between</option>
-    <option>space-around</option>
-  </Select>
-</FormControl>
-
-<FormControl label="alignItems">
-  <Select
-    name="alignItems${param.name}"
-    size="sm"
-    value={alignItems${param.name} || ''}
-    onChange={setValueFromEvent}
-  >
-    <option>stretch</option>
     <option>flex-start</option>
     <option>center</option>
     <option>flex-end</option>

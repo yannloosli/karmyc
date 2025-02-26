@@ -3,17 +3,22 @@ import { Flex, IconButton, useTheme } from '@chakra-ui/react'
 import { HiOutlineDesktopComputer } from 'react-icons/hi'
 import { MdOutlineTabletMac } from 'react-icons/md'
 import { ImMobile } from 'react-icons/im'
-import useDispatch from 'src/hooks/useDispatch'
-import { getEditorWidth } from 'src/core/selectors/app'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { getEditorWidth } from '../store/selectors/app'
 import { useSelector } from 'react-redux'
+import { updateEditorWidth } from '../store/slices/appSlice'
 
 const ResponsiveToolBar = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const theme = useTheme()
   const editorWidth = useSelector(getEditorWidth)
 
  const activeColor = '#b644ff'
  const inactiveColor = 'whiteAlpha.500'
+
+  const onClick = (width: string) => {
+    dispatch(updateEditorWidth({ width }))
+  }
 
   return (
     <Flex
@@ -28,7 +33,7 @@ const ResponsiveToolBar = () => {
         variant="ghost"
         color={editorWidth === '100%' ? activeColor : inactiveColor}
         aria-label="Desktop version"
-        onClick={() => dispatch.app.updateEditorWidth({ width: '100%' })}
+        onClick={() => onClick('100%')}
         />
 
       <IconButton
@@ -39,9 +44,7 @@ const ResponsiveToolBar = () => {
         variant="ghost"
         aria-label="Tablet version"
         mx={12}
-        onClick={() =>
-          dispatch.app.updateEditorWidth({ width: theme.breakpoints.md })
-        }
+        onClick={() => onClick(theme.breakpoints.md)}
         />
 
       <IconButton
@@ -51,9 +54,7 @@ const ResponsiveToolBar = () => {
         fontSize="30px"
         variant="ghost"
         aria-label="Mobile version"
-        onClick={() =>
-          dispatch.app.updateEditorWidth({ width: theme.breakpoints.sm })
-        }
+        onClick={() => onClick(theme.breakpoints.sm)}
       />
     </Flex>
   )

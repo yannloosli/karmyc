@@ -1,14 +1,16 @@
 import { useRef, MouseEvent } from 'react'
 import { useSelector } from 'react-redux'
-import useDispatch from './useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { useDrag } from 'react-dnd'
 import {
   getIsSelectedComponent,
   getIsHovered,
   getIsSortHovered,
   getSortPosition,
-} from '../core/selectors/components'
-import { getShowLayout, getFocusedComponent } from '../core/selectors/app'
+} from '@/store/selectors/components'
+import { getShowLayout, getFocusedComponent } from '@/store/selectors/app'
+import { hover, select, unhover } from '../store/slices/componentsSlice'
+import { toggleInputText } from '../store/slices/appSlice'
 
 export const useInteractive = (
   component: IComponent,
@@ -16,7 +18,7 @@ export const useInteractive = (
   enableVisualHelper: boolean = false,
   withoutComponentProps = false,
 ) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const showLayout = useSelector(getShowLayout)
   const isComponentSelected = useSelector(getIsSelectedComponent(component.id))
   const isHovered = useSelector(getIsHovered(component.id))
@@ -39,21 +41,21 @@ export const useInteractive = (
     ...(withoutComponentProps ? {} : component.props),
     onMouseOver: (event: MouseEvent) => {
       event.stopPropagation()
-      dispatch.components.hover(component.id)
+      dispatch(hover(component.id))
     },
     onMouseOut: () => {
-      dispatch.components.unhover()
+      dispatch(unhover())
     },
     onClick: (event: MouseEvent) => {
       event.preventDefault()
       event.stopPropagation()
-      dispatch.components.select(component.id)
+      dispatch(select(component.id))
     },
     onDoubleClick: (event: MouseEvent) => {
       event.preventDefault()
       event.stopPropagation()
       if (focusInput === false) {
-        dispatch.app.toggleInputText()
+        dispatch(toggleInputText(true))
       }
     },
   }

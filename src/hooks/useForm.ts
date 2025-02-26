@@ -1,28 +1,35 @@
 import { ChangeEvent, useCallback } from 'react'
+import { useAppDispatch } from './useAppDispatch'
+import { getSelectedComponentId } from '@/store/selectors/components'
 import { useSelector } from 'react-redux'
-import useDispatch from './useDispatch'
-import { getSelectedComponentId } from 'src/core/selectors/components'
+import { updateProps } from '../store/slices/componentsSlice'
 
 export const useForm = () => {
-  const dispatch = useDispatch()
-  const componentId = useSelector(getSelectedComponentId)
+    const dispatch = useAppDispatch()
+    const selectedComponentId = useSelector(getSelectedComponentId)
 
-  const setValueFromEvent = ({
-    target: { name, value },
-  }: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    setValue(name, value)
-  }
 
-  const setValue = useCallback(
-    (name: string, value: any) => {
-      dispatch.components.updateProps({
-        id: componentId,
-        name,
-        value,
-      })
-    },
-    [componentId, dispatch.components],
-  )
+    const setValueFromEvent = ({
+        target: { name, value },
+    }: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+        setValue(name, value)
+    }
 
-  return { setValue, setValueFromEvent }
+    const setValue = useCallback(
+        (name: string, value: any) => {
+            dispatch(updateProps({
+                componentId: selectedComponentId,
+                props: {
+                    [name]: value
+                }
+            }))
+        },
+        [selectedComponentId, dispatch]
+    )
+  
+
+return { setValue, setValueFromEvent }
+
 }
+
+export default useForm

@@ -3,7 +3,7 @@ import { useInspectorState } from 'src/contexts/inspector-context'
 import {
   getComponentParamNames,
   getSelectedComponent,
-} from 'src/core/selectors/components'
+} from '@/store/selectors/components'
 import { useSelector } from 'react-redux'
 import {
   IconButton,
@@ -22,11 +22,12 @@ import {
   Portal,
 } from '@chakra-ui/react'
 import { ChevronDownIcon, EditIcon, SmallCloseIcon } from '@chakra-ui/icons'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { useForm } from 'src/hooks/useForm'
+import { deleteProps } from '@/store/slices/componentsSlice'
 
 const CustomPropsPanel = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const activePropsRef = useInspectorState()
@@ -45,10 +46,10 @@ const CustomPropsPanel = () => {
   const [hasError, setError] = useState(false)
 
   const onDelete = (propsName: string) => {
-    dispatch.components.deleteProps({
+    dispatch(deleteProps({
       id,
       name: propsName,
-    })
+    }))
   }
 
   const activeProps = activePropsRef || []

@@ -7,8 +7,8 @@ export const airbnbCard: IComponents = {
     props: {},
     params: []
   },
-  'comp-root': {
-    id: 'comp-root',
+  'rootComponents': {
+    id: 'rootComponents',
     props: {
       bg: '#ffffff',
       borderRadius: 'lg',
@@ -26,7 +26,7 @@ export const airbnbCard: IComponents = {
     props: {},
     children: ['comp-1580479588'],
     type: 'Box',
-    parent: 'comp-root',
+    parent: 'rootComponents',
   },
   'comp-1580479588': {
     id: 'comp-1580479588',
@@ -56,7 +56,7 @@ export const airbnbCard: IComponents = {
       'comp-1580479811',
     ],
     type: 'Box',
-    parent: 'comp-root',
+    parent: 'rootComponents',
   },
   'comp-1580479631': {
     id: 'comp-1580479631',

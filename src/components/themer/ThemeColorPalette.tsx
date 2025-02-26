@@ -1,6 +1,6 @@
 import { Text, Divider, HStack, VStack, GridItem, Grid } from '@chakra-ui/react'
 import React from 'react'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { NewThemeType } from 'src/core/models/customComponents'
 import ParentColorPicker from './ParentColorPicker'
 

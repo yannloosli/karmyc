@@ -43,7 +43,7 @@ describe('Components model', () => {
     const nextState = components.reducers.loadDemo(state, 'onboarding')
     expect(nextState).toEqual({
       components: onboarding,
-      selectedId: 'comp-root',
+      selectedId: 'rootComponents',
     })
   })
 

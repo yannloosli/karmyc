@@ -1,5 +1,20 @@
 import { fileOpen, fileSave } from 'browser-nativefs'
-import { INITIAL_COMPONENTS } from 'src/core/models/components'
+
+const INITIAL_COMPONENTS = {
+  components: {
+    root: {
+      id: 'root',
+      type: 'root',
+      props: {},
+      children: [],
+      parent: null,
+      componentName: 'Root'
+    }
+  },
+  selectedId: 'root',
+  hoveredId: null,
+  rootComponents: []
+}
 
 export async function loadFromJSON() {
   const blob = await fileOpen({

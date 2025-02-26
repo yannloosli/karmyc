@@ -8,7 +8,7 @@ import {
 } from '@chakra-ui/react'
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { getShowLoader } from 'src/core/selectors/app'
+import { getShowLoader } from '../store/selectors/app'
 
 const Loader = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()

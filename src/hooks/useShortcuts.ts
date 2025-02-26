@@ -1,7 +1,9 @@
-import useDispatch from './useDispatch'
+import { useAppDispatch } from '../hooks/useAppDispatch'
 import { useSelector } from 'react-redux'
 import { ActionCreators as UndoActionCreators } from 'redux-undo'
-import { getSelectedComponent } from 'src/core/selectors/components'
+import { getSelectedComponent } from '../store/selectors/components'
+import { deleteComponent, unselect, selectParent, duplicate, loadDemo } from '../store/slices/componentsSlice'
+import { appSlice } from '../store/slices/appSlice'
 import { useHotkeys } from 'react-hotkeys-hook'
 
 const keyMap = {
@@ -20,20 +22,22 @@ const hasNoSpecialKeyPressed = (event: KeyboardEvent | undefined) =>
   !event?.metaKey && !event?.shiftKey && !event?.ctrlKey && !event?.altKey
 
 const useShortcuts = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const selected = useSelector(getSelectedComponent)
 
   const deleteNode = (event: KeyboardEvent | undefined) => {
     if (event) {
       event.preventDefault()
     }
-    dispatch.components.deleteComponent(selected.id)
+    if (selected?.id) {
+      dispatch(deleteComponent(selected.id))
+    }
   }
 
   const toggleBuilderMode = (event: KeyboardEvent | undefined) => {
     if (event && hasNoSpecialKeyPressed(event)) {
       event.preventDefault()
-      dispatch.app.toggleBuilderMode()
+      dispatch(appSlice.actions.toggleBuilderMode())
     }
   }
 
@@ -54,13 +58,13 @@ const useShortcuts = () => {
   }
 
   const onUnselect = () => {
-    dispatch.components.unselect()
+    dispatch(unselect())
   }
 
   const onSelectParent = (event: KeyboardEvent | undefined) => {
     if (event && hasNoSpecialKeyPressed(event)) {
       event.preventDefault()
-      dispatch.components.selectParent()
+      dispatch(selectParent())
     }
   }
 
@@ -68,15 +72,14 @@ const useShortcuts = () => {
     if (event) {
       event.preventDefault()
     }
-
-    dispatch.components.duplicate()
+    dispatch(duplicate())
   }
 
   const onKonamiCode = () => {
-    dispatch.components.loadDemo('secretchakra')
+    dispatch(loadDemo('secretchakra'))
   }
 
-  useHotkeys(keyMap.DELETE_NODE, deleteNode, {}, [selected.id])
+  useHotkeys(keyMap.DELETE_NODE, deleteNode, {}, [selected?.id])
   useHotkeys(keyMap.TOGGLE_BUILDER_MODE, toggleBuilderMode)
   useHotkeys(keyMap.UNDO, undo)
   useHotkeys(keyMap.REDO, redo)

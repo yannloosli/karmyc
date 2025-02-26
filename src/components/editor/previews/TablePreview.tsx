@@ -4,7 +4,6 @@ import { useInteractive } from 'src/hooks/useInteractive'
 import { useDropComponent } from 'src/hooks/useDropComponent'
 import ComponentPreview from 'src/components/editor/ComponentPreview'
 import { Table, Tr, TableContainer, Box } from '@chakra-ui/react'
-import index from 'src/core/models'
 
 const TablePreview: React.FC<IPreviewProps> = ({ component, index }) => {
   const acceptedTypes = [

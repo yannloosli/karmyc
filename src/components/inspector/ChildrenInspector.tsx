@@ -1,36 +1,41 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { getSelectedComponentChildren } from 'src/core/selectors/components'
-import ElementsList from 'src/components/inspector/elements-list/ElementsList'
-import useDispatch from 'src/hooks/useDispatch'
+import { getSelectedComponentChildren } from '@/store/selectors/components'
+import ElementsList from './elements-list/ElementsList'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { hover, unhover, select, moveSelectedComponentChildren } from '../../store/slices/componentsSlice'
 
-const ChildrenInspector = () => {
+const ChildrenInspector: React.FC = () => {
   const childrenComponent = useSelector(getSelectedComponentChildren)
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
-  const moveChildren = (
+  const moveChildren = useCallback((
     componentId: string,
     fromIndex: number,
     toIndex: number,
   ) => {
-    dispatch.components.moveSelectedComponentChildren({
+    dispatch(moveSelectedComponentChildren({
       droppedId: componentId,
       targetId: childrenComponent[toIndex].id,
-      position: `${fromIndex}-${toIndex}`,
-    })
-  }
+      position: fromIndex > toIndex ? 'top' : 'bottom'
+    }))
+  }, [dispatch, childrenComponent])
 
-  const onSelectChild = (id: IComponent['id']) => {
-    dispatch.components.select(id)
-  }
+  const onSelectChild = useCallback((id: string) => {
+    dispatch(select(id))
+  }, [dispatch])
 
-  const onHoverChild = (id: IComponent['id']) => {
-    dispatch.components.hover(id)
-  }
+  const onHoverChild = useCallback((id: string | null) => {
+    if (id) {
+      dispatch(hover(id))
+    } else {
+      dispatch(unhover())
+    }
+  }, [dispatch])
 
-  const onUnhoverChild = () => {
-    dispatch.components.unhover()
-  }
+  const onUnhoverChild = useCallback(() => {
+    dispatch(unhover())
+  }, [dispatch])
 
   return (
     <ElementsList

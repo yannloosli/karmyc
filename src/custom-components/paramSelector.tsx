@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react'
 import { ChevronLeftIcon } from '@chakra-ui/icons'
 import { useSelector } from 'react-redux'
-import { getComponentParamNames } from 'src/core/selectors/components'
+import { getComponentParamNames } from '@/store/selectors/components'
 import { useForm } from 'src/hooks/useForm'
 import usePropsSelector from 'src/hooks/usePropsSelector'
 

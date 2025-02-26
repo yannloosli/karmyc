@@ -11,13 +11,14 @@ import Editor from 'src/components/editor/Editor'
 import { InspectorProvider } from 'src/contexts/inspector-context'
 import Inspector from 'src/components/inspector/Inspector'
 import { useSelector } from 'react-redux'
-import { getEditorWidth } from 'src/core/selectors/app'
+import { getEditorWidth } from './store/selectors/app'
 import GridLayout from "react-grid-layout";
+import { Provider } from 'react-redux'
+import { PersistGate } from 'redux-persist/integration/react'
+import { store, persistor } from './store/store'
+import { ChakraProvider } from '@chakra-ui/react'
 
-import '/node_modules/react-grid-layout/css/styles.css'
-import '/node_modules/react-resizable/css/styles.css'
-
-const App = () => {
+const AppContent = () => {
     const editorWidth = useSelector(getEditorWidth)
     const containerRef = useRef<HTMLDivElement>(null)
     const [containerWidth, setContainerWidth] = useState(0)
@@ -64,7 +65,7 @@ const App = () => {
                         <Box key="Sidebar" overflow='hidden' data-grid={{ x: 0, y: 0, w: 2, h: Math.floor(containerHeight / 200),  static: true }}>
                             <Sidebar />
                         </Box>
-                        <Box key="Editor" data-grid={{ x: 2, y: 0, w: 7, h: Math.floor(containerHeight / 200),/*  minW: 2, maxW: 10, */ static: true  }}>
+                        <Box key="Editor" data-grid={{ x: 2, y: 0, w: 7, h: Math.floor(containerHeight / 200), static: true  }}>
                             <Flex
                                 w={editorWidth}
                                 bg="#edf2f6"
@@ -99,4 +100,16 @@ const App = () => {
     )
 }
 
-export default App
+const App = () => {
+    return (
+        <Provider store={store}>
+            <PersistGate loading={null} persistor={persistor}>
+                <ChakraProvider>
+                    <AppContent />
+                </ChakraProvider>
+            </PersistGate>
+        </Provider>
+    )
+}
+
+export default App 

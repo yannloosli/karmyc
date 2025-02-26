@@ -1,15 +1,21 @@
-import React, { memo, useState, useEffect, useRef } from 'react'
+import React, { memo, useState, useEffect, useRef, useCallback } from 'react'
 import { Box, Text, Link, theme as baseTheme, ChakraProvider } from '@chakra-ui/react'
 import { useDropComponent } from 'src/hooks/useDropComponent'
 import { useSelector } from 'react-redux'
-import useDispatch from 'src/hooks/useDispatch'
-import { getComponents } from 'src/core/selectors/components'
-import { getNewTheme } from 'src/core/selectors/customComponents'
-import { getShowLayout } from 'src/core/selectors/app'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { getComponents } from '@/store/selectors/components'
+import { getNewTheme } from '@/store/selectors/customComponents'
+import { getShowLayout } from '@/store/selectors/app'
 import ComponentPreview from 'src/components/editor/ComponentPreview'
 import { omit } from 'lodash'
-import myTheme from './myTheme'
+import { myTheme } from '../../theme/myTheme'
 import Fonts from 'src/components/Fonts'
+import { loadDemo, unselect } from '../../store/slices/componentsSlice'
+
+const defaultTheme = {
+    headingFontFamily: 'roboto',
+    bodyFontFamily: 'roboto',
+}
 
 export const themeColors: any = Object.keys(
     omit(baseTheme.colors, ['transparent', 'current', 'black', 'white']),
@@ -36,17 +42,18 @@ const Editor: React.FC = () => {
     const showLayout = useSelector(getShowLayout)
     const components = useSelector(getComponents)
     const newThemeState = useSelector(getNewTheme)
-    const dispatch = useDispatch()
+    const dispatch = useAppDispatch()
+    
     const ref = useRef(null)
 
     const { drop } = useDropComponent('root', 0, ref)
-    const isEmpty = !components.root.children.length
-    const rootProps = components.root.props
+    const isEmpty = !components?.root?.children?.length
+    const rootProps = components?.root?.props || {}
 
     let editorBackgroundProps = {}
 
     const onSelectBackground = () => {
-        dispatch.components.unselect()
+        dispatch(unselect())
     }
 
     if (showLayout) {
@@ -58,12 +65,26 @@ const Editor: React.FC = () => {
         ...rootProps,
     }
 
+    const dropRef = useCallback(
+        (node: HTMLDivElement) => {
+            ref.current = node
+            drop(node)
+        },
+        [drop]
+    )
+
+    const handleLoadDemo = useCallback((demoName: string) => {
+        dispatch(loadDemo(demoName))
+    }, [dispatch])
+
     const Playground = (
-        <ChakraProvider theme={myTheme(newThemeState)} resetCSS={false} cssVarsRoot="#root">
-            {/* <Fonts
-                headingFontFamily={newThemeState.headingFontFamily}
-                bodyFontFamily={newThemeState.bodyFontFamily}
-            /> */}
+        <ChakraProvider theme={myTheme()}>
+            {newThemeState && (
+                <Fonts
+                    headingFontFamily={newThemeState.headingFontFamily}
+                    bodyFontFamily={newThemeState.bodyFontFamily}
+                />
+            )}
             <Box
                 className="editor"
                 bg="chakra-body-bg"
@@ -79,7 +100,7 @@ const Editor: React.FC = () => {
                 justifyContent="center"
                 alignItems="center"
                 overflow="auto"
-                ref={drop(ref)}
+                ref={dropRef}
                 position="relative"
                 flexDirection="column"
                 onClick={onSelectBackground}
@@ -91,7 +112,7 @@ const Editor: React.FC = () => {
                             color="gray.500"
                             onClick={(e: React.MouseEvent) => {
                                 e.stopPropagation()
-                                dispatch.components.loadDemo('onboarding')
+                                handleLoadDemo('onboarding')
                             }}
                             textDecoration="underline"
                         >
@@ -100,7 +121,7 @@ const Editor: React.FC = () => {
                         .
                     </Text>
                 )}
-                {components.root.children.map((name, i) => (
+                {components?.root?.children?.map((name, i) => (
                     <ComponentPreview key={name} index={i} componentName={name} />
                 ))}
             </Box>
@@ -108,9 +129,6 @@ const Editor: React.FC = () => {
     )
 
     return Playground
-
-
-
 }
 
 export default memo(Editor)

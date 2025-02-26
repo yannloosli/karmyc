@@ -10,10 +10,10 @@ import {
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { NewThemeType } from 'src/core/models/customComponents'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 
 const ThemeFonts = ({ themeState }: { themeState: NewThemeType }) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const [fonts, setFonts] = useState([])
   const fontSourceURL =
     'https://api.fontsource.org/v1/fonts?subsets=latin&type=google&styles=normal&weights=400'

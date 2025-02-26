@@ -30,17 +30,20 @@ import { AiFillThunderbolt } from 'react-icons/ai'
 import { SiTypescript } from 'react-icons/si'
 import { buildParameters } from 'src/utils/codesandbox'
 import { generateCode } from 'src/utils/code'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '../hooks/useAppDispatch'
 import { useSelector } from 'react-redux'
-import { getComponents } from 'src/core/selectors/components'
+import { getComponents } from '../store/selectors/components'
 import {
     getCustomComponents,
-} from 'src/core/selectors/customComponents'
-import { getShowLayout } from 'src/core/selectors/app'
+} from '../store/selectors/customComponents'
+import { getShowLayout } from '../store/selectors/app'
 import HeaderMenu from 'src/components/headerMenu/HeaderMenu'
 import { FaReact } from 'react-icons/fa'
 import Themer from './themer/Themer'
 import ResponsiveToolBar from './ResponsiveToolBar'
+import { ComponentState, reset } from '../store/slices/componentsSlice'
+import { CustomComponent } from '../store/slices/customComponentsSlice'
+import { toggleBuilderMode } from '../store/slices/appSlice'
 
 const CodeSandboxButton = () => {
     const components = useSelector(getComponents)
@@ -50,8 +53,8 @@ const CodeSandboxButton = () => {
     const exportToCodeSandbox = async (isTypeScript: boolean) => {
         setIsLoading(true)
         const code = await generateCode(
-            components,
-            componentsList,
+            components as Record<string, ComponentState>,
+            componentsList as Record<string, CustomComponent>
         )
         setIsLoading(false)
         const parameters = buildParameters(code, isTypeScript)
@@ -126,7 +129,7 @@ const CodeSandboxButton = () => {
 
 const Header = () => {
     const showLayout = useSelector(getShowLayout)
-    const dispatch = useDispatch()
+    const dispatch = useAppDispatch()
 
     return (
         <DarkMode>
@@ -178,7 +181,7 @@ const Header = () => {
                                     isChecked={showLayout}
                                     colorScheme="teal"
                                     size="sm"
-                                    onChange={() => dispatch.app.toggleBuilderMode()}
+                                    onChange={() => dispatch(toggleBuilderMode())}
                                     id="preview"
                                 />
                             </LightMode>
@@ -218,7 +221,7 @@ const Header = () => {
                                                     colorScheme="red"
                                                     rightIcon={<CheckIcon path="" />}
                                                     onClick={() => {
-                                                        dispatch.components.reset()
+                                                        dispatch(reset())
                                                         if (onClose) {
                                                             onClose()
                                                         }

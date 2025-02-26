@@ -12,7 +12,7 @@ import AccordionPreview, {
     AccordionPanelPreview,
 } from 'src/components/editor/previews/AccordionPreview'
 import * as Chakra from '@chakra-ui/react'
-import { getComponentBy } from 'src/core/selectors/components'
+import { getComponentBy } from '@/store/selectors/components'
 import { InputRightElementPreview } from 'src/components/editor/previews/InputRightElement'
 import { InputLeftElementPreview } from 'src/components/editor/previews/InputLeftElement'
 import AspectRatioPreview from 'src/components/editor/previews/AspectRatioBoxPreview'
@@ -66,7 +66,7 @@ import TagPreview, {
 } from 'src/components/editor/previews/TagPreview'
 import {
     getCustomComponentNames,
-} from 'src/core/selectors/customComponents'
+} from '@/store/selectors/customComponents'
 import MenuPreview, {
     MenuListPreview,
     MenuButtonPreview,

@@ -1,6 +1,6 @@
 import React, { memo, useState, FormEvent, ChangeEvent, useRef } from 'react'
 import { useInspectorState } from 'src/contexts/inspector-context'
-import { getComponentParams } from 'src/core/selectors/components'
+import { getComponentParams } from '@/store/selectors/components'
 import { useSelector } from 'react-redux'
 import {
   IconButton,
@@ -27,14 +27,14 @@ import {
   InfoOutlineIcon,
   SmallCloseIcon,
 } from '@chakra-ui/icons'
-import useDispatch from 'src/hooks/useDispatch'
+import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { useParamsForm } from 'src/hooks/useParamsForm'
-import { getSelectedCustomComponentId } from 'src/core/selectors/customComponents'
+import { getSelectedCustomComponentId } from '@/store/selectors/customComponents'
 
 const paramTypes = ['string', 'number', 'boolean', 'Function', 'any']
 
 const ParametersPanel = () => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const activeParamsRef = useInspectorState()

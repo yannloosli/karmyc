@@ -3,7 +3,7 @@ export const onboarding: IComponents = {
     id: 'root',
     parent: 'root',
     type: 'Box',
-    children: ['comp-root', 'comp-K6GOMRTOCHZHD'],
+    children: ['rootComponents', 'comp-K6GOMRTOCHZHD'],
     props: {
       backgroundColor: 'gray.100',
     },
@@ -410,8 +410,8 @@ export const onboarding: IComponents = {
     parent: 'comp-K6GP5TB58TQP4',
     rootParentType: 'Icon',
   },
-  'comp-root': {
-    id: 'comp-root',
+  'rootComponents': {
+    id: 'rootComponents',
     props: {
       display: 'flex',
       flexDirection: 'column',
@@ -552,7 +552,6 @@ export const onboarding: IComponents = {
       children: 'Preset',
       size: 'md',
       variant: 'subtle',
-      isInline: false,
       colorScheme: 'whatsapp',
     },
     children: [],
@@ -814,7 +813,6 @@ export const onboarding: IComponents = {
       children: 'Sort components',
       size: 'md',
       variant: 'subtle',
-      isInline: false,
       colorScheme: 'yellow',
     },
     children: [],
@@ -1000,7 +998,7 @@ export const onboarding: IComponents = {
     },
     children: ['comp-K6GPAPKNQACEE', 'comp-K6GPCGKZ5S4UA'],
     type: 'Flex',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Flex',
   },
   'comp-K6H1NSQY3KC7W': {
@@ -1011,7 +1009,7 @@ export const onboarding: IComponents = {
     },
     children: [],
     type: 'Text',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Text',
   },
   'comp-K6H1R04NDVRXG': {
@@ -1321,7 +1319,6 @@ export const onboarding: IComponents = {
       size: 'sm',
       variant: 'subtle',
       colorScheme: 'gray',
-      isInline: false,
     },
     children: [],
     type: 'Tag',

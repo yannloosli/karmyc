@@ -1,13 +1,21 @@
 import { useDrop, DropTargetMonitor, XYCoord } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import builder from 'src/core/models/composer/builder'
-import { getSortPosition } from 'src/core/selectors/components'
-import { RootState } from 'src/core/store'
+import { getSortPosition } from '@/store/selectors/components'
+import { RootState } from '../store/store'
 import { rootComponents } from 'src/utils/editor'
-import useDispatch from './useDispatch'
+import { useAppDispatch } from '../store/hooks'
 import {
   getCustomComponentNames,
-} from 'src/core/selectors/customComponents'
+} from '@/store/selectors/customComponents'
+import { 
+  sortUnhover, 
+  sortHover, 
+  moveComponent, 
+  addMetaComponent, 
+  addComponentPayload as addComponent,
+  moveSelectedComponentChildren 
+} from '../store/slices/componentsSlice'
 
 export const useDropComponent = (
   componentId: string,
@@ -16,23 +24,19 @@ export const useDropComponent = (
   accept: (ComponentType | MetaComponentType)[] = rootComponents,
   canDrop: boolean = true,
 ) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const customComponents = useSelector(getCustomComponentNames)
   const isSortHovered = useSelector((state: RootState) =>
     Boolean(state.components.present.sortHoveredId),
   )
-  const sortPosition = useSelector(getSortPosition()) || ''
+  const sortPosition = useSelector(getSortPosition()) as 'top' | 'bottom'
 
   const moveChildren = (
     droppedId: string,
     targetId: string,
-    position: string,
+    position: 'top' | 'bottom',
   ) => {
-    dispatch.components.moveSelectedComponentChildren({
-      droppedId,
-      targetId,
-      position,
-    })
+    dispatch(moveSelectedComponentChildren({ droppedId, targetId, position }))
   }
 
   const [{ isOver }, drop] = useDrop({
@@ -72,7 +76,7 @@ export const useDropComponent = (
       // When dragging downwards, only move when the cursor is below 50%
       // When dragging upwards, only move when the cursor is above 50%
 
-      dispatch.components.sortUnhover()
+      dispatch(sortUnhover())
 
       // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
@@ -85,46 +89,44 @@ export const useDropComponent = (
       }
 
       if (dragIndex <= hoverIndex) {
-        dispatch.components.sortHover({
+        dispatch(sortHover({
           componentId,
           position: 'bottom',
-        })
+        }))
       }
 
       if (dragIndex > hoverIndex) {
-        dispatch.components.sortHover({
+        dispatch(sortHover({
           componentId,
           position: 'top',
-        })
+        }))
       }
     },
     drop: (item: ComponentItemProps, monitor: DropTargetMonitor) => {
       if (!monitor.isOver()) {
         return
       }
-      dispatch.components.sortUnhover()
+      dispatch(sortUnhover())
 
       const droppedId = item.id
-
-      //const droppedId = item.id
 
       if (item.isMoved) {
         if (isSortHovered) {
           moveChildren(droppedId, componentId, sortPosition)
         } else {
-          dispatch.components.moveComponent({
+          dispatch(moveComponent({
             parentId: componentId,
             componentId: item.id,
-          })
+          }))
         }
       } else if (item.isMeta) {
-        dispatch.components.addMetaComponent(builder[item.type](componentId))
+        dispatch(addMetaComponent(builder[item.type](componentId)))
       } else {
-        dispatch.components.addComponent({
+        dispatch(addComponent({
           parentName: componentId,
           type: item.type,
           rootParentType: item.rootParentType,
-        })
+        }))
       }
     },
     canDrop: () => canDrop,

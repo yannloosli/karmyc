@@ -3,12 +3,12 @@ export const secretchakra: IComponents = {
     id: 'root',
     parent: 'root',
     type: 'Box',
-    children: ['comp-root'],
+    children: ['rootComponents'],
     props: {},
     params: [],
   },
-  'comp-root': {
-    id: 'comp-root',
+  'rootComponents': {
+    id: 'rootComponents',
     props: {
       width: '100%',
       height: '100%',
@@ -34,7 +34,7 @@ export const secretchakra: IComponents = {
       'comp-K74LCUBUZD53Y',
     ],
     type: 'Flex',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Flex',
   },
   'comp-K74L811LSF53G': {
@@ -479,7 +479,7 @@ export const secretchakra: IComponents = {
       'comp-K74LPCLIHYI6L',
     ],
     type: 'Flex',
-    parent: 'comp-root',
+    parent: 'rootComponents',
     rootParentType: 'Flex',
   },
   'comp-K74LPAIMR0ECA': {
