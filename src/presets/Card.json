@@ -1,0 +1,103 @@
+{
+  "name": "Card",
+  "component": {
+    "id": "card-root",
+    "type": "Card",
+    "props": {
+      "variant": "outline"
+    },
+    "children": ["card-header", "card-body", "card-footer"],
+    "parent": "",
+    "componentName": "Card",
+    "rootParentType": "Card"
+  },
+  "components": {
+    "card-root": {
+      "id": "card-root",
+      "type": "Card",
+      "props": {
+        "variant": "outline"
+      },
+      "children": ["card-header", "card-body", "card-footer"],
+      "parent": "",
+      "componentName": "Card",
+      "rootParentType": "Card"
+    },
+    "card-header": {
+      "id": "card-header",
+      "type": "CardHeader",
+      "props": {},
+      "children": ["card-title", "card-subtitle"],
+      "parent": "card-root",
+      "componentName": "CardHeader",
+      "rootParentType": "CardHeader"
+    },
+    "card-title": {
+      "id": "card-title",
+      "type": "CardTitle",
+      "props": {
+        "children": "Card Title"
+      },
+      "children": [],
+      "parent": "card-header",
+      "componentName": "CardTitle",
+      "rootParentType": "CardTitle"
+    },
+    "card-subtitle": {
+      "id": "card-subtitle",
+      "type": "CardSubtitle",
+      "props": {
+        "children": "Card Subtitle"
+      },
+      "children": [],
+      "parent": "card-header",
+      "componentName": "CardSubtitle",
+      "rootParentType": "CardSubtitle"
+    },
+    "card-body": {
+      "id": "card-body",
+      "type": "CardBody",
+      "props": {
+        "children": "Card Body Content"
+      },
+      "children": [],
+      "parent": "card-root",
+      "componentName": "CardBody",
+      "rootParentType": "CardBody"
+    },
+    "card-footer": {
+      "id": "card-footer",
+      "type": "CardFooter",
+      "props": {},
+      "children": ["card-footer-button-1", "card-footer-button-2"],
+      "parent": "card-root",
+      "componentName": "CardFooter",
+      "rootParentType": "CardFooter"
+    },
+    "card-footer-button-1": {
+      "id": "card-footer-button-1",
+      "type": "Button",
+      "props": {
+        "children": "Cancel",
+        "variant": "ghost"
+      },
+      "children": [],
+      "parent": "card-footer",
+      "componentName": "Button",
+      "rootParentType": "Button"
+    },
+    "card-footer-button-2": {
+      "id": "card-footer-button-2",
+      "type": "Button",
+      "props": {
+        "children": "Proceed",
+        "variant": "solid",
+        "ml": 3
+      },
+      "children": [],
+      "parent": "card-footer",
+      "componentName": "Button",
+      "rootParentType": "Button"
+    }
+  }
+} 

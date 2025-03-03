@@ -3,21 +3,26 @@ import { useSelector } from 'react-redux'
 import { getSelectedComponentParent } from '@/store/selectors/components'
 import ElementListItem from 'src/components/inspector/elements-list/ElementListItem'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { select, hover, unhover } from '@/store/slices/componentsSlice'
 
 const ParentInspector = () => {
   const parentComponent = useSelector(getSelectedComponentParent)
   const dispatch = useAppDispatch()
 
+  if (!parentComponent) {
+    return null
+  }
+
   const onSelect = () => {
-    dispatch.components.select(parentComponent.id)
+    dispatch(select(parentComponent.id))
   }
 
   const onHover = () => {
-    dispatch.components.hover(parentComponent.id)
+    dispatch(hover(parentComponent.id))
   }
 
   const onUnhover = () => {
-    dispatch.components.unhover()
+    dispatch(unhover())
   }
 
   return (

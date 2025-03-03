@@ -1,0 +1,73 @@
+{
+  "name": "Form",
+  "component": {
+    "id": "form-root",
+    "type": "FormControl",
+    "props": {
+      "isRequired": true
+    },
+    "children": ["form-label", "form-input", "form-helper-text", "form-error-message"],
+    "parent": "",
+    "componentName": "FormControl",
+    "rootParentType": "FormControl"
+  },
+  "components": {
+    "form-root": {
+      "id": "form-root",
+      "type": "FormControl",
+      "props": {
+        "isRequired": true
+      },
+      "children": ["form-label", "form-input", "form-helper-text", "form-error-message"],
+      "parent": "",
+      "componentName": "FormControl",
+      "rootParentType": "FormControl"
+    },
+    "form-label": {
+      "id": "form-label",
+      "type": "FormLabel",
+      "props": {
+        "children": "Email"
+      },
+      "children": [],
+      "parent": "form-root",
+      "componentName": "FormLabel",
+      "rootParentType": "FormLabel"
+    },
+    "form-input": {
+      "id": "form-input",
+      "type": "Input",
+      "props": {
+        "type": "email",
+        "placeholder": "Enter your email"
+      },
+      "children": [],
+      "parent": "form-root",
+      "componentName": "Input",
+      "rootParentType": "Input"
+    },
+    "form-helper-text": {
+      "id": "form-helper-text",
+      "type": "FormHelperText",
+      "props": {
+        "children": "We'll never share your email."
+      },
+      "children": [],
+      "parent": "form-root",
+      "componentName": "FormHelperText",
+      "rootParentType": "FormHelperText"
+    },
+    "form-error-message": {
+      "id": "form-error-message",
+      "type": "FormErrorMessage",
+      "props": {
+        "children": "Email is required"
+      },
+      "children": [],
+      "parent": "form-root",
+      "componentName": "FormErrorMessage",
+      "rootParentType": "FormErrorMessage"
+    }
+  }
+}
+ 

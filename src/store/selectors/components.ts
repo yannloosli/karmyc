@@ -2,7 +2,16 @@ import map from 'lodash/map'
 import { RootState } from '../store'
 import { createSelector } from '@reduxjs/toolkit'
 
-export const getComponents = (state: RootState) => state.components.present.components
+export const getComponentsState = (state: RootState) => {
+  return state.components.present
+}
+
+export const getComponents = createSelector(
+  [getComponentsState],
+  (componentsState) => {
+    return componentsState.components || {}
+  }
+)
 
 export const getComponentBy = (nameOrId: string | IComponent['id']) => (
   state: RootState,
@@ -48,8 +57,13 @@ export const getSelectedComponentChildren = createSelector(
 export const getSelectedComponentParent = (state: RootState) =>
   state.components.present.components[getSelectedComponent(state).parent]
 
-export const getHoveredId = (state: RootState) =>
-  state.components.present.hoveredId
+export const getHoveredId = createSelector(
+  [getComponentsState, getComponents],
+  (state, components) => {
+    const hoveredId = state.hoveredId
+    return hoveredId && components[hoveredId] ? hoveredId : null
+  }
+)
 
 export const getIsHovered = (id: IComponent['id']) => (state: RootState) =>
   getHoveredId(state) === id

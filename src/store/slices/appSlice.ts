@@ -1,25 +1,50 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-type Overlay = undefined | { rect: DOMRect; id: string; type: ComponentType }
+interface Rect {
+  x: number
+  y: number
+  width: number
+  height: number
+  top: number
+  left: number
+  bottom: number
+  right: number
+}
 
-// Définition du type pour le state
 interface AppState {
-    showLayout: boolean
-    showLoader: boolean
-    inputTextFocused: boolean
-    editorWidth: string
-    overlay: undefined | Overlay
-    theme: 'light' | 'dark'
-    isLoading: boolean
+  editorWidth: string
+  showLayout: boolean
+  showLoader: boolean
+  inputTextFocused: boolean
+  overlay: {
+    rect: Rect
+    id: string
+    type: string
+  }
+  theme: 'light' | 'dark'
+  isLoading: boolean
 }
 
 // État initial
 const initialState: AppState = {
-    showLayout: true,
+    editorWidth: '100%',
+    showLayout: false,
     showLoader: false,
     inputTextFocused: false,
-    editorWidth: '100%',
-    overlay: undefined,
+    overlay: {
+        rect: {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            top: 0,
+            left: 0,
+            bottom: 0,
+            right: 0
+        },
+        id: '',
+        type: ''
+    },
     theme: 'light',
     isLoading: false
 }
@@ -38,14 +63,32 @@ export const appSlice = createSlice({
     toggleInputText: (state, action: PayloadAction<boolean>) => {
       state.inputTextFocused = action.payload
     },
-    setOverlay: (state, action: PayloadAction<Overlay | undefined>) => {
-      state.overlay = action.payload
+    setOverlay: (state, action: PayloadAction<{
+      rect: Rect
+      id: string
+      type: string
+    }>) => {
+      const { rect, id, type } = action.payload
+      state.overlay = {
+        rect: {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          top: rect.top,
+          left: rect.left,
+          bottom: rect.bottom,
+          right: rect.right
+        },
+        id,
+        type
+      }
     },
     updateEditorWidth: (state, action: PayloadAction<{ width: string }>) => {
       state.editorWidth = action.payload.width
     },
     clearOverlay: (state) => {
-      state.overlay = undefined
+      state.overlay = initialState.overlay
     },
     setTheme: (state, action: PayloadAction<'light' | 'dark'>) => {
       state.theme = action.payload
@@ -57,10 +100,10 @@ export const appSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase('components/deleteComponent', (state) => {
-        state.overlay = undefined
+        state.overlay = initialState.overlay
       })
       .addCase('@@redux-undo/UNDO', (state) => {
-        state.overlay = undefined
+        state.overlay = initialState.overlay
       })
   }
 })

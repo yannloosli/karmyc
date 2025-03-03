@@ -34,17 +34,25 @@ const LoopPreview: React.FC<{ component: IComponent, index: number }> = ({ compo
         </>
       ) : loopLength && loopLength > 0 ? (
         <>
-          {loopArray.map(() =>
+          {loopArray.map((_, loopIndex) =>
             component.children.map((key: string) => (
-              <ComponentPreview key={key} index={index} componentName={key} />
+              <ComponentPreview 
+                key={`${key}-${loopIndex}`} 
+                index={index} 
+                componentName={key} 
+              />
             )),
           )}
         </>
       ) : (
         <>
-          {[1, 2, 3, 4].map(() =>
+          {[1, 2, 3, 4].map((_, loopIndex) =>
             component.children.map((key: string) => (
-              <ComponentPreview key={key} index={index} componentName={key} />
+              <ComponentPreview 
+                key={`${key}-${loopIndex}`} 
+                index={index} 
+                componentName={key} 
+              />
             )),
           )}
         </>

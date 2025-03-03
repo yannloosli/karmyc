@@ -1,0 +1,23 @@
+{
+  "name": "Spinner",
+  "component": {
+    "id": "spinner-root",
+    "type": "Spinner",
+    "props": { "size": "md", "color": "blue.500" },
+    "children": [],
+    "parent": "",
+    "componentName": "Spinner",
+    "rootParentType": "Spinner"
+  },
+  "components": {
+    "spinner-root": {
+      "id": "spinner-root",
+      "type": "Spinner",
+      "props": { "size": "md", "color": "blue.500" },
+      "children": [],
+      "parent": "",
+      "componentName": "Spinner",
+      "rootParentType": "Spinner"
+    }
+  }
+} 

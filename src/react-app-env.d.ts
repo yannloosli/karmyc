@@ -84,9 +84,6 @@ type ComponentType =
   | 'Select'
   | 'SimpleGrid'
   | 'Spinner'
-  | 'Skeleton'
-  | 'SkeletonCircle'
-  | 'SkeletonText'
   | 'Slider'
   | 'SliderTrack'
   | 'SliderFilledTrack'
@@ -128,25 +125,6 @@ type ComponentType =
   | 'Tooltip'
   | string
 
-type MetaComponentType =
-  | 'FormControlMeta'
-  | 'AccordionMeta'
-  | 'ListMeta'
-  | 'AlertMeta'
-  | 'InputGroupMeta'
-  | 'BreadcrumbMeta'
-  | 'TabsMeta'
-  | 'StatMeta'
-  | 'TableMeta'
-  | 'TableRowMeta'
-  | 'ConditionalMeta'
-  | 'ModalMeta'
-  | 'TagMeta'
-  | 'PopoverMeta'
-  | 'MenuMeta'
-  | 'SliderMeta'
-  | 'RangeSliderMeta'
-
 interface ParametersType {
   name: string
   value: any
@@ -183,10 +161,10 @@ interface ComponentItemProps {
   isMoved?: boolean
   isChild?: boolean
   isSelected?: boolean
-  isMeta?: boolean
-  soon?: boolean
   custom?: boolean
+  isPreset?: boolean
   rootParentType?: ComponentType
   children?: React.ReactNode
   index?: number
+  onDragStart?: () => void
 }

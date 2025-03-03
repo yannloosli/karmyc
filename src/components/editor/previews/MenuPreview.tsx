@@ -24,15 +24,14 @@ interface Props {
 const MenuPreview = ({ component, index }: Props) => {
     const { props, ref } = useInteractive(component, index)
     const { drop, isOver } = useDropComponent(component.id, index, ref)
-    let prop = { ...props }
-    delete prop['isOpen']
+    const { showpreview, isOpen, ...restProps } = props
 
     if (isOver) {
-        props.bg = 'teal.50'
+        restProps.bg = 'teal.50'
     }
     return (
-        <Box ref={drop(ref)} index={index} {...props}>
-            <Menu isOpen={props.showpreview} {...prop}>
+        <Box ref={drop(ref)} index={index} {...restProps}>
+            <Menu isOpen={showpreview} {...restProps}>
                 {component.children.map((key: string) => (
                     <ComponentPreview key={key} index={index} componentName={key} />
                 ))}

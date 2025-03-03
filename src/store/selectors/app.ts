@@ -11,4 +11,6 @@ export const getFocusedComponent = (id: IComponent['id']) => (
 export const getInputTextFocused = (state: RootState) =>
   state.app.present.inputTextFocused
 
-export const getEditorWidth = (state: RootState) => state.app.present.editorWidth 
+export const getEditorWidth = (state: RootState) => state.app.present.editorWidth
+
+export const getOverlay = (state: RootState) => state.app.present.overlay 

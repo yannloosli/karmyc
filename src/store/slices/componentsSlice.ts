@@ -46,35 +46,28 @@ const initialState: ComponentsState = {
       id: 'root',
       type: 'root',
       props: {},
-      children: [],
+      children: ['default-container'],
       parent: null,
       componentName: 'Root'
+    },
+    'default-container': {
+      id: 'default-container',
+      type: 'Container',
+      props: {
+        maxW: 'container.xl',
+        p: 4,
+        centerContent: true
+      },
+      children: [],
+      parent: 'root',
+      componentName: 'Container'
     }
   },
-  selectedId: 'root',
+  selectedId: 'default-container',
   hoveredId: null,
   rootComponents: [],
   sortHoveredId: undefined,
   sortPosition: undefined
-}
-
-const createMetaComponent = (
-  components: Record<string, ComponentState>,
-  componentId: string,
-  type: string,
-  rootParentType?: string,
-) => {
-  if (!components[componentId]) {
-    components[componentId] = {
-      id: componentId,
-      type,
-      props: {},
-      children: [],
-      parent: '',
-      rootParentType,
-    }
-  }
-  return components
 }
 
 const componentsSlice = createSlice({
@@ -132,16 +125,48 @@ const componentsSlice = createSlice({
       state.hoveredId = action.payload
     },
 
-    moveComponent: (state, action: PayloadAction<{ parentId: string; componentId: string }>) => {
-      const { parentId, componentId } = action.payload
-      if (state.components[componentId].parent === parentId || parentId === componentId) return
+    moveComponent: (state, action: PayloadAction<{ 
+      parentId: string
+      componentId: string
+      index?: number 
+    }>) => {
+      const { parentId, componentId, index } = action.payload
+      
+      // Vérifier que le composant à déplacer existe
+      if (!state.components[componentId]) {
+        console.warn(`Component with id ${componentId} not found`)
+        return
+      }
 
+      // Vérifier que le nouveau parent existe
+      if (!state.components[parentId]) {
+        console.warn(`Parent component with id ${parentId} not found`)
+        return
+      }
+
+      // Vérifier que le parent actuel existe
       const previousParentId = state.components[componentId].parent
+      if (!previousParentId || !state.components[previousParentId]) {
+        console.warn(`Previous parent component not found for component ${componentId}`)
+        return
+      }
+
+      // Ne rien faire si le composant est déjà dans le bon parent
+      if (previousParentId === parentId || parentId === componentId) return
+
+      // Retirer de l'ancien parent
       state.components[previousParentId].children = 
         state.components[previousParentId].children.filter(id => id !== componentId)
 
+      // Mettre à jour le parent du composant
       state.components[componentId].parent = parentId
-      state.components[parentId].children.push(componentId)
+
+      // Ajouter au nouveau parent
+      if (typeof index === 'number') {
+        state.components[parentId].children.splice(index, 0, componentId)
+      } else {
+        state.components[parentId].children.push(componentId)
+      }
     },
 
     moveSelectedComponentChildren: (state, action: PayloadAction<{
@@ -150,8 +175,24 @@ const componentsSlice = createSlice({
       position: 'top' | 'bottom'
     }>) => {
       const { droppedId, targetId, position } = action.payload
+      
+      // Vérifier que les composants existent
+      if (!state.components[targetId]) {
+        console.warn(`Component with id ${targetId} not found`)
+        return
+      }
+      
       const targetParentId = state.components[targetId].parent
-      const droppedParentId = state.components[droppedId].parent
+      if (!state.components[targetParentId]) {
+        console.warn(`Parent component with id ${targetParentId} not found`)
+        return
+      }
+      
+      const droppedParentId = state.components[droppedId]?.parent
+      if (!droppedParentId || !state.components[droppedParentId]) {
+        console.warn(`Parent component for dropped item ${droppedId} not found`)
+        return
+      }
 
       // Retirer de l'ancien parent
       state.components[droppedParentId].children = 
@@ -172,74 +213,75 @@ const componentsSlice = createSlice({
 
     addComponentPayload: (state, action: PayloadAction<{
       parentName: string
-      type: ComponentType
-      rootParentType?: ComponentType
+      type: string
+      rootParentType?: string
       testId?: string
+      index?: number
     }>) => {
-      const { parentName, type, rootParentType, testId } = action.payload
+      const { parentName, type, rootParentType, testId, index } = action.payload
       const id = testId || generateId(type)
       const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
 
       state.selectedId = id
-      state.components[parentName].children.push(id)
+      
+      // Vérifier que le composant parent existe
+      if (!state.components[parentName]) {
+        state.components[parentName] = {
+          id: parentName,
+          type: 'Box',
+          props: {},
+          children: [],
+          parent: null,
+          componentName: 'Box'
+        }
+      }
+
+      // Créer le composant principal
       state.components[id] = {
         id,
-        props: defaultProps || {},
-        children: [],
         type,
+        props: defaultProps,
+        children: [],
         parent: parentName,
-        rootParentType: rootParentType || type,
+        rootParentType,
+        componentName: type
       }
 
-      if (componentsWithRefs.includes(type)) {
-        const ref = `ref${id.replace('-', '_')}`
-        if (!state.components['root'].params) {
-          state.components['root'].params = []
+      // Gérer les sous-composants pour Progress
+      if (type === 'Progress') {
+        const trackId = `${id}-track`
+        const filledId = `${id}-filled`
+        
+        // Créer ProgressTrack
+        state.components[trackId] = {
+          id: trackId,
+          type: 'ProgressTrack',
+          props: DEFAULT_PROPS['ProgressTrack'] || {},
+          children: [filledId],
+          parent: id,
+          componentName: 'ProgressTrack'
         }
-        state.components['root'].params.push({
-          name: ref,
-          type: `RefObject<${ComponentWithRefs[type]}>`,
-          value: 'null',
-          optional: true,
-          exposed: false,
-          ref: true,
-        })
-        state.components[id].props['ref'] = `{${ref}}`
+
+        // Créer ProgressFilledTrack
+        state.components[filledId] = {
+          id: filledId,
+          type: 'ProgressFilledTrack',
+          props: DEFAULT_PROPS['ProgressFilledTrack'] || {},
+          children: [],
+          parent: trackId,
+          componentName: 'ProgressFilledTrack'
+        }
+
+        // Ajouter ProgressTrack aux enfants du Progress
+        state.components[id].children.push(trackId)
       }
-    },
 
-    addMetaComponent: (state, action: PayloadAction<{
-      components: IComponents
-      root: string
-      parent: string
-    }>) => {
-      const { components: newComponents, root, parent } = action.payload
-      
-      state.selectedId = root
-      state.components[parent].children.push(root)
-      state.components = { ...state.components, ...newComponents }
-
-      const newRefElements = Object.entries(state.components)
-        .filter(([id, comp]) => 
-          componentsWithRefs.includes(comp.type) && 
-          state.components[root].children.includes(id)
-        )
-
-      newRefElements.forEach(([id, comp]) => {
-        const ref = `ref${id.replace('-', '_')}`
-        if (!state.components['root'].params) {
-          state.components['root'].params = []
-        }
-        state.components['root'].params.push({
-          name: ref,
-          type: `RefObject<${ComponentWithRefs[comp.type]}>`,
-          value: 'null',
-          optional: true,
-          exposed: false,
-          ref: true,
-        })
-        state.components[id].props['ref'] = `{${ref}}`
-      })
+      // Ajouter le composant aux enfants du parent
+      if (typeof index === 'number') {
+        state.components[parentName].children.splice(index, 0, id)
+      } else {
+        state.components[parentName].children.push(id)
+      }
     },
 
     select: (state, action: PayloadAction<IComponent['id']>) => {
@@ -365,17 +407,77 @@ const componentsSlice = createSlice({
     ) => {
       const { parentId, type, rootParentType } = action.payload
       const componentId = action.payload.componentId || `${type}-${uuid()}`
+      const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
 
-      state.components = createMetaComponent(
-        state.components,
-        componentId,
-        type,
-        rootParentType,
-      )
+      // Créer le composant principal
+      const createComponent = (id: string, componentType: string, parent: string) => {
+        const { form: _, ...props } = DEFAULT_PROPS[componentType] || {}
+        return {
+          id,
+          type: componentType,
+          props: props || {},
+          children: [],
+          parent,
+          rootParentType: rootParentType || componentType,
+          componentName: componentType
+        }
+      }
 
-      state.components[componentId].parent = parentId
+      // Créer et ajouter le composant principal
+      state.components[componentId] = createComponent(componentId, type, parentId)
       state.components[parentId].children.push(componentId)
       state.selectedId = componentId
+
+      // Gérer les sous-composants du Progress
+      if (type === 'Progress') {
+        const trackId = `${componentId}-track`
+        const filledTrackId = `${componentId}-filled`
+
+        // Créer ProgressTrack
+        state.components[trackId] = createComponent(trackId, 'ProgressTrack', componentId)
+        state.components[componentId].children.push(trackId)
+
+        // Créer ProgressFilledTrack
+        state.components[filledTrackId] = createComponent(filledTrackId, 'ProgressFilledTrack', componentId)
+        state.components[componentId].children.push(filledTrackId)
+
+        // Ajouter les refs pour les sous-composants
+        const addRef = (id: string, componentType: string) => {
+          const ref = `ref${id.replace('-', '_')}`
+          if (!state.components['root'].params) {
+            state.components['root'].params = []
+          }
+          state.components['root'].params.push({
+            name: ref,
+            type: `RefObject<${ComponentWithRefs[componentType] || 'HTMLDivElement'}>`,
+            value: 'null',
+            optional: true,
+            exposed: false,
+            ref: true,
+          })
+          state.components[id].props['ref'] = `{${ref}}`
+        }
+
+        addRef(trackId, 'ProgressTrack')
+        addRef(filledTrackId, 'ProgressFilledTrack')
+      }
+
+      // Gérer les refs pour les autres composants si nécessaire
+      if (componentsWithRefs.includes(type)) {
+        const ref = `ref${componentId.replace('-', '_')}`
+        if (!state.components['root'].params) {
+          state.components['root'].params = []
+        }
+        state.components['root'].params.push({
+          name: ref,
+          type: `RefObject<${ComponentWithRefs[type] || 'HTMLDivElement'}>`,
+          value: 'null',
+          optional: true,
+          exposed: false,
+          ref: true,
+        })
+        state.components[componentId].props['ref'] = `{${ref}}`
+      }
     },
   }
 })
@@ -389,7 +491,6 @@ export const {
   setHoveredComponent,
   moveComponent,
   moveSelectedComponentChildren,
-  addMetaComponent,
   select,
   unselect,
   selectParent,

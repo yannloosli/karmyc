@@ -1,0 +1,79 @@
+{
+  "name": "Switch",
+  "component": {
+    "id": "switch-container-root",
+    "type": "Box",
+    "props": {
+      "display": "flex",
+      "gap": 4,
+      "flexWrap": "wrap"
+    },
+    "children": ["switch-default", "switch-checked", "switch-disabled", "switch-disabled-checked"],
+    "parent": "",
+    "componentName": "Box",
+    "rootParentType": "Box"
+  },
+  "components": {
+    "switch-container-root": {
+      "id": "switch-container-root",
+      "type": "Box",
+      "props": {
+        "display": "flex",
+        "gap": 4,
+        "flexWrap": "wrap"
+      },
+      "children": ["switch-default", "switch-checked", "switch-disabled", "switch-disabled-checked"],
+      "parent": "",
+      "componentName": "Box",
+      "rootParentType": "Box"
+    },
+    "switch-default": {
+      "id": "switch-default",
+      "type": "Switch",
+      "props": {
+        "colorScheme": "blue"
+      },
+      "children": [],
+      "parent": "switch-container-root",
+      "componentName": "Switch",
+      "rootParentType": "Switch"
+    },
+    "switch-checked": {
+      "id": "switch-checked",
+      "type": "Switch",
+      "props": {
+        "defaultChecked": true,
+        "colorScheme": "blue"
+      },
+      "children": [],
+      "parent": "switch-container-root",
+      "componentName": "Switch",
+      "rootParentType": "Switch"
+    },
+    "switch-disabled": {
+      "id": "switch-disabled",
+      "type": "Switch",
+      "props": {
+        "isDisabled": true,
+        "colorScheme": "blue"
+      },
+      "children": [],
+      "parent": "switch-container-root",
+      "componentName": "Switch",
+      "rootParentType": "Switch"
+    },
+    "switch-disabled-checked": {
+      "id": "switch-disabled-checked",
+      "type": "Switch",
+      "props": {
+        "isDisabled": true,
+        "defaultChecked": true,
+        "colorScheme": "blue"
+      },
+      "children": [],
+      "parent": "switch-container-root",
+      "componentName": "Switch",
+      "rootParentType": "Switch"
+    }
+  }
+} 

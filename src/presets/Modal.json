@@ -1,0 +1,112 @@
+{
+  "name": "Modal",
+  "component": {
+    "id": "modal-root",
+    "type": "Modal",
+    "props": {
+      "isOpen": false,
+      "onClose": "() => {}"
+    },
+    "children": ["modal-overlay", "modal-content"],
+    "parent": "",
+    "componentName": "Modal",
+    "rootParentType": "Modal"
+  },
+  "components": {
+    "modal-root": {
+      "id": "modal-root",
+      "type": "Modal",
+      "props": {
+        "isOpen": false,
+        "onClose": "() => {}"
+      },
+      "children": ["modal-overlay", "modal-content"],
+      "parent": "",
+      "componentName": "Modal",
+      "rootParentType": "Modal"
+    },
+    "modal-overlay": {
+      "id": "modal-overlay",
+      "type": "ModalOverlay",
+      "props": {},
+      "children": [],
+      "parent": "modal-root",
+      "componentName": "ModalOverlay",
+      "rootParentType": "ModalOverlay"
+    },
+    "modal-content": {
+      "id": "modal-content",
+      "type": "ModalContent",
+      "props": {},
+      "children": ["modal-header", "modal-close-button", "modal-body", "modal-footer"],
+      "parent": "modal-root",
+      "componentName": "ModalContent",
+      "rootParentType": "ModalContent"
+    },
+    "modal-header": {
+      "id": "modal-header",
+      "type": "ModalHeader",
+      "props": {
+        "children": "Modal Title"
+      },
+      "children": [],
+      "parent": "modal-content",
+      "componentName": "ModalHeader",
+      "rootParentType": "ModalHeader"
+    },
+    "modal-close-button": {
+      "id": "modal-close-button",
+      "type": "ModalCloseButton",
+      "props": {},
+      "children": [],
+      "parent": "modal-content",
+      "componentName": "ModalCloseButton",
+      "rootParentType": "ModalCloseButton"
+    },
+    "modal-body": {
+      "id": "modal-body",
+      "type": "ModalBody",
+      "props": {
+        "children": "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore."
+      },
+      "children": [],
+      "parent": "modal-content",
+      "componentName": "ModalBody",
+      "rootParentType": "ModalBody"
+    },
+    "modal-footer": {
+      "id": "modal-footer",
+      "type": "ModalFooter",
+      "props": {},
+      "children": ["modal-footer-button-1", "modal-footer-button-2"],
+      "parent": "modal-content",
+      "componentName": "ModalFooter",
+      "rootParentType": "ModalFooter"
+    },
+    "modal-footer-button-1": {
+      "id": "modal-footer-button-1",
+      "type": "Button",
+      "props": {
+        "children": "Cancel",
+        "variant": "ghost"
+      },
+      "children": [],
+      "parent": "modal-footer",
+      "componentName": "Button",
+      "rootParentType": "Button"
+    },
+    "modal-footer-button-2": {
+      "id": "modal-footer-button-2",
+      "type": "Button",
+      "props": {
+        "children": "Proceed",
+        "variant": "solid",
+        "ml": 3
+      },
+      "children": [],
+      "parent": "modal-footer",
+      "componentName": "Button",
+      "rootParentType": "Button"
+    }
+  }
+} 

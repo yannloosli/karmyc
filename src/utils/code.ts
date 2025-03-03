@@ -2,7 +2,7 @@ import isBoolean from 'lodash/isBoolean'
 import filter from 'lodash/filter'
 import icons from 'src/iconsList'
 import { CustomDictionary } from 'src/core/models/customComponents'
-import { convertToPascal } from 'src/components/editor/Editor'
+import { convertToPascal } from './theme'
 import { ComponentState } from '../store/slices/componentsSlice'
 import { CustomComponent } from '../store/slices/customComponentsSlice'
 

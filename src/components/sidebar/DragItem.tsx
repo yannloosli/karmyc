@@ -5,23 +5,23 @@ import { DragHandleIcon, EditIcon } from '@chakra-ui/icons'
 
 const DragItem: React.FC<ComponentItemProps> = ({
   type,
-  soon,
   label,
-  isMeta,
   isSelected,
   custom,
   isChild,
   rootParentType,
+  isPreset,
 }) => {
   const [, drag] = useDrag({
-    type,
+    type: isPreset ? type : type as ComponentType,
     item: {
       id: type,
       type,
-      isMeta,
       custom,
       rootParentType,
       isSelected,
+      isPreset,
+      label
     },
   })
 
@@ -30,7 +30,7 @@ const DragItem: React.FC<ComponentItemProps> = ({
     color: 'whiteAlpha.600',
   }
 
-  if (!soon && !isSelected) {
+  if (!isSelected) {
     boxProps = {
       ref: drag,
       color: 'whiteAlpha.800',
@@ -70,32 +70,6 @@ const DragItem: React.FC<ComponentItemProps> = ({
       >
         {label}
       </Text>
-      {isMeta && (
-        <Box
-          ml={2}
-          borderWidth="1px"
-          color="teal.300"
-          borderColor="teal.600"
-          fontSize="xs"
-          borderRadius={4}
-          px={1}
-        >
-          preset
-        </Box>
-      )}
-      {soon && (
-        <Box
-          ml={2}
-          borderWidth="1px"
-          color="whiteAlpha.500"
-          borderColor="whiteAlpha.300"
-          fontSize="xs"
-          borderRadius={4}
-          px={1}
-        >
-          soon
-        </Box>
-      )}
     </Box>
   )
 }

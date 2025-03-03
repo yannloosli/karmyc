@@ -22,6 +22,7 @@ const ElementListItem = forwardRef(
       onMouseOver,
       draggable,
       name,
+      ...props
     }: Props,
     ref: React.Ref<HTMLDivElement>,
   ) => {
@@ -39,6 +40,7 @@ const ElementListItem = forwardRef(
         ref={ref}
         onMouseOver={onMouseOver}
         onMouseOut={onMouseOut}
+        {...props}
       >
         <Flex justify="space-between" align="center" w="100%">
           <Flex align="center">

@@ -188,6 +188,69 @@ const myTheme = (themeState: NewThemeType) =>
           colorScheme: 'brand',
         },
       },
+      Menu: {
+        baseStyle: {
+          menu: {
+            boxShadow: 'lg',
+            rounded: 'md',
+            flexDirection: 'column',
+            py: '2',
+          },
+          item: {
+            fontWeight: 'medium',
+            lineHeight: 'normal',
+            display: 'flex',
+            alignItems: 'center',
+            textAlign: 'left',
+            px: '3',
+            py: '2',
+          },
+          command: {
+            opacity: '0.6',
+            fontSize: 'sm',
+            letterSpacing: 'wider',
+            pl: '8',
+          },
+          divider: {
+            border: 0,
+            borderBottom: '1px',
+            borderColor: 'inherit',
+            my: '2',
+            opacity: '0.6',
+          },
+          groupTitle: {
+            px: '3',
+            py: '2',
+            fontSize: 'xs',
+            fontWeight: 'semibold',
+            color: 'gray.500',
+          },
+          button: {
+            transition: 'all 0.2s',
+            borderRadius: 'md',
+            fontWeight: 'medium',
+            _hover: {
+              bg: 'gray.100',
+            },
+            _active: {
+              bg: 'gray.200',
+            },
+          },
+          list: {
+            bg: 'white',
+            boxShadow: 'lg',
+            color: 'inherit',
+            minW: '12rem',
+            py: '2',
+            zIndex: '1',
+            borderRadius: 'md',
+            borderWidth: '1px',
+          },
+          group: {
+            px: '2',
+          },
+        },
+      },
     },
   })
 

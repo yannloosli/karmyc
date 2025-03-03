@@ -1,10 +1,10 @@
-const ALERT_COMPONENTS: (ComponentType | MetaComponentType)[] = [
+const ALERT_COMPONENTS: ComponentType[] = [
   'Alert',
   'AlertDescription',
   'AlertIcon',
   'AlertTitle',
 ]
-const TABLE_COMPONENTS: (ComponentType | MetaComponentType)[] = [
+const TABLE_COMPONENTS: ComponentType[] = [
   'Table',
   'Thead',
   'Tbody',
@@ -16,7 +16,7 @@ const TABLE_COMPONENTS: (ComponentType | MetaComponentType)[] = [
   'TableContainer',
 ]
 
-const MENU_COMPONENTS: (ComponentType | MetaComponentType)[] = [
+const MENU_COMPONENTS: ComponentType[] = [
   'Menu',
   'MenuList',
   'MenuButton',
@@ -27,7 +27,7 @@ const MENU_COMPONENTS: (ComponentType | MetaComponentType)[] = [
   'MenuItemOption',
 ]
 
-const POPOVER_COMPONENTS: (ComponentType | MetaComponentType)[] = [
+const POPOVER_COMPONENTS: ComponentType[] = [
   'Popover',
   'PopoverTrigger',
   'PopoverContent',
@@ -38,7 +38,7 @@ const POPOVER_COMPONENTS: (ComponentType | MetaComponentType)[] = [
   'PopoverFooter',
 ]
 
-export const COMPONENTS: (ComponentType | MetaComponentType)[] = [
+export const COMPONENTS: ComponentType[] = [
   ...ALERT_COMPONENTS,
   'Avatar',
   'AvatarBadge',
@@ -107,9 +107,6 @@ export const COMPONENTS: (ComponentType | MetaComponentType)[] = [
   'SimpleGrid',
   'Spinner',
   'Select',
-  'Skeleton',
-  'SkeletonCircle',
-  'SkeletonText',
   'RangeSLider',
   'RangeSliderTrack',
   'RangeSliderFilledTrack',
@@ -152,25 +149,6 @@ export const COMPONENTS: (ComponentType | MetaComponentType)[] = [
   'StatGroup',
   'Tooltip',
   ...POPOVER_COMPONENTS,
-  // Allow meta components
-  'AlertMeta',
-  'FormControlMeta',
-  'AccordionMeta',
-  'ListMeta',
-  'InputGroupMeta',
-  'BreadcrumbMeta',
-  'TabsMeta',
-  'StatMeta',
-  'TableMeta',
-  'TableRowMeta',
-  'ConditionalMeta',
-  'ModalMeta',
-  'CardMeta',
-  'TagMeta',
-  'PopoverMeta',
-  'RangeSliderMeta',
-  'SliderMeta',
-  'MenuMeta',
   // Allow custom components
   'Conditional',
   'Loop',
@@ -178,12 +156,10 @@ export const COMPONENTS: (ComponentType | MetaComponentType)[] = [
 
 export const AccordionWhitelist: (
   | ComponentType
-  | MetaComponentType
 )[] = COMPONENTS.filter(name => !ALERT_COMPONENTS.includes(name))
 
 export const MenuWhitelist: (
   | ComponentType
-  | MetaComponentType
 )[] = COMPONENTS.filter(name => !ALERT_COMPONENTS.includes(name))
 
 export const rootComponents = COMPONENTS

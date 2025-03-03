@@ -35,9 +35,10 @@ export const getIsSelectedCustomComponent = (
   state.customComponents.present.selectedCustomId === componentId
 
 export const getCustomComponentNames = createSelector(
-  [(state: RootState) => state.customComponents.present.components],
+  [getCustomComponents],
   (components) => {
-    return Object.keys(components || {})
+    if (!components) return []
+    return Object.keys(components)
   }
 )
 

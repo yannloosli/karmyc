@@ -1,10 +1,10 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 import ChildrenControl from 'src/components/inspector/controls/ChildrenControl'
 
-const KdbPanel = () => (
+const KbdPanel = () => (
   <>
     <ChildrenControl />
   </>
 )
 
-export default memo(KdbPanel)
+export default memo(KbdPanel)

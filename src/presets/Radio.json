@@ -1,0 +1,92 @@
+{
+  "name": "Radio",
+  "component": {
+    "id": "radio-container-root",
+    "type": "Box",
+    "props": {
+      "display": "flex",
+      "gap": 4,
+      "flexWrap": "wrap"
+    },
+    "children": ["radio-group", "radio-disabled"],
+    "parent": "",
+    "componentName": "Box",
+    "rootParentType": "Box"
+  },
+  "components": {
+    "radio-container-root": {
+      "id": "radio-container-root",
+      "type": "Box",
+      "props": {
+        "display": "flex",
+        "gap": 4,
+        "flexWrap": "wrap"
+      },
+      "children": ["radio-group", "radio-disabled"],
+      "parent": "",
+      "componentName": "Box",
+      "rootParentType": "Box"
+    },
+    "radio-group": {
+      "id": "radio-group",
+      "type": "RadioGroup",
+      "props": {
+        "defaultValue": "1",
+        "colorScheme": "blue"
+      },
+      "children": ["radio-1", "radio-2", "radio-3"],
+      "parent": "radio-container-root",
+      "componentName": "RadioGroup",
+      "rootParentType": "RadioGroup"
+    },
+    "radio-1": {
+      "id": "radio-1",
+      "type": "Radio",
+      "props": {
+        "value": "1",
+        "children": "Option 1"
+      },
+      "children": [],
+      "parent": "radio-group",
+      "componentName": "Radio",
+      "rootParentType": "Radio"
+    },
+    "radio-2": {
+      "id": "radio-2",
+      "type": "Radio",
+      "props": {
+        "value": "2",
+        "children": "Option 2"
+      },
+      "children": [],
+      "parent": "radio-group",
+      "componentName": "Radio",
+      "rootParentType": "Radio"
+    },
+    "radio-3": {
+      "id": "radio-3",
+      "type": "Radio",
+      "props": {
+        "value": "3",
+        "children": "Option 3"
+      },
+      "children": [],
+      "parent": "radio-group",
+      "componentName": "Radio",
+      "rootParentType": "Radio"
+    },
+    "radio-disabled": {
+      "id": "radio-disabled",
+      "type": "Radio",
+      "props": {
+        "children": "Disabled",
+        "isDisabled": true,
+        "colorScheme": "blue"
+      },
+      "children": [],
+      "parent": "radio-container-root",
+      "componentName": "Radio",
+      "rootParentType": "Radio"
+    }
+  }
+} 

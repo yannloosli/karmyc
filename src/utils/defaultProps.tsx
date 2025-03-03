@@ -87,7 +87,6 @@ import {
     StatLabelProps,
     StatNumberProps,
     StatArrowProps,
-    SkeletonProps,
     TableContainerProps,
     TableProps,
     TableCaptionProps,
@@ -215,9 +214,6 @@ type PreviewDefaultProps = {
     Center?: PropsWithForm<CenterProps>
     Container?: PropsWithForm<ContainerProps>
     Kbd?: PropsWithForm<KbdProps>
-    Skeleton?: PropsWithForm<SkeletonProps>
-    SkeletonCircle?: PropsWithForm<SkeletonProps>
-    SkeletonText?: PropsWithForm<SkeletonProps>
     TableContainer?: PropsWithForm<TableContainerProps>
     Table?: PropsWithForm<TableProps>
     TableCaption?: PropsWithForm<TableCaptionProps>
@@ -238,14 +234,7 @@ type PreviewDefaultProps = {
     RangeSliderTrack?: PropsWithForm<RangeSliderTrackProps>
     RangeSliderFilledTrack?: PropsWithForm<any>
     RangeSliderThumb?: PropsWithForm<RangeSliderThumbProps>
-    // meta components
-    AlertMeta?: any
-    InputGroupMeta?: any
-    FormControlMeta?: any
-    AccordionMeta?: any
-    ListMeta?: any
-    BreadcrumbMeta?: any
-    MenuMeta?: any
+
 }
 
 export const DEFAULT_PROPS: PreviewDefaultProps | any = {
@@ -445,26 +434,6 @@ export const DEFAULT_PROPS: PreviewDefaultProps | any = {
         alignItems: 'center',
     },
     StatGroup: {},
-    Skeleton: {
-        height: 50,
-
-        form: {
-            fadeDuration: 0.4,
-            speed: 0.8,
-        },
-    },
-    SkeletonCircle: {
-        form: {
-            fadeDuration: 0.4,
-            speed: 0.8,
-        },
-    },
-    SkeletonText: {
-        form: {
-            fadeDuration: 0.4,
-            speed: 0.8,
-        },
-    },
     Switch: {
         isChecked: false,
     },

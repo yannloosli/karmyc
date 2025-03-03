@@ -1,0 +1,166 @@
+{
+  "name": "Table",
+  "component": {
+    "id": "table-container-root",
+    "type": "TableContainer",
+    "props": {},
+    "children": ["table-root"],
+    "parent": "",
+    "componentName": "TableContainer",
+    "rootParentType": "TableContainer"
+  },
+  "components": {
+    "table-container-root": {
+      "id": "table-container-root",
+      "type": "TableContainer",
+      "props": {},
+      "children": ["table-root"],
+      "parent": "",
+      "componentName": "TableContainer",
+      "rootParentType": "TableContainer"
+    },
+    "table-root": {
+      "id": "table-root",
+      "type": "Table",
+      "props": {
+        "variant": "simple",
+        "size": "md"
+      },
+      "children": ["table-caption", "table-head", "table-body", "table-foot"],
+      "parent": "table-container-root",
+      "componentName": "Table",
+      "rootParentType": "Table"
+    },
+    "table-caption": {
+      "id": "table-caption",
+      "type": "TableCaption",
+      "props": {
+        "children": "Table Caption Text"
+      },
+      "children": [],
+      "parent": "table-root",
+      "componentName": "TableCaption",
+      "rootParentType": "TableCaption"
+    },
+    "table-head": {
+      "id": "table-head",
+      "type": "Thead",
+      "props": {},
+      "children": ["table-head-tr"],
+      "parent": "table-root",
+      "componentName": "Thead",
+      "rootParentType": "Thead"
+    },
+    "table-head-tr": {
+      "id": "table-head-tr",
+      "type": "Tr",
+      "props": {},
+      "children": ["table-head-th-1", "table-head-th-2"],
+      "parent": "table-head",
+      "componentName": "Tr",
+      "rootParentType": "Tr"
+    },
+    "table-head-th-1": {
+      "id": "table-head-th-1",
+      "type": "Th",
+      "props": {
+        "children": "Th Text"
+      },
+      "children": [],
+      "parent": "table-head-tr",
+      "componentName": "Th",
+      "rootParentType": "Th"
+    },
+    "table-head-th-2": {
+      "id": "table-head-th-2",
+      "type": "Th",
+      "props": {
+        "children": "Th Text"
+      },
+      "children": [],
+      "parent": "table-head-tr",
+      "componentName": "Th",
+      "rootParentType": "Th"
+    },
+    "table-body": {
+      "id": "table-body",
+      "type": "Tbody",
+      "props": {},
+      "children": ["table-body-tr"],
+      "parent": "table-root",
+      "componentName": "Tbody",
+      "rootParentType": "Tbody"
+    },
+    "table-body-tr": {
+      "id": "table-body-tr",
+      "type": "Tr",
+      "props": {},
+      "children": ["table-body-td-1", "table-body-td-2"],
+      "parent": "table-body",
+      "componentName": "Tr",
+      "rootParentType": "Tr"
+    },
+    "table-body-td-1": {
+      "id": "table-body-td-1",
+      "type": "Td",
+      "props": {
+        "children": "Td Text"
+      },
+      "children": [],
+      "parent": "table-body-tr",
+      "componentName": "Td",
+      "rootParentType": "Td"
+    },
+    "table-body-td-2": {
+      "id": "table-body-td-2",
+      "type": "Td",
+      "props": {
+        "children": "Td Text"
+      },
+      "children": [],
+      "parent": "table-body-tr",
+      "componentName": "Td",
+      "rootParentType": "Td"
+    },
+    "table-foot": {
+      "id": "table-foot",
+      "type": "Tfoot",
+      "props": {},
+      "children": ["table-foot-tr"],
+      "parent": "table-root",
+      "componentName": "Tfoot",
+      "rootParentType": "Tfoot"
+    },
+    "table-foot-tr": {
+      "id": "table-foot-tr",
+      "type": "Tr",
+      "props": {},
+      "children": ["table-foot-th-1", "table-foot-th-2"],
+      "parent": "table-foot",
+      "componentName": "Tr",
+      "rootParentType": "Tr"
+    },
+    "table-foot-th-1": {
+      "id": "table-foot-th-1",
+      "type": "Th",
+      "props": {
+        "children": "Th Text"
+      },
+      "children": [],
+      "parent": "table-foot-tr",
+      "componentName": "Th",
+      "rootParentType": "Th"
+    },
+    "table-foot-th-2": {
+      "id": "table-foot-th-2",
+      "type": "Th",
+      "props": {
+        "children": "Th Text"
+      },
+      "children": [],
+      "parent": "table-foot-tr",
+      "componentName": "Th",
+      "rootParentType": "Th"
+    }
+  }
+} 

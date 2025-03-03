@@ -45,8 +45,10 @@ import {
   deleteParams,
   setComponentName,
   resetProps,
-  duplicate
+  duplicate,
+  ComponentState
 } from '../../store/slices/componentsSlice'
+import { addPreset } from '../../store/slices/presetsSlice'
 
 const CodeActionButton = memo(() => {
   const [isLoading, setIsLoading] = useState(false)
@@ -149,10 +151,44 @@ const Inspector = () => {
 
   const saveComponent = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    // Sauvegarder le nom du composant
     dispatch(setComponentName({
       componentId: component.id,
       name: componentName,
     }))
+
+    // Collecter tous les composants associés
+    const collectComponents = (comp: ComponentState): Record<string, ComponentState> => {
+      const result: Record<string, ComponentState> = {
+        [comp.id]: comp
+      }
+
+      // Récursivement collecter les enfants
+      if (comp.children && comp.children.length > 0) {
+        comp.children.forEach(childId => {
+          const childComponent = components[childId]
+          if (childComponent) {
+            const childComponents = collectComponents(childComponent)
+            Object.assign(result, childComponents)
+          }
+        })
+      }
+
+      return result
+    }
+
+    // Collecter tous les composants
+    const allComponents = collectComponents(component)
+
+    // Sauvegarder en tant que preset
+    dispatch(addPreset({
+      id: component.id,
+      name: componentName,
+      component: component,
+      components: allComponents
+    }))
+
     onClose()
     onChangeComponentName('')
   }

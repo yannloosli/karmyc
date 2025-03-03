@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
-import { themeColors } from '../editor/Editor'
+import { themeColors } from 'src/utils/theme'
 import { updateNewTheme } from '../../store/slices/customComponentsSlice'
 import { NewThemeType } from '../../store/slices/customComponentsSlice'
 

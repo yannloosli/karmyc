@@ -1,0 +1,49 @@
+{
+  "name": "Progress",
+  "component": {
+    "id": "progress-root",
+    "type": "Progress",
+    "props": {
+      "value": 80,
+      "size": "md",
+      "colorScheme": "blue"
+    },
+    "children": ["progress-track", "progress-filled"],
+    "parent": "",
+    "componentName": "Progress",
+    "rootParentType": "Progress"
+  },
+  "components": {
+    "progress-root": {
+      "id": "progress-root",
+      "type": "Progress",
+      "props": {
+        "value": 80,
+        "size": "md",
+        "colorScheme": "blue"
+      },
+      "children": ["progress-track", "progress-filled"],
+      "parent": "",
+      "componentName": "Progress",
+      "rootParentType": "Progress"
+    },
+    "progress-track": {
+      "id": "progress-track",
+      "type": "ProgressTrack",
+      "props": {},
+      "children": [],
+      "parent": "progress-root",
+      "componentName": "ProgressTrack",
+      "rootParentType": "ProgressTrack"
+    },
+    "progress-filled": {
+      "id": "progress-filled",
+      "type": "ProgressFilledTrack",
+      "props": {},
+      "children": [],
+      "parent": "progress-root",
+      "componentName": "ProgressFilledTrack",
+      "rootParentType": "ProgressFilledTrack"
+    }
+  }
+} 

@@ -90,15 +90,16 @@ export const AccordionPanelPreview = ({ component, index }: IPreviewProps) => {
     AccordionWhitelist,
   )
 
+  const { showpreview, ...restProps } = props
   let boxProps: any = {}
 
   if (isOver) {
-    props.bg = 'teal.50'
+    restProps.bg = 'teal.50'
   }
 
-  return props.showpreview ? (
+  return showpreview ? (
     <Box ref={drop(ref)} {...boxProps}>
-      <AccordionPanel {...props}>
+      <AccordionPanel {...restProps}>
         {component.children.map((key, i) => (
           <ComponentPreview key={key} componentName={key} index={i} />
         ))}

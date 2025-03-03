@@ -128,9 +128,6 @@ export const menuItems: MenuItems = {
     rootParentType: 'Radio',
   },
   SimpleGrid: {},
-  Skeleton: {},
-  SkeletonCircle: {},
-  SkeletonText: {},
   Slider: {
     children: {
       Slider: {},
@@ -291,9 +288,6 @@ export const componentsList: ComponentType[] = [
   'Select',
   'SimpleGrid',
   'Spinner',
-  'Skeleton',
-  'SkeletonCircle',
-  'SkeletonText',
   'Slider',
   'SliderTrack',
   'SliderFilledTrack',

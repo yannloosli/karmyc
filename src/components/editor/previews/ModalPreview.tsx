@@ -13,17 +13,15 @@ const ModalPreview = ({ component, index }: Props) => {
     const { props, ref } = useInteractive(component, index)
     const { drop, isOver } = useDropComponent(component.id, index, ref)
 
-    if (isOver) {
-        props.bg = 'teal.50'
-    }
-    let prop = { ...props }
-    delete prop['size']
-    delete prop['isOpen']
-    delete prop['showpreview']
+    const { showpreview, size, isOpen, ...restProps } = props
 
-    return props.showpreview ? (
+    if (isOver) {
+        restProps.bg = 'teal.50'
+    }
+
+    return showpreview ? (
         <Box display="flex" justifyContent="center">
-            <Modal ref={drop(ref)} minW={props.size} {...prop} maxW={props.size}>
+            <Modal ref={drop(ref)} minW={size} {...restProps} maxW={size}>
                 {component.children.map((key: string) => (
                     <ComponentPreview key={key} index={index} componentName={key} />
                 ))}

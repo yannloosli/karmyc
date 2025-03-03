@@ -8,66 +8,23 @@ import { useMemo, memo } from 'react'
 // Constante pour le tableau vide
 const EMPTY_ARRAY: readonly any[] = Object.freeze([])
 
-interface ComponentsState {
-  present: {
-    components: {
-      root?: {
-        params?: Array<{name: string}>
-      }
-    }
-  }
-}
+// Sélecteur de base qui retourne directement les paramètres
+const selectParams = (state: RootState) => 
+  state.components.present.components.root?.params ?? EMPTY_ARRAY
 
-// Cache global pour les paramètres
-const paramsCache = new WeakMap()
-
-// Sélecteur de base avec cache
-const selectRootParams = (state: RootState) => {
-  const components = (state.components as ComponentsState).present.components
-  
-  if (!components.root?.params) {
-    return EMPTY_ARRAY
-  }
-  
-  // Utiliser le cache existant si disponible
-  if (paramsCache.has(components.root)) {
-    return paramsCache.get(components.root)
-  }
-  
-  // Sinon créer et mettre en cache
-  const params = Object.freeze([...components.root.params])
-  paramsCache.set(components.root, params)
-  return params
-}
-
-// Créer un cache pour les options
-const optionsCache = new Map<string, readonly { value: string; label: string }[]>()
-
-interface Param {
-  name: string
-}
-
-// Sélecteur mémorisé avec cache manuel
+// Sélecteur mémorisé pour les options avec une référence stable
 const selectParamOptions = createSelector(
-  [selectRootParams],
-  (params: readonly Param[]) => {
+  [selectParams],
+  (params) => {
     if (params === EMPTY_ARRAY) return EMPTY_ARRAY
-
-    // Créer une clé unique pour le cache basée sur les noms des paramètres
-    const cacheKey = params.map(p => p.name).join('|')
     
-    if (!optionsCache.has(cacheKey)) {
-      // Créer et geler les nouvelles options
-      const options = Object.freeze(
-        params.map(param => Object.freeze({
-          value: `$${param.name}`,
-          label: param.name,
-        }))
-      )
-      optionsCache.set(cacheKey, options)
-    }
+    // Créer un tableau d'options avec une référence stable
+    const options = params.map(param => ({
+      value: `$${param.name}`,
+      label: param.name,
+    }))
     
-    return optionsCache.get(cacheKey)!
+    return Object.freeze(options)
   }
 )
 
@@ -78,7 +35,7 @@ interface ParamSelectorProps {
   value?: string
 }
 
-const ParamSelector: React.FC<ParamSelectorProps> = ({ 
+const ParamSelector: React.FC<ParamSelectorProps> = memo(({ 
   name, 
   label, 
   onChange,
@@ -115,10 +72,7 @@ const ParamSelector: React.FC<ParamSelectorProps> = ({
       </Grid>
     </FormControl>
   )
-}
-
-// Mémoriser le composant avec une fonction de comparaison personnalisée
-export default memo(ParamSelector, (prevProps, nextProps) => {
+}, (prevProps, nextProps) => {
   return prevProps.name === nextProps.name &&
          prevProps.value === nextProps.value &&
          prevProps.label === nextProps.label &&

@@ -1,0 +1,79 @@
+{
+  "name": "Select",
+  "component": {
+    "id": "select-root",
+    "type": "Select",
+    "props": {
+      "placeholder": "Select option",
+      "size": "md",
+      "variant": "outline"
+    },
+    "children": ["select-placeholder", "select-option-1", "select-option-2", "select-option-3"],
+    "parent": "",
+    "componentName": "Select",
+    "rootParentType": "Select"
+  },
+  "components": {
+    "select-root": {
+      "id": "select-root",
+      "type": "Select",
+      "props": {
+        "placeholder": "Select option",
+        "size": "md",
+        "variant": "outline"
+      },
+      "children": ["select-placeholder", "select-option-1", "select-option-2", "select-option-3"],
+      "parent": "",
+      "componentName": "Select",
+      "rootParentType": "Select"
+    },
+    "select-placeholder": {
+      "id": "select-placeholder",
+      "type": "option",
+      "props": {
+        "value": "",
+        "children": "Select option"
+      },
+      "children": [],
+      "parent": "select-root",
+      "componentName": "option",
+      "rootParentType": "option"
+    },
+    "select-option-1": {
+      "id": "select-option-1",
+      "type": "option",
+      "props": {
+        "value": "option1",
+        "children": "Option 1"
+      },
+      "children": [],
+      "parent": "select-root",
+      "componentName": "option",
+      "rootParentType": "option"
+    },
+    "select-option-2": {
+      "id": "select-option-2",
+      "type": "option",
+      "props": {
+        "value": "option2",
+        "children": "Option 2"
+      },
+      "children": [],
+      "parent": "select-root",
+      "componentName": "option",
+      "rootParentType": "option"
+    },
+    "select-option-3": {
+      "id": "select-option-3",
+      "type": "option",
+      "props": {
+        "value": "option3",
+        "children": "Option 3"
+      },
+      "children": [],
+      "parent": "select-root",
+      "componentName": "option",
+      "rootParentType": "option"
+    }
+  }
+} 

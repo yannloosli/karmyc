@@ -1,6 +1,5 @@
-import React, { memo, useState, useEffect, useRef, useCallback } from 'react'
+import React, { memo, useCallback, useRef } from 'react'
 import { Box, Text, Link, theme as baseTheme, ChakraProvider } from '@chakra-ui/react'
-import { useDropComponent } from 'src/hooks/useDropComponent'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { getComponents } from '@/store/selectors/components'
@@ -11,6 +10,8 @@ import { omit } from 'lodash'
 import { myTheme } from '../../theme/myTheme'
 import Fonts from 'src/components/Fonts'
 import { loadDemo, unselect } from '../../store/slices/componentsSlice'
+import { useDropComponent } from '../../hooks/useDropComponent'
+import EmptyDropZone from './EmptyDropZone'
 
 const defaultTheme = {
     headingFontFamily: 'roboto',
@@ -23,19 +24,8 @@ export const themeColors: any = Object.keys(
 
 export const gridStyles = {
     backgroundImage:
-        'linear-gradient(to right, #d9e2e9 1px, transparent 1px),linear-gradient(to bottom, #d9e2e9 1px, transparent 1px);',
+        'linear-gradient(to right, #f0f0f0 1px, transparent 1px), linear-gradient(to bottom, #f0f0f0 1px, transparent 1px)',
     backgroundSize: '20px 20px',
-    bgColor: '#edf2f6',
-    p: 10,
-}
-
-export const convertToPascal = (filePath: string) => {
-    const fileName = filePath.split('/').slice(-1)[0]
-    let fileArray = fileName.split('-')
-    fileArray = fileArray.map(word => {
-        return `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`
-    })
-    return fileArray.join('')
 }
 
 const Editor: React.FC = () => {
@@ -105,25 +95,13 @@ const Editor: React.FC = () => {
                 flexDirection="column"
                 onClick={onSelectBackground}
             >
-                {isEmpty && (
-                    <Text maxWidth="md" color="gray.400" fontSize="xl" textAlign="center">
-                        Drag some component to start coding without code! Or load{' '}
-                        <Link
-                            color="gray.500"
-                            onClick={(e: React.MouseEvent) => {
-                                e.stopPropagation()
-                                handleLoadDemo('onboarding')
-                            }}
-                            textDecoration="underline"
-                        >
-                            the onboarding components
-                        </Link>
-                        .
-                    </Text>
+                {isEmpty ? (
+                    <EmptyDropZone />
+                ) : (
+                    components?.root?.children?.map((name, i) => (
+                        <ComponentPreview key={name} index={i} componentName={name} />
+                    ))
                 )}
-                {components?.root?.children?.map((name, i) => (
-                    <ComponentPreview key={name} index={i} componentName={name} />
-                ))}
             </Box>
         </ChakraProvider>
     )

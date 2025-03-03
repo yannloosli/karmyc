@@ -9,9 +9,18 @@ export default function filterActions(action: UnknownAction): boolean {
     'components/addComponent',
     'components/deleteComponent',
     'components/moveComponent',
-    'components/addMetaComponent',
     'components/moveSelectedComponentChildren',
     'components/duplicate',
+    'components/sortHover',
+    'components/sortUnhover',
+    'components/hover',
+    'components/unhover',
+    'components/select',
+    'components/unselect',
+    'components/selectParent',
+    'components/setComponentName',
+    'components/setSelectedComponent',
+    'components/setHoveredComponent'
   ]
 
   return allowedActions.includes(action.type)

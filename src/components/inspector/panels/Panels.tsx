@@ -57,14 +57,13 @@ import KbdPanel from './components/KbdPanel'
 import TabPanel from './components/TabPanel'
 import StatArrowPanel from './components/StatArrowPanel'
 import StatLabelPanel from './components/StatLabelPanel'
-import SkeletonPanel from './components/SkeletonPanel'
 import RangeSliderPanel from 'src/components/inspector/panels/components/RangeSliderPanel'
 import TablePanel from './components/TablePanel'
 import ConditionalPanel from './components/ConditionalPanel'
 import LoopPanel from './components/LoopPanel'
 import { useSelector } from 'react-redux'
 import { getCustomComponentNames } from '@/store/selectors/customComponents'
-import { convertToPascal } from 'src/components/editor/Editor'
+import { convertToPascal } from 'src/utils/theme'
 import TableCaptionPanel from './components/TableCaptionPanel'
 import TdThPanel from './components/TdThPanel'
 import ModalPanel from './components/ModalPanel'
@@ -164,9 +163,6 @@ const Panels: React.FC<{
       {type === 'Radio' && <RadioPanel />}
       {type === 'RadioGroup' && <RadioGroupPanel />}
       {type === 'Select' && <SelectPanel />}
-      {type === 'Skeleton' && <SkeletonPanel />}
-      {type === 'SkeletonCircle' && <SkeletonPanel isSkeletonCircle />}
-      {type === 'SkeletonText' && <SkeletonPanel isSkeletonText />}
       {type === 'List' && <ListPanel />}
       {type === 'ListItem' && <ListItemPanel />}
       {type === 'ListIcon' && <ListIconPanel />}

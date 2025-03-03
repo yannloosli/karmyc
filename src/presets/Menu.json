@@ -1,0 +1,126 @@
+{
+  "name": "Menu",
+  "component": {
+    "id": "menu-root",
+    "type": "Menu",
+    "props": {},
+    "children": ["menu-button", "menu-list"],
+    "parent": "",
+    "componentName": "Menu",
+    "rootParentType": "Menu"
+  },
+  "components": {
+    "menu-root": {
+      "id": "menu-root",
+      "type": "Menu",
+      "props": {},
+      "children": ["menu-button", "menu-list"],
+      "parent": "",
+      "componentName": "Menu",
+      "rootParentType": "Menu"
+    },
+    "menu-button": {
+      "id": "menu-button",
+      "type": "MenuButton",
+      "props": {},
+      "children": ["menu-button-content"],
+      "parent": "menu-root",
+      "componentName": "MenuButton",
+      "rootParentType": "MenuButton"
+    },
+    "menu-button-content": {
+      "id": "menu-button-content",
+      "type": "Button",
+      "props": {
+        "leftIcon": "chevron-down",
+        "children": "Actions"
+      },
+      "children": [],
+      "parent": "menu-button",
+      "componentName": "Button",
+      "rootParentType": "Button"
+    },
+    "menu-list": {
+      "id": "menu-list",
+      "type": "MenuList",
+      "props": {},
+      "children": ["menu-group-1", "menu-divider", "menu-group-2"],
+      "parent": "menu-root",
+      "componentName": "MenuList",
+      "rootParentType": "MenuList"
+    },
+    "menu-group-1": {
+      "id": "menu-group-1",
+      "type": "MenuGroup",
+      "props": {},
+      "children": ["menu-item-1", "menu-item-2"],
+      "parent": "menu-list",
+      "componentName": "MenuGroup",
+      "rootParentType": "MenuGroup"
+    },
+    "menu-item-1": {
+      "id": "menu-item-1",
+      "type": "MenuItem",
+      "props": {
+        "children": "New"
+      },
+      "children": [],
+      "parent": "menu-group-1",
+      "componentName": "MenuItem",
+      "rootParentType": "MenuItem"
+    },
+    "menu-item-2": {
+      "id": "menu-item-2",
+      "type": "MenuItem",
+      "props": {
+        "children": "Payments"
+      },
+      "children": [],
+      "parent": "menu-group-1",
+      "componentName": "MenuItem",
+      "rootParentType": "MenuItem"
+    },
+    "menu-divider": {
+      "id": "menu-divider",
+      "type": "MenuDivider",
+      "props": {},
+      "children": [],
+      "parent": "menu-list",
+      "componentName": "MenuDivider",
+      "rootParentType": "MenuDivider"
+    },
+    "menu-group-2": {
+      "id": "menu-group-2",
+      "type": "MenuGroup",
+      "props": {
+        "title": "Help"
+      },
+      "children": ["menu-item-3", "menu-item-4"],
+      "parent": "menu-list",
+      "componentName": "MenuGroup",
+      "rootParentType": "MenuGroup"
+    },
+    "menu-item-3": {
+      "id": "menu-item-3",
+      "type": "MenuItem",
+      "props": {
+        "children": "Docs"
+      },
+      "children": [],
+      "parent": "menu-group-2",
+      "componentName": "MenuItem",
+      "rootParentType": "MenuItem"
+    },
+    "menu-item-4": {
+      "id": "menu-item-4",
+      "type": "MenuItem",
+      "props": {
+        "children": "FAQ"
+      },
+      "children": [],
+      "parent": "menu-group-2",
+      "componentName": "MenuItem",
+      "rootParentType": "MenuItem"
+    }
+  }
+} 

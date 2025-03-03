@@ -6,10 +6,12 @@ import {
     InputRightElement,
     DarkMode,
     IconButton,
+    Divider,
 } from '@chakra-ui/react'
 import { CloseIcon, SearchIcon } from '@chakra-ui/icons'
 import DragItem from './DragItem'
 import { menuItems, MenuItem } from '../../componentsList'
+import PresetsList from './PresetsList'
 
 const Menu = () => {
     const [searchTerm, setSearchTerm] = useState('')
@@ -20,7 +22,7 @@ const Menu = () => {
                 className="sidebar"
                 maxH="calc(100dvh - 6rem)"
                 overflowY="auto"
-                overflowX="none"
+                overflowX="hidden"
                 boxShadow="xl"
                 flex="0 0 14rem"
                 m={0}
@@ -63,51 +65,21 @@ const Menu = () => {
                         </InputRightElement>
                     </InputGroup>
                 </Box>
+
+                <Box p={4}>
+                    <PresetsList />
+                </Box>
+
+                <Divider my={2} borderColor="whiteAlpha.200" />
+
                 <Box p={0} pt={0}>
                     {(Object.keys(menuItems) as ComponentType[])
                         .filter(c =>
                             c.toLowerCase().includes(searchTerm.toLowerCase()),
                         )
                         .map(name => {
-                            const { children, soon } = menuItems[name] as MenuItem
-
-                            if (children) {
-                                const elements = Object.keys(children).map(childName => (
-                                    <DragItem
-                                        isChild
-                                        key={childName}
-                                        label={childName}
-                                        type={childName as any}
-                                        id={childName as any}
-                                        rootParentType={
-                                            menuItems[name]?.rootParentType || name
-                                        }
-                                    >
-                                        {childName}
-                                    </DragItem>
-                                ))
-
-                                return [
-                                    <DragItem
-                                        isMeta
-                                        soon={soon}
-                                        key={`${name}Meta`}
-                                        label={name}
-                                        type={`${name}Meta` as any}
-                                        id={`${name}Meta` as any}
-                                        rootParentType={
-                                            menuItems[name]?.rootParentType || name
-                                        }
-                                    >
-                                        {name}
-                                    </DragItem>,
-                                    ...elements,
-                                ]
-                            }
-
                             return (
                                 <DragItem
-                                    soon={soon}
                                     key={name}
                                     label={name}
                                     type={name as any}
