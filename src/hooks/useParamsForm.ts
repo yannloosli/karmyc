@@ -1,11 +1,13 @@
 import { useCallback } from 'react'
 import { useSelector } from 'react-redux'
-import { getSelectedComponentId } from '@/store/selectors/components'
+import { getSelectedComponentId, getComponentParams } from '@/store/selectors/components'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
+import { updateComponent } from '@/store/slices/componentsSlice'
 
 export const useParamsForm = () => {
   const dispatch = useAppDispatch()
   const componentId = useSelector(getSelectedComponentId)
+  const currentParams = useSelector(getComponentParams) || []
 
   const setValue = useCallback(
     (
@@ -16,18 +18,52 @@ export const useParamsForm = () => {
       exposed: boolean = false,
       ref: boolean = false,
     ) => {
-      dispatch.components.updateParams({
+      const updatedParams = [...currentParams]
+      const existingParamIndex = updatedParams.findIndex(p => p.name === name)
+      
+      if (existingParamIndex !== -1) {
+        updatedParams[existingParamIndex] = {
+          name,
+          value,
+          type,
+          optional,
+          exposed,
+          ref,
+        }
+      } else {
+        updatedParams.push({
+          name,
+          value,
+          type,
+          optional,
+          exposed,
+          ref,
+        })
+      }
+
+      dispatch(updateComponent({
         id: 'root',
-        name,
-        value,
-        type,
-        optional,
-        exposed,
-        ref,
-      })
+        updates: {
+          params: updatedParams
+        }
+      }))
     },
-    [componentId, dispatch.components],
+    [dispatch, currentParams],
   )
 
-  return { setValue }
+  const deleteValue = useCallback(
+    (name: string) => {
+      const updatedParams = currentParams.filter(param => param.name !== name)
+      
+      dispatch(updateComponent({
+        id: 'root',
+        updates: {
+          params: updatedParams
+        }
+      }))
+    },
+    [dispatch, currentParams],
+  )
+
+  return { setValue, deleteValue }
 }

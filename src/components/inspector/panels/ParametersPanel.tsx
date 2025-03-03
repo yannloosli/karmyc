@@ -40,7 +40,7 @@ const ParametersPanel = () => {
   const activeParamsRef = useInspectorState()
   const params = useSelector(getComponentParams)
   const customComponentName = useSelector(getSelectedCustomComponentId)
-  const { setValue } = useParamsForm()
+  const { setValue, deleteValue } = useParamsForm()
 
   const DEFAULT_PARAMS: ParametersType = {
     name: '',
@@ -54,10 +54,7 @@ const ParametersPanel = () => {
   const [hasError, setError] = useState(false)
 
   const onDelete = (paramsName: string) => {
-    dispatch.components.deleteParams({
-      id: 'root',
-      name: paramsName,
-    })
+    deleteValue(paramsName)
   }
 
   const activeParams = activeParamsRef || []
