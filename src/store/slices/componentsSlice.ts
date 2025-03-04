@@ -74,17 +74,112 @@ const componentsSlice = createSlice({
   name: 'components',
   initialState,
   reducers: {
-    addComponentBase: (state, action: PayloadAction<{
-      id: string,
-      component: ComponentState
+    addComponent: (state, action: PayloadAction<{
+      id?: string
+      type: string
+      parentName: string
+      rootParentType?: string
+      isExisting?: boolean
+      component?: ComponentState
+      index?: number
     }>) => {
-      const { id, component } = action.payload
-      state.components[id] = component
+      const { parentName, type, rootParentType, isExisting, component, index } = action.payload
+      const id = action.payload.id || generateId(type)
+
+      // Si c'est un composant existant
+      if (isExisting && component) {
+        state.components[id] = component
+        
+        if (!component.parent) {
+          if (!state.rootComponents.includes(id)) {
+            state.rootComponents.push(id)
+          }
+        } else if (state.components[component.parent]) {
+          if (!state.components[component.parent].children.includes(id)) {
+            state.components[component.parent].children.push(id)
+          }
+        }
+        return
+      }
+
+      // Si c'est un nouveau composant
+      const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
+      state.selectedId = id
       
-      if (!component.parent) {
-        state.rootComponents.push(id)
-      } else if (state.components[component.parent]) {
-        state.components[component.parent].children.push(id)
+      // Vérifier que le composant parent existe
+      if (!state.components[parentName]) {
+        state.components[parentName] = {
+          id: parentName,
+          type: 'Box',
+          props: {},
+          children: [],
+          parent: null,
+          componentName: 'Box'
+        }
+      }
+
+      // Créer le composant principal
+      state.components[id] = {
+        id,
+        type,
+        props: defaultProps,
+        children: [],
+        parent: parentName,
+        rootParentType,
+        componentName: type
+      }
+
+      // Gérer les sous-composants pour Progress
+      if (type === 'Progress') {
+        const trackId = `${id}-track`
+        const filledId = `${id}-filled`
+        
+        // Créer ProgressTrack
+        state.components[trackId] = {
+          id: trackId,
+          type: 'ProgressTrack',
+          props: DEFAULT_PROPS['ProgressTrack'] || {},
+          children: [filledId],
+          parent: id,
+          componentName: 'ProgressTrack'
+        }
+
+        // Créer ProgressFilledTrack
+        state.components[filledId] = {
+          id: filledId,
+          type: 'ProgressFilledTrack',
+          props: DEFAULT_PROPS['ProgressFilledTrack'] || {},
+          children: [],
+          parent: trackId,
+          componentName: 'ProgressFilledTrack'
+        }
+
+        // Ajouter ProgressTrack aux enfants du Progress
+        state.components[id].children.push(trackId)
+      }
+
+      // Ajouter le composant aux enfants du parent
+      if (typeof index === 'number') {
+        state.components[parentName].children.splice(index, 0, id)
+      } else {
+        state.components[parentName].children.push(id)
+      }
+
+      // Gérer les refs si nécessaire
+      if (componentsWithRefs.includes(type)) {
+        const ref = `ref${id.replace('-', '_')}`
+        if (!state.components['root'].params) {
+          state.components['root'].params = []
+        }
+        state.components['root'].params.push({
+          name: ref,
+          type: `RefObject<${ComponentWithRefs[type] || 'HTMLDivElement'}>`,
+          value: 'null',
+          optional: true,
+          exposed: false,
+          ref: true,
+        })
+        state.components[id].props['ref'] = `{${ref}}`
       }
     },
     
@@ -114,6 +209,27 @@ const componentsSlice = createSlice({
         
         // Supprimer le composant
         delete state.components[id]
+
+        // Vérifier s'il reste des composants autres que root
+        const remainingComponents = Object.keys(state.components).filter(key => key !== 'root')
+        if (remainingComponents.length === 0) {
+          // Recréer le conteneur par défaut
+          const defaultContainer = {
+            id: 'default-container',
+            type: 'Container',
+            props: {
+              maxW: 'container.xl',
+              p: 4,
+              centerContent: true
+            },
+            children: [],
+            parent: 'root',
+            componentName: 'Container'
+          }
+          state.components['default-container'] = defaultContainer
+          state.components.root.children = ['default-container']
+          state.selectedId = 'default-container'
+        }
       }
     },
     
@@ -208,79 +324,6 @@ const componentsSlice = createSlice({
 
       if (targetParentId !== droppedParentId) {
         state.components[droppedId].parent = targetParentId
-      }
-    },
-
-    addComponentPayload: (state, action: PayloadAction<{
-      parentName: string
-      type: string
-      rootParentType?: string
-      testId?: string
-      index?: number
-    }>) => {
-      const { parentName, type, rootParentType, testId, index } = action.payload
-      const id = testId || generateId(type)
-      const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
-
-      state.selectedId = id
-      
-      // Vérifier que le composant parent existe
-      if (!state.components[parentName]) {
-        state.components[parentName] = {
-          id: parentName,
-          type: 'Box',
-          props: {},
-          children: [],
-          parent: null,
-          componentName: 'Box'
-        }
-      }
-
-      // Créer le composant principal
-      state.components[id] = {
-        id,
-        type,
-        props: defaultProps,
-        children: [],
-        parent: parentName,
-        rootParentType,
-        componentName: type
-      }
-
-      // Gérer les sous-composants pour Progress
-      if (type === 'Progress') {
-        const trackId = `${id}-track`
-        const filledId = `${id}-filled`
-        
-        // Créer ProgressTrack
-        state.components[trackId] = {
-          id: trackId,
-          type: 'ProgressTrack',
-          props: DEFAULT_PROPS['ProgressTrack'] || {},
-          children: [filledId],
-          parent: id,
-          componentName: 'ProgressTrack'
-        }
-
-        // Créer ProgressFilledTrack
-        state.components[filledId] = {
-          id: filledId,
-          type: 'ProgressFilledTrack',
-          props: DEFAULT_PROPS['ProgressFilledTrack'] || {},
-          children: [],
-          parent: trackId,
-          componentName: 'ProgressFilledTrack'
-        }
-
-        // Ajouter ProgressTrack aux enfants du Progress
-        state.components[id].children.push(trackId)
-      }
-
-      // Ajouter le composant aux enfants du parent
-      if (typeof index === 'number') {
-        state.components[parentName].children.splice(index, 0, id)
-      } else {
-        state.components[parentName].children.push(id)
       }
     },
 
@@ -395,96 +438,11 @@ const componentsSlice = createSlice({
       const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
       state.components[id].props = defaultProps || {}
     },
-
-    addComponent: (
-      state,
-      action: PayloadAction<{
-        parentId: string
-        componentId?: string
-        type: string
-        rootParentType?: string
-      }>,
-    ) => {
-      const { parentId, type, rootParentType } = action.payload
-      const componentId = action.payload.componentId || `${type}-${uuid()}`
-      const { form, ...defaultProps } = DEFAULT_PROPS[type] || {}
-
-      // Créer le composant principal
-      const createComponent = (id: string, componentType: string, parent: string) => {
-        const { form: _, ...props } = DEFAULT_PROPS[componentType] || {}
-        return {
-          id,
-          type: componentType,
-          props: props || {},
-          children: [],
-          parent,
-          rootParentType: rootParentType || componentType,
-          componentName: componentType
-        }
-      }
-
-      // Créer et ajouter le composant principal
-      state.components[componentId] = createComponent(componentId, type, parentId)
-      state.components[parentId].children.push(componentId)
-      state.selectedId = componentId
-
-      // Gérer les sous-composants du Progress
-      if (type === 'Progress') {
-        const trackId = `${componentId}-track`
-        const filledTrackId = `${componentId}-filled`
-
-        // Créer ProgressTrack
-        state.components[trackId] = createComponent(trackId, 'ProgressTrack', componentId)
-        state.components[componentId].children.push(trackId)
-
-        // Créer ProgressFilledTrack
-        state.components[filledTrackId] = createComponent(filledTrackId, 'ProgressFilledTrack', componentId)
-        state.components[componentId].children.push(filledTrackId)
-
-        // Ajouter les refs pour les sous-composants
-        const addRef = (id: string, componentType: string) => {
-          const ref = `ref${id.replace('-', '_')}`
-          if (!state.components['root'].params) {
-            state.components['root'].params = []
-          }
-          state.components['root'].params.push({
-            name: ref,
-            type: `RefObject<${ComponentWithRefs[componentType] || 'HTMLDivElement'}>`,
-            value: 'null',
-            optional: true,
-            exposed: false,
-            ref: true,
-          })
-          state.components[id].props['ref'] = `{${ref}}`
-        }
-
-        addRef(trackId, 'ProgressTrack')
-        addRef(filledTrackId, 'ProgressFilledTrack')
-      }
-
-      // Gérer les refs pour les autres composants si nécessaire
-      if (componentsWithRefs.includes(type)) {
-        const ref = `ref${componentId.replace('-', '_')}`
-        if (!state.components['root'].params) {
-          state.components['root'].params = []
-        }
-        state.components['root'].params.push({
-          name: ref,
-          type: `RefObject<${ComponentWithRefs[type] || 'HTMLDivElement'}>`,
-          value: 'null',
-          optional: true,
-          exposed: false,
-          ref: true,
-        })
-        state.components[componentId].props['ref'] = `{${ref}}`
-      }
-    },
   }
 })
 
 export const {
-  addComponentBase,
-  addComponentPayload,
+  addComponent,
   updateComponent,
   deleteComponent,
   setSelectedComponent,
@@ -506,7 +464,6 @@ export const {
   updateProps,
   deleteParams,
   resetProps,
-  addComponent,
 } = componentsSlice.actions
 
 export default componentsSlice.reducer

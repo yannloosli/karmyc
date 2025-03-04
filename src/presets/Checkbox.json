@@ -1,20 +1,8 @@
 {
-  "name": "Checkbox",
-  "component": {
-    "id": "checkbox-container-root",
-    "type": "Box",
-    "props": {
-      "display": "flex",
-      "gap": 4,
-      "flexWrap": "wrap"
-    },
-    "children": ["checkbox-default", "checkbox-checked", "checkbox-disabled"],
-    "parent": "",
-    "componentName": "Box",
-    "rootParentType": "Box"
-  },
-  "components": {
-    "checkbox-container-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Checkbox",
+    "component": {
       "id": "checkbox-container-root",
       "type": "Box",
       "props": {
@@ -23,47 +11,62 @@
         "flexWrap": "wrap"
       },
       "children": ["checkbox-default", "checkbox-checked", "checkbox-disabled"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Box",
       "rootParentType": "Box"
     },
-    "checkbox-default": {
-      "id": "checkbox-default",
-      "type": "Checkbox",
-      "props": {
-        "children": "Default",
-        "colorScheme": "blue"
+    "components": {
+      "checkbox-container-root": {
+        "id": "checkbox-container-root",
+        "type": "Box",
+        "props": {
+          "display": "flex",
+          "gap": 4,
+          "flexWrap": "wrap"
+        },
+        "children": ["checkbox-default", "checkbox-checked", "checkbox-disabled"],
+        "parent": "root",
+        "componentName": "Box",
+        "rootParentType": "Box"
       },
-      "children": [],
-      "parent": "checkbox-container-root",
-      "componentName": "Checkbox",
-      "rootParentType": "Checkbox"
-    },
-    "checkbox-checked": {
-      "id": "checkbox-checked",
-      "type": "Checkbox",
-      "props": {
-        "children": "Checked",
-        "defaultChecked": true,
-        "colorScheme": "blue"
+      "checkbox-default": {
+        "id": "checkbox-default",
+        "type": "Checkbox",
+        "props": {
+          "children": "Default",
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "checkbox-container-root",
+        "componentName": "Checkbox",
+        "rootParentType": "Checkbox"
       },
-      "children": [],
-      "parent": "checkbox-container-root",
-      "componentName": "Checkbox",
-      "rootParentType": "Checkbox"
-    },
-    "checkbox-disabled": {
-      "id": "checkbox-disabled",
-      "type": "Checkbox",
-      "props": {
-        "children": "Disabled",
-        "isDisabled": true,
-        "colorScheme": "blue"
+      "checkbox-checked": {
+        "id": "checkbox-checked",
+        "type": "Checkbox",
+        "props": {
+          "children": "Checked",
+          "defaultChecked": true,
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "checkbox-container-root",
+        "componentName": "Checkbox",
+        "rootParentType": "Checkbox"
       },
-      "children": [],
-      "parent": "checkbox-container-root",
-      "componentName": "Checkbox",
-      "rootParentType": "Checkbox"
+      "checkbox-disabled": {
+        "id": "checkbox-disabled",
+        "type": "Checkbox",
+        "props": {
+          "children": "Disabled",
+          "isDisabled": true,
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "checkbox-container-root",
+        "componentName": "Checkbox",
+        "rootParentType": "Checkbox"
+      }
     }
   }
 } 

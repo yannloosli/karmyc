@@ -1,95 +1,98 @@
 {
-  "name": "Popover",
-  "component": {
-    "id": "popover-root",
-    "type": "Popover",
-    "props": {},
-    "children": ["popover-trigger", "popover-content"],
-    "parent": "",
-    "componentName": "Popover",
-    "rootParentType": "Popover"
-  },
-  "components": {
-    "popover-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Popover",
+    "component": {
       "id": "popover-root",
       "type": "Popover",
       "props": {},
       "children": ["popover-trigger", "popover-content"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Popover",
       "rootParentType": "Popover"
     },
-    "popover-trigger": {
-      "id": "popover-trigger",
-      "type": "PopoverTrigger",
-      "props": {},
-      "children": ["popover-trigger-button"],
-      "parent": "popover-root",
-      "componentName": "PopoverTrigger",
-      "rootParentType": "PopoverTrigger"
-    },
-    "popover-trigger-button": {
-      "id": "popover-trigger-button",
-      "type": "Button",
-      "props": { "children": "Trigger" },
-      "children": [],
-      "parent": "popover-trigger",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "popover-content": {
-      "id": "popover-content",
-      "type": "PopoverContent",
-      "props": {},
-      "children": ["popover-header", "popover-body", "popover-footer", "popover-close-button"],
-      "parent": "popover-root",
-      "componentName": "PopoverContent",
-      "rootParentType": "PopoverContent"
-    },
-    "popover-header": {
-      "id": "popover-header",
-      "type": "PopoverHeader",
-      "props": { "children": "Popover Title" },
-      "children": [],
-      "parent": "popover-content",
-      "componentName": "PopoverHeader",
-      "rootParentType": "PopoverHeader"
-    },
-    "popover-body": {
-      "id": "popover-body",
-      "type": "PopoverBody",
-      "props": { "children": "Popover Content" },
-      "children": [],
-      "parent": "popover-content",
-      "componentName": "PopoverBody",
-      "rootParentType": "PopoverBody"
-    },
-    "popover-footer": {
-      "id": "popover-footer",
-      "type": "PopoverFooter",
-      "props": {},
-      "children": ["popover-footer-button"],
-      "parent": "popover-content",
-      "componentName": "PopoverFooter",
-      "rootParentType": "PopoverFooter"
-    },
-    "popover-footer-button": {
-      "id": "popover-footer-button",
-      "type": "Button",
-      "props": { "colorScheme": "blue", "children": "Action" },
-      "children": [],
-      "parent": "popover-footer",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "popover-close-button": {
-      "id": "popover-close-button",
-      "type": "PopoverCloseButton",
-      "props": {},
-      "children": [],
-      "parent": "popover-content",
-      "componentName": "PopoverCloseButton",
-      "rootParentType": "PopoverCloseButton"
+    "components": {
+      "popover-root": {
+        "id": "popover-root",
+        "type": "Popover",
+        "props": {},
+        "children": ["popover-trigger", "popover-content"],
+        "parent": "root",
+        "componentName": "Popover",
+        "rootParentType": "Popover"
+      },
+      "popover-trigger": {
+        "id": "popover-trigger",
+        "type": "PopoverTrigger",
+        "props": {},
+        "children": ["popover-trigger-button"],
+        "parent": "popover-root",
+        "componentName": "PopoverTrigger",
+        "rootParentType": "PopoverTrigger"
+      },
+      "popover-trigger-button": {
+        "id": "popover-trigger-button",
+        "type": "Button",
+        "props": { "children": "Trigger" },
+        "children": [],
+        "parent": "popover-trigger",
+        "componentName": "Button",
+        "rootParentType": "Button"
+      },
+      "popover-content": {
+        "id": "popover-content",
+        "type": "PopoverContent",
+        "props": {},
+        "children": ["popover-header", "popover-body", "popover-footer", "popover-close-button"],
+        "parent": "popover-root",
+        "componentName": "PopoverContent",
+        "rootParentType": "PopoverContent"
+      },
+      "popover-header": {
+        "id": "popover-header",
+        "type": "PopoverHeader",
+        "props": { "children": "Popover Title" },
+        "children": [],
+        "parent": "popover-content",
+        "componentName": "PopoverHeader",
+        "rootParentType": "PopoverHeader"
+      },
+      "popover-body": {
+        "id": "popover-body",
+        "type": "PopoverBody",
+        "props": { "children": "Popover Content" },
+        "children": [],
+        "parent": "popover-content",
+        "componentName": "PopoverBody",
+        "rootParentType": "PopoverBody"
+      },
+      "popover-footer": {
+        "id": "popover-footer",
+        "type": "PopoverFooter",
+        "props": {},
+        "children": ["popover-footer-button"],
+        "parent": "popover-content",
+        "componentName": "PopoverFooter",
+        "rootParentType": "PopoverFooter"
+      },
+      "popover-footer-button": {
+        "id": "popover-footer-button",
+        "type": "Button",
+        "props": { "colorScheme": "blue", "children": "Action" },
+        "children": [],
+        "parent": "popover-footer",
+        "componentName": "Button",
+        "rootParentType": "Button"
+      },
+      "popover-close-button": {
+        "id": "popover-close-button",
+        "type": "PopoverCloseButton",
+        "props": {},
+        "children": [],
+        "parent": "popover-content",
+        "componentName": "PopoverCloseButton",
+        "rootParentType": "PopoverCloseButton"
+      }
     }
   }
 } 

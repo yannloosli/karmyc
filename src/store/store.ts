@@ -8,6 +8,7 @@ import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, 
 import storage from 'redux-persist/lib/storage'
 import storageSession from 'redux-persist/lib/storage/session'
 import { presetsMiddleware } from './middleware/presetsMiddleware'
+import filterActions from '../utils/undo'
 
 // État initial pour customComponents
 const customComponentsInitialState = {
@@ -33,6 +34,31 @@ const componentsPersistConfig = {
     blacklist: ['hoveredId', 'selectedId', 'sortHoveredId', 'sortPosition'],
     version: 1,
     stateReconciler: (inboundState: any, originalState: any) => {
+        // Si pas d'état entrant, utiliser l'état initial
+        if (!inboundState?.present) {
+            return {
+                ...originalState,
+                present: {
+                    components: {
+                        root: {
+                            id: 'root',
+                            type: 'root',
+                            props: {},
+                            children: [],
+                            parent: null,
+                            componentName: 'Root'
+                        }
+                    },
+                    selectedId: 'root',
+                    hoveredId: null,
+                    rootComponents: [],
+                    sortHoveredId: undefined,
+                    sortPosition: undefined
+                },
+                past: [],
+                future: []
+            }
+        }
         return {
             ...originalState,
             ...inboundState,
@@ -54,6 +80,15 @@ const customComponentsPersistConfig = {
     storage,
     version: 1,
     stateReconciler: (inboundState: any, originalState: any) => {
+        // Si pas d'état entrant, utiliser l'état initial
+        if (!inboundState?.present) {
+            return {
+                ...originalState,
+                present: customComponentsInitialState,
+                past: [],
+                future: []
+            }
+        }
         return {
             ...originalState,
             ...inboundState,
@@ -73,13 +108,43 @@ const customComponentsPersistConfig = {
     }
 }
 
-// Configuration pour app avec editorWidth explicitement inclus
+// Configuration pour app
 const appPersistConfig = {
     key: 'app',
     storage,
     whitelist: ['editorWidth', 'theme'],
     version: 1,
     stateReconciler: (inboundState: any, originalState: any) => {
+        // Si pas d'état entrant, utiliser l'état initial
+        if (!inboundState?.present) {
+            return {
+                ...originalState,
+                present: {
+                    editorWidth: '100%',
+                    showLayout: true,
+                    showLoader: false,
+                    inputTextFocused: false,
+                    overlay: { 
+                        rect: {
+                            x: 0,
+                            y: 0,
+                            width: 0,
+                            height: 0,
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
+                            right: 0
+                        }, 
+                        id: '', 
+                        type: '' 
+                    },
+                    theme: 'light',
+                    isLoading: false
+                },
+                past: [],
+                future: []
+            }
+        }
         return {
             ...originalState,
             ...inboundState,
@@ -101,12 +166,18 @@ const presetsPersistConfig = {
 // Créer les reducers persistés
 const persistedComponentsReducer = persistReducer(
     componentsPersistConfig,
-    undoable(componentsReducer, { limit: 5 })
+    undoable(componentsReducer, { 
+        limit: 25,
+        filter: filterActions
+    })
 )
 
 const persistedCustomComponentsReducer = persistReducer(
     customComponentsPersistConfig,
-    undoable(customComponentsReducer, { limit: 5 })
+    undoable(customComponentsReducer, { 
+        limit: 25,
+        filter: filterActions
+    })
 )
 
 const persistedPresetsReducer = persistReducer(
@@ -116,7 +187,10 @@ const persistedPresetsReducer = persistReducer(
 
 const persistedAppReducer = persistReducer(
     appPersistConfig,
-    undoable(appReducer, { limit: 5 })
+    undoable(appReducer, { 
+        limit: 25,
+        filter: filterActions
+    })
 )
 
 // Combiner les reducers
@@ -130,67 +204,13 @@ const rootReducer = combineReducers({
 // Configurer le store
 const store = configureStore({
     reducer: rootReducer,
-    preloadedState: {
-        components: {
-            present: {
-                components: {
-                    root: {
-                        id: 'root',
-                        type: 'root',
-                        props: {},
-                        children: [],
-                        parent: null,
-                        componentName: 'Root'
-                    }
-                },
-                selectedId: 'root',
-                hoveredId: null,
-                rootComponents: [],
-                sortHoveredId: undefined,
-                sortPosition: undefined
-            },
-            past: [],
-            future: [],
-            _persist: { version: 1, rehydrated: true }
-        },
-        customComponents: {
-            present: customComponentsInitialState,
-        },
-        app: {
-            present: {
-                editorWidth: '100%',
-                showLayout: false,
-                showLoader: false,
-                inputTextFocused: false,
-                overlay: { 
-                    rect: {
-                        x: 0,
-                        y: 0,
-                        width: 0,
-                        height: 0,
-                        top: 0,
-                        left: 0,
-                        bottom: 0,
-                        right: 0
-                    }, 
-                    id: '', 
-                    type: '' 
-                },
-                theme: 'light',
-                isLoading: false
-            },
-            past: [],
-            future: [],
-            _persist: { version: 1, rehydrated: true }
-        },
-    },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: {
                 ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
             },
             immutableCheck: { warnAfter: 200 },
-        }),
+        }).concat(presetsMiddleware),
     devTools: process.env.NODE_ENV !== 'production',
 })
 

@@ -30,10 +30,19 @@ const WithChildrenPreviewContainer = forwardRef<HTMLDivElement, {
   const { componentName, ...cleanProps } = props
   const propsElement = { 
     ...cleanProps, 
-    ...forwardedProps, 
-    pos: 'relative',
-    transition: 'all 0.2s ease-in-out'
+    ...forwardedProps,
+    // Déplacer les props de style dans l'objet style
+    style: {
+      position: 'relative',
+      transition: 'all 0.2s ease-in-out',
+      boxShadow: props.boxShadow,
+      zIndex: props.zIndex
+    }
   }
+
+  // Supprimer les props qui ont été déplacées dans style
+  delete propsElement.boxShadow;
+  delete propsElement.zIndex;
 
   const setDropRef = useCallback((element: HTMLDivElement | null) => {
     if (ref && typeof ref === 'object' && 'current' in ref) {

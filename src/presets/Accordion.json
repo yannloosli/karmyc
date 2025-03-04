@@ -1,19 +1,8 @@
 {
-  "name": "Accordion",
-  "component": {
-    "id": "accordion-root",
-    "type": "Accordion",
-    "props": {
-      "allowMultiple": true,
-      "allowToggle": true
-    },
-    "children": ["accordion-item-1", "accordion-item-2"],
-    "parent": "",
-    "componentName": "Accordion",
-    "rootParentType": "Accordion"
-  },
-  "components": {
-    "accordion-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Accordion",
+    "component": {
       "id": "accordion-root",
       "type": "Accordion",
       "props": {
@@ -21,75 +10,89 @@
         "allowToggle": true
       },
       "children": ["accordion-item-1", "accordion-item-2"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Accordion",
       "rootParentType": "Accordion"
     },
-    "accordion-item-1": {
-      "id": "accordion-item-1",
-      "type": "AccordionItem",
-      "props": {
-        "isExpanded": false
+    "components": {
+      "accordion-root": {
+        "id": "accordion-root",
+        "type": "Accordion",
+        "props": {
+          "allowMultiple": true,
+          "allowToggle": true
+        },
+        "children": ["accordion-item-1", "accordion-item-2"],
+        "parent": "root",
+        "componentName": "Accordion",
+        "rootParentType": "Accordion"
       },
-      "children": ["accordion-button-1", "accordion-panel-1"],
-      "parent": "accordion-root",
-      "componentName": "AccordionItem",
-      "rootParentType": "AccordionItem"
-    },
-    "accordion-button-1": {
-      "id": "accordion-button-1",
-      "type": "AccordionButton",
-      "props": {
-        "children": "Section 1 title"
+      "accordion-item-1": {
+        "id": "accordion-item-1",
+        "type": "AccordionItem",
+        "props": {
+          "isExpanded": false
+        },
+        "children": ["accordion-button-1", "accordion-panel-1"],
+        "parent": "accordion-root",
+        "componentName": "AccordionItem",
+        "rootParentType": "AccordionItem"
       },
-      "children": [],
-      "parent": "accordion-item-1",
-      "componentName": "AccordionButton",
-      "rootParentType": "AccordionButton"
-    },
-    "accordion-panel-1": {
-      "id": "accordion-panel-1",
-      "type": "AccordionPanel",
-      "props": {
-        "children": "Section 1 content"
+      "accordion-button-1": {
+        "id": "accordion-button-1",
+        "type": "AccordionButton",
+        "props": {
+          "children": "Section 1 title"
+        },
+        "children": [],
+        "parent": "accordion-item-1",
+        "componentName": "AccordionButton",
+        "rootParentType": "AccordionButton"
       },
-      "children": [],
-      "parent": "accordion-item-1",
-      "componentName": "AccordionPanel",
-      "rootParentType": "AccordionPanel"
-    },
-    "accordion-item-2": {
-      "id": "accordion-item-2",
-      "type": "AccordionItem",
-      "props": {
-        "isExpanded": false
+      "accordion-panel-1": {
+        "id": "accordion-panel-1",
+        "type": "AccordionPanel",
+        "props": {
+          "children": "Section 1 content"
+        },
+        "children": [],
+        "parent": "accordion-item-1",
+        "componentName": "AccordionPanel",
+        "rootParentType": "AccordionPanel"
       },
-      "children": ["accordion-button-2", "accordion-panel-2"],
-      "parent": "accordion-root",
-      "componentName": "AccordionItem",
-      "rootParentType": "AccordionItem"
-    },
-    "accordion-button-2": {
-      "id": "accordion-button-2",
-      "type": "AccordionButton",
-      "props": {
-        "children": "Section 2 title"
+      "accordion-item-2": {
+        "id": "accordion-item-2",
+        "type": "AccordionItem",
+        "props": {
+          "isExpanded": false
+        },
+        "children": ["accordion-button-2", "accordion-panel-2"],
+        "parent": "accordion-root",
+        "componentName": "AccordionItem",
+        "rootParentType": "AccordionItem"
       },
-      "children": [],
-      "parent": "accordion-item-2",
-      "componentName": "AccordionButton",
-      "rootParentType": "AccordionButton"
-    },
-    "accordion-panel-2": {
-      "id": "accordion-panel-2",
-      "type": "AccordionPanel",
-      "props": {
-        "children": "Section 2 content"
+      "accordion-button-2": {
+        "id": "accordion-button-2",
+        "type": "AccordionButton",
+        "props": {
+          "children": "Section 2 title"
+        },
+        "children": [],
+        "parent": "accordion-item-2",
+        "componentName": "AccordionButton",
+        "rootParentType": "AccordionButton"
       },
-      "children": [],
-      "parent": "accordion-item-2",
-      "componentName": "AccordionPanel",
-      "rootParentType": "AccordionPanel"
+      "accordion-panel-2": {
+        "id": "accordion-panel-2",
+        "type": "AccordionPanel",
+        "props": {
+          "children": "Section 2 content"
+        },
+        "children": [],
+        "parent": "accordion-item-2",
+        "componentName": "AccordionPanel",
+        "rootParentType": "AccordionPanel"
+      }
     }
   }
 } 

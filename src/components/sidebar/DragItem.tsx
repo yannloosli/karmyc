@@ -11,18 +11,24 @@ const DragItem: React.FC<ComponentItemProps> = ({
   isChild,
   rootParentType,
   isPreset,
+  onDragStart,
 }) => {
   const [, drag] = useDrag({
     type: isPreset ? type : type as ComponentType,
-    item: {
-      id: type,
-      type,
-      custom,
-      rootParentType,
-      isSelected,
-      isPreset,
-      label
-    },
+    item: () => {
+      if (onDragStart) {
+        onDragStart()
+      }
+      return {
+        id: type,
+        type,
+        label,
+        custom,
+        rootParentType,
+        isSelected,
+        isPreset,
+      }
+    }
   })
 
   let boxProps: any = {

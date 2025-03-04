@@ -1,20 +1,8 @@
 {
-  "name": "Button",
-  "component": {
-    "id": "button-container-root",
-    "type": "Box",
-    "props": {
-      "display": "flex",
-      "gap": 4,
-      "flexWrap": "wrap"
-    },
-    "children": ["button-solid", "button-outline", "button-ghost", "button-link"],
-    "parent": "",
-    "componentName": "Box",
-    "rootParentType": "Box"
-  },
-  "components": {
-    "button-container-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Button",
+    "component": {
       "id": "button-container-root",
       "type": "Box",
       "props": {
@@ -23,61 +11,76 @@
         "flexWrap": "wrap"
       },
       "children": ["button-solid", "button-outline", "button-ghost", "button-link"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Box",
       "rootParentType": "Box"
     },
-    "button-solid": {
-      "id": "button-solid",
-      "type": "Button",
-      "props": {
-        "children": "Solid",
-        "variant": "solid",
-        "colorScheme": "blue"
+    "components": {
+      "button-container-root": {
+        "id": "button-container-root",
+        "type": "Box",
+        "props": {
+          "display": "flex",
+          "gap": 4,
+          "flexWrap": "wrap"
+        },
+        "children": ["button-solid", "button-outline", "button-ghost", "button-link"],
+        "parent": "root",
+        "componentName": "Box",
+        "rootParentType": "Box"
       },
-      "children": [],
-      "parent": "button-container-root",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "button-outline": {
-      "id": "button-outline",
-      "type": "Button",
-      "props": {
-        "children": "Outline",
-        "variant": "outline",
-        "colorScheme": "blue"
+      "button-solid": {
+        "id": "button-solid",
+        "type": "Button",
+        "props": {
+          "children": "Solid",
+          "variant": "solid",
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "button-container-root",
+        "componentName": "Button",
+        "rootParentType": "Button"
       },
-      "children": [],
-      "parent": "button-container-root",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "button-ghost": {
-      "id": "button-ghost",
-      "type": "Button",
-      "props": {
-        "children": "Ghost",
-        "variant": "ghost",
-        "colorScheme": "blue"
+      "button-outline": {
+        "id": "button-outline",
+        "type": "Button",
+        "props": {
+          "children": "Outline",
+          "variant": "outline",
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "button-container-root",
+        "componentName": "Button",
+        "rootParentType": "Button"
       },
-      "children": [],
-      "parent": "button-container-root",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "button-link": {
-      "id": "button-link",
-      "type": "Button",
-      "props": {
-        "children": "Link",
-        "variant": "link",
-        "colorScheme": "blue"
+      "button-ghost": {
+        "id": "button-ghost",
+        "type": "Button",
+        "props": {
+          "children": "Ghost",
+          "variant": "ghost",
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "button-container-root",
+        "componentName": "Button",
+        "rootParentType": "Button"
       },
-      "children": [],
-      "parent": "button-container-root",
-      "componentName": "Button",
-      "rootParentType": "Button"
+      "button-link": {
+        "id": "button-link",
+        "type": "Button",
+        "props": {
+          "children": "Link",
+          "variant": "link",
+          "colorScheme": "blue"
+        },
+        "children": [],
+        "parent": "button-container-root",
+        "componentName": "Button",
+        "rootParentType": "Button"
+      }
     }
   }
 } 

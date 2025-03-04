@@ -1,50 +1,53 @@
 {
-  "name": "Tooltip",
-  "component": {
-    "id": "tooltip-root",
-    "type": "Tooltip",
-    "props": {},
-    "children": ["tooltip-trigger", "tooltip-content"],
-    "parent": "",
-    "componentName": "Tooltip",
-    "rootParentType": "Tooltip"
-  },
-  "components": {
-    "tooltip-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Tooltip",
+    "component": {
       "id": "tooltip-root",
       "type": "Tooltip",
       "props": {},
       "children": ["tooltip-trigger", "tooltip-content"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Tooltip",
       "rootParentType": "Tooltip"
     },
-    "tooltip-trigger": {
-      "id": "tooltip-trigger",
-      "type": "TooltipTrigger",
-      "props": {},
-      "children": ["tooltip-trigger-button"],
-      "parent": "tooltip-root",
-      "componentName": "TooltipTrigger",
-      "rootParentType": "TooltipTrigger"
-    },
-    "tooltip-trigger-button": {
-      "id": "tooltip-trigger-button",
-      "type": "Button",
-      "props": { "children": "Hover me" },
-      "children": [],
-      "parent": "tooltip-trigger",
-      "componentName": "Button",
-      "rootParentType": "Button"
-    },
-    "tooltip-content": {
-      "id": "tooltip-content",
-      "type": "TooltipContent",
-      "props": { "children": "Tooltip content" },
-      "children": [],
-      "parent": "tooltip-root",
-      "componentName": "TooltipContent",
-      "rootParentType": "TooltipContent"
+    "components": {
+      "tooltip-root": {
+        "id": "tooltip-root",
+        "type": "Tooltip",
+        "props": {},
+        "children": ["tooltip-trigger", "tooltip-content"],
+        "parent": "root",
+        "componentName": "Tooltip",
+        "rootParentType": "Tooltip"
+      },
+      "tooltip-trigger": {
+        "id": "tooltip-trigger",
+        "type": "TooltipTrigger",
+        "props": {},
+        "children": ["tooltip-trigger-button"],
+        "parent": "tooltip-root",
+        "componentName": "TooltipTrigger",
+        "rootParentType": "TooltipTrigger"
+      },
+      "tooltip-trigger-button": {
+        "id": "tooltip-trigger-button",
+        "type": "Button",
+        "props": { "children": "Hover me" },
+        "children": [],
+        "parent": "tooltip-trigger",
+        "componentName": "Button",
+        "rootParentType": "Button"
+      },
+      "tooltip-content": {
+        "id": "tooltip-content",
+        "type": "TooltipContent",
+        "props": { "children": "Tooltip content" },
+        "children": [],
+        "parent": "tooltip-root",
+        "componentName": "TooltipContent",
+        "rootParentType": "TooltipContent"
+      }
     }
   }
 } 

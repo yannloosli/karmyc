@@ -2,11 +2,17 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { ComponentState } from './componentsSlice'
 import { RootState } from '../store'
 
-export interface Preset {
+export interface RootComponents {
   id: string
   name: string
   component: ComponentState
   components: Record<string, ComponentState>
+}
+
+export interface Preset {
+  id: string
+  name: string
+  rootComponents: RootComponents
   createdAt: string
   updatedAt: string
 }
@@ -26,17 +32,15 @@ export const presetsSlice = createSlice({
     addPreset: (state, action: PayloadAction<{
       id: string
       name: string
-      component: ComponentState
-      components: Record<string, ComponentState>
+      rootComponents: RootComponents
     }>) => {
-      const { id, name, component, components } = action.payload
+      const { id, name, rootComponents } = action.payload
       const now = new Date().toISOString()
       
       state.presets[id] = {
         id,
         name,
-        component,
-        components,
+        rootComponents,
         createdAt: now,
         updatedAt: now
       }

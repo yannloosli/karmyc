@@ -1,23 +1,26 @@
 {
-  "name": "Spinner",
-  "component": {
-    "id": "spinner-root",
-    "type": "Spinner",
-    "props": { "size": "md", "color": "blue.500" },
-    "children": [],
-    "parent": "",
-    "componentName": "Spinner",
-    "rootParentType": "Spinner"
-  },
-  "components": {
-    "spinner-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Spinner",
+    "component": {
       "id": "spinner-root",
       "type": "Spinner",
       "props": { "size": "md", "color": "blue.500" },
       "children": [],
-      "parent": "",
+      "parent": "root",
       "componentName": "Spinner",
       "rootParentType": "Spinner"
+    },
+    "components": {
+      "spinner-root": {
+        "id": "spinner-root",
+        "type": "Spinner",
+        "props": { "size": "md", "color": "blue.500" },
+        "children": [],
+        "parent": "root",
+        "componentName": "Spinner",
+        "rootParentType": "Spinner"
+      }
     }
   }
 } 

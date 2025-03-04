@@ -1,20 +1,8 @@
 {
-  "name": "Textarea",
-  "component": {
-    "id": "textarea-container-root",
-    "type": "Box",
-    "props": {
-      "display": "flex",
-      "flexDirection": "column",
-      "gap": 4
-    },
-    "children": ["textarea-default", "textarea-resize", "textarea-disabled", "textarea-readonly"],
-    "parent": "",
-    "componentName": "Box",
-    "rootParentType": "Box"
-  },
-  "components": {
-    "textarea-container-root": {
+  "rootComponents": {
+    "id": "rootComponents",
+    "name": "Textarea",
+    "component": {
       "id": "textarea-container-root",
       "type": "Box",
       "props": {
@@ -23,64 +11,79 @@
         "gap": 4
       },
       "children": ["textarea-default", "textarea-resize", "textarea-disabled", "textarea-readonly"],
-      "parent": "",
+      "parent": "root",
       "componentName": "Box",
       "rootParentType": "Box"
     },
-    "textarea-default": {
-      "id": "textarea-default",
-      "type": "Textarea",
-      "props": {
-        "placeholder": "Here is a sample placeholder",
-        "size": "md",
-        "variant": "outline"
+    "components": {
+      "textarea-container-root": {
+        "id": "textarea-container-root",
+        "type": "Box",
+        "props": {
+          "display": "flex",
+          "flexDirection": "column",
+          "gap": 4
+        },
+        "children": ["textarea-default", "textarea-resize", "textarea-disabled", "textarea-readonly"],
+        "parent": "root",
+        "componentName": "Box",
+        "rootParentType": "Box"
       },
-      "children": [],
-      "parent": "textarea-container-root",
-      "componentName": "Textarea",
-      "rootParentType": "Textarea"
-    },
-    "textarea-resize": {
-      "id": "textarea-resize",
-      "type": "Textarea",
-      "props": {
-        "placeholder": "This textarea can be resized",
-        "resize": "horizontal",
-        "size": "md",
-        "variant": "outline"
+      "textarea-default": {
+        "id": "textarea-default",
+        "type": "Textarea",
+        "props": {
+          "placeholder": "Here is a sample placeholder",
+          "size": "md",
+          "variant": "outline"
+        },
+        "children": [],
+        "parent": "textarea-container-root",
+        "componentName": "Textarea",
+        "rootParentType": "Textarea"
       },
-      "children": [],
-      "parent": "textarea-container-root",
-      "componentName": "Textarea",
-      "rootParentType": "Textarea"
-    },
-    "textarea-disabled": {
-      "id": "textarea-disabled",
-      "type": "Textarea",
-      "props": {
-        "placeholder": "This textarea is disabled",
-        "isDisabled": true,
-        "size": "md",
-        "variant": "outline"
+      "textarea-resize": {
+        "id": "textarea-resize",
+        "type": "Textarea",
+        "props": {
+          "placeholder": "This textarea can be resized",
+          "resize": "horizontal",
+          "size": "md",
+          "variant": "outline"
+        },
+        "children": [],
+        "parent": "textarea-container-root",
+        "componentName": "Textarea",
+        "rootParentType": "Textarea"
       },
-      "children": [],
-      "parent": "textarea-container-root",
-      "componentName": "Textarea",
-      "rootParentType": "Textarea"
-    },
-    "textarea-readonly": {
-      "id": "textarea-readonly",
-      "type": "Textarea",
-      "props": {
-        "placeholder": "This textarea is readonly",
-        "isReadOnly": true,
-        "size": "md",
-        "variant": "outline"
+      "textarea-disabled": {
+        "id": "textarea-disabled",
+        "type": "Textarea",
+        "props": {
+          "placeholder": "This textarea is disabled",
+          "isDisabled": true,
+          "size": "md",
+          "variant": "outline"
+        },
+        "children": [],
+        "parent": "textarea-container-root",
+        "componentName": "Textarea",
+        "rootParentType": "Textarea"
       },
-      "children": [],
-      "parent": "textarea-container-root",
-      "componentName": "Textarea",
-      "rootParentType": "Textarea"
+      "textarea-readonly": {
+        "id": "textarea-readonly",
+        "type": "Textarea",
+        "props": {
+          "placeholder": "This textarea is readonly",
+          "isReadOnly": true,
+          "size": "md",
+          "variant": "outline"
+        },
+        "children": [],
+        "parent": "textarea-container-root",
+        "componentName": "Textarea",
+        "rootParentType": "Textarea"
+      }
     }
   }
 } 

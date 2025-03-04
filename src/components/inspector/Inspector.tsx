@@ -185,8 +185,12 @@ const Inspector = () => {
     dispatch(addPreset({
       id: component.id,
       name: componentName,
-      component: component,
-      components: allComponents
+      rootComponents: {
+        id: "rootComponents",
+        name: componentName,
+        component: component,
+        components: allComponents
+      }
     }))
 
     onClose()

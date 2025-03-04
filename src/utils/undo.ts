@@ -7,6 +7,7 @@ export default function filterActions(action: UnknownAction): boolean {
     'components/resetProps',
     'components/updateProps',
     'components/addComponent',
+    'components/addComponentBase',
     'components/deleteComponent',
     'components/moveComponent',
     'components/moveSelectedComponentChildren',
