@@ -130,7 +130,7 @@ const ToolbarComponent: React.FC<Props> = (props) => {
 			</div>
 			<div
 				className={s("dragArea", { right: true })}
-				onDoubleClick={() => electron.onDoubleClickDragArea()}
+				onClick={() => console.log('Drag area ??')}
 			/>
 		</div>
 	);

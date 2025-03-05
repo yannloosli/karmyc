@@ -1,4 +1,4 @@
-import uuid from "uuid/v4";
+import {v4 as uuid} from "uuid";
 import { DEFAULT_FLOW_NODE_WIDTH } from "~/constants";
 import { FlowGraph, FlowNode, FlowNodeType } from "~/flow/flowTypes";
 import { FlowState } from "~/flow/state/flowReducers";

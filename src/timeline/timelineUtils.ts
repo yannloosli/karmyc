@@ -1,5 +1,5 @@
 import Bezier from "bezier-easing";
-import uuid from "uuid/v4";
+import {v4 as uuid} from "uuid";
 import { CompositionState } from "~/composition/compositionReducer";
 import { CompositionSelectionState } from "~/composition/compositionSelectionReducer";
 import { CompoundProperty } from "~/composition/compositionTypes";

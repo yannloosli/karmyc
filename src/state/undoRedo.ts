@@ -46,6 +46,3 @@ addListener.repeated("keydown", { modifierKeys: ["Command"] }, (e) => {
 
 	undo();
 });
-
-electron.registerUndo(undo);
-electron.registerRedo(redo);

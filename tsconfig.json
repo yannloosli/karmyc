@@ -2,15 +2,14 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "jsx": "react",
+    "jsx": "react-jsx", 
     "allowJs": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "preserveConstEnums": true,
     "sourceMap": true,
-    "keyofStringsOnly": true,
     "outDir": "dist",
     "lib": [
       "dom",
@@ -29,11 +28,7 @@
         "./*"
       ]
     },
-    "types": [
-      "jest",
-      "./index",
-      "./custom",
-    ]
+    "types": ["vite/client", "jest"]
   },
   "exclude": [
     "node_modules",

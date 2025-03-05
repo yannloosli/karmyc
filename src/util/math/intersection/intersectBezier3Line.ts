@@ -1,6 +1,4 @@
-/* tslint:disable */
-
-const Polynomial = require("kld-polynomial").Polynomial;
+import {Polynomial} from 'kld-polynomial'
 
 const mulvec2 = (vec: Vec2, scalar: number) => Vec2.new(vec.x * scalar, vec.y * scalar);
 const minVec2 = (a: Vec2, b: Vec2): Vec2 => Vec2.new(Math.min(a.x, b.x), Math.min(a.y, b.y));
