@@ -30,17 +30,20 @@ const PreviewContainer: React.FC<{
         position: 'absolute',
         left: '0px',
         right: '0px',
-        height: '24px',
-        background: 'linear-gradient(90deg, rgba(49,130,206,0.4) 0%, rgba(49,130,206,1) 50%, rgba(49,130,206,0.4) 100%)',
-        boxShadow: '0 0 4px rgba(49,130,206,0.6)',
-        transition: 'all 0.2s ease-in-out',
+        height: '0px',
+        maxHeight: '32px',
+        background: 'linear-gradient(90deg, rgba(49,130,206,0.2) 0%, rgba(49,130,206,0.8) 50%, rgba(49,130,206,0.2) 100%)',
+        boxShadow: '0 0 8px rgba(49,130,206,0.4)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: 'scaleY(0)',
+        transformOrigin: 'center',
         zIndex: 2000,
         pointerEvents: 'none',
         opacity: 0,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        backdropFilter: 'blur(2px)'
     }
 
     // Ajouter les styles de drop zone
@@ -49,7 +52,7 @@ const PreviewContainer: React.FC<{
         ...forwardedProps,
         index,
         position: 'relative',
-        transition: 'all 0.2s ease-in-out',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         zIndex: isOver ? 2 : 1,
         _hover: {
             ...filteredProps._hover,
@@ -59,26 +62,31 @@ const PreviewContainer: React.FC<{
     if (isOver || dropZones.top.isVisible || dropZones.bottom.isVisible) {
         elementProps.outline = '2px solid rgba(49,130,206,0.8)'
         elementProps.outlineOffset = '2px'
-        elementProps.bg = 'blue.50'
+        elementProps.bg = 'rgba(235,248,255,0.8)'
         elementProps.transform = 'scale(1.01)'
+        elementProps.boxShadow = '0 0 16px rgba(49,130,206,0.2)'
         
         if (dropZones.top.isVisible) {
+            const scale = (100 - dropZones.top.distance) / 100
             elementProps._before = {
                 ...dropZoneBaseStyle,
-                top: '-24px',
+                top: '-32px',
+                height: `${32 * scale}px`,
                 transform: 'scaleY(1)',
-                opacity: (100 - dropZones.top.distance) / 100,
-                children: <Icon as={MdArrowUpward} color="white" w={6} h={6} />
+                opacity: scale,
+                children: <Icon as={MdArrowUpward} color="white" w={6} h={6} style={{ transform: `scale(${scale})` }} />
             }
         }
         
         if (dropZones.bottom.isVisible) {
+            const scale = (100 - dropZones.bottom.distance) / 100
             elementProps._after = {
                 ...dropZoneBaseStyle,
-                bottom: '-24px',
+                bottom: '-32px',
+                height: `${32 * scale}px`,
                 transform: 'scaleY(1)',
-                opacity: (100 - dropZones.bottom.distance) / 100,
-                children: <Icon as={MdArrowDownward} color="white" w={6} h={6} />
+                opacity: scale,
+                children: <Icon as={MdArrowDownward} color="white" w={6} h={6} style={{ transform: `scale(${scale})` }} />
             }
         }
     }

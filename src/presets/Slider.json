@@ -1,63 +1,43 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Slider",
-    "component": {
-      "id": "slider-root",
-      "type": "Slider",
-      "props": {
-        "min": 0,
-        "max": 100,
-        "defaultValue": 50,
-        "step": 1
-      },
-      "children": ["slider-track", "slider-thumb"],
-      "parent": "root",
-      "componentName": "Slider",
-      "rootParentType": "Slider"
+  "root": {
+    "id": "root",
+    "type": "Slider",
+    "props": {
+      "min": 0,
+      "max": 100,
+      "defaultValue": 50,
+      "step": 1
     },
-    "components": {
-      "slider-root": {
-        "id": "slider-root",
-        "type": "Slider",
-        "props": {
-          "min": 0,
-          "max": 100,
-          "defaultValue": 50,
-          "step": 1
-        },
-        "children": ["slider-track", "slider-thumb"],
-        "parent": "root",
-        "componentName": "Slider",
-        "rootParentType": "Slider"
-      },
-      "slider-track": {
-        "id": "slider-track",
-        "type": "SliderTrack",
-        "props": {},
-        "children": ["slider-filled-track"],
-        "parent": "slider-root",
-        "componentName": "SliderTrack",
-        "rootParentType": "SliderTrack"
-      },
-      "slider-filled-track": {
-        "id": "slider-filled-track",
-        "type": "SliderFilledTrack",
-        "props": {},
-        "children": [],
-        "parent": "slider-track",
-        "componentName": "SliderFilledTrack",
-        "rootParentType": "SliderFilledTrack"
-      },
-      "slider-thumb": {
-        "id": "slider-thumb",
-        "type": "SliderThumb",
-        "props": {},
-        "children": [],
-        "parent": "slider-root",
-        "componentName": "SliderThumb",
-        "rootParentType": "SliderThumb"
-      }
-    }
+    "children": ["slider-track", "slider-thumb"],
+    "parent": "root",
+    "componentName": "Slider",
+    "rootParentType": "Slider"
+  },
+  "slider-track": {
+    "id": "slider-track",
+    "type": "SliderTrack",
+    "props": {},
+    "children": ["slider-filled-track"],
+    "parent": "root",
+    "componentName": "SliderTrack",
+    "rootParentType": "SliderTrack"
+  },
+  "slider-filled-track": {
+    "id": "slider-filled-track",
+    "type": "SliderFilledTrack",
+    "props": {},
+    "children": [],
+    "parent": "slider-track",
+    "componentName": "SliderFilledTrack",
+    "rootParentType": "SliderFilledTrack"
+  },
+  "slider-thumb": {
+    "id": "slider-thumb",
+    "type": "SliderThumb",
+    "props": {},
+    "children": [],
+    "parent": "root",
+    "componentName": "SliderThumb",
+    "rootParentType": "SliderThumb"
   }
 } 

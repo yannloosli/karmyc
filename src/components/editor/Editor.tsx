@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useRef } from 'react'
-import { Box, Text, Link, theme as baseTheme, ChakraProvider } from '@chakra-ui/react'
+import { Box, theme as baseTheme, ChakraProvider } from '@chakra-ui/react'
 import { useSelector } from 'react-redux'
 import { useAppDispatch } from '@/hooks/useAppDispatch'
 import { getComponents } from '@/store/selectors/components'
@@ -9,7 +9,7 @@ import ComponentPreview from 'src/components/editor/ComponentPreview'
 import { omit } from 'lodash'
 import { myTheme } from '../../theme/myTheme'
 import Fonts from 'src/components/Fonts'
-import { loadDemo, unselect } from '../../store/slices/componentsSlice'
+import { unselect } from '../../store/slices/componentsSlice'
 import { useDropComponent } from '../../hooks/useDropComponent'
 import EmptyDropZone from './EmptyDropZone'
 
@@ -63,9 +63,6 @@ const Editor: React.FC = () => {
         [drop]
     )
 
-    const handleLoadDemo = useCallback((demoName: string) => {
-        dispatch(loadDemo(demoName))
-    }, [dispatch])
 
     const Playground = (
         <ChakraProvider theme={myTheme()}>

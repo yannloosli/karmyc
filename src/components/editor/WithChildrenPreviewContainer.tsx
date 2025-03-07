@@ -25,7 +25,6 @@ const WithChildrenPreviewContainer = forwardRef<HTMLDivElement, {
 }, forwardedRef) => {
   const { props, ref } = useInteractive(component, index, enableVisualHelper)
   const { drop, isOver, dropZones } = useDropComponent(component.id, index, ref)
-  console.log("===============>",component.children, children)
   // Filtrer la prop componentName
   const { componentName, ...cleanProps } = props
   const propsElement = { 
@@ -111,6 +110,7 @@ const WithChildrenPreviewContainer = forwardRef<HTMLDivElement, {
     
     // Si le composant a des enfants, les rendre comme des ComponentPreview
     if (component.children && component.children.length > 0) {
+        console.log("===============>",component, component.children, children)
       return component.children.map((childId, childIndex) => (
         <ComponentPreview
           key={childId}

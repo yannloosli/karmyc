@@ -1,116 +1,98 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Tabs",
-    "component": {
-      "id": "tabs-root",
-      "type": "Tabs",
-      "props": {
-        "variant": "line",
-        "colorScheme": "blue"
-      },
-      "children": ["tab-list", "tab-panels"],
-      "parent": "root",
-      "componentName": "Tabs",
-      "rootParentType": "Tabs"
+  "root": {
+    "id": "root",
+    "type": "Tabs",
+    "props": {
+      "variant": "line",
+      "colorScheme": "blue"
     },
-    "components": {
-      "tabs-root": {
-        "id": "tabs-root",
-        "type": "Tabs",
-        "props": {
-          "variant": "line",
-          "colorScheme": "blue"
-        },
-        "children": ["tab-list", "tab-panels"],
-        "parent": "root",
-        "componentName": "Tabs",
-        "rootParentType": "Tabs"
-      },
-      "tab-list": {
-        "id": "tab-list",
-        "type": "TabList",
-        "props": {},
-        "children": ["tab-1", "tab-2", "tab-3"],
-        "parent": "tabs-root",
-        "componentName": "TabList",
-        "rootParentType": "TabList"
-      },
-      "tab-1": {
-        "id": "tab-1",
-        "type": "Tab",
-        "props": {
-          "children": "Tab 1"
-        },
-        "children": [],
-        "parent": "tab-list",
-        "componentName": "Tab",
-        "rootParentType": "Tab"
-      },
-      "tab-2": {
-        "id": "tab-2",
-        "type": "Tab",
-        "props": {
-          "children": "Tab 2"
-        },
-        "children": [],
-        "parent": "tab-list",
-        "componentName": "Tab",
-        "rootParentType": "Tab"
-      },
-      "tab-3": {
-        "id": "tab-3",
-        "type": "Tab",
-        "props": {
-          "children": "Tab 3"
-        },
-        "children": [],
-        "parent": "tab-list",
-        "componentName": "Tab",
-        "rootParentType": "Tab"
-      },
-      "tab-panels": {
-        "id": "tab-panels",
-        "type": "TabPanels",
-        "props": {},
-        "children": ["tab-panel-1", "tab-panel-2", "tab-panel-3"],
-        "parent": "tabs-root",
-        "componentName": "TabPanels",
-        "rootParentType": "TabPanels"
-      },
-      "tab-panel-1": {
-        "id": "tab-panel-1",
-        "type": "TabPanel",
-        "props": {
-          "children": "Tab Panel 1 Content"
-        },
-        "children": [],
-        "parent": "tab-panels",
-        "componentName": "TabPanel",
-        "rootParentType": "TabPanel"
-      },
-      "tab-panel-2": {
-        "id": "tab-panel-2",
-        "type": "TabPanel",
-        "props": {
-          "children": "Tab Panel 2 Content"
-        },
-        "children": [],
-        "parent": "tab-panels",
-        "componentName": "TabPanel",
-        "rootParentType": "TabPanel"
-      },
-      "tab-panel-3": {
-        "id": "tab-panel-3",
-        "type": "TabPanel",
-        "props": {
-          "children": "Tab Panel 3 Content"
-        },
-        "children": [],
-        "parent": "tab-panels",
-        "componentName": "TabPanel",
-        "rootParentType": "TabPanel"
-      }
-    }
+    "children": ["tab-list", "tab-panels"],
+    "parent": "root",
+    "componentName": "Tabs",
+    "rootParentType": "Tabs"
+  },
+  "tab-list": {
+    "id": "tab-list",
+    "type": "TabList",
+    "props": {},
+    "children": ["tab-1", "tab-2", "tab-3"],
+    "parent": "root",
+    "componentName": "TabList",
+    "rootParentType": "TabList"
+  },
+  "tab-1": {
+    "id": "tab-1",
+    "type": "Tab",
+    "props": {
+      "children": "Tab 1"
+    },
+    "children": [],
+    "parent": "tab-list",
+    "componentName": "Tab",
+    "rootParentType": "Tab"
+  },
+  "tab-2": {
+    "id": "tab-2",
+    "type": "Tab",
+    "props": {
+      "children": "Tab 2"
+    },
+    "children": [],
+    "parent": "tab-list",
+    "componentName": "Tab",
+    "rootParentType": "Tab"
+  },
+  "tab-3": {
+    "id": "tab-3",
+    "type": "Tab",
+    "props": {
+      "children": "Tab 3"
+    },
+    "children": [],
+    "parent": "tab-list",
+    "componentName": "Tab",
+    "rootParentType": "Tab"
+  },
+  "tab-panels": {
+    "id": "tab-panels",
+    "type": "TabPanels",
+    "props": {},
+    "children": ["tab-panel-1", "tab-panel-2", "tab-panel-3"],
+    "parent": "root",
+    "componentName": "TabPanels",
+    "rootParentType": "TabPanels"
+  },
+  "tab-panel-1": {
+    "id": "tab-panel-1",
+    "type": "TabPanel",
+    "props": {
+      "children": "Tab Panel 1 Content"
+    },
+    "children": [],
+    "parent": "tab-panels",
+    "componentName": "TabPanel",
+    "rootParentType": "TabPanel"
+  },
+  "tab-panel-2": {
+    "id": "tab-panel-2",
+    "type": "TabPanel",
+    "props": {
+      "children": "Tab Panel 2 Content"
+    },
+    "children": [],
+    "parent": "tab-panels",
+    "componentName": "TabPanel",
+    "rootParentType": "TabPanel"
+  },
+  "tab-panel-3": {
+    "id": "tab-panel-3",
+    "type": "TabPanel",
+    "props": {
+      "children": "Tab Panel 3 Content"
+    },
+    "children": [],
+    "parent": "tab-panels",
+    "componentName": "TabPanel",
+    "rootParentType": "TabPanel"
   }
 } 

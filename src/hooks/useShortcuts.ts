@@ -2,7 +2,7 @@ import { useAppDispatch } from '../hooks/useAppDispatch'
 import { useSelector } from 'react-redux'
 import { ActionCreators as UndoActionCreators } from 'redux-undo'
 import { getSelectedComponent } from '../store/selectors/components'
-import { deleteComponent, unselect, selectParent, duplicate, loadDemo } from '../store/slices/componentsSlice'
+import { deleteComponent, unselect, selectParent, duplicate } from '../store/slices/componentsSlice'
 import { appSlice } from '../store/slices/appSlice'
 import { useHotkeys } from 'react-hotkeys-hook'
 
@@ -14,8 +14,6 @@ const keyMap = {
   UNSELECT: 'esc',
   PARENT: 'p',
   DUPLICATE: 'ctrl+d, command+d',
-  KONAMI_CODE:
-    'up up down down left right left right b a, up up down down left right left right B A',
 }
 
 const hasNoSpecialKeyPressed = (event: KeyboardEvent | undefined) =>
@@ -75,9 +73,6 @@ const useShortcuts = () => {
     dispatch(duplicate())
   }
 
-  const onKonamiCode = () => {
-    dispatch(loadDemo('secretchakra'))
-  }
 
   useHotkeys(keyMap.DELETE_NODE, deleteNode, {}, [selected?.id])
   useHotkeys(keyMap.TOGGLE_BUILDER_MODE, toggleBuilderMode)
@@ -86,7 +81,6 @@ const useShortcuts = () => {
   useHotkeys(keyMap.UNSELECT, onUnselect)
   useHotkeys(keyMap.PARENT, onSelectParent)
   useHotkeys(keyMap.DUPLICATE, onDuplicate)
-  useHotkeys(keyMap.KONAMI_CODE, onKonamiCode)
 }
 
 export default useShortcuts

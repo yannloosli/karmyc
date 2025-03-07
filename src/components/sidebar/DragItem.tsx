@@ -20,7 +20,7 @@ const DragItem: React.FC<ComponentItemProps> = ({
         onDragStart()
       }
       return {
-        id: type,
+        id: isPreset ? `${type}-${Date.now()}` : type,
         type,
         label,
         custom,

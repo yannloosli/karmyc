@@ -1,13 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { DEFAULT_PROPS } from 'src/utils/defaultProps'
-import templates, { TemplateType } from 'src/templates'
 import { generateId } from 'src/utils/generateId'
 import { duplicateComponent } from 'src/utils/recursive'
-import { deleteComponent as deleteComponentUtil } from 'src/utils/recursive'
-import omit from 'lodash/omit'
 import { ComponentWithRefs } from 'src/custom-components/refComponents'
-import { v4 as uuid } from 'uuid'
-import { onboarding } from '../../templates/onboarding'
 
 const DEFAULT_ID = 'root'
 const componentsWithRefs = Object.keys(ComponentWithRefs)
@@ -127,35 +122,6 @@ const componentsSlice = createSlice({
         parent: parentName,
         rootParentType,
         componentName: type
-      }
-
-      // Gérer les sous-composants pour Progress
-      if (type === 'Progress') {
-        const trackId = `${id}-track`
-        const filledId = `${id}-filled`
-        
-        // Créer ProgressTrack
-        state.components[trackId] = {
-          id: trackId,
-          type: 'ProgressTrack',
-          props: DEFAULT_PROPS['ProgressTrack'] || {},
-          children: [filledId],
-          parent: id,
-          componentName: 'ProgressTrack'
-        }
-
-        // Créer ProgressFilledTrack
-        state.components[filledId] = {
-          id: filledId,
-          type: 'ProgressFilledTrack',
-          props: DEFAULT_PROPS['ProgressFilledTrack'] || {},
-          children: [],
-          parent: trackId,
-          componentName: 'ProgressFilledTrack'
-        }
-
-        // Ajouter ProgressTrack aux enfants du Progress
-        state.components[id].children.push(trackId)
       }
 
       // Ajouter le composant aux enfants du parent
@@ -391,18 +357,6 @@ const componentsSlice = createSlice({
       state.sortPosition = undefined
     },
 
-    loadDemo: (state, action: PayloadAction<string>) => {
-      if (action.payload === 'onboarding') {
-        // Copier directement l'état de onboarding
-        state.components = { ...onboarding }
-        // Sélectionner le composant root
-        state.selectedId = 'root'
-        state.hoveredId = null
-        state.sortHoveredId = null
-        state.sortPosition = null
-      }
-    },
-
     deleteProps: (state, action: PayloadAction<{ id: string, name: string }>) => {
       const { id, name } = action.payload
       if (state.components[id]) {
@@ -459,7 +413,6 @@ export const {
   sortHover,
   sortUnhover,
   reset,
-  loadDemo,
   deleteProps,
   updateProps,
   deleteParams,

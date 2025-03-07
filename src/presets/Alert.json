@@ -1,63 +1,45 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Alert",
-    "component": {
-      "id": "alert-root",
-      "type": "Alert",
-      "props": {
-        "status": "info",
-        "variant": "subtle"
-      },
-      "children": ["alert-icon", "alert-title", "alert-description"],
-      "parent": "root",
-      "componentName": "Alert",
-      "rootParentType": "Alert"
+  "root": {
+    "id": "root",
+    "type": "Alert",
+    "props": {
+      "status": "info",
+      "variant": "subtle"
     },
-    "components": {
-      "alert-root": {
-        "id": "alert-root",
-        "type": "Alert",
-        "props": {
-          "status": "info",
-          "variant": "subtle"
-        },
-        "children": ["alert-icon", "alert-title", "alert-description"],
-        "parent": "root",
-        "componentName": "Alert",
-        "rootParentType": "Alert"
-      },
-      "alert-icon": {
-        "id": "alert-icon",
-        "type": "AlertIcon",
-        "props": {},
-        "children": [],
-        "parent": "alert-root",
-        "componentName": "AlertIcon",
-        "rootParentType": "AlertIcon"
-      },
-      "alert-title": {
-        "id": "alert-title",
-        "type": "AlertTitle",
-        "props": {
-          "children": "Alert Title"
-        },
-        "children": [],
-        "parent": "alert-root",
-        "componentName": "AlertTitle",
-        "rootParentType": "AlertTitle"
-      },
-      "alert-description": {
-        "id": "alert-description",
-        "type": "AlertDescription",
-        "props": {
-          "children": "Alert Description"
-        },
-        "children": [],
-        "parent": "alert-root",
-        "componentName": "AlertDescription",
-        "rootParentType": "AlertDescription"
-      }
-    }
+    "children": ["alert-icon", "alert-title", "alert-description"],
+    "parent": "root",
+    "componentName": "Alert",
+    "rootParentType": "Alert"
+  },
+  "alert-icon": {
+    "id": "alert-icon",
+    "type": "AlertIcon",
+    "props": {},
+    "children": [],
+    "parent": "root",
+    "componentName": "AlertIcon",
+    "rootParentType": "AlertIcon"
+  },
+  "alert-title": {
+    "id": "alert-title",
+    "type": "AlertTitle",
+    "props": {
+      "children": "Alert Title"
+    },
+    "children": [],
+    "parent": "root",
+    "componentName": "AlertTitle",
+    "rootParentType": "AlertTitle"
+  },
+  "alert-description": {
+    "id": "alert-description",
+    "type": "AlertDescription",
+    "props": {
+      "children": "Alert Description"
+    },
+    "children": [],
+    "parent": "root",
+    "componentName": "AlertDescription",
+    "rootParentType": "AlertDescription"
   }
 } 

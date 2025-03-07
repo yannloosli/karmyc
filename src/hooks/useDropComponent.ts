@@ -29,34 +29,13 @@ interface DropZones {
   bottom: DropZone
 }
 
-interface ComponentPreset {
+interface Preset {
   id: string
   name: string
-  component: ComponentState
-  components: Record<string, ComponentState>
+  root: ComponentState
+  [key: string]: ComponentState | string
   createdAt?: string
   updatedAt?: string
-}
-
-interface RootComponentsPreset {
-  id: string
-  name: string
-  rootComponents: {
-    component: ComponentState
-    components: Record<string, ComponentState>
-  }
-  createdAt?: string
-  updatedAt?: string
-}
-
-type Preset = ComponentPreset | RootComponentsPreset
-
-const isRootComponentsPreset = (preset: Preset): preset is RootComponentsPreset => {
-  return 'rootComponents' in preset
-}
-
-const isComponentPreset = (preset: Preset): preset is ComponentPreset => {
-  return 'component' in preset && 'components' in preset
 }
 
 // Fonction pour générer un UUID unique
@@ -107,19 +86,26 @@ export const useDropComponent = (
 
     const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
     const hoverClientY = clientOffset.y - hoverBoundingRect.top
+    const detectionZone = 100 // Zone de détection augmentée à 100px
 
+    // Calcul des distances avec une fonction exponentielle pour une transition plus douce
     const topDistance = Math.abs(hoverClientY)
     const bottomDistance = Math.abs(hoverClientY - hoverBoundingRect.height)
 
-    setDropZones({
-      top: {
-        isVisible: topDistance < 50,
-        distance: Math.min(topDistance, 100)
-      },
-      bottom: {
-        isVisible: bottomDistance < 50,
-        distance: Math.min(bottomDistance, 100)
+    // Fonction pour calculer l'opacité avec une courbe exponentielle
+    const calculateVisibility = (distance: number) => {
+      if (distance > detectionZone) return { isVisible: false, distance: 100 }
+      const normalizedDistance = (distance / detectionZone) * 100
+      const smoothDistance = Math.pow(normalizedDistance / 100, 2) * 100
+      return { 
+        isVisible: true, 
+        distance: smoothDistance 
       }
+    }
+
+    setDropZones({
+      top: calculateVisibility(topDistance),
+      bottom: calculateVisibility(bottomDistance)
     })
   }
 
@@ -134,14 +120,23 @@ export const useDropComponent = (
       isOver: monitor.isOver({ shallow: true }) && monitor.canDrop(),
     }),
     hover: (item: ComponentItemProps, monitor) => {
-      if (!ref?.current) {
+      if (!ref?.current || !monitor.isOver({ shallow: true })) {
+        setDropZones({
+          top: { isVisible: false, distance: 100 },
+          bottom: { isVisible: false, distance: 100 }
+        })
         return
       }
+
       const dragIndex = item.index || 0
       const hoverIndex = index
 
       // Don't replace items with themselves
       if (dragIndex === hoverIndex) {
+        setDropZones({
+          top: { isVisible: false, distance: 100 },
+          bottom: { isVisible: false, distance: 100 }
+        })
         return
       }
 
@@ -164,11 +159,19 @@ export const useDropComponent = (
 
       // Dragging downwards
       if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        setDropZones({
+          top: { isVisible: false, distance: 100 },
+          bottom: { isVisible: false, distance: 100 }
+        })
         return
       }
 
       // Dragging upwards
       if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        setDropZones({
+          top: { isVisible: false, distance: 100 },
+          bottom: { isVisible: false, distance: 100 }
+        })
         return
       }
 
@@ -205,133 +208,142 @@ export const useDropComponent = (
         }
       } else {
         try {
-          console.log('Drop item:', item)
           // Vérifier d'abord dans les presets personnalisés en utilisant l'ID
           let preset = presets[item.id]
-          console.log('Found preset by id:', preset)
           
           // Si pas trouvé par ID, chercher par type dans les presets personnalisés
           if (!preset) {
             preset = presets[item.type]
-            console.log('Found preset by type:', preset)
           }
           
           // Si pas trouvé, chercher par nom dans les presets personnalisés
           if (!preset) {
             preset = Object.values(presets).find(p => p.name === item.type)
-            console.log('Found preset by name:', preset)
           }
           
           // Si toujours pas trouvé, chercher dans les presets par défaut
           if (!preset && defaultPresets[item.type]) {
+            const defaultPreset = defaultPresets[item.type]
             const now = new Date().toISOString()
-            preset = {
-              id: item.type,
-              name: item.type,
-              rootComponents: defaultPresets[item.type].rootComponents,
-              createdAt: now,
-              updatedAt: now
-            }
-            console.log('Created preset from default:', preset)
-          }
-
-          if (preset) {
-            console.log('Using preset:', preset)
             
-            // Extraire les composants et le composant racine
-            let components: Record<string, ComponentState>
-            let component: ComponentState
-
-            if (isRootComponentsPreset(preset)) {
-              if (!preset.rootComponents) {
-                console.error('Preset has no rootComponents:', preset)
-                return
-              }
-              components = preset.rootComponents.components
-              component = preset.rootComponents.component
-            } else {
-              const componentPreset = preset as ComponentPreset
-              if (!componentPreset.components || !componentPreset.component) {
-                console.error('Invalid preset structure:', preset)
-                return
-              }
-              components = componentPreset.components
-              component = componentPreset.component
-            }
-
-            if (!components || !component) {
-              console.error('Invalid preset structure:', preset)
+            // Convertir l'ancien format en nouveau format si nécessaire
+            const root = defaultPreset.root || defaultPreset.rootComponents?.component
+            const components = defaultPreset.rootComponents?.components || {}
+            
+            if (!root) {
+              console.error('Default preset has no root component:', defaultPreset)
               return
             }
 
-            // Générer de nouveaux IDs pour tous les composants
-            const idMapping: Record<string, string> = {}
-            const instanceId = generateUUID()
-            const usedIds = new Set<string>()
+            preset = {
+              id: item.type,
+              name: item.type,
+              root,
+              ...Object.entries(components).reduce((acc, [key, value]) => {
+                if (key !== 'root' && value && typeof value === 'object' && 'type' in value) {
+                  acc[key] = value as ComponentState
+                }
+                return acc
+              }, {} as Record<string, ComponentState>),
+              createdAt: now,
+              updatedAt: now
+            }
+          }
 
-            // Fonction pour générer un ID unique
+          if (preset) {           
+            const component = preset.root
+            if (!component) {
+              console.error('Preset has no root component:', preset)
+              return
+            }
+
+            // Générer un ID unique pour le nouveau composant
             const generateUniqueId = (componentType: string): string => {
-              let counter = 0
-              let newId: string
-              do {
-                newId = `${componentType}-${instanceId}-${counter++}`
-              } while (usedIds.has(newId))
-              usedIds.add(newId)
+              return `${componentType}-${generateUUID()}`
+            }
+
+            // Map pour stocker les correspondances entre anciens et nouveaux IDs
+            const idMapping = new Map<string, string>()
+
+            // Fonction pour obtenir ou générer un nouvel ID
+            const getNewId = (oldId: string, componentType: string): string => {
+              if (idMapping.has(oldId)) {
+                return idMapping.get(oldId)!
+              }
+              const newId = generateUniqueId(componentType)
+              idMapping.set(oldId, newId)
               return newId
             }
 
-            // Générer des IDs pour tous les composants
-            Object.keys(components).forEach(oldId => {
-              const component = components[oldId] as ComponentState
-              if (component) {
-                idMapping[oldId] = generateUniqueId(component.type)
-              }
+            // Créer une copie du composant avec un nouvel ID
+            const newComponentId = getNewId('root', component.type)
+            
+            // Générer les nouveaux IDs des enfants du composant racine
+            const newRootChildrenIds = component.children.map(childId => {
+              const child = preset[childId]
+              return typeof child === 'string' ? childId : getNewId(childId, child.type)
             })
 
-            // Mettre à jour tous les composants avec leurs nouveaux IDs et références
-            const updatedComponents: Record<string, ComponentState> = {}
-            Object.entries(components).forEach(([oldId, component]) => {
-              const newId = idMapping[oldId]
-              const typedComponent = component as ComponentState
-              if (newId && typedComponent) {
-                updatedComponents[newId] = {
-                  ...typedComponent,
-                  id: newId,
-                  parent: typedComponent.parent === "root" ? componentId : idMapping[typedComponent.parent] || typedComponent.parent,
-                  children: typedComponent.children.map(childId => idMapping[childId] || childId)
-                }
+            // Ajouter le composant racine
+            dispatch(addComponent({
+              id: newComponentId,
+              type: component.type,
+              parentName: componentId,
+              rootParentType: component.rootParentType,
+              isExisting: true,
+              component: {
+                ...component,
+                id: newComponentId,
+                parent: componentId,
+                children: newRootChildrenIds
               }
-            })
+            }))
 
-            // Trouver l'ID du composant racine
-            const rootComponentId = Object.keys(components).find(
-              id => (components[id] as ComponentState)?.parent === "root"
-            )
-
-            // Ajouter tous les composants au store dans l'ordre correct
+            // Fonction récursive pour ajouter les composants dans l'ordre
             const addComponentsInOrder = (componentId: string) => {
-              const component = updatedComponents[componentId]
-              if (!component) return
+              const currentComponent = preset[componentId]
+              if (!currentComponent || typeof currentComponent === 'string') return
 
-              // D'abord ajouter le composant lui-même
+              // Créer une copie du composant avec un nouvel ID
+              const newId = getNewId(componentId, currentComponent.type)
+              const parentComponent = preset[currentComponent.parent || '']
+              const newParentId = componentId === 'root' ? newComponentId : 
+                (parentComponent && typeof parentComponent !== 'string' ? 
+                  getNewId(currentComponent.parent || '', parentComponent.type) : componentId)
+
+              // Générer et stocker les nouveaux IDs des enfants
+              const newChildrenIds = currentComponent.children.map(childId => {
+                const child = preset[childId]
+                return typeof child === 'string' ? childId : getNewId(childId, child.type)
+              })
+
               dispatch(addComponent({
-                id: componentId,
-                type: component.type,
-                parentName: component.parent || 'root',
+                id: newId,
+                type: currentComponent.type,
+                parentName: newParentId,
+                rootParentType: currentComponent.rootParentType,
                 isExisting: true,
-                component
+                component: {
+                  ...currentComponent,
+                  id: newId,
+                  parent: newParentId,
+                  children: newChildrenIds
+                }
               }))
 
-              // Puis ajouter les enfants
-              component.children.forEach(childId => {
-                addComponentsInOrder(childId)
+              // Ajouter récursivement les enfants en utilisant les nouveaux IDs
+              currentComponent.children.forEach((childId, index) => {
+                const child = preset[childId]
+                if (typeof child !== 'string') {
+                  addComponentsInOrder(childId)
+                }
               })
             }
 
-            // Commencer par le composant racine
-            if (rootComponentId && idMapping[rootComponentId]) {
-              addComponentsInOrder(idMapping[rootComponentId])
-            }
+            // Ajouter les composants enfants dans l'ordre
+            component.children.forEach(childId => {
+              addComponentsInOrder(childId)
+            })
           } else {
             // Cas d'un composant de base (Box, Flex, etc.)
             dispatch(addComponent({

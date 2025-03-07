@@ -1,0 +1,362 @@
+{
+    "root": {
+        "id": "onboarding-root",
+        "type": "root",
+        "props": {
+            "display": "flex",
+            "flexDirection": "column",
+            "alignItems": "center",
+            "justifyContent": "center",
+            "textAlign": "center",
+            "mt": "4"
+        },
+        "children": [
+            "header-section",
+            "subtitle-section",
+            "content-section"
+        ],
+        "parent": "root",
+        "componentName": "Onboarding",
+        "rootParentType": "Flex"
+    },
+    "header-section": {
+        "id": "header-section",
+        "type": "Flex",
+        "props": {
+            "display": "flex",
+            "flexDirection": "row",
+            "alignItems": "flex-start",
+            "justifyContent": "flex-start"
+        },
+        "children": [
+            "title-text",
+            "beta-badge"
+        ],
+        "parent": "onboarding-root",
+        "componentName": "Flex",
+        "rootParentType": "Flex"
+    },
+    "title-text": {
+        "id": "title-text",
+        "type": "Text",
+        "props": {
+            "children": "⚡️Welcome to OpenChakra",
+            "fontSize": "3xl",
+            "fontWeight": "bold"
+        },
+        "children": [],
+        "parent": "header-section",
+        "componentName": "Text",
+        "rootParentType": "Text"
+    },
+    "beta-badge": {
+        "id": "beta-badge",
+        "type": "Badge",
+        "props": {
+            "children": "BETA",
+            "variant": "subtle",
+            "colorScheme": "pink",
+            "ml": "1"
+        },
+        "children": [],
+        "parent": "header-section",
+        "componentName": "Badge",
+        "rootParentType": "Badge"
+    },
+    "subtitle-section": {
+        "id": "subtitle-section",
+        "type": "Text",
+        "props": {
+            "children": "The Visual Editor for Chakra UI",
+            "color": "gray.500"
+        },
+        "children": [],
+        "parent": "onboarding-root",
+        "componentName": "Text",
+        "rootParentType": "Text"
+    },
+    "content-section": {
+        "id": "content-section",
+        "type": "Box",
+        "props": {
+            "backgroundColor": "gray.100"
+        },
+        "children": [
+            "grid-container"
+        ],
+        "parent": "onboarding-root",
+        "componentName": "Box",
+        "rootParentType": "Box"
+    },
+    "grid-container": {
+        "id": "grid-container",
+        "type": "Grid",
+        "props": {
+            "p": 10,
+            "gap": "6",
+            "templateColumns": "repeat(auto-fit, minmax(350px, 1fr))"
+        },
+        "children": [
+            "drag-drop-section",
+            "inspector-section",
+            "editor-section",
+            "cards-section"
+        ],
+        "parent": "content-section",
+        "componentName": "Grid",
+        "rootParentType": "Grid"
+    },
+    "drag-drop-section": {
+        "id": "drag-drop-section",
+        "type": "Stack",
+        "props": {},
+        "children": [
+            "drag-drop-box"
+        ],
+        "parent": "grid-container",
+        "componentName": "Stack",
+        "rootParentType": "Stack"
+    },
+    "drag-drop-box": {
+        "id": "drag-drop-box",
+        "type": "Box",
+        "props": {
+            "backgroundColor": "white",
+            "boxShadow": "sm",
+            "borderRadius": "lg",
+            "p": "",
+            "pl": "3",
+            "pr": "3",
+            "pt": "5",
+            "pb": "5"
+        },
+        "children": [
+            "drag-drop-header",
+            "drag-drop-content"
+        ],
+        "parent": "drag-drop-section",
+        "componentName": "Box",
+        "rootParentType": "Box"
+    },
+    "drag-drop-header": {
+        "id": "drag-drop-header",
+        "type": "Flex",
+        "props": {
+            "display": "flex",
+            "flexDirection": "row",
+            "alignItems": "center",
+            "justifyContent": "flex-start",
+            "pb": "2"
+        },
+        "children": [
+            "chevron-icon",
+            "header-title"
+        ],
+        "parent": "drag-drop-box",
+        "componentName": "Flex",
+        "rootParentType": "Flex"
+    },
+    "chevron-icon": {
+        "id": "chevron-icon",
+        "type": "Icon",
+        "props": {
+            "icon": "ChevronLeftIcon"
+        },
+        "children": [],
+        "parent": "drag-drop-header",
+        "componentName": "Icon",
+        "rootParentType": "Icon"
+    },
+    "header-title": {
+        "id": "header-title",
+        "type": "Heading",
+        "props": {
+            "size": "md",
+            "as": "h2",
+            "lineHeight": "shorter",
+            "fontWeight": "bold",
+            "fontFamily": "heading",
+            "children": "Component Panel"
+        },
+        "children": [],
+        "parent": "drag-drop-header",
+        "componentName": "Heading",
+        "rootParentType": "Heading"
+    },
+    "drag-drop-content": {
+        "id": "drag-drop-content",
+        "type": "Stack",
+        "props": {
+            "ml": "4",
+            "spacing": "2",
+            "mt": "4",
+            "mr": "4"
+        },
+        "children": [
+            "drag-drop-description",
+            "preset-description",
+            "alert-example"
+        ],
+        "parent": "drag-drop-box",
+        "componentName": "Stack",
+        "rootParentType": "Stack"
+    },
+    "drag-drop-description": {
+        "id": "drag-drop-description",
+        "type": "Stack",
+        "props": {
+            "isInline": false,
+            "justifyContent": "flex-start",
+            "alignItems": "flex-start",
+            "ml": "",
+            "spacing": "2"
+        },
+        "children": [
+            "drag-drop-tag",
+            "drag-drop-text",
+            "drop-zone"
+        ],
+        "parent": "drag-drop-content",
+        "componentName": "Stack",
+        "rootParentType": "Stack"
+    },
+    "drag-drop-tag": {
+        "id": "drag-drop-tag",
+        "type": "Tag",
+        "props": {
+            "children": "Drag and Drop!",
+            "size": "md",
+            "variant": "subtle",
+            "colorScheme": "whatsapp",
+            "borderRadius": "sm",
+            "fontSize": "sm"
+        },
+        "children": [],
+        "parent": "drag-drop-description",
+        "componentName": "Tag",
+        "rootParentType": "Tag"
+    },
+    "drag-drop-text": {
+        "id": "drag-drop-text",
+        "type": "Text",
+        "props": {
+            "children": "Drag any component from the left hand panel into this editor. Then start interacting with them: try to drop the Avatar component in this box…",
+            "fontSize": "md",
+            "color": "gray.600"
+        },
+        "children": [],
+        "parent": "drag-drop-description",
+        "componentName": "Text",
+        "rootParentType": "Text"
+    },
+    "drop-zone": {
+        "id": "drop-zone",
+        "type": "Box",
+        "props": {
+            "width": "200px",
+            "display": "block",
+            "flexDirection": "column",
+            "alignItems": "flex-start",
+            "justifyContent": "flex-start",
+            "minWidth": "",
+            "backgroundColor": "gray.100",
+            "borderRadius": "lg",
+            "p": "3",
+            "minHeight": "60px"
+        },
+        "children": [],
+        "parent": "drag-drop-description",
+        "componentName": "Box",
+        "rootParentType": "Box"
+    },
+    "preset-description": {
+        "id": "preset-description",
+        "type": "Stack",
+        "props": {
+            "ml": "",
+            "isInline": false,
+            "spacing": "2"
+        },
+        "children": [
+            "preset-tag",
+            "preset-text"
+        ],
+        "parent": "drag-drop-content",
+        "componentName": "Stack",
+        "rootParentType": "Stack"
+    },
+    "preset-tag": {
+        "id": "preset-tag",
+        "type": "Tag",
+        "props": {
+            "children": "Preset",
+            "size": "md",
+            "variant": "subtle",
+            "colorScheme": "whatsapp"
+        },
+        "children": [],
+        "parent": "preset-description",
+        "componentName": "Tag",
+        "rootParentType": "Tag"
+    },
+    "preset-text": {
+        "id": "preset-text",
+        "type": "Text",
+        "props": {
+            "children": "A preset is a group of components (like Alert). Just drop a preset to easily setup a complexe component like this:",
+            "color": "gray.600"
+        },
+        "children": [],
+        "parent": "preset-description",
+        "componentName": "Text",
+        "rootParentType": "Text"
+    },
+    "alert-example": {
+        "id": "alert-example",
+        "type": "Alert",
+        "props": {
+            "variant": "left-accent",
+            "status": "success"
+        },
+        "children": [
+            "alert-icon",
+            "alert-title",
+            "alert-description"
+        ],
+        "parent": "drag-drop-content",
+        "componentName": "Alert",
+        "rootParentType": "Alert"
+    },
+    "alert-icon": {
+        "id": "alert-icon",
+        "type": "AlertIcon",
+        "props": {},
+        "children": [],
+        "parent": "alert-example",
+        "componentName": "AlertIcon",
+        "rootParentType": "Alert"
+    },
+    "alert-title": {
+        "id": "alert-title",
+        "type": "AlertTitle",
+        "props": {
+            "children": "Alert!",
+            "mr": 1
+        },
+        "children": [],
+        "parent": "alert-example",
+        "componentName": "AlertTitle",
+        "rootParentType": "Alert"
+    },
+    "alert-description": {
+        "id": "alert-description",
+        "type": "AlertDescription",
+        "props": {
+            "children": "I'm an Alert preset"
+        },
+        "children": [],
+        "parent": "alert-example",
+        "componentName": "AlertDescription",
+        "rootParentType": "Alert"
+    }
+}

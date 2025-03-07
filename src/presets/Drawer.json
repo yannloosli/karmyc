@@ -1,98 +1,83 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Drawer",
-    "component": {
-      "id": "drawer-root",
-      "type": "Drawer",
-      "props": {},
-      "children": ["drawer-overlay", "drawer-content"],
-      "parent": "root",
-      "componentName": "Drawer",
-      "rootParentType": "Drawer"
-    },
-    "components": {
-      "drawer-root": {
-        "id": "drawer-root",
-        "type": "Drawer",
-        "props": {},
-        "children": ["drawer-overlay", "drawer-content"],
-        "parent": "root",
-        "componentName": "Drawer",
-        "rootParentType": "Drawer"
-      },
-      "drawer-overlay": {
-        "id": "drawer-overlay",
-        "type": "DrawerOverlay",
-        "props": {},
-        "children": [],
-        "parent": "drawer-root",
-        "componentName": "DrawerOverlay",
-        "rootParentType": "DrawerOverlay"
-      },
-      "drawer-content": {
-        "id": "drawer-content",
-        "type": "DrawerContent",
-        "props": {},
-        "children": ["drawer-header", "drawer-close-button", "drawer-body", "drawer-footer"],
-        "parent": "drawer-root",
-        "componentName": "DrawerContent",
-        "rootParentType": "DrawerContent"
-      },
-      "drawer-header": {
-        "id": "drawer-header",
-        "type": "DrawerHeader",
-        "props": { "children": "Drawer Title" },
-        "children": [],
-        "parent": "drawer-content",
-        "componentName": "DrawerHeader",
-        "rootParentType": "DrawerHeader"
-      },
-      "drawer-close-button": {
-        "id": "drawer-close-button",
-        "type": "DrawerCloseButton",
-        "props": {},
-        "children": [],
-        "parent": "drawer-content",
-        "componentName": "DrawerCloseButton",
-        "rootParentType": "DrawerCloseButton"
-      },
-      "drawer-body": {
-        "id": "drawer-body",
-        "type": "DrawerBody",
-        "props": { "children": "Drawer Content" },
-        "children": [],
-        "parent": "drawer-content",
-        "componentName": "DrawerBody",
-        "rootParentType": "DrawerBody"
-      },
-      "drawer-footer": {
-        "id": "drawer-footer",
-        "type": "DrawerFooter",
-        "props": {},
-        "children": ["drawer-footer-button-1", "drawer-footer-button-2"],
-        "parent": "drawer-content",
-        "componentName": "DrawerFooter",
-        "rootParentType": "DrawerFooter"
-      },
-      "drawer-footer-button-1": {
-        "id": "drawer-footer-button-1",
-        "type": "Button",
-        "props": { "variant": "ghost", "children": "Cancel" },
-        "children": [],
-        "parent": "drawer-footer",
-        "componentName": "Button",
-        "rootParentType": "Button"
-      },
-      "drawer-footer-button-2": {
-        "id": "drawer-footer-button-2",
-        "type": "Button",
-        "props": { "colorScheme": "blue", "children": "Save" },
-        "children": [],
-        "parent": "drawer-footer",
-        "componentName": "Button",
-        "rootParentType": "Button"
-      }
-    }
+  "root": {
+    "id": "root",
+    "type": "Drawer",
+    "props": {},
+    "children": ["drawer-overlay", "drawer-content"],
+    "parent": "root",
+    "componentName": "Drawer",
+    "rootParentType": "Drawer"
+  },
+  "drawer-overlay": {
+    "id": "drawer-overlay",
+    "type": "DrawerOverlay",
+    "props": {},
+    "children": [],
+    "parent": "root",
+    "componentName": "DrawerOverlay",
+    "rootParentType": "DrawerOverlay"
+  },
+  "drawer-content": {
+    "id": "drawer-content",
+    "type": "DrawerContent",
+    "props": {},
+    "children": ["drawer-header", "drawer-close-button", "drawer-body", "drawer-footer"],
+    "parent": "root",
+    "componentName": "DrawerContent",
+    "rootParentType": "DrawerContent"
+  },
+  "drawer-header": {
+    "id": "drawer-header",
+    "type": "DrawerHeader",
+    "props": { "children": "Drawer Title" },
+    "children": [],
+    "parent": "drawer-content",
+    "componentName": "DrawerHeader",
+    "rootParentType": "DrawerHeader"
+  },
+  "drawer-close-button": {
+    "id": "drawer-close-button",
+    "type": "DrawerCloseButton",
+    "props": {},
+    "children": [],
+    "parent": "drawer-content",
+    "componentName": "DrawerCloseButton",
+    "rootParentType": "DrawerCloseButton"
+  },
+  "drawer-body": {
+    "id": "drawer-body",
+    "type": "DrawerBody",
+    "props": { "children": "Drawer Content" },
+    "children": [],
+    "parent": "drawer-content",
+    "componentName": "DrawerBody",
+    "rootParentType": "DrawerBody"
+  },
+  "drawer-footer": {
+    "id": "drawer-footer",
+    "type": "DrawerFooter",
+    "props": {},
+    "children": ["drawer-footer-button-1", "drawer-footer-button-2"],
+    "parent": "drawer-content",
+    "componentName": "DrawerFooter",
+    "rootParentType": "DrawerFooter"
+  },
+  "drawer-footer-button-1": {
+    "id": "drawer-footer-button-1",
+    "type": "Button",
+    "props": { "variant": "ghost", "children": "Cancel" },
+    "children": [],
+    "parent": "drawer-footer",
+    "componentName": "Button",
+    "rootParentType": "Button"
+  },
+  "drawer-footer-button-2": {
+    "id": "drawer-footer-button-2",
+    "type": "Button",
+    "props": { "colorScheme": "blue", "children": "Save" },
+    "children": [],
+    "parent": "drawer-footer",
+    "componentName": "Button",
+    "rootParentType": "Button"
   }
 } 

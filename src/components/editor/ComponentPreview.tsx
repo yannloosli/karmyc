@@ -113,7 +113,7 @@ const ComponentPreview: React.FC<{
 }> = ({ componentName, index, ...forwardedProps }) => {
     const component = useSelector(getComponentBy(componentName))
     const customComponents = useSelector(getCustomComponentNames)
-
+    console.log("~~~~~~~~~~~~~~~~~~~~",component, componentName, customComponents)   
     if (!component) {
         console.error(`ComponentPreview unavailable for component ${componentName}`)
         return null
@@ -136,7 +136,7 @@ const ComponentPreview: React.FC<{
 
     // Gérer les composants conteneurs
     if (CONTAINER_COMPONENTS.includes(type)) {
-        console.log("~~~~~~~~~~~~~~~~~~~~",component)
+        console.log("CONTAINER_COMPONENTS",type)
         return (
             <WithChildrenPreviewContainer
                 enableVisualHelper
@@ -150,6 +150,7 @@ const ComponentPreview: React.FC<{
 
     // Gérer les composants qui nécessitent un wrapper Box
     if (WRAPPED_COMPONENTS.includes(type)) {
+        console.log("WRAPPED_COMPONENTS",type)
         return (
             <PreviewContainer
                 index={index}

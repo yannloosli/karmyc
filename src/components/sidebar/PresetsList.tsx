@@ -21,7 +21,7 @@ import { DeleteIcon, EditIcon } from '@chakra-ui/icons'
 import { useSelector } from 'react-redux'
 import { RootState } from '../../store/store'
 import { useAppDispatch } from '../../hooks/useAppDispatch'
-import { deletePreset, updatePresetName, addPreset, RootComponents, Preset } from '../../store/slices/presetsSlice'
+import { deletePreset, updatePresetName, addPreset, Preset } from '../../store/slices/presetsSlice'
 import DragItem from './DragItem'
 import { defaultPresets } from '../../presets'
 import { ComponentState } from '../../store/slices/componentsSlice'
@@ -29,7 +29,8 @@ import { ComponentState } from '../../store/slices/componentsSlice'
 interface PresetDragItem {
   id?: string
   name: string
-  rootComponents: RootComponents
+  root: ComponentState
+  [key: string]: ComponentState | string | undefined
 }
 
 const PresetsList = () => {
@@ -48,33 +49,28 @@ const PresetsList = () => {
   }
 
   const handlePresetDrag = (preset: PresetDragItem) => {
-    // Si le preset a un ID, c'est un preset personnalisé existant
     if (preset.id) {
       return
     }
 
-    // Ne pas ajouter le preset au store s'il est déjà dans les presets personnalisés
     const existingPreset = Object.values(presets).find(p => p.name === preset.name)
     if (existingPreset) {
-      console.log('Using existing preset:', existingPreset.id)
       return
     }
 
-    // Créer un ID unique pour le preset
     const id = `${preset.name}-${Date.now()}`
+    const { id: _, ...presetWithoutId } = preset
     
-    // Ajouter le preset au store Redux
     dispatch(addPreset({
       id,
-      name: preset.name,
-      rootComponents: preset.rootComponents
+      ...presetWithoutId
     }))
   }
 
   const getRootParentType = (preset: PresetDragItem) => {
-    if (!preset.rootComponents?.component?.rootParentType) {
+    if (!preset.root?.rootParentType) {
       // Si le rootParentType n'est pas défini, utiliser le type du composant racine
-      const componentType = preset.rootComponents?.component?.type
+      const componentType = preset.root?.type
       if (componentType) {
         return componentType
       }
@@ -82,7 +78,17 @@ const PresetsList = () => {
       console.warn(`No type found for ${preset.name}, using name as fallback`)
       return preset.name
     }
-    return preset.rootComponents.component.rootParentType
+    return preset.root.rootParentType
+  }
+
+  const extractComponentStates = (obj: any): Record<string, ComponentState> => {
+    const result: Record<string, ComponentState> = {}
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value && typeof value === 'object' && 'type' in value && 'props' in value) {
+        result[key] = value as ComponentState
+      }
+    })
+    return result
   }
 
   return (
@@ -93,9 +99,15 @@ const PresetsList = () => {
       {/* Presets par défaut */}
       {Object.entries(defaultPresets).map(([name, preset]) => {
         try {
+            console.log('Processing custom preset:', name, preset)
+
+          const componentStates = extractComponentStates(preset)
+          const root = (preset as any).root || (preset as any).rootComponents?.component
+          
           const presetWithName: PresetDragItem = {
             name,
-            rootComponents: (preset as any).rootComponents
+            root: root as ComponentState,
+            ...componentStates
           }
           const rootParentType = getRootParentType(presetWithName)
           if (!rootParentType) {
@@ -128,10 +140,13 @@ const PresetsList = () => {
         .map(([id, preset]) => {
           try {
             console.log('Processing custom preset:', id, preset)
+            const componentStates = extractComponentStates(preset)
+            
             const presetDragItem: PresetDragItem = {
               id,
               name: preset.name,
-              rootComponents: preset.rootComponents
+              root: preset.root,
+              ...componentStates
             }
             const rootParentType = getRootParentType(presetDragItem)
             if (!rootParentType) {

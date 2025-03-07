@@ -1,71 +1,56 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Input",
-    "component": {
-      "id": "input-root",
-      "type": "InputGroup",
-      "props": {},
-      "children": ["input-left-element", "input-field", "input-right-element"],
-      "parent": "root",
-      "componentName": "InputGroup",
-      "rootParentType": "InputGroup"
-    },
-    "components": {
-      "input-root": {
-        "id": "input-root",
-        "type": "InputGroup",
-        "props": {},
-        "children": ["input-left-element", "input-field", "input-right-element"],
-        "parent": "root",
-        "componentName": "InputGroup",
-        "rootParentType": "InputGroup"
-      },
-      "input-left-element": {
-        "id": "input-left-element",
-        "type": "InputLeftElement",
-        "props": {},
-        "children": ["input-left-icon"],
-        "parent": "input-root",
-        "componentName": "InputLeftElement",
-        "rootParentType": "InputLeftElement"
-      },
-      "input-left-icon": {
-        "id": "input-left-icon",
-        "type": "Icon",
-        "props": { "name": "search" },
-        "children": [],
-        "parent": "input-left-element",
-        "componentName": "Icon",
-        "rootParentType": "Icon"
-      },
-      "input-field": {
-        "id": "input-field",
-        "type": "Input",
-        "props": { "placeholder": "Search..." },
-        "children": [],
-        "parent": "input-root",
-        "componentName": "Input",
-        "rootParentType": "Input"
-      },
-      "input-right-element": {
-        "id": "input-right-element",
-        "type": "InputRightElement",
-        "props": {},
-        "children": ["input-right-icon"],
-        "parent": "input-root",
-        "componentName": "InputRightElement",
-        "rootParentType": "InputRightElement"
-      },
-      "input-right-icon": {
-        "id": "input-right-icon",
-        "type": "Icon",
-        "props": { "name": "close" },
-        "children": [],
-        "parent": "input-right-element",
-        "componentName": "Icon",
-        "rootParentType": "Icon"
-      }
-    }
+  "root": {
+    "id": "root",
+    "type": "InputGroup",
+    "props": {},
+    "children": ["input-left-element", "input-field", "input-right-element"],
+    "parent": "root",
+    "componentName": "InputGroup",
+    "rootParentType": "InputGroup"
+  },
+  "input-left-element": {
+    "id": "input-left-element",
+    "type": "InputLeftElement",
+    "props": {},
+    "children": ["input-left-icon"],
+    "parent": "root",
+    "componentName": "InputLeftElement",
+    "rootParentType": "InputLeftElement"
+  },
+  "input-left-icon": {
+    "id": "input-left-icon",
+    "type": "Icon",
+    "props": { "name": "search" },
+    "children": [],
+    "parent": "input-left-element",
+    "componentName": "Icon",
+    "rootParentType": "Icon"
+  },
+  "input-field": {
+    "id": "input-field",
+    "type": "Input",
+    "props": { "placeholder": "Search..." },
+    "children": [],
+    "parent": "root",
+    "componentName": "Input",
+    "rootParentType": "Input"
+  },
+  "input-right-element": {
+    "id": "input-right-element",
+    "type": "InputRightElement",
+    "props": {},
+    "children": ["input-right-icon"],
+    "parent": "root",
+    "componentName": "InputRightElement",
+    "rootParentType": "InputRightElement"
+  },
+  "input-right-icon": {
+    "id": "input-right-icon",
+    "type": "Icon",
+    "props": { "name": "close" },
+    "children": [],
+    "parent": "input-right-element",
+    "componentName": "Icon",
+    "rootParentType": "Icon"
   }
 } 

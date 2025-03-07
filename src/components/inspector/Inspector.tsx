@@ -181,16 +181,12 @@ const Inspector = () => {
     // Collecter tous les composants
     const allComponents = collectComponents(component)
 
-    // Sauvegarder en tant que preset
+    // Sauvegarder en tant que preset avec la nouvelle structure
     dispatch(addPreset({
-      id: component.id,
+      id: `${componentName}-${Date.now()}`,
       name: componentName,
-      rootComponents: {
-        id: "rootComponents",
-        name: componentName,
-        component: component,
-        components: allComponents
-      }
+      root: component,
+      ...allComponents
     }))
 
     onClose()

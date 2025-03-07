@@ -1,110 +1,92 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Card",
-    "component": {
-      "id": "card-root",
-      "type": "Card",
-      "props": {
-        "variant": "outline",
-        "shadow": "md"
-      },
-      "children": ["card-header", "card-body", "card-footer"],
-      "parent": "root",
-      "componentName": "Card",
-      "rootParentType": "Card"
+  "root": {
+    "id": "root",
+    "type": "Card",
+    "props": {
+      "variant": "outline",
+      "shadow": "md"
     },
-    "components": {
-      "card-root": {
-        "id": "card-root",
-        "type": "Card",
-        "props": {
-          "variant": "outline",
-          "shadow": "md"
-        },
-        "children": ["card-header", "card-body", "card-footer"],
-        "parent": "root",
-        "componentName": "Card",
-        "rootParentType": "Card"
-      },
-      "card-header": {
-        "id": "card-header",
-        "type": "CardHeader",
-        "props": {},
-        "children": ["card-title", "card-subtitle"],
-        "parent": "card-root",
-        "componentName": "CardHeader",
-        "rootParentType": "CardHeader"
-      },
-      "card-title": {
-        "id": "card-title",
-        "type": "Heading",
-        "props": {
-          "children": "Card Title",
-          "size": "md"
-        },
-        "children": [],
-        "parent": "card-header",
-        "componentName": "Heading",
-        "rootParentType": "Heading"
-      },
-      "card-subtitle": {
-        "id": "card-subtitle",
-        "type": "Text",
-        "props": {
-          "children": "Card Subtitle",
-          "color": "gray.600"
-        },
-        "children": [],
-        "parent": "card-header",
-        "componentName": "Text",
-        "rootParentType": "Text"
-      },
-      "card-body": {
-        "id": "card-body",
-        "type": "CardBody",
-        "props": {
-          "children": "Card Body Content"
-        },
-        "children": [],
-        "parent": "card-root",
-        "componentName": "CardBody",
-        "rootParentType": "CardBody"
-      },
-      "card-footer": {
-        "id": "card-footer",
-        "type": "CardFooter",
-        "props": {},
-        "children": ["card-footer-button-1", "card-footer-button-2"],
-        "parent": "card-root",
-        "componentName": "CardFooter",
-        "rootParentType": "CardFooter"
-      },
-      "card-footer-button-1": {
-        "id": "card-footer-button-1",
-        "type": "Button",
-        "props": {
-          "children": "Cancel",
-          "variant": "ghost"
-        },
-        "children": [],
-        "parent": "card-footer",
-        "componentName": "Button",
-        "rootParentType": "Button"
-      },
-      "card-footer-button-2": {
-        "id": "card-footer-button-2",
-        "type": "Button",
-        "props": {
-          "children": "Proceed",
-          "variant": "solid",
-          "ml": 3
-        },
-        "children": [],
-        "parent": "card-footer",
-        "componentName": "Button",
-        "rootParentType": "Button"
-      }
-    }
+    "children": ["card-header", "card-body", "card-footer"],
+    "parent": "root",
+    "componentName": "Card",
+    "rootParentType": "Card"
+  },
+  "card-header": {
+    "id": "card-header",
+    "type": "CardHeader",
+    "props": {},
+    "children": ["card-title", "card-subtitle"],
+    "parent": "root",
+    "componentName": "CardHeader",
+    "rootParentType": "CardHeader"
+  },
+  "card-title": {
+    "id": "card-title",
+    "type": "Heading",
+    "props": {
+      "children": "Card Title",
+      "size": "md"
+    },
+    "children": [],
+    "parent": "card-header",
+    "componentName": "Heading",
+    "rootParentType": "Heading"
+  },
+  "card-subtitle": {
+    "id": "card-subtitle",
+    "type": "Text",
+    "props": {
+      "children": "Card Subtitle",
+      "color": "gray.600"
+    },
+    "children": [],
+    "parent": "card-header",
+    "componentName": "Text",
+    "rootParentType": "Text"
+  },
+  "card-body": {
+    "id": "card-body",
+    "type": "CardBody",
+    "props": {
+      "children": "Card Body Content"
+    },
+    "children": [],
+    "parent": "root",
+    "componentName": "CardBody",
+    "rootParentType": "CardBody"
+  },
+  "card-footer": {
+    "id": "card-footer",
+    "type": "CardFooter",
+    "props": {},
+    "children": ["card-footer-button-1", "card-footer-button-2"],
+    "parent": "root",
+    "componentName": "CardFooter",
+    "rootParentType": "CardFooter"
+  },
+  "card-footer-button-1": {
+    "id": "card-footer-button-1",
+    "type": "Button",
+    "props": {
+      "children": "Cancel",
+      "variant": "ghost"
+    },
+    "children": [],
+    "parent": "card-footer",
+    "componentName": "Button",
+    "rootParentType": "Button"
+  },
+  "card-footer-button-2": {
+    "id": "card-footer-button-2",
+    "type": "Button",
+    "props": {
+      "children": "Proceed",
+      "variant": "solid",
+      "ml": 3
+    },
+    "children": [],
+    "parent": "card-footer",
+    "componentName": "Button",
+    "rootParentType": "Button"
   }
 } 

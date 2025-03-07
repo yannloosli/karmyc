@@ -1,71 +1,56 @@
 {
-  "rootComponents": {
-    "id": "rootComponents",
-    "name": "Toast",
-    "component": {
-      "id": "toast-root",
-      "type": "Toast",
-      "props": {},
-      "children": ["toast-container"],
-      "parent": "root",
-      "componentName": "Toast",
-      "rootParentType": "Toast"
-    },
-    "components": {
-      "toast-root": {
-        "id": "toast-root",
-        "type": "Toast",
-        "props": {},
-        "children": ["toast-container"],
-        "parent": "root",
-        "componentName": "Toast",
-        "rootParentType": "Toast"
-      },
-      "toast-container": {
-        "id": "toast-container",
-        "type": "ToastContainer",
-        "props": {},
-        "children": ["toast-content"],
-        "parent": "toast-root",
-        "componentName": "ToastContainer",
-        "rootParentType": "ToastContainer"
-      },
-      "toast-content": {
-        "id": "toast-content",
-        "type": "ToastContent",
-        "props": {},
-        "children": ["toast-icon", "toast-text", "toast-close-button"],
-        "parent": "toast-container",
-        "componentName": "ToastContent",
-        "rootParentType": "ToastContent"
-      },
-      "toast-icon": {
-        "id": "toast-icon",
-        "type": "ToastIcon",
-        "props": {},
-        "children": [],
-        "parent": "toast-content",
-        "componentName": "ToastIcon",
-        "rootParentType": "ToastIcon"
-      },
-      "toast-text": {
-        "id": "toast-text",
-        "type": "Text",
-        "props": { "children": "Toast message" },
-        "children": [],
-        "parent": "toast-content",
-        "componentName": "Text",
-        "rootParentType": "Text"
-      },
-      "toast-close-button": {
-        "id": "toast-close-button",
-        "type": "ToastCloseButton",
-        "props": {},
-        "children": [],
-        "parent": "toast-content",
-        "componentName": "ToastCloseButton",
-        "rootParentType": "ToastCloseButton"
-      }
-    }
+  "root": {
+    "id": "root",
+    "type": "Toast",
+    "props": {},
+    "children": ["toast-container"],
+    "parent": "root",
+    "componentName": "Toast",
+    "rootParentType": "Toast"
+  },
+  "toast-container": {
+    "id": "toast-container",
+    "type": "ToastContainer",
+    "props": {},
+    "children": ["toast-content"],
+    "parent": "root",
+    "componentName": "ToastContainer",
+    "rootParentType": "ToastContainer"
+  },
+  "toast-content": {
+    "id": "toast-content",
+    "type": "ToastContent",
+    "props": {},
+    "children": ["toast-icon", "toast-text", "toast-close-button"],
+    "parent": "toast-container",
+    "componentName": "ToastContent",
+    "rootParentType": "ToastContent"
+  },
+  "toast-icon": {
+    "id": "toast-icon",
+    "type": "ToastIcon",
+    "props": {},
+    "children": [],
+    "parent": "toast-content",
+    "componentName": "ToastIcon",
+    "rootParentType": "ToastIcon"
+  },
+  "toast-text": {
+    "id": "toast-text",
+    "type": "Text",
+    "props": { "children": "Toast message" },
+    "children": [],
+    "parent": "toast-content",
+    "componentName": "Text",
+    "rootParentType": "Text"
+  },
+  "toast-close-button": {
+    "id": "toast-close-button",
+    "type": "ToastCloseButton",
+    "props": {},
+    "children": [],
+    "parent": "toast-content",
+    "componentName": "ToastCloseButton",
+    "rootParentType": "ToastCloseButton"
   }
 } 
