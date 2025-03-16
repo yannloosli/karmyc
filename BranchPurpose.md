@@ -118,14 +118,14 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 ### 3. Implémentation
 
 #### 3.1 Refactorisation de la structure
-- [ ] Créer le dossier 'core' et ses sous-dossiers
+- [x] Créer le dossier 'core' et ses sous-dossiers
 - [ ] Migrer les composants existants vers la nouvelle structure
 - [ ] Mettre à jour les imports dans tous les fichiers
 - [ ] Assurer la compatibilité avec le code existant
 - [ ] **Mettre à jour la documentation avec la structure finale implémentée**
 
 #### 3.2 Implémentation du store Redux
-- [ ] Installer les dépendances nécessaires (redux-toolkit, redux-undo, redux-persist)
+- [x] Installer les dépendances nécessaires (redux-toolkit, redux-undo, redux-persist)
 - [ ] Implémenter les slices Redux pour chaque domaine
 - [ ] Configurer le middleware et les enhancers
 - [ ] Mettre en place les sélecteurs optimisés avec reselect

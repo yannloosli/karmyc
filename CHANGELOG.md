@@ -129,3 +129,19 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 
 ### Modifications
 - Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 2.3
+
+## Début de l'implémentation - 2024-04-24
+
+### Ajouts
+- Création de la structure de dossiers pour le module core
+- Implémentation des types de base (area, actions, contextMenu, history, store, core)
+- Implémentation du registre d'actions avec système de validation
+- Implémentation des validateurs d'actions communs
+- Implémentation des priorités d'actions
+- Implémentation des middlewares Redux pour les actions et l'historique
+
+### Dépendances
+- Ajout de @reduxjs/toolkit, redux-undo et redux-persist comme dépendances
+
+### Modifications
+- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 3.1 et 3.2

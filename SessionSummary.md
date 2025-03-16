@@ -1,69 +1,63 @@
-# Résumé de la session du 23 avril 2024
+# Résumé de la session du 24 avril 2024
 
 ## Travail accompli
 
-Aujourd'hui, nous avons conçu l'API de hooks pour le core layout system de l'éditeur d'animation. Cette étape correspond à la section 2.4 de notre feuille de route.
+Aujourd'hui, nous avons commencé la phase d'implémentation du core layout system de l'éditeur d'animation. Cette étape correspond aux sections 3.1 et 3.2 de notre feuille de route.
 
 ### Principales réalisations
 
-1. **Création du document HooksAPIDesign.md** : Document détaillé présentant la conception de l'API de hooks avec des exemples d'utilisation.
+1. **Création de la structure de dossiers pour le module core** :
+   - Création du dossier 'core' et de ses sous-dossiers (types, store, hooks, actions, history, components, utils, providers, constants)
+   - Création des fichiers index.ts dans chaque dossier pour faciliter les exports
 
-2. **Conception des hooks d'enregistrement des types de zones** :
-   - `useRegisterAreaType` : Pour enregistrer un nouveau type de zone avec son composant, son réducteur et ses raccourcis clavier
-   - `useAreaTypes` : Pour accéder à la liste des types de zones enregistrés
+2. **Implémentation des types de base** :
+   - Types pour les zones (area.ts)
+   - Types pour les actions (actions.ts)
+   - Types pour les menus contextuels (contextMenu.ts)
+   - Types pour l'historique (history.ts)
+   - Types pour le store Redux (store.ts)
+   - Types pour le module core (core.ts)
 
-3. **Conception des hooks d'enregistrement des actions** :
-   - `useRegisterAction` : Pour enregistrer une action avec son handler
-   - `useRegisterActionValidator` : Pour enregistrer un validateur pour un type d'action spécifique
+3. **Implémentation du système d'actions** :
+   - Registre d'actions avec système de validation (registry.ts)
+   - Validateurs d'actions communs (validators.ts)
+   - Priorités d'actions (priorities.ts)
 
-4. **Conception des hooks pour les menus contextuels** :
-   - `useContextMenu` : Pour créer et gérer un menu contextuel
-   - `useRegisterContextMenuAction` : Pour enregistrer une action de menu contextuel
+4. **Implémentation des middlewares Redux** :
+   - Middleware pour les actions (actions.ts)
+   - Middleware pour l'historique (history.ts)
 
-5. **Conception des hooks d'initialisation** :
-   - `useLayoutCore` : Pour initialiser le système avec une configuration personnalisée
-   - `useLayoutCoreProvider` : Pour créer un provider React pour le système
+5. **Installation des dépendances nécessaires** :
+   - @reduxjs/toolkit
+   - redux-undo
+   - redux-persist
 
-6. **Conception des hooks d'accès aux données** :
-   - `useAreaState` : Pour accéder à l'état d'une zone spécifique
-   - `useAreaLayout` : Pour accéder à la disposition des zones
-
-7. **Documentation des considérations de performance** pour optimiser l'utilisation des hooks.
-
-8. **Mise à jour du CHANGELOG.md** pour documenter les modifications apportées.
-
-9. **Mise à jour de BranchPurpose.md** pour marquer les tâches de la section 2.4 comme terminées.
+6. **Mise à jour de la documentation** :
+   - Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches
+   - Mise à jour de CHANGELOG.md pour documenter les modifications apportées
 
 ## Prochaines étapes
 
-La phase de conception est maintenant terminée. Nous pouvons passer à la phase d'implémentation, qui comprend les étapes suivantes :
+Pour la prochaine session, nous devons continuer l'implémentation du système :
 
-1. **Refactorisation de la structure** (section 3.1) :
-   - Créer le dossier 'core' et ses sous-dossiers
+1. **Continuer la refactorisation de la structure** (section 3.1) :
    - Migrer les composants existants vers la nouvelle structure
    - Mettre à jour les imports dans tous les fichiers
    - Assurer la compatibilité avec le code existant
 
-2. **Implémentation du store Redux** (section 3.2) :
-   - Installer les dépendances nécessaires
+2. **Continuer l'implémentation du store Redux** (section 3.2) :
    - Implémenter les slices Redux pour chaque domaine
    - Configurer le middleware et les enhancers
-   - Mettre en place les sélecteurs optimisés
+   - Mettre en place les sélecteurs optimisés avec reselect
 
-3. **Implémentation du système d'actions** (section 3.3) :
+3. **Commencer l'implémentation du système d'actions** (section 3.3) :
    - Implémenter le système de plugins pour les actions
    - Créer le registre central des actions
    - Développer les mécanismes de dispatch et d'exécution
-   - Intégrer avec le système d'historique
-
-4. **Implémentation des hooks et de l'API publique** (section 3.4) :
-   - Implémenter les hooks d'enregistrement
-   - Créer les hooks d'initialisation
-   - Développer les hooks d'accès aux données
-   - Documenter l'API publique
+   - Intégrer avec le système d'historique (undo/redo)
 
 ## Points à discuter
 
-- Confirmation de l'approche adoptée pour la conception des hooks
-- Priorités pour la phase d'implémentation
-- Besoin éventuel de dépendances supplémentaires pour l'implémentation 
+- Approche pour migrer les composants existants vers la nouvelle structure
+- Stratégie pour assurer la compatibilité avec le code existant
+- Priorités pour l'implémentation des slices Redux 
