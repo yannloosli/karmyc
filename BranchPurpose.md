@@ -15,7 +15,8 @@ Le système est actuellement composé des éléments suivants :
 - [ ] `util` - Fonctions utilitaires (partiellement)
 - [ ] `history` - Gestion de l'historique
 - [ ] `listener` - Système d'écoute d'événements
-- [ ] `clipper.js` - Utilitaire de découpage (à confirmer)
+
+Le but est de les rassembler sous la forme d'un composant unique.
 
 ## Informations complémentaires
 
@@ -30,7 +31,7 @@ Le système est actuellement composé des éléments suivants :
 - **Compatibilité React** : Maintenir la compatibilité avec React 16.12.0 pour cette phase, avec objectif de migration vers React 19 ultérieurement
 - **Intégration** : Concevoir une architecture agnostique avec des hooks pour faciliter l'intégration future avec d'autres modules
 
-### Continuité entre les sessions
+### Continuité entre les sessions (Instructions pour l'IA)
 
 Pour assurer une reprise efficace du travail entre les sessions, les opérations suivantes doivent être effectuées :
 
@@ -40,7 +41,7 @@ Pour assurer une reprise efficace du travail entre les sessions, les opérations
 - [ ] Identifier clairement les points bloquants ou questions en suspens
 - [ ] Proposer un commit d'étape si une partie significative du travail a été réalisée
 - [ ] Sauvegarder tous les documents de travail en cours
-- [ ] Mettre à jour AgentFeedback.md avec les observations et recommandations
+
 
 #### En début de session
 - [ ] Examiner l'état actuel du projet (fichiers modifiés, structure)
@@ -48,9 +49,8 @@ Pour assurer une reprise efficace du travail entre les sessions, les opérations
 - [ ] Réviser les points bloquants identifiés lors de la session précédente
 - [ ] Établir les objectifs de la session actuelle
 - [ ] Vérifier les dépendances installées et l'état de l'environnement de développement
-- [ ] Consulter OperatorFeedback.md pour les retours de l'opérateur
 
-#### Informations à fournir en début de session
+#### Informations à fournir en début de session (si elles ne sont pas fournies, les demander)
 Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assistant IA les éléments suivants au début de chaque session :
 
 - [ ] **État d'avancement** : Résumé des dernières tâches accomplies et mise à jour des cases cochées dans ce document
@@ -65,19 +65,17 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [ ] Maintenir un journal des modifications dans un fichier CHANGELOG.md
 - [ ] Mettre à jour ce document de feuille de route en cochant les tâches terminées
 - [ ] Documenter les problèmes rencontrés et leurs solutions dans un fichier TROUBLESHOOTING.md
-- [ ] Consigner les retours de l'opérateur dans OperatorFeedback.md
-- [ ] Enregistrer les observations et suggestions de l'agent IA dans AgentFeedback.md
+
 
 ## Feuille de route détaillée
 
 ### 1. Analyse approfondie de l'existant
 
 #### 1.1 Analyse de la structure actuelle
-- [ ] Examiner en détail les dossiers identifiés
-- [ ] Documenter les dépendances entre ces dossiers
-- [ ] Identifier les interfaces et types partagés
-- [ ] Analyser le fichier clipper.d.ts et déterminer son rôle exact
-- [ ] **Documenter les résultats de l'analyse dans un document technique initial**
+- [x] Examiner en détail les dossiers identifiés
+- [x] Documenter les dépendances entre ces dossiers
+- [x] Identifier les interfaces et types partagés
+- [x] **Documenter les résultats de l'analyse dans un document technique initial**
 
 #### 1.2 Analyse du flux de données
 - [ ] Cartographier le flux de données entre les composants
@@ -233,5 +231,3 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - **BranchPurpose.md** : Feuille de route principale et suivi des tâches
 - **CHANGELOG.md** : Journal des modifications apportées au projet
 - **TROUBLESHOOTING.md** : Documentation des problèmes rencontrés et leurs solutions
-- **OperatorFeedback.md** : Retours et observations de l'opérateur humain
-- **AgentFeedback.md** : Analyses et suggestions de l'agent IA
