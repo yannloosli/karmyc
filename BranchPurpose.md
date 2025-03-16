@@ -109,11 +109,11 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] **Documenter l'API du système d'actions avec exemples d'utilisation**
 
 #### 2.4 API de hooks
-- [ ] Concevoir les hooks pour l'enregistrement des types de zones
-- [ ] Créer les hooks pour l'enregistrement des actions
-- [ ] Développer les hooks pour les actions de menu contextuel
-- [ ] Définir un hook d'initialisation avec configuration personnalisable
-- [ ] **Créer une documentation de référence pour chaque hook avec exemples**
+- [x] Concevoir les hooks pour l'enregistrement des types de zones
+- [x] Créer les hooks pour l'enregistrement des actions
+- [x] Développer les hooks pour les actions de menu contextuel
+- [x] Définir un hook d'initialisation avec configuration personnalisable
+- [x] **Créer une documentation de référence pour chaque hook avec exemples**
 
 ### 3. Implémentation
 

@@ -32,6 +32,21 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 
 <!-- Les entrées seront ajoutées ici au fur et à mesure du projet -->
 
+## Conception de l'API de hooks - 2024-04-23
+
+### Ajouts
+- Création du document HooksAPIDesign.md détaillant la conception de l'API de hooks
+- Conception des hooks d'enregistrement des types de zones (`useRegisterAreaType`, `useAreaTypes`)
+- Conception des hooks d'enregistrement des actions (`useRegisterAction`, `useRegisterActionValidator`)
+- Conception des hooks pour les menus contextuels (`useContextMenu`, `useRegisterContextMenuAction`)
+- Conception des hooks d'initialisation (`useLayoutCore`, `useLayoutCoreProvider`)
+- Conception des hooks d'accès aux données (`useAreaState`, `useAreaLayout`)
+- Ajout d'exemples d'utilisation pour chaque catégorie de hooks
+- Documentation des considérations de performance pour les hooks
+
+### Modifications
+- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 2.4
+
 ## Initialisation - 2024-04-10
 
 ### Ajouts
