@@ -421,72 +421,307 @@ interface RequestActionParams {
 }
 ```
 
-## 4. Relations et dépendances entre les composants
+## 4. Analyse du flux de données
 
-### 4.1 Diagramme des dépendances
+### 4.1 Vue d'ensemble du flux de données
+
+Le flux de données dans l'application suit principalement le modèle Redux avec quelques extensions personnalisées pour gérer des fonctionnalités spécifiques comme l'historique, les opérations complexes et les différences visuelles.
 
 ```mermaid
 graph TD
-    A[area] -->|utilise| B[state]
-    C[contextMenu] -->|utilise| B
-    D[project] -->|utilise| B
-    E[toolbar] -->|utilise| B
-    F[listener] -->|interagit avec| B
-    B -->|utilise| G[diff]
-    F -->|utilise| G
-    A -->|enregistre écouteurs| F
-    C -->|enregistre écouteurs| F
-    D -->|enregistre écouteurs| F
-    E -->|enregistre écouteurs| F
+    U[Utilisateur] -->|Interaction| C[Composants UI]
+    C -->|requestAction| L[Système d'écoute]
+    L -->|createOperation| O[Opération]
+    O -->|add actions| O
+    O -->|addDiff| O
+    O -->|submit| S[Store Redux]
+    S -->|dispatch| R[Reducers]
+    R -->|update| S
+    S -->|state changes| C
+    O -->|performDiff| D[Système de différences]
+    D -->|visual updates| C
 ```
 
-### 4.2 Flux de données
+### 4.2 Points d'entrée et de sortie des données
+
+#### 4.2.1 Points d'entrée
+
+1. **Interactions utilisateur** : Les interactions utilisateur (clics, glisser-déposer, raccourcis clavier) sont capturées par les composants React et déclenchent des actions via le système `requestAction`.
+
+2. **Système d'écoute d'événements** : Le module `listener` capture les événements DOM et les transforme en actions Redux via `requestAction.ts`.
+
+3. **Opérations complexes** : Les opérations complexes sont initiées via `createOperation` qui permet de regrouper plusieurs actions et différences.
 
 ```mermaid
 sequenceDiagram
     participant U as Utilisateur
     participant C as Composant UI
     participant L as Listener
-    participant O as Operation
-    participant S as Store
-    participant D as Diff
+    participant R as requestAction
     
-    U->>C: Interaction
-    C->>L: Événement
-    L->>O: requestAction
-    O->>O: add(action)
-    O->>O: addDiff(diffFn)
-    O->>S: dispatch(actions)
-    O->>D: performDiff(diffFn)
-    S-->>C: Mise à jour de l'état
-    D-->>C: Mise à jour visuelle
+    U->>C: Interaction (clic, glisser-déposer)
+    C->>R: requestAction(options, callback)
+    R->>L: addListener(event, handler)
+    L-->>R: événement déclenché
+    R->>C: callback avec params
 ```
 
-### 4.3 Description des dépendances principales
+#### 4.2.2 Points de sortie
 
-1. **Relation entre `area` et `state`** :
-   - Les zones utilisent le système d'opérations pour effectuer des actions complexes
-   - L'état des zones est géré dans le store Redux central via `areaReducer`
+1. **Rendu des composants** : Les changements d'état sont reflétés dans l'interface utilisateur via le système de rendu de React.
 
-2. **Relation entre `contextMenu` et `state`** :
-   - Les menus contextuels utilisent `connectActionState` pour se connecter au store
-   - L'état des menus contextuels est géré dans le store Redux central
+2. **Système de différences** : Les différences visuelles sont propagées aux composants via le système `diffListener`.
 
-3. **Relation entre `project` et `state`** :
-   - Les projets utilisent le système d'historique pour la gestion des changements
-   - L'état des projets est géré dans le store Redux central
+3. **Persistance** : L'état est persisté via le système `saveState`.
 
-4. **Relation entre `diff` et `state/history`** :
-   - Le système de différences est utilisé par le système d'historique pour enregistrer les changements
-   - Les différences sont appliquées lors des opérations d'annulation/rétablissement
+```mermaid
+sequenceDiagram
+    participant S as Store
+    participant C as Composants
+    participant D as Système de différences
+    participant P as Persistance
+    
+    S->>C: Mise à jour de l'état via connectActionState
+    S->>D: Propagation des différences
+    D->>C: Mise à jour visuelle
+    S->>P: Sauvegarde de l'état
+```
 
-5. **Relation entre `listener` et `state`** :
-   - Le système d'écoute d'événements interagit avec le store pour dispatcher des actions
-   - `requestAction.ts` fournit une interface pour effectuer des actions complexes
+### 4.3 Modèles d'état (State Patterns)
 
-6. **Relation entre `toolbar` et `state`** :
-   - L'état des outils est géré dans le store Redux central
-   - Les outils peuvent déclencher des actions qui modifient d'autres parties de l'état
+#### 4.3.1 Structure à deux niveaux
+
+L'application utilise une structure d'état à deux niveaux :
+
+1. **ApplicationState** : L'état global de l'application, incluant l'historique.
+2. **ActionState** : L'état actuel sans l'historique, utilisé pour les opérations courantes.
+
+```mermaid
+classDiagram
+    class ApplicationState {
+        area: ActionBasedState~AreaReducerState~
+        compositionState: HistoryState~CompositionState~
+        contextMenu: ActionBasedState~ContextMenuState~
+        project: HistoryState~ProjectState~
+        tool: ActionBasedState~ToolState~
+        ...autres états
+    }
+    
+    class ActionState {
+        area: AreaReducerState
+        compositionState: CompositionState
+        contextMenu: ContextMenuState
+        project: ProjectState
+        tool: ToolState
+        ...autres états
+    }
+    
+    ApplicationState --> ActionState : contient
+```
+
+#### 4.3.2 Gestion de l'historique
+
+L'historique est géré via deux types d'états :
+
+1. **ActionBasedState** : État basé sur les actions, sans historique complet.
+2. **HistoryState** : État avec historique complet, permettant l'annulation/rétablissement.
+
+```mermaid
+classDiagram
+    class HistoryState~S~ {
+        type: "normal" | "selection"
+        list: Array~StateEntry~
+        index: number
+        indexDirection: -1 | 1
+        action: null | ActionEntry
+    }
+    
+    class StateEntry {
+        state: S
+        name: string
+        modifiedRelated: boolean
+        allowIndexShift: boolean
+        diffs: Diff[]
+    }
+    
+    class ActionBasedState~S~ {
+        state: S
+        actions: Action[]
+    }
+    
+    HistoryState --> StateEntry : contient
+```
+
+### 4.4 Flux de données pour les zones (Areas)
+
+Le module `area` est central dans l'architecture et illustre bien le flux de données de l'application.
+
+#### 4.4.1 Structure des zones
+
+```mermaid
+classDiagram
+    class AreaReducerState {
+        _id: number
+        rootId: string
+        joinPreview: JoinPreview | null
+        layout: Map~string, AreaLayout | AreaRowLayout~
+        areas: Map~string, Area~
+        areaToOpen: AreaToOpen | null
+    }
+    
+    class Area {
+        id: string
+        type: AreaType
+        state: AreaState~any~
+        size: number
+    }
+    
+    class AreaRowLayout {
+        id: string
+        type: "area_row"
+        orientation: "horizontal" | "vertical"
+        areas: Array~AreaItem~
+    }
+    
+    class AreaItem {
+        id: string
+        size: number
+    }
+    
+    class AreaLayout {
+        id: string
+        type: "area"
+    }
+    
+    AreaReducerState --> Area : contient
+    AreaReducerState --> AreaRowLayout : contient
+    AreaReducerState --> AreaLayout : contient
+    AreaRowLayout --> AreaItem : contient
+```
+
+#### 4.4.2 Flux de données pour les opérations sur les zones
+
+```mermaid
+sequenceDiagram
+    participant C as Composant UI
+    participant O as areaOperations
+    participant A as areaActions
+    participant R as areaReducer
+    participant D as diffFactory
+    
+    C->>O: dragArea(op, area, targetId, placement)
+    O->>A: setFields({areaToOpen: null})
+    O->>A: wrapAreaInRow(targetId, orientation)
+    O->>A: insertAreaIntoRow(newRowId, area, index)
+    O->>A: setRowSizes(newRowId, [1, 1])
+    O->>D: addDiff(diff.resizeAreas())
+    A->>R: reducer traite les actions
+    R-->>C: nouvel état
+    D-->>C: mise à jour visuelle
+```
+
+### 4.5 Flux de données pour les actions et opérations
+
+Le système d'actions et d'opérations est au cœur du flux de données de l'application.
+
+#### 4.5.1 Cycle de vie d'une action
+
+```mermaid
+sequenceDiagram
+    participant C as Composant
+    participant R as requestAction
+    participant O as Operation
+    participant S as Store
+    participant H as Historique
+    participant D as Diff
+    
+    C->>R: requestAction(options, callback)
+    R->>O: createOperation(params)
+    R->>C: callback(params)
+    C->>O: add(action1, action2, ...)
+    C->>O: addDiff(diffFn)
+    C->>O: submit()
+    O->>S: dispatch(actions)
+    S->>H: mise à jour de l'historique si nécessaire
+    O->>D: performDiff(diffFn)
+    S-->>C: nouvel état
+    D-->>C: mise à jour visuelle
+```
+
+#### 4.5.2 Flux pour les opérations complexes
+
+```mermaid
+flowchart TD
+    A[Composant UI] -->|requestAction| B[Système d'écoute]
+    B -->|createOperation| C[Opération]
+    C -->|add| D[Actions atomiques]
+    C -->|addDiff| E[Différences]
+    C -->|submit| F[Store Redux]
+    F -->|dispatch| G[Reducers]
+    G -->|update| H[ApplicationState]
+    H -->|getActionState| I[ActionState]
+    I -->|connectActionState| A
+    C -->|performDiff| J[Système de différences]
+    J -->|sendDiffsToSubscribers| A
+```
+
+### 4.6 Flux de données pour le système de différences
+
+Le système de différences permet de propager efficacement les changements visuels sans passer par le cycle complet de Redux.
+
+```mermaid
+sequenceDiagram
+    participant O as Operation
+    participant F as diffFactory
+    participant D as diffListener
+    participant C as Composants abonnés
+    
+    O->>F: factory.layer(layerId)
+    F-->>O: Diff object
+    O->>D: performDiff(diffFn)
+    D->>D: sendDiffsToSubscribers(diffs)
+    D->>C: callback(diff)
+    C->>C: Mise à jour visuelle
+```
+
+### 4.7 Analyse des modèles de communication
+
+#### 4.7.1 Communication directe vs indirecte
+
+L'application utilise principalement deux modèles de communication :
+
+1. **Communication via Redux** : Pour les changements d'état qui doivent être persistés et inclus dans l'historique.
+2. **Communication via le système de différences** : Pour les mises à jour visuelles rapides qui ne nécessitent pas de persistance.
+
+```mermaid
+graph TD
+    A[Composant source] -->|Redux| B[Store]
+    B -->|State| C[Composant cible]
+    A -->|Diff| D[diffListener]
+    D -->|Callback| C
+```
+
+#### 4.7.2 Modèle Publish-Subscribe
+
+Le système `diffListener` implémente un modèle publish-subscribe où les composants peuvent s'abonner à des types spécifiques de différences.
+
+```mermaid
+classDiagram
+    class DiffSubscriber {
+        id: string
+        callback: function
+        types: DiffType[]
+    }
+    
+    class DiffListener {
+        subscribers: DiffSubscriber[]
+        addSubscriber(callback, types): string
+        removeSubscriber(id): void
+        sendDiffsToSubscribers(diffs): void
+    }
+    
+    DiffListener --> DiffSubscriber : gère
+```
 
 ## 5. Points forts et limitations de l'architecture actuelle
 

@@ -41,3 +41,18 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 - Définition de la structure de documentation et du processus de travail
 - Établissement des procédures de continuité entre les sessions
 - Identification des composants à analyser dans la phase initiale
+
+## Analyse du flux de données - 2024-04-16
+
+### Ajouts
+- Ajout d'une section complète "Analyse du flux de données" dans TechnicalAnalysis.md
+- Création de diagrammes mermaid pour visualiser les flux de données
+- Documentation des points d'entrée et de sortie des données
+- Documentation des modèles d'état (state patterns)
+- Documentation des flux de données pour les zones (areas)
+- Documentation des flux de données pour les actions et opérations
+- Documentation du système de différences
+- Analyse des modèles de communication
+
+### Modifications
+- Mise à jour de BranchPurpose.md pour marquer la phase 1.2 comme terminée

@@ -78,11 +78,11 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] **Documenter les résultats de l'analyse dans un document technique initial**
 
 #### 1.2 Analyse du flux de données
-- [ ] Cartographier le flux de données entre les composants
-- [ ] Identifier les points d'entrée et de sortie des données
-- [ ] Documenter les modèles d'état actuels (state patterns)
-- [ ] Analyser comment les actions sont actuellement gérées
-- [ ] **Créer des diagrammes de flux de données et les inclure dans la documentation**
+- [x] Cartographier le flux de données entre les composants
+- [x] Identifier les points d'entrée et de sortie des données
+- [x] Documenter les modèles d'état actuels (state patterns)
+- [x] Analyser comment les actions sont actuellement gérées
+- [x] **Créer des diagrammes de flux de données et les inclure dans la documentation**
 
 #### 1.3 Analyse des performances
 - [ ] Identifier les goulots d'étranglement potentiels
