@@ -849,3 +849,336 @@ La prochaine étape selon la feuille de route est l'analyse du flux de données 
 5. Créer des diagrammes de flux de données
 
 Cette analyse permettra de mieux comprendre les interactions entre les composants et de concevoir une architecture plus cohérente et maintenable.
+
+## 4. Conception de la structure du dossier 'core'
+
+### 4.1 Structure proposée pour un composant bundlisable
+
+Pour permettre la distribution du composant 'core' via npm et assurer sa compatibilité avec différents systèmes de bundling, nous proposons la structure suivante :
+
+```
+src/
+└── core/
+    ├── index.ts                 # Point d'entrée principal (exports publics)
+    ├── types/                   # Types et interfaces partagés
+    │   ├── index.ts             # Export des types publics
+    │   ├── internal.ts          # Types internes (non exportés)
+    │   ├── area.ts              # Types liés aux zones
+    │   ├── store.ts             # Types liés au store
+    │   └── ...
+    ├── store/                   # Gestion de l'état global
+    │   ├── index.ts             # Export public du store
+    │   ├── slices/              # Slices Redux pour chaque domaine
+    │   │   ├── area.ts
+    │   │   ├── contextMenu.ts
+    │   │   ├── project.ts
+    │   │   └── ...
+    │   ├── middleware/          # Middleware Redux personnalisés
+    │   ├── enhancers/           # Enhancers Redux
+    │   └── serialization/       # Logique de sérialisation/désérialisation
+    ├── hooks/                   # Hooks React pour l'API publique
+    │   ├── index.ts             # Export des hooks publics
+    │   ├── useArea.ts           # Hook pour la gestion des zones
+    │   ├── useContextMenu.ts    # Hook pour les menus contextuels
+    │   ├── useProject.ts        # Hook pour la gestion des projets
+    │   └── ...
+    ├── actions/                 # Système d'actions modulaire
+    │   ├── index.ts             # Export des actions publiques
+    │   ├── registry.ts          # Registre central des actions
+    │   ├── types.ts             # Types d'actions
+    │   ├── validation.ts        # Validation des actions
+    │   └── plugins/             # Système de plugins pour les actions
+    ├── components/              # Composants React réutilisables
+    │   ├── index.ts             # Export des composants publics
+    │   ├── Area.tsx             # Composant de zone
+    │   ├── ContextMenu.tsx      # Composant de menu contextuel
+    │   └── ...
+    ├── utils/                   # Fonctions utilitaires
+    │   ├── index.ts             # Export des utilitaires publics
+    │   ├── history.ts           # Utilitaires pour l'historique
+    │   ├── diff.ts              # Utilitaires pour les différences
+    │   └── ...
+    ├── providers/               # Providers React pour le contexte
+    │   ├── index.ts             # Export des providers
+    │   ├── CoreProvider.tsx     # Provider principal
+    │   └── ...
+    └── constants/               # Constantes partagées
+        ├── index.ts             # Export des constantes publiques
+        └── ...
+```
+
+### 4.2 Justification des choix architecturaux
+
+#### 4.2.1 Structure orientée bundling
+
+Cette structure est conçue pour faciliter le bundling et la distribution via npm :
+
+1. **Point d'entrée unique** : Le fichier `index.ts` à la racine du dossier 'core' sert de point d'entrée unique, ce qui simplifie l'importation pour les utilisateurs.
+
+2. **Exports explicites** : Chaque sous-dossier contient son propre fichier `index.ts` qui exporte uniquement les éléments destinés à être publics, permettant un contrôle précis sur l'API exposée.
+
+3. **Séparation claire entre API publique et implémentation interne** : Les types, fonctions et composants sont clairement séparés entre ceux qui font partie de l'API publique et ceux qui sont internes.
+
+4. **Structure modulaire** : Chaque fonctionnalité est isolée dans son propre sous-dossier, ce qui facilite le tree-shaking lors du bundling.
+
+#### 4.2.2 Organisation des fonctionnalités
+
+La structure proposée organise les fonctionnalités de manière logique :
+
+1. **Store** : Centralise toute la logique de gestion d'état avec Redux-Toolkit, organisée en slices pour chaque domaine fonctionnel.
+
+2. **Hooks** : Fournit une API React moderne basée sur les hooks, facilitant l'intégration dans les applications React.
+
+3. **Actions** : Implémente un système d'actions modulaire avec un registre central et un mécanisme de plugins.
+
+4. **Components** : Contient les composants React réutilisables qui forment l'interface utilisateur du système de mise en page.
+
+5. **Providers** : Fournit les providers React nécessaires pour injecter le contexte et les fonctionnalités dans l'arbre de composants.
+
+#### 4.2.3 Avantages pour la distribution npm
+
+Cette structure présente plusieurs avantages pour la distribution via npm :
+
+1. **Tree-shaking efficace** : Les bundlers modernes (webpack, rollup, esbuild) pourront éliminer efficacement le code non utilisé grâce à la structure modulaire et aux exports explicites.
+
+2. **Compatibilité avec les différents formats de modules** : La structure permet de générer facilement des builds pour différents formats (ESM, CommonJS, UMD).
+
+3. **Types TypeScript intégrés** : L'organisation des types facilite la génération de déclarations TypeScript (.d.ts) pour une meilleure expérience développeur.
+
+4. **Versionnement sémantique** : La séparation claire entre API publique et implémentation interne facilite le respect du versionnement sémantique.
+
+5. **Documentation automatique** : La structure facilite la génération de documentation automatique (par exemple avec TypeDoc).
+
+### 4.3 Configuration du bundling
+
+Pour rendre le composant 'core' bundlisable et distribuable via npm, nous recommandons la configuration suivante :
+
+#### 4.3.1 Configuration de Rollup
+
+Rollup est particulièrement adapté pour les bibliothèques en raison de son excellent support du tree-shaking. Voici une configuration de base pour bundler le composant 'core' :
+
+```javascript
+// rollup.config.js
+import typescript from '@rollup/plugin-typescript';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import { terser } from 'rollup-plugin-terser';
+import dts from 'rollup-plugin-dts';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+
+const packageJson = require('./package.json');
+
+export default [
+  // Configuration pour le code JavaScript
+  {
+    input: 'src/core/index.ts',
+    output: [
+      {
+        file: packageJson.main,
+        format: 'cjs',
+        sourcemap: true,
+      },
+      {
+        file: packageJson.module,
+        format: 'esm',
+        sourcemap: true,
+      },
+    ],
+    plugins: [
+      peerDepsExternal(),
+      resolve(),
+      commonjs(),
+      typescript({ tsconfig: './tsconfig.json' }),
+      terser(),
+    ],
+    external: ['react', 'react-dom', '@reduxjs/toolkit', 'redux'],
+  },
+  // Configuration pour les fichiers de déclaration TypeScript
+  {
+    input: 'dist/esm/types/core/index.d.ts',
+    output: [{ file: 'dist/index.d.ts', format: 'esm' }],
+    plugins: [dts()],
+  },
+];
+```
+
+#### 4.3.2 Configuration du package.json
+
+Le fichier `package.json` doit être configuré pour prendre en charge différents environnements et systèmes de modules :
+
+```json
+{
+  "name": "animation-editor-core",
+  "version": "0.1.0",
+  "description": "Core layout system for animation editor",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rollup -c",
+    "lint": "eslint src/core --ext .ts,.tsx",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
+    "@reduxjs/toolkit": "^1.9.0",
+    "redux": "^4.2.0"
+  },
+  "devDependencies": {
+    // Dépendances de développement nécessaires
+  }
+}
+```
+
+#### 4.3.3 Configuration de TypeScript
+
+Le fichier `tsconfig.json` doit être configuré pour générer des déclarations de types et prendre en charge les différents formats de modules :
+
+```json
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "esnext",
+    "lib": ["dom", "esnext"],
+    "importHelpers": true,
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": "./src",
+    "outDir": "./dist/esm",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
+    "jsx": "react",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/core"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+}
+```
+
+### 4.4 Conventions de nommage et bonnes pratiques
+
+Pour assurer la cohérence et la maintenabilité du code, nous recommandons les conventions suivantes :
+
+#### 4.4.1 Conventions de nommage
+
+- **Fichiers** : 
+  - Utiliser le PascalCase pour les composants React (ex: `AreaComponent.tsx`)
+  - Utiliser le camelCase pour les hooks, utilitaires et autres fichiers (ex: `useArea.ts`, `areaUtils.ts`)
+  - Utiliser le kebab-case pour les fichiers de configuration (ex: `rollup-config.js`)
+
+- **Exports** :
+  - Utiliser des exports nommés pour la plupart des fonctionnalités
+  - Réserver les exports par défaut pour les composants React principaux
+  - Préfixer les hooks avec `use` (ex: `useArea`, `useContextMenu`)
+  - Préfixer les types avec `T` et les interfaces avec `I` (ex: `TAreaProps`, `IAreaConfig`)
+
+- **Constantes** :
+  - Utiliser le SNAKE_CASE pour les constantes (ex: `DEFAULT_AREA_WIDTH`)
+
+#### 4.4.2 Documentation du code
+
+- Documenter toutes les fonctions, classes et interfaces publiques avec des commentaires JSDoc
+- Inclure des exemples d'utilisation dans la documentation des hooks et composants principaux
+- Documenter les paramètres génériques et les types de retour
+
+#### 4.4.3 Tests
+
+- Créer des tests unitaires pour chaque fonctionnalité
+- Organiser les tests en miroir de la structure du code source
+- Utiliser des snapshots pour les tests de composants UI
+- Tester les cas limites et les cas d'erreur
+
+### 4.5 Interfaces publiques vs. privées
+
+Pour distinguer clairement les interfaces publiques des interfaces privées :
+
+#### 4.5.1 Interfaces publiques
+
+Les interfaces publiques constituent l'API que les utilisateurs de la bibliothèque utiliseront :
+
+- Hooks React (ex: `useArea`, `useContextMenu`)
+- Composants React (ex: `AreaComponent`, `ContextMenuComponent`)
+- Types et interfaces nécessaires pour utiliser l'API (ex: `AreaProps`, `ContextMenuConfig`)
+- Fonctions utilitaires destinées à être utilisées par les consommateurs
+
+Ces interfaces doivent être :
+- Stables et suivre le versionnement sémantique
+- Bien documentées avec des exemples d'utilisation
+- Exportées explicitement depuis les fichiers `index.ts`
+
+#### 4.5.2 Interfaces privées
+
+Les interfaces privées sont utilisées en interne et ne doivent pas être utilisées directement par les consommateurs :
+
+- Implémentations internes des hooks et composants
+- Types et interfaces utilisés uniquement en interne
+- Fonctions utilitaires internes
+- Logique de gestion d'état interne
+
+Ces interfaces doivent être :
+- Non exportées depuis les fichiers `index.ts`
+- Potentiellement préfixées avec `_` pour indiquer leur nature privée
+- Documentées pour les développeurs de la bibliothèque, mais pas nécessairement pour les utilisateurs
+
+### 4.6 Stratégie d'exportation
+
+Pour contrôler précisément ce qui est exposé aux utilisateurs de la bibliothèque, nous recommandons la stratégie d'exportation suivante :
+
+#### 4.6.1 Fichier index.ts principal
+
+Le fichier `src/core/index.ts` est le point d'entrée principal et ne doit exporter que l'API publique :
+
+```typescript
+// src/core/index.ts
+
+// Exporter les hooks publics
+export * from './hooks';
+
+// Exporter les composants publics
+export * from './components';
+
+// Exporter les types publics
+export * from './types';
+
+// Exporter les constantes publiques
+export * from './constants';
+
+// Exporter le provider principal
+export { CoreProvider } from './providers';
+
+// Exporter la fonction d'initialisation
+export { initCore } from './init';
+```
+
+#### 4.6.2 Fichiers index.ts des sous-dossiers
+
+Chaque sous-dossier doit avoir son propre fichier `index.ts` qui n'exporte que les éléments destinés à être publics :
+
+```typescript
+// src/core/hooks/index.ts
+
+// Exporter les hooks publics
+export { useArea } from './useArea';
+export { useContextMenu } from './useContextMenu';
+export { useProject } from './useProject';
+// Ne pas exporter les hooks internes comme _useAreaInternal
+```
+
+Cette approche permet un contrôle précis sur l'API publique et facilite le tree-shaking.

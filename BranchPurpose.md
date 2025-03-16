@@ -84,20 +84,14 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] Analyser comment les actions sont actuellement gérées
 - [x] **Créer des diagrammes de flux de données et les inclure dans la documentation**
 
-#### 1.3 Analyse des performances
-- [ ] Identifier les goulots d'étranglement potentiels
-- [ ] Évaluer l'efficacité de la structure actuelle
-- [ ] Mesurer les performances de rendu et de manipulation
-- [ ] **Documenter les métriques de performance de référence pour comparaison future**
-
 ### 2. Conception de la nouvelle architecture
 
 #### 2.1 Structure du dossier 'core'
-- [ ] Définir une hiérarchie claire pour le dossier 'core'
-- [ ] Créer un schéma d'organisation des sous-dossiers
-- [ ] Établir des conventions de nommage cohérentes
-- [ ] Définir les interfaces publiques vs. privées
-- [ ] **Documenter la structure proposée avec justifications des choix architecturaux**
+- [x] Définir une hiérarchie claire pour le dossier 'core'
+- [x] Créer un schéma d'organisation des sous-dossiers
+- [x] Établir des conventions de nommage cohérentes
+- [x] Définir les interfaces publiques vs. privées
+- [x] **Documenter la structure proposée avec justifications des choix architecturaux**
 
 #### 2.2 Conception du store Redux
 - [ ] Définir la structure du store Redux-Toolkit
@@ -157,7 +151,6 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [ ] Créer des tests pour chaque composant du core
 - [ ] Tester les hooks et l'API publique
 - [ ] Vérifier la compatibilité avec le code existant
-- [ ] Tester les performances
 - [ ] **Documenter la couverture des tests et les résultats**
 
 #### 4.2 Documentation finale
@@ -214,7 +207,6 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [ ] Conserver le dossier ORIGINAL comme référence pour la logique
 - [ ] Respecter la structure TypeScript existante
 - [ ] Assurer la compatibilité avec les bibliothèques existantes (pixi.js, etc.)
-- [ ] Maintenir les performances actuelles ou les améliorer
 - [ ] **Documenter chaque étape du développement en temps réel**
 
 ## Livrables attendus

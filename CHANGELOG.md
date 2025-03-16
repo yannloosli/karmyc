@@ -56,3 +56,17 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 
 ### Modifications
 - Mise à jour de BranchPurpose.md pour marquer la phase 1.2 comme terminée
+
+## Conception de la structure 'core' - 2024-04-17
+
+### Ajouts
+- Définition d'une structure complète pour le dossier 'core' orientée bundling et distribution npm
+- Création d'un schéma d'organisation des sous-dossiers avec justifications
+- Établissement des conventions de nommage pour les fichiers et exports
+- Définition claire des interfaces publiques vs. privées
+- Documentation de la stratégie d'exportation pour contrôler l'API publique
+- Ajout des configurations recommandées pour Rollup, package.json et TypeScript
+
+### Modifications
+- Mise à jour de TechnicalAnalysis.md avec une nouvelle section sur la conception du dossier 'core'
+- Mise à jour de BranchPurpose.md pour marquer les tâches de la section 2.1 comme terminées
