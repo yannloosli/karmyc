@@ -94,12 +94,12 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] **Documenter la structure proposée avec justifications des choix architecturaux**
 
 #### 2.2 Conception du store Redux
-- [ ] Définir la structure du store Redux-Toolkit
-- [ ] Concevoir les slices pour chaque domaine fonctionnel
-- [ ] Intégrer redux-undo pour la gestion de l'historique des actions
-- [ ] Configurer redux-persist pour la persistance des données
-- [ ] Définir une stratégie de sérialisation/désérialisation
-- [ ] **Créer un document de conception détaillé du store avec diagrammes**
+- [x] Définir la structure du store Redux-Toolkit
+- [x] Concevoir les slices pour chaque domaine fonctionnel
+- [x] Intégrer redux-undo pour la gestion de l'historique des actions
+- [x] Configurer redux-persist pour la persistance des données
+- [x] Définir une stratégie de sérialisation/désérialisation
+- [x] **Créer un document de conception détaillé du store avec diagrammes**
 
 #### 2.3 Système d'actions modulaire
 - [ ] Concevoir une architecture de plugins pour les actions

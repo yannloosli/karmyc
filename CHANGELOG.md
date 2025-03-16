@@ -70,3 +70,33 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 ### Modifications
 - Mise à jour de TechnicalAnalysis.md avec une nouvelle section sur la conception du dossier 'core'
 - Mise à jour de BranchPurpose.md pour marquer les tâches de la section 2.1 comme terminées
+
+## Conception du store Redux-Toolkit - 2024-04-20
+
+### Ajouts
+- Création du document StoreReduxAnalysis.md analysant la structure actuelle du store Redux
+- Création du document StoreReduxDesign.md détaillant la conception du nouveau store avec Redux-Toolkit
+- Conception détaillée de la structure des slices Redux pour chaque domaine fonctionnel
+- Conception du système d'historique basé sur redux-undo
+- Conception du système d'actions modulaire avec architecture de plugins
+- Définition des hooks personnalisés pour faciliter l'accès au store
+- Création de diagrammes pour visualiser l'architecture du store
+- Élaboration d'une stratégie de migration progressive
+
+### Dépendances
+- Identification du besoin d'ajouter @reduxjs/toolkit et redux-undo comme dépendances
+
+## Mise à jour de la conception du store Redux-Toolkit - 2024-04-21
+
+### Ajouts
+- Mise à jour du document StoreReduxDesign.md avec une structure alignée sur l'analyse technique
+- Intégration de la structure de dossiers proposée dans la section 4.1 de TechnicalAnalysis.md
+- Conception détaillée du point d'entrée principal pour le composant bundlisable
+- Définition des conventions de nommage pour les types (préfixes T et I)
+- Ajout d'un provider React principal pour faciliter l'intégration
+- Conception d'un système d'exports explicites pour contrôler l'API publique
+
+### Modifications
+- Réorganisation de la structure des dossiers pour s'aligner avec les recommandations de l'analyse technique
+- Amélioration de la séparation entre API publique et implémentation interne
+- Mise à jour des exemples de code pour refléter la nouvelle structure
