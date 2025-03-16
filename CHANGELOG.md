@@ -100,3 +100,17 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 - Réorganisation de la structure des dossiers pour s'aligner avec les recommandations de l'analyse technique
 - Amélioration de la séparation entre API publique et implémentation interne
 - Mise à jour des exemples de code pour refléter la nouvelle structure
+
+## Conception du système d'actions modulaire - 2024-04-22
+
+### Ajouts
+- Création du document ActionSystemDesign.md détaillant la conception du système d'actions modulaire
+- Conception d'une architecture de plugins pour les actions avec système de priorité
+- Définition des interfaces pour l'enregistrement des actions et des validateurs
+- Conception d'un système de validation des actions avec mécanismes personnalisables
+- Création de hooks React pour faciliter l'enregistrement des plugins et validateurs
+- Conception de l'intégration avec le système d'historique
+- Documentation des exemples d'utilisation et des considérations de performance
+
+### Modifications
+- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 2.3

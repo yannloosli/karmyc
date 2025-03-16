@@ -102,11 +102,11 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] **Créer un document de conception détaillé du store avec diagrammes**
 
 #### 2.3 Système d'actions modulaire
-- [ ] Concevoir une architecture de plugins pour les actions
-- [ ] Définir les interfaces pour l'enregistrement des actions
-- [ ] Créer un système de priorité pour les actions
-- [ ] Établir un mécanisme de validation des actions
-- [ ] **Documenter l'API du système d'actions avec exemples d'utilisation**
+- [x] Concevoir une architecture de plugins pour les actions
+- [x] Définir les interfaces pour l'enregistrement des actions
+- [x] Créer un système de priorité pour les actions
+- [x] Établir un mécanisme de validation des actions
+- [x] **Documenter l'API du système d'actions avec exemples d'utilisation**
 
 #### 2.4 API de hooks
 - [ ] Concevoir les hooks pour l'enregistrement des types de zones
