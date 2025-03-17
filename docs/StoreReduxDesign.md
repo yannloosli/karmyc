@@ -27,10 +27,12 @@ src/
     ├── store/                   # Gestion de l'état global
     │   ├── index.ts             # Export public du store
     │   ├── slices/              # Slices Redux pour chaque domaine
-    │   │   ├── area.ts
-    │   │   ├── contextMenu.ts
-    │   │   ├── project.ts
-    │   │   └── ...
+    │   │   ├── area.ts          # Gestion des zones
+    │   │   ├── contextMenu.ts   # Gestion des menus contextuels
+    │   │   ├── project.ts       # Gestion des projets
+    │   │   ├── state.ts         # Gestion des transitions d'état
+    │   │   ├── diff.ts          # Gestion des différences d'état
+    │   │   └── toolbar.ts       # Gestion de la barre d'outils
     │   ├── middleware/          # Middleware Redux personnalisés
     │   │   ├── index.ts
     │   │   ├── history.ts       # Middleware pour l'historique
@@ -154,7 +156,121 @@ export const { addArea, removeArea, updateArea, setActiveArea } = areaSlice.acti
 export default areaSlice.reducer;
 ```
 
-### 2.3 Sélecteurs
+### 2.3 Exemples des autres Slices
+
+#### 2.3.1 Slice de Transition d'État
+
+```typescript
+// src/core/store/slices/state.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TStateTransition, TStateState } from '../../types/state';
+
+const initialState: TStateState = {
+  states: {},
+  transitions: [],
+};
+
+export const stateSlice = createSlice({
+  name: 'state',
+  initialState,
+  reducers: {
+    transitionState: (state, action: PayloadAction<TStateTransition>) => {
+      const { id, transition, data } = action.payload;
+      if (state.states[id]) {
+        state.states[id] = {
+          ...state.states[id],
+          currentState: transition,
+          lastTransition: {
+            to: transition,
+            data,
+            timestamp: new Date().toISOString(),
+          },
+        };
+      }
+    },
+    registerTransition: (state, action: PayloadAction<{
+      from: string;
+      to: string;
+      condition: (state: any) => boolean;
+      action: (state: any, data: any) => void;
+    }>) => {
+      state.transitions.push(action.payload);
+    },
+  },
+});
+
+export const { transitionState, registerTransition } = stateSlice.actions;
+export default stateSlice.reducer;
+```
+
+#### 2.3.2 Slice de Différences
+
+```typescript
+// src/core/store/slices/diff.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TDiff, TDiffState } from '../../types/diff';
+
+const initialState: TDiffState = {
+  diffs: [],
+  currentDiffIndex: -1,
+};
+
+export const diffSlice = createSlice({
+  name: 'diff',
+  initialState,
+  reducers: {
+    addDiff: (state, action: PayloadAction<TDiff>) => {
+      state.diffs.push(action.payload);
+      state.currentDiffIndex = state.diffs.length - 1;
+    },
+    setCurrentDiff: (state, action: PayloadAction<number>) => {
+      state.currentDiffIndex = action.payload;
+    },
+    clearDiffs: (state) => {
+      state.diffs = [];
+      state.currentDiffIndex = -1;
+    },
+  },
+});
+
+export const { addDiff, setCurrentDiff, clearDiffs } = diffSlice.actions;
+export default diffSlice.reducer;
+```
+
+#### 2.3.3 Slice de Barre d'Outils
+
+```typescript
+// src/core/store/slices/toolbar.ts
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TToolbarState, TToolbarAction } from '../../types/toolbar';
+
+const initialState: TToolbarState = {
+  actions: [],
+  activeAction: null,
+  isVisible: true,
+};
+
+export const toolbarSlice = createSlice({
+  name: 'toolbar',
+  initialState,
+  reducers: {
+    addToolbarAction: (state, action: PayloadAction<TToolbarAction>) => {
+      state.actions.push(action.payload);
+    },
+    setActiveAction: (state, action: PayloadAction<string | null>) => {
+      state.activeAction = action.payload;
+    },
+    toggleToolbar: (state) => {
+      state.isVisible = !state.isVisible;
+    },
+  },
+});
+
+export const { addToolbarAction, setActiveAction, toggleToolbar } = toolbarSlice.actions;
+export default toolbarSlice.reducer;
+```
+
+### 2.4 Sélecteurs
 
 Les sélecteurs sont définis dans le même fichier que le slice ou dans un fichier séparé pour les sélecteurs plus complexes :
 

@@ -1,6 +1,7 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import {
     IActionPlugin,
+    IActionRegistry,
     IActionRegistryOptions,
     IActionValidationResult,
     TActionValidator
@@ -10,7 +11,7 @@ import {
  * Registre d'actions
  * Gère l'enregistrement et l'exécution des plugins d'actions
  */
-class ActionRegistry {
+class ActionRegistry implements IActionRegistry {
   private plugins: IActionPlugin[] = [];
   private validators: Record<string, TActionValidator[]> = {};
   private options: IActionRegistryOptions;
@@ -29,7 +30,7 @@ class ActionRegistry {
   /**
    * Enregistre un plugin d'action
    */
-  registerPlugin<T extends AnyAction>(plugin: IActionPlugin<T>): void {
+  registerPlugin(plugin: IActionPlugin): void {
     this.plugins.push(plugin);
     // Trier par priorité (priorité plus élevée = exécuté en premier)
     this.plugins.sort((a, b) => b.priority - a.priority);
@@ -53,11 +54,11 @@ class ActionRegistry {
   /**
    * Enregistre un validateur pour un type d'action spécifique
    */
-  registerValidator<T extends AnyAction>(actionType: string, validator: TActionValidator<T>): void {
+  registerValidator(actionType: string, validator: TActionValidator): void {
     if (!this.validators[actionType]) {
       this.validators[actionType] = [];
     }
-    this.validators[actionType].push(validator as TActionValidator);
+    this.validators[actionType].push(validator);
     
     if (this.options.enableLogging) {
       console.log(`Validateur enregistré pour le type d'action: ${actionType}`);

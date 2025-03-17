@@ -1,4 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
+import { StateWithHistory } from 'redux-undo';
 
 /**
  * Type de base pour une zone
@@ -82,4 +83,18 @@ export interface IAreaKeyboardShortcut {
   payload?: any;
 }
 
-export type TAreaKeyboardShortcuts = IAreaKeyboardShortcut[]; 
+export type TAreaKeyboardShortcuts = IAreaKeyboardShortcut[];
+
+export interface Area {
+  id: string;
+  name: string;
+  lastModified: number;
+  dependencies?: string[];
+}
+
+export interface AreaState {
+  areas: Area[];
+  activeAreaId: string | null;
+}
+
+export type UndoableAreaState = StateWithHistory<AreaState>; 

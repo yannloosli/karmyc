@@ -6,11 +6,12 @@ import { AnyAction } from '@reduxjs/toolkit';
 export type TActionHandler<T extends AnyAction = AnyAction> = (action: T) => void;
 
 /**
- * Interface pour un plugin d'action
+ * Interface pour une action
  */
-export interface IActionPlugin<T extends AnyAction = AnyAction> {
+export interface IAction<T extends AnyAction = AnyAction> {
   id: string;
-  priority: number;
+  type: string;
+  priority?: number;
   actionTypes: string[] | null; // null signifie tous les types d'actions
   handler: TActionHandler<T>;
 }

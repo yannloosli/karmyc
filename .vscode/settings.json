@@ -24,8 +24,8 @@
     "typescriptreact",
   ],
   "editor.codeActionsOnSave": {
-    "source.organizeImports": true
-  },
+    "source.organizeImports": "explicit"
+},
   "typescriptHero.imports.grouping": [
     "Plains",
     "Modules",

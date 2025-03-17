@@ -27,30 +27,22 @@ export interface IContextMenuOption {
 export interface IContextMenuAction {
   id: string;
   label: string;
-  icon?: ReactNode;
-  action: (context: any) => void;
-  isVisible?: (context: any) => boolean;
-  isDisabled?: (context: any) => boolean;
-  divider?: boolean;
-  children?: IContextMenuAction[];
-  priority?: number;
+  icon?: string;
+  handler: () => void;
+  isEnabled?: () => boolean;
+  isVisible?: () => boolean;
 }
 
 /**
  * État du menu contextuel
  */
 export interface IContextMenuState {
-  isOpen: boolean;
-  name: string | null;
-  options: IContextMenuOption[];
-  position: IPosition | null;
-  customComponent: {
-    component: React.ComponentType<any>;
-    props: any;
-    position: IPosition;
-    alignPosition?: 'top-left' | 'bottom-left' | 'center';
-    closeMenuBuffer?: number;
-  } | null;
+  isVisible: boolean;
+  position: IContextMenuPosition;
+  items: IContextMenuItem[];
+  targetId?: string;
+  metadata?: Record<string, any>;
+  errors: string[];
 }
 
 /**
@@ -59,4 +51,35 @@ export interface IContextMenuState {
 export interface IContextMenuBaseProps {
   updateRect: (rect: DOMRect) => void;
   close: () => void;
+}
+
+export interface IContextMenuItem {
+  id: string;
+  label: string;
+  icon?: string;
+  shortcut?: string;
+  disabled?: boolean;
+  divider?: boolean;
+  submenu?: IContextMenuItem[];
+  action?: () => void;
+}
+
+export interface IContextMenuPosition {
+  x: number;
+  y: number;
+}
+
+export interface ContextMenuItem {
+  id: string;
+  label: string;
+  action: () => void;
+  disabled?: boolean;
+  shortcut?: string;
+}
+
+export interface ContextMenuState {
+  isOpen: boolean;
+  position: { x: number; y: number } | null;
+  items: ContextMenuItem[];
+  targetId: string | null;
 } 

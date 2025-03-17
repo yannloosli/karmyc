@@ -3,5 +3,22 @@
  * Ce fichier exporte tous les hooks publics du module
  */
 
-// Les hooks seront implémentés et exportés ici au fur et à mesure
-// de l'implémentation du système 
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import type { AppDispatch, RootState } from '../types/store';
+
+// Hooks de base
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+// Hooks spécifiques
+export * from './useActions';
+export * from './useArea';
+export * from './useContextMenu';
+export * from './useInitialize';
+export * from './useProject';
+export * from './useUndoable';
+
+// Nouveaux hooks
+export * from './useDependencies';
+export * from './useHistory';
+export * from './usePerformance';

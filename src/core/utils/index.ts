@@ -5,3 +5,7 @@
 
 // Les fonctions utilitaires seront implémentées et exportées ici au fur et à mesure
 // de l'implémentation du système 
+
+export * from './diff';
+export * from './history';
+export * from './validation';

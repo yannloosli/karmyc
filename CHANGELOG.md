@@ -145,3 +145,46 @@ Ce document trace chronologiquement toutes les modifications significatives appo
 
 ### Modifications
 - Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 3.1 et 3.2
+
+## Mise à jour vers React 17 - 2024-04-24
+
+### Modifications
+- Mise à jour de la compatibilité React de 16.12.0 vers React 17
+- Mise à jour de la documentation pour refléter le changement de version
+
+### Dépendances
+- Mise à jour de la version de React vers 17.x
+
+## [Unreleased]
+
+### Added
+- Système d'actions modulaire avec plugins et validation
+- Hook `useActions` pour l'initialisation des plugins
+- Hook `useArea` pour la gestion des zones
+- Hook `useProject` pour la gestion des projets
+- Hook `useContextMenu` pour la gestion du menu contextuel
+- Composant `ContextMenu` pour l'affichage du menu contextuel
+- Provider principal `CoreProvider` avec système d'initialisation
+- Middleware Redux pour le système d'actions
+
+### Changed
+- Refactorisation du système de menu contextuel
+- Simplification des types du menu contextuel
+- Amélioration de la structure des slices Redux
+- Mise à jour de la documentation
+
+### Fixed
+- Problèmes de typage dans le menu contextuel
+- Conflits d'interfaces dans les types
+- Gestion des états dans les slices Redux
+
+### Removed
+- Ancien système de menu contextuel incompatible
+- Types redondants et obsolètes
+
+## [0.1.0] - 2024-03-17
+
+### Added
+- Structure initiale du projet
+- Configuration de base
+- Documentation initiale

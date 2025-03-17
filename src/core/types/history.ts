@@ -18,29 +18,38 @@ export interface IHistoryOptions {
 /**
  * État avec historique
  */
-export interface IStateWithHistory<S> {
-  past: S[];
-  present: S;
-  future: S[];
+export interface THistoryState<T> {
+  past: T[];
+  present: T;
+  future: T[];
 }
 
 /**
- * Différence entre deux états
+ * Changement dans l'historique avec chemin
  */
-export interface IDiff {
+export interface THistoryChange {
   path: string[];
   oldValue: any;
   newValue: any;
 }
 
 /**
- * Action d'historique
+ * Différence entre deux états
  */
-export interface IHistoryAction {
+export interface THistoryDiff {
+  timestamp: number;
+  actionType: string;
+  changes: THistoryChange[];
+}
+
+/**
+ * Action d'historique avec métadonnées
+ */
+export interface THistoryAction {
   id: string;
   type: string;
   timestamp: number;
-  diffs: IDiff[];
+  diffs: THistoryChange[];
   metadata?: Record<string, any>;
 }
 
@@ -48,7 +57,7 @@ export interface IHistoryAction {
  * État du système d'historique
  */
 export interface IHistoryState {
-  actions: IHistoryAction[];
+  actions: THistoryAction[];
   currentIndex: number;
   isUndoing: boolean;
   isRedoing: boolean;
@@ -57,4 +66,28 @@ export interface IHistoryState {
 /**
  * Options pour le réducteur undoable
  */
-export type TUndoableOptions = Omit<IHistoryOptions, 'groupBy'>; 
+export type TUndoableOptions = Omit<IHistoryOptions, 'groupBy'>;
+
+export interface HistoryAction {
+  id: string;
+  type: string;
+  timestamp: number;
+  diffs: Array<{
+    path: string[];
+    oldValue: any;
+    newValue: any;
+  }>;
+  metadata?: {
+    areaId?: string;
+    projectId?: string;
+    userId?: string;
+    duration?: number;
+  };
+}
+
+export interface HistoryState {
+  actions: HistoryAction[];
+  currentIndex: number;
+  isUndoing: boolean;
+  isRedoing: boolean;
+} 

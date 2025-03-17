@@ -1,35 +1,28 @@
-import * as PIXI from "pixi.js";
-import React from "react";
-import ReactDOM from "react-dom";
-import { ErrorBoundary } from 'react-error-boundary';
 import { debounce } from 'lodash';
-import { Provider } from "react-redux";
+import React from "react";
+import ReactDOM from 'react-dom';
+import { CoreProvider } from "~/core/providers/CoreProvider";
 import { DiffType } from "~/diff/diffs";
 import "~/globals";
 import { sendDiffsToSubscribers } from "~/listener/diffListener";
 import { getActionState } from "~/state/stateUtils";
-import { store } from "~/state/store";
 import "~/state/undoRedo";
 import { App } from "./App";
 
-// If unsafe-eval is present in CSP, this can be used to fix that.
-
-// import { install } from "@pixi/unsafe-eval";
-// install(PIXI);
-
-PIXI.utils.skipHello();
-
 const Root = () => (
     <React.StrictMode>
-        <ErrorBoundary fallback={<div>Une erreur est survenue</div>}>
-            <Provider store={store}>
-                <App />
-            </Provider>
-        </ErrorBoundary>
+        <CoreProvider>
+            <App />
+        </CoreProvider>
     </React.StrictMode>
 );
 
-ReactDOM.render(<Root />, document.getElementById("root"));
+const rootElement = document.getElementById("root");
+
+if (rootElement) {
+    // @ts-expect-error TO CHECK WHEN UPGRADING REACT
+    ReactDOM.render(<Root />, rootElement);
+}
 
 // Disable right click context menu
 document.addEventListener("contextmenu", (e) => e.preventDefault(), false);

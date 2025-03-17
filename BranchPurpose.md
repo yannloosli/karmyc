@@ -165,7 +165,7 @@ Le but est de les rassembler sous la forme d'un composant unique.
 
 ### Contraintes techniques supplémentaires
 - **Dépendances** : Proposer des solutions et demander validation avant d'ajouter de nouvelles dépendances
-- **Compatibilité React** : Maintenir la compatibilité avec React 16.12.0 pour cette phase, avec objectif de migration vers React 19 ultérieurement
+- **Compatibilité React** : Maintenir la compatibilité avec React 17 pour cette phase, avec objectif de migration vers React 19 ultérieurement
 - **Intégration** : Concevoir une architecture agnostique avec des hooks pour faciliter l'intégration future avec d'autres modules
 
 ### Continuité entre les sessions (Instructions pour l'IA)
@@ -263,10 +263,22 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 
 #### 3.2 Implémentation du store Redux
 - [x] Installer les dépendances nécessaires (redux-toolkit, redux-undo, redux-persist)
-- [ ] Implémenter les slices Redux pour chaque domaine
-- [ ] Configurer le middleware et les enhancers
-- [ ] Mettre en place les sélecteurs optimisés avec reselect
-- [ ] **Documenter l'implémentation finale du store avec exemples d'utilisation**
+- [x] Implémenter les slices Redux pour chaque domaine
+  - [x] areaSlice.ts - Gestion des zones d'affichage
+  - [x] contextMenuSlice.ts - Gestion des menus contextuels
+  - [x] projectSlice.ts - Gestion des projets
+  - [x] stateSlice.ts - Gestion des états
+  - [x] diffSlice.ts - Système de comparaison
+  - [x] toolbarSlice.ts - Interface des barres d'outils
+  - [x] notificationSlice.ts - Système de notifications (implémenté en bonus)
+- [x] Configurer le middleware et les enhancers
+  - [x] Structure des middlewares (middleware/)
+  - [x] Structure des enhancers (enhancers/)
+  - [x] Système de sérialisation (serialization/)
+- [x] Mettre en place les sélecteurs optimisés
+  - [x] Sélecteurs globaux (selectors.ts)
+  - [x] Sélecteurs spécifiques par domaine (selectors/)
+- [x] **Documenter l'implémentation finale du store avec exemples d'utilisation**
 
 #### 3.3 Système d'actions
 - [ ] Implémenter le système de plugins pour les actions
@@ -340,7 +352,7 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 ## Contraintes techniques
 
 - [ ] Utiliser yarn comme gestionnaire de paquets
-- [ ] Maintenir la compatibilité avec React 16.12.0
+- [ ] Maintenir la compatibilité avec React 17
 - [ ] Conserver le dossier ORIGINAL comme référence pour la logique
 - [ ] Respecter la structure TypeScript existante
 - [ ] Assurer la compatibilité avec les bibliothèques existantes (pixi.js, etc.)
@@ -359,4 +371,4 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 
 - **BranchPurpose.md** : Feuille de route principale et suivi des tâches
 - **CHANGELOG.md** : Journal des modifications apportées au projet
-- **TROUBLESHOOTING.md** : Documentation des problèmes rencontrés et leurs solutions
+- [ ] **TROUBLESHOOTING.md** : Documentation des problèmes rencontrés et leurs solutions

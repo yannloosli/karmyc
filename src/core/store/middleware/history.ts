@@ -1,30 +1,34 @@
-import { AnyAction, Middleware } from '@reduxjs/toolkit';
-import { HISTORY_ACTION_TYPES } from '../../constants/actionTypes';
-
 /**
- * Middleware d'historique pour Redux
- * Ce middleware gère les actions liées à l'historique (undo, redo, etc.)
+ * Middleware pour la gestion de l'historique des actions
+ * 
+ * Ce middleware est responsable de :
+ * 1. L'interception des actions pour générer des différences d'état
+ * 2. La gestion de l'historique undo/redo
+ * 3. La visualisation des changements d'état
+ * 
+ * @see docs/StoreReduxDesign.md - Section 4.2 Middleware d'historique
  */
-export const historyMiddleware: Middleware = store => next => (action: AnyAction) => {
-  // Avant d'exécuter l'action
+import { Action, Middleware } from '@reduxjs/toolkit';
+import { generateDiff } from '../../utils/diff';
+
+export const historyMiddleware: Middleware = store => next => (action: unknown) => {
+  // Capturer l'état avant l'exécution de l'action
   const prevState = store.getState();
   
-  // Exécuter l'action
+  // Exécuter l'action normalement
   const result = next(action);
   
-  // Après l'exécution de l'action
+  // Capturer l'état après l'exécution de l'action
   const nextState = store.getState();
   
-  // Traiter les actions d'historique spécifiques
-  if (action.type === HISTORY_ACTION_TYPES.UNDO) {
-    // Logique pour l'annulation
-    console.log('Undo action');
-  } else if (action.type === HISTORY_ACTION_TYPES.REDO) {
-    // Logique pour la restauration
-    console.log('Redo action');
-  } else if (action.type === HISTORY_ACTION_TYPES.CLEAR_HISTORY) {
-    // Logique pour effacer l'historique
-    console.log('Clear history');
+  // Générer les différences si l'action est liée à l'historique
+  if (typeof action === 'object' && action !== null && 'type' in action && (action as Action).type.startsWith('history/')) {
+    const diffs = generateDiff(prevState, nextState);
+    // Stocker les différences pour visualisation ultérieure
+    store.dispatch({
+      type: 'history/STORE_DIFFS',
+      payload: diffs
+    });
   }
   
   return result;
