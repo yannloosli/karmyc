@@ -22,10 +22,18 @@ export const contextMenuSlice = createSlice({
             metadata?: Record<string, any>;
         }>) => {
             const { position, items, targetId, metadata } = action.payload;
+            console.log('contextMenuSlice - openContextMenu:', {
+                position,
+                items,
+                targetId,
+                metadata,
+                currentState: state
+            });
 
             // Validation de la position
             const positionValidation = validatePosition(position);
             if (!positionValidation.isValid) {
+                console.warn('Position validation failed:', positionValidation.errors);
                 state.errors = positionValidation.errors;
                 return;
             }
@@ -34,6 +42,7 @@ export const contextMenuSlice = createSlice({
             const itemsValidation = items.map(item => validateContextMenuItem(item));
             const invalidItems = itemsValidation.filter(validation => !validation.isValid);
             if (invalidItems.length > 0) {
+                console.warn('Items validation failed:', invalidItems);
                 state.errors = invalidItems.flatMap(validation => validation.errors);
                 return;
             }
@@ -45,6 +54,8 @@ export const contextMenuSlice = createSlice({
             state.metadata = metadata;
             state.errors = [];
             state.customContextMenu = null;
+
+            console.log('contextMenuSlice - state after update:', state);
         },
 
         openCustomContextMenu: (state, action: PayloadAction<OpenCustomContextMenuOptions>) => {

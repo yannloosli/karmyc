@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "~/core/styles/JoinAreaPreview.styles";
-import { compileStylesheet } from "~/core/styles/stylesheets";
 import { CardinalDirection } from "~/core/types";
+import { compileStylesheet } from "../../../utils/stylesheets";
 import { ArrowBoldDownIcon } from "../../icons/ArrowBoldDownIcon";
 
 const s = compileStylesheet(styles);

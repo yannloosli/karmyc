@@ -11,10 +11,10 @@ import {
     selectContextMenuVisible
 } from "../../../store/slices/contextMenuSlice";
 import styles from "../../../styles/NormalContextMenu.styles";
-import { compileStylesheet } from "../../../styles/stylesheets";
 import { ContextMenuItem } from "../../../types/contextMenu";
 import { Point, Rect } from "../../../types/geometry";
 import { boundingRectOfRects, isVecInRect } from "../../../utils/geometry";
+import { compileStylesheet } from "../../../utils/stylesheets";
 
 const s = compileStylesheet(styles);
 
@@ -70,9 +70,11 @@ export const NormalContextMenu: React.FC = () => {
     useEffect(() => {
         setTimeout(() => {
             const els = document.querySelectorAll("[data-option-list]");
+            console.log('Found option lists:', els.length);
             const rects: Rect[] = [];
             els.forEach((el) => {
                 const domRect = el.getBoundingClientRect();
+                console.log('Option list rect:', domRect);
                 rects.push({
                     left: domRect.left,
                     top: domRect.top,
@@ -82,7 +84,9 @@ export const NormalContextMenu: React.FC = () => {
                     bottom: domRect.bottom,
                 });
             });
-            setRect(boundingRectOfRects(rects));
+            const boundingRect = boundingRectOfRects(rects);
+            console.log('Bounding rect:', boundingRect);
+            setRect(boundingRect);
 
             if (rects.length > 1) {
                 let rect = rects[rects.length - 1];
@@ -106,22 +110,28 @@ export const NormalContextMenu: React.FC = () => {
 
     const onMouseMove = (e: React.MouseEvent) => {
         const { clientX: x, clientY: y } = e;
+        console.log('Mouse move:', { x, y, rect });
 
         if (!rect) {
+            console.log('No rect available for mouse move');
             return;
         }
 
         if (stack.length > 1 && reduceStackRect && !isVecInRect({ x, y }, reduceStackRect)) {
+            console.log('Reducing stack due to mouse position');
             setStack(stack.slice(0, stack.length - 1));
             return;
         }
 
-        if (
+        const shouldClose =
             x < rect.left - CLOSE_MENU_BUFFER ||
             x > rect.left + rect.width + CLOSE_MENU_BUFFER ||
             y < rect.top - CLOSE_MENU_BUFFER ||
-            y > rect.top + rect.height + CLOSE_MENU_BUFFER
-        ) {
+            y > rect.top + rect.height + CLOSE_MENU_BUFFER;
+
+        console.log('Should close menu:', { shouldClose, x, y, rect, CLOSE_MENU_BUFFER });
+
+        if (shouldClose) {
             dispatch(closeContextMenu());
         }
     };
@@ -193,6 +203,7 @@ export const NormalContextMenu: React.FC = () => {
                 onMouseDown={() => dispatch(closeContextMenu())}
             />
             {stack.map(({ options, position }, i) => {
+                console.log('Rendering stack item:', { i, position, options });
                 return (
                     <div
                         className={s("container")}
@@ -209,6 +220,7 @@ export const NormalContextMenu: React.FC = () => {
                         )}
 
                         {options.map((option, j) => {
+                            console.log('Rendering option:', { i, j, option });
                             const Icon = option.icon;
 
                             if (option.children) {

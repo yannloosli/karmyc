@@ -3,10 +3,10 @@ import { useSelector } from "react-redux";
 import { AREA_BORDER_WIDTH } from "../../../constants";
 import { RootState } from "../../../store";
 import { cssZIndex } from "../../../styles/cssVariables";
-import { compileStylesheet } from "../../../styles/stylesheets";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { _setAreaViewport, getAreaRootViewport } from "../../../utils/getAreaViewport";
+import { compileStylesheet } from "../../../utils/stylesheets";
 import { handleDragAreaResize } from "../handlers/areaDragResize";
 
 const s = compileStylesheet(({ css }) => ({
@@ -25,6 +25,7 @@ interface OwnProps {
     row: AreaRowLayout;
     areaToViewport: MapOf<Rect>;
 }
+
 type Props = OwnProps;
 
 export const AreaRowSeparators: React.FC<Props> = props => {
@@ -32,6 +33,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const { layout, rootId } = useSelector((state: RootState) => state.area);
     const viewportsRef = useRef(areaToViewport);
 
+    // Mettre à jour les viewports quand ils changent
     useEffect(() => {
         // Vérifier si des viewports sont manquants
         const missingViewports = row.areas.some(area => !areaToViewport[area.id]);

@@ -38,6 +38,12 @@ export const CustomContextMenu: React.FC = () => {
     const options = useSelector(selectCustomContextMenu);
     const [rect, setRect] = useState<Rect | null>(null);
 
+    console.log('CustomContextMenu render:', {
+        hasOptions: !!options,
+        options,
+        rect
+    });
+
     if (!options) {
         return null;
     }
@@ -49,17 +55,26 @@ export const CustomContextMenu: React.FC = () => {
         const { clientX: x, clientY: y } = e;
 
         if (!rect) {
+            console.log('No rect available for CustomContextMenu');
             return;
         }
 
         const closeMenuBuffer = options.closeMenuBuffer ?? DEFAULT_CLOSE_MENU_BUFFER;
 
-        if (
+        const shouldClose =
             x < rect.left - closeMenuBuffer ||
             x > rect.left + rect.width + closeMenuBuffer ||
             y < rect.top - closeMenuBuffer ||
-            y > rect.top + rect.height + closeMenuBuffer
-        ) {
+            y > rect.top + rect.height + closeMenuBuffer;
+
+        console.log('CustomContextMenu mouse move:', {
+            mousePosition: { x, y },
+            rect,
+            closeMenuBuffer,
+            shouldClose
+        });
+
+        if (shouldClose) {
             options.close();
         }
     };
