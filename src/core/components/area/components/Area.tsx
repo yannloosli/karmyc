@@ -3,8 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AREA_BORDER_WIDTH, AreaType } from "~/core/constants";
 import { useAreaKeyboardShortcuts } from "~/core/hooks/useAreaKeyboardShortcuts";
 import { _areaReactKeyRegistry, areaComponentRegistry } from "~/core/store/registries/areaRegistry";
-import { updateArea } from "~/core/store/slices/areaSlice";
-import { closeContextMenu, openContextMenu } from "~/core/store/slices/contextMenuSlice";
+import { openContextMenu } from "~/core/store/slices/contextMenuSlice";
 import styles from "~/core/styles/Area.styles";
 import { AreaComponentProps } from "~/core/types/areaTypes";
 import { AreaIdContext } from "~/core/utils/AreaIdContext";
@@ -104,54 +103,40 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
         requestAction({}, (params) => {
             dispatch(
                 openContextMenu({
-                    position: pos,
+                    position: { x: pos.x, y: pos.y },
                     items: [
                         {
                             id: "project",
                             label: "Project",
-                            action: () => {
-                                dispatch(updateArea({ id, changes: { type: AreaType.Project } }));
-                                dispatch(closeContextMenu());
-                                params.submitAction("Update area type");
-                            }
+                            actionId: "area.project",
+                            metadata: { areaId: id }
                         },
                         {
                             id: "timeline",
                             label: "Timeline",
-                            action: () => {
-                                dispatch(updateArea({ id, changes: { type: AreaType.Timeline } }));
-                                dispatch(closeContextMenu());
-                                params.submitAction("Update area type");
-                            }
+                            actionId: "area.timeline",
+                            metadata: { areaId: id }
                         },
                         {
                             id: "workspace",
                             label: "Workspace",
-                            action: () => {
-                                dispatch(updateArea({ id, changes: { type: AreaType.Workspace } }));
-                                dispatch(closeContextMenu());
-                                params.submitAction("Update area type");
-                            }
+                            actionId: "area.workspace",
+                            metadata: { areaId: id }
                         },
                         {
                             id: "floweditor",
                             label: "Node Editor",
-                            action: () => {
-                                dispatch(updateArea({ id, changes: { type: AreaType.FlowEditor } }));
-                                dispatch(closeContextMenu());
-                                params.submitAction("Update area type");
-                            }
+                            actionId: "area.floweditor",
+                            metadata: { areaId: id }
                         },
                         {
                             id: "history",
                             label: "History",
-                            action: () => {
-                                dispatch(updateArea({ id, changes: { type: AreaType.History } }));
-                                dispatch(closeContextMenu());
-                                params.submitAction("Update area type");
-                            }
+                            actionId: "area.history",
+                            metadata: { areaId: id }
                         }
-                    ]
+                    ],
+                    metadata: { areaId: id }
                 })
             );
         });

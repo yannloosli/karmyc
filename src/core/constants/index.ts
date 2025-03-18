@@ -54,3 +54,8 @@ export enum AreaType {
     FlowEditor = "flow",
     History = "history"
 }
+
+export const DEFAULT_CONTEXT_MENU_WIDTH = 180;
+export const CONTEXT_MENU_OPTION_HEIGHT = 20;
+export const CONTEXT_MENU_OPTION_PADDING_LEFT = 32;
+export const CONTEXT_MENU_OPTION_PADDING_RIGHT = 16;

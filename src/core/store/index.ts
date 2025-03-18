@@ -36,39 +36,39 @@ import toolbarReducer from './slices/toolbarSlice';
 
 // Configuration de la persistance
 const persistConfig = {
-  key: 'root',
-  storage,
-  whitelist: ['project', 'toolbar', 'state'], // Persister les projets, toolbars et états
-  blacklist: ['undoable', 'diff'], // Ne pas persister l'historique undo/redo et les diffs
+    key: 'root',
+    storage,
+    whitelist: ['project', 'toolbar', 'state'], // Persister les projets, toolbars et états
+    blacklist: ['undoable', 'diff'], // Ne pas persister l'historique undo/redo et les diffs
 };
 
 // Combiner les reducers
 const rootReducer = combineReducers({
-  area: areaReducer,
-  project: projectReducer,
-  toolbar: toolbarReducer,
-  diff: diffReducer,
-  state: stateReducer,
-  contextMenu: contextMenuReducer
+    area: areaReducer,
+    project: projectReducer,
+    toolbar: toolbarReducer,
+    diff: diffReducer,
+    state: stateReducer,
+    contextMenu: contextMenuReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Créer le store avec tous les middlewares
 export const store = configureStore({
-  reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        // Ignorer les actions non sérialisables
-        ignoredActions: [
-          'state/transitionState',
-          'diff/applyDiff',
-          'diff/revertDiff'
-        ]
-      }
-    }).concat(errorMiddleware, diffMiddleware, stateMiddleware),
-  devTools: process.env.NODE_ENV !== 'production'
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: {
+                // Ignorer les actions non sérialisables
+                ignoredActions: [
+                    'state/transitionState',
+                    'diff/applyDiff',
+                    'diff/revertDiff'
+                ]
+            }
+        }).concat(errorMiddleware, diffMiddleware, stateMiddleware),
+    devTools: process.env.NODE_ENV !== 'production'
 });
 
 // Enregistrer les plugins par défaut
@@ -81,6 +81,7 @@ export type AppDispatch = typeof store.dispatch;
 // Exporter les actions et sélecteurs
 export * from './selectors';
 export * from './slices/areaSlice';
+export * from './slices/contextMenuSlice';
 export * from './slices/diffSlice';
 export * from './slices/projectSlice';
 export * from './slices/stateSlice';

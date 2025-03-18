@@ -1,13 +1,22 @@
 import { intersectInfiniteLines } from "~/core/utils/math/intersection/intersectInfiniteLines";
 import { Mat2 } from "~/core/utils/math/mat";
+import { Point, Rect } from '../types/geometry';
 
 export const interpolate = (a: number, b: number, t: number) => a * (1 - t) + b * t;
 
-export const isVecInRect = (vec: Vec2, rect: Rect) =>
-    vec.x >= rect.left &&
-    vec.x <= rect.left + rect.width &&
-    vec.y >= rect.top &&
-    vec.y <= rect.top + rect.height;
+export interface Point {
+    x: number;
+    y: number;
+}
+
+export function isVecInRect(vec: Point, rect: Rect): boolean {
+    return (
+        vec.x >= rect.left &&
+        vec.x <= rect.right &&
+        vec.y >= rect.top &&
+        vec.y <= rect.bottom
+    );
+}
 
 export const capToRange = (low: number, high: number, value: number) =>
     Math.min(high, Math.max(low, value));
@@ -81,22 +90,35 @@ export const rectsIntersect = (a: Rect, b: Rect): boolean => {
     return true;
 };
 
-export const boundingRectOfRects = (rects: Rect[]): Rect | null => {
-    if (!rects.length) {
+export function boundingRectOfRects(rects: Rect[]): Rect | null {
+    if (rects.length === 0) {
         return null;
     }
 
-    return rects.slice(1).reduce<Rect>((a, b) => {
-        const xMin = Math.min(a.left, b.left);
-        const yMin = Math.min(a.top, b.top);
-        return {
-            left: xMin,
-            top: yMin,
-            height: Math.max(a.top + a.height, b.top + b.height) - yMin,
-            width: Math.max(a.left + a.width, b.left + b.width) - xMin,
-        };
-    }, rects[0]);
-};
+    let left = Infinity;
+    let top = Infinity;
+    let right = -Infinity;
+    let bottom = -Infinity;
+
+    for (const rect of rects) {
+        left = Math.min(left, rect.left);
+        top = Math.min(top, rect.top);
+        right = Math.max(right, rect.right);
+        bottom = Math.max(bottom, rect.bottom);
+    }
+
+    const width = right - left;
+    const height = bottom - top;
+
+    return {
+        left,
+        top,
+        width,
+        height,
+        right,
+        bottom,
+    };
+}
 
 /**
  * @param value - The value to interpolate
