@@ -33,7 +33,6 @@ import diffReducer from './slices/diffSlice';
 import projectReducer from './slices/projectSlice';
 import stateReducer from './slices/stateSlice';
 import toolbarReducer from './slices/toolbarSlice';
-import { createUndoableReducer } from './undoable';
 
 // Configuration de la persistance
 const persistConfig = {
@@ -45,7 +44,7 @@ const persistConfig = {
 
 // Combiner les reducers
 const rootReducer = combineReducers({
-  area: createUndoableReducer(areaReducer),
+  area: areaReducer,
   project: projectReducer,
   toolbar: toolbarReducer,
   diff: diffReducer,

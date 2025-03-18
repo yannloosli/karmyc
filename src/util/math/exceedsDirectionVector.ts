@@ -9,15 +9,27 @@ const isNegative = (n: number) => n < 0;
  * Exceeding meaning greater than or equal.
  */
 export const exceedsDirectionVector = (
-	directionVec: DirectionVector,
-	distance: number,
-	vec: Vec2,
+    directionVec: DirectionVector,
+    distance: number,
+    vec: Vec2,
 ): "x" | "y" | "" => {
-	const axis: "x" | "y" = directionVec.x ? "x" : "y";
+    // Vérifier l'axe X si le vecteur de direction a une composante X
+    if (directionVec.x !== 0) {
+        // Pour un mouvement vers la droite (directionVec.x > 0), vec.x doit être positif
+        // Pour un mouvement vers la gauche (directionVec.x < 0), vec.x doit être négatif
+        if (Math.abs(vec.x) >= distance && Math.sign(vec.x) === Math.sign(directionVec.x)) {
+            return "x";
+        }
+    }
 
-	if (isNegative(directionVec[axis]) !== isNegative(vec[axis])) {
-		return "";
-	}
+    // Vérifier l'axe Y si le vecteur de direction a une composante Y
+    if (directionVec.y !== 0) {
+        // Pour un mouvement vers le bas (directionVec.y > 0), vec.y doit être positif
+        // Pour un mouvement vers le haut (directionVec.y < 0), vec.y doit être négatif
+        if (Math.abs(vec.y) >= distance && Math.sign(vec.y) === Math.sign(directionVec.y)) {
+            return "y";
+        }
+    }
 
-	return Math.abs(vec[axis]) >= distance ? axis : "";
+    return "";
 };

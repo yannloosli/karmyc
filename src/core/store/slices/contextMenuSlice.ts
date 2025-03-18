@@ -93,4 +93,5 @@ export const selectContextMenuTargetId = (state: { contextMenu: IContextMenuStat
 export const selectContextMenuMetadata = (state: { contextMenu: IContextMenuState }) => state.contextMenu.metadata;
 export const selectContextMenuErrors = (state: { contextMenu: IContextMenuState }) => state.contextMenu.errors;
 
+export const contextMenuReducer = contextMenuSlice.reducer;
 export default contextMenuSlice.reducer; 

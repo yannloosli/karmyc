@@ -1,17 +1,17 @@
+import { AreaType } from '../constants';
+import { Area } from '../types/areaTypes';
 import { IContextMenuItem } from '../types/contextMenu';
-import { IArea, IDiff, IProject, IState, IToolbarItem } from '../types/core';
+import { IProject } from '../types/core';
+import { IDiff } from '../types/diff';
+import { IState } from '../types/state';
+import { IToolbarItem } from '../types/toolbar';
 
 // Validation des zones
-export const validateArea = (area: IArea): { isValid: boolean; errors: string[] } => {
+export const validateArea = (area: Area<AreaType>): { isValid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  if (!area.id) errors.push('ID manquant');
-  if (!area.name) errors.push('Nom manquant');
   if (!area.type) errors.push('Type manquant');
-  if (area.width < 0) errors.push('Largeur invalide');
-  if (area.height < 0) errors.push('Hauteur invalide');
-  if (area.x < 0) errors.push('Position X invalide');
-  if (area.y < 0) errors.push('Position Y invalide');
+  if (!area.state) errors.push('État manquant');
 
   return {
     isValid: errors.length === 0,
@@ -25,7 +25,6 @@ export const validateProject = (project: IProject): { isValid: boolean; errors: 
 
   if (!project.id) errors.push('ID manquant');
   if (!project.name) errors.push('Nom manquant');
-  if (!project.type) errors.push('Type manquant');
   if (!project.createdAt) errors.push('Date de création manquante');
   if (!project.updatedAt) errors.push('Date de mise à jour manquante');
 

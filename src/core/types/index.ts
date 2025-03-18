@@ -23,3 +23,6 @@ export * from './store';
 
 // Types liés au module core
 export * from './core';
+
+// Types liés aux directions
+export * from './directions';

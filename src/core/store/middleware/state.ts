@@ -6,6 +6,22 @@ import { transitionState } from '../slices/stateSlice';
 // Registre des transitions disponibles
 const transitions: Record<string, IStateTransition> = {};
 
+export const registerTransition = (transition: IStateTransition) => {
+  const key = `${transition.from}-${transition.to}`;
+  transitions[key] = transition;
+};
+
+export const unregisterTransition = (from: string, to: string) => {
+  const key = `${from}-${to}`;
+  delete transitions[key];
+};
+
+export const getAvailableTransitions = (currentType: string): string[] => {
+  return Object.entries(transitions)
+    .filter(([key]) => key.startsWith(currentType))
+    .map(([key]) => key.split('-')[1]);
+};
+
 // Transitions prédéfinies
 const predefinedTransitions: IStateTransition[] = [
   {
@@ -80,22 +96,6 @@ const predefinedTransitions: IStateTransition[] = [
 predefinedTransitions.forEach(transition => {
   registerTransition(transition);
 });
-
-export const registerTransition = (transition: IStateTransition) => {
-  const key = `${transition.from}-${transition.to}`;
-  transitions[key] = transition;
-};
-
-export const unregisterTransition = (from: string, to: string) => {
-  const key = `${from}-${to}`;
-  delete transitions[key];
-};
-
-export const getAvailableTransitions = (currentType: string): string[] => {
-  return Object.entries(transitions)
-    .filter(([key]) => key.startsWith(currentType))
-    .map(([key]) => key.split('-')[1]);
-};
 
 export const stateMiddleware: Middleware<{}, RootState> = store => next => (action: AnyAction) => {
   // Exécuter l'action normalement

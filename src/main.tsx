@@ -8,6 +8,10 @@ import { sendDiffsToSubscribers } from "~/listener/diffListener";
 import { getActionState } from "~/state/stateUtils";
 import "~/state/undoRedo";
 import { App } from "./App";
+import { initAreaRegistries } from "./core/store/registries/initRegistries";
+
+// Initialiser les registres
+initAreaRegistries();
 
 const Root = () => (
     <React.StrictMode>

@@ -10,36 +10,36 @@ import { redo, undo } from '../store/slices/historySlice';
 import { useAppDispatch, useAppSelector } from './index';
 
 export function useHistory() {
-  const dispatch = useAppDispatch();
-  
-  const canUndo = useAppSelector(selectCanUndo);
-  const canRedo = useAppSelector(selectCanRedo);
-  const historyLength = useAppSelector(selectHistoryLength);
-  const actions = useAppSelector(selectHistoryActions);
+    const dispatch = useAppDispatch();
 
-  const handleUndo = useCallback(() => {
-    if (canUndo) {
-      dispatch(undo());
-    }
-  }, [dispatch, canUndo]);
+    const canUndo = useAppSelector(selectCanUndo);
+    const canRedo = useAppSelector(selectCanRedo);
+    const historyLength = useAppSelector(selectHistoryLength);
+    const actions = useAppSelector(selectHistoryActions);
 
-  const handleRedo = useCallback(() => {
-    if (canRedo) {
-      dispatch(redo());
-    }
-  }, [dispatch, canRedo]);
+    const handleUndo = useCallback(() => {
+        if (canUndo) {
+            dispatch(undo());
+        }
+    }, [dispatch, canUndo]);
 
-  const getActionsByType = useCallback((type: string) => {
-    return useAppSelector(selectHistoryActionsByType(type));
-  }, []);
+    const handleRedo = useCallback(() => {
+        if (canRedo) {
+            dispatch(redo());
+        }
+    }, [dispatch, canRedo]);
 
-  return {
-    canUndo,
-    canRedo,
-    historyLength,
-    actions,
-    undo: handleUndo,
-    redo: handleRedo,
-    getActionsByType,
-  };
+    const getActionsByType = useCallback((type: string) => {
+        return useAppSelector(selectHistoryActionsByType(type));
+    }, []);
+
+    return {
+        canUndo,
+        canRedo,
+        historyLength,
+        actions,
+        undo: handleUndo,
+        redo: handleRedo,
+        getActionsByType,
+    };
 } 
