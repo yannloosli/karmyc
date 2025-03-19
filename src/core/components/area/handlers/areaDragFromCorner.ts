@@ -2,12 +2,12 @@ import { AREA_MIN_CONTENT_WIDTH } from "../../../constants";
 import { areaSlice, AreaState } from "../../../store/slices/areaSlice";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { CardinalDirection, IntercardinalDirection } from "../../../types/directions";
+import type { Rect } from "../../../types/geometry";
 import type { RequestActionParams } from "../../../types/requestAction";
 import { computeAreaToParentRow } from "../../../utils/areaToParentRow";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../../utils/getAreaViewport";
-import { capToRange, isVecInRect } from "../../../utils/math";
-import type { Rect } from "../../../utils/math/types";
+import { capToRange } from "../../../utils/math";
 import { Vec2 } from "../../../utils/math/vec2";
 import { requestAction } from "../../../utils/requestAction";
 import { getActionState } from "../../../utils/stateUtils";
@@ -96,10 +96,7 @@ export const handleAreaDragFromCorner = (
         const directionParts = parseCorner(corner);
 
         function createNewArea(horizontal: boolean) {
-            console.log('Creating new area:', { horizontal, viewport });
-
             if ((horizontal ? viewport.width : viewport.height) < AREA_MIN_CONTENT_WIDTH * 2) {
-                console.log('Area too small, joining instead');
                 const handlers = joinAreas();
                 currentHandlers = handlers;
                 if (handlers.onMove) {
@@ -110,117 +107,200 @@ export const handleAreaDragFromCorner = (
             }
 
             params.performDiff((diff) => {
-                // 1. Convertir en row
-                params.dispatch(areaActions.convertAreaToRow({
-                    areaId,
-                    cornerParts: directionParts,
-                    horizontal
-                }));
-
-                // 2. Récupérer l'état mis à jour
+                // Récupérer l'état actuel
                 const currentState = getActionState().area;
-                console.log('Current state after conversion:', currentState);
+                const parentRowId = areaToRow[areaId];
+                const parentRow = parentRowId ? currentState.layout[parentRowId] as AreaRowLayout : null;
 
-                // 3. Vérifier que la ligne a été créée
-                const row = currentState.layout[areaId] as AreaRowLayout;
-                if (!row || !row.areas) {
-                    console.error('Row not found after conversion');
-                    params.cancelAction();
-                    return;
+                // Identifier quelle sera la ligne parente finale et son id
+                let finalRowId: string;
+                let existingRow = false;
+
+                // Si on a un parent row et que l'orientation est la même
+                if (parentRow && ((parentRow.orientation === 'horizontal') === horizontal)) {
+                    finalRowId = parentRowId;
+                    existingRow = true;
+                    // Récupérer la taille actuelle de la zone avant de la diviser
+                    const currentArea = parentRow.areas.find(a => a.id === areaId);
+                    const currentSize = currentArea ? currentArea.size : 0;
+
+                    // Ajouter une nouvelle zone au parent existant
+                    params.dispatch(areaActions.addAreaToRow({
+                        rowId: parentRowId,
+                        afterAreaId: areaId
+                    }));
+
+                    // Récupérer l'état mis à jour
+                    const updatedState = getActionState().area;
+                    const updatedRow = updatedState.layout[parentRowId] as AreaRowLayout;
+                    const areaIndex = updatedRow.areas.findIndex(a => a.id === areaId);
+                    const newAreaId = updatedRow.areas[areaIndex + 1].id;
+
+                    // Calculer les nouvelles tailles en préservant les tailles des autres zones
+                    const newSizes = updatedRow.areas.map((area, index) => {
+                        if (index === areaIndex) {
+                            // La zone d'origine prend la moitié de sa taille précédente
+                            return currentSize / 2;
+                        } else if (index === areaIndex + 1) {
+                            // La nouvelle zone prend l'autre moitié
+                            return currentSize / 2;
+                        } else {
+                            // Les autres zones gardent leur taille
+                            return area.size;
+                        }
+                    });
+
+                    // Mettre à jour les tailles
+                    params.dispatch(areaActions.setRowSizes({
+                        rowId: parentRowId,
+                        sizes: newSizes
+                    }));
+
+                    // Mettre à jour les viewports
+                    const viewports = updateViewports();
+                    params.dispatch(areaActions.setViewports({ viewports }));
+                } else {
+                    finalRowId = areaId;
+                    existingRow = false;
+                    // Créer une nouvelle ligne avec deux zones
+                    params.dispatch(areaActions.convertAreaToRow({
+                        areaId,
+                        cornerParts: directionParts,
+                        horizontal
+                    }));
+
+                    // Récupérer l'état mis à jour
+                    const updatedState = getActionState().area;
+                    const newRow = updatedState.layout[areaId] as AreaRowLayout;
+
+                    // Initialiser les tailles des zones à 50/50
+                    params.dispatch(areaActions.setRowSizes({
+                        rowId: areaId,
+                        sizes: [0.5, 0.5]
+                    }));
+
+                    // Mettre à jour les viewports
+                    const viewports = updateViewports();
+                    params.dispatch(areaActions.setViewports({ viewports }));
                 }
 
-                // 4. Récupérer les IDs des nouvelles zones
-                const newAreas = row.areas.map(area => area.id);
-                console.log('New areas:', newAreas);
-
-                // 5. Initialiser les tailles des zones
-                params.dispatch(areaActions.setRowSizes({
-                    rowId: areaId,
-                    sizes: [0.5, 0.5]
-                }));
-
-                // 6. Forcer une mise à jour du layout
+                // Forcer la mise à jour du layout
                 diff.resizeAreas();
 
-                // 7. Calculer et initialiser les viewports
-                const rootViewport = getAreaRootViewport();
-                console.log('Root viewport:', rootViewport);
-
-                const viewports: Record<string, Rect> = {};
-                newAreas.forEach((newAreaId, index) => {
-                    const newViewport = {
-                        left: viewport.left + (horizontal && index === 1 ? viewport.width / 2 : 0),
-                        top: viewport.top + (!horizontal && index === 1 ? viewport.height / 2 : 0),
-                        width: horizontal ? viewport.width / 2 : viewport.width,
-                        height: horizontal ? viewport.height : viewport.height / 2
-                    };
-                    viewports[newAreaId] = newViewport;
-
-                    // Mettre à jour directement l'area avec son viewport
-                    params.dispatch(areaActions.updateArea({
-                        id: newAreaId,
-                        changes: { viewport: newViewport }
-                    }));
-                });
-
-                // 8. Mettre à jour les viewports dans le state global
-                params.dispatch(areaActions.setViewports({ viewports }));
-
-                // 9. Forcer une seconde mise à jour pour s'assurer que tout est synchronisé
-                diff.resizeAreas();
-
-                // 10. Configurer les handlers
+                // Configurer les handlers pour le redimensionnement
                 const getT = (vec: Vec2): number => {
-                    const viewportSize = horizontal ? viewport.width : viewport.height;
+                    // Obtenir l'état actuel et la ligne concernée
+                    const state = getActionState().area;
+                    const rowId = existingRow ? parentRowId : areaId;
+                    const row = state.layout[rowId] as AreaRowLayout;
+
+                    // Déterminer l'orientation réelle
+                    const isHorizontalRow = row.orientation === 'horizontal';
+
+                    // Récupérer le viewport actuel
+                    const areaToViewport = computeAreaToViewport(
+                        state.layout,
+                        state.rootId,
+                        getAreaRootViewport()
+                    );
+
+                    // Si c'est une ligne existante, on utilise le viewport combiné des zones concernées
+                    let effectiveViewport: Rect;
+                    if (existingRow) {
+                        const areaIndex = row.areas.findIndex(a => a.id === areaId);
+                        if (areaIndex !== -1 && areaIndex + 1 < row.areas.length) {
+                            const v0 = areaToViewport[row.areas[areaIndex].id];
+                            const v1 = areaToViewport[row.areas[areaIndex + 1].id];
+
+                            if (v0 && v1) {
+                                effectiveViewport = isHorizontalRow
+                                    ? {
+                                        left: v0.left,
+                                        top: v0.top,
+                                        width: v0.width + v1.width,
+                                        height: v0.height
+                                    }
+                                    : {
+                                        left: v0.left,
+                                        top: v0.top,
+                                        width: v0.width,
+                                        height: v0.height + v1.height
+                                    };
+                            } else {
+                                effectiveViewport = viewport;
+                            }
+                        } else {
+                            effectiveViewport = viewport;
+                        }
+                    } else {
+                        effectiveViewport = viewport;
+                    }
+
+                    // Calculer t en fonction de l'orientation réelle et du viewport effectif
+                    const viewportSize = isHorizontalRow ? effectiveViewport.width : effectiveViewport.height;
                     const minT = AREA_MIN_CONTENT_WIDTH / viewportSize;
-                    const t0 = horizontal ? viewport.left : viewport.top;
-                    const t1 = horizontal ? viewport.left + viewport.width : viewport.top + viewport.height;
-                    const val = horizontal ? vec.x : vec.y;
+                    const t0 = isHorizontalRow ? effectiveViewport.left : effectiveViewport.top;
+                    const t1 = isHorizontalRow ? effectiveViewport.left + effectiveViewport.width : effectiveViewport.top + effectiveViewport.height;
+                    const val = isHorizontalRow ? vec.x : vec.y;
+
                     return capToRange(minT, 1 - minT, (val - t0) / (t1 - t0));
                 };
 
                 const onMoveFn = (vec: Vec2) => {
+                    // Obtenir l'état actuel
+                    const state = getActionState().area;
+                    const rowId = existingRow ? parentRowId : areaId;
+                    const row = state.layout[rowId] as AreaRowLayout;
+                    const areaIndex = existingRow
+                        ? row.areas.findIndex(a => a.id === areaId)
+                        : 0;
+
+                    // Calculer t
                     const t = getT(vec);
-                    const newViewports: Record<string, Rect> = {};
 
-                    // Mettre à jour les viewports pendant le déplacement
-                    newAreas.forEach((newAreaId, index) => {
-                        const size = index === 0 ? t : 1 - t;
-                        const newViewport = {
-                            left: viewport.left + (horizontal && index === 1 ? viewport.width * t : 0),
-                            top: viewport.top + (!horizontal && index === 1 ? viewport.height * t : 0),
-                            width: horizontal ? viewport.width * size : viewport.width,
-                            height: horizontal ? viewport.height : viewport.height * size
-                        };
-                        newViewports[newAreaId] = newViewport;
+                    // Mettre à jour les tailles
+                    let newSizes: number[];
+                    if (row.areas.length === 2) {
+                        newSizes = [t, 1 - t];
+                    } else if (existingRow) {
+                        // Pour une ligne existante avec plus de deux zones
+                        newSizes = row.areas.map((area, index) => {
+                            if (index === areaIndex) {
+                                return t;
+                            } else if (index === areaIndex + 1) {
+                                // La zone suivante
+                                const originalSize = area.size + row.areas[areaIndex].size;
+                                return Math.max(0, originalSize - t);
+                            } else {
+                                return area.size;
+                            }
+                        });
+                    } else {
+                        // Cas improbable mais géré par sécurité
+                        newSizes = Array(row.areas.length).fill(1 / row.areas.length);
+                    }
 
-                        // Mettre à jour directement l'area
-                        params.dispatch(areaActions.updateArea({
-                            id: newAreaId,
-                            changes: { viewport: newViewport }
-                        }));
-                    });
-
-                    // Mettre à jour les tailles et les viewports
+                    // Appliquer les nouvelles tailles
                     params.dispatch(areaActions.setRowSizes({
-                        rowId: areaId,
-                        sizes: [t, 1 - t]
+                        rowId,
+                        sizes: newSizes
                     }));
 
-                    params.dispatch(areaActions.setViewports({ viewports: newViewports }));
+                    // Forcer le recalcul complet
+                    const viewports = updateViewports();
+                    params.dispatch(areaActions.setViewports({ viewports }));
 
-                    // Forcer la mise à jour
+                    // Forcer la mise à jour immédiate
                     params.performDiff((diff) => {
                         diff.resizeAreas();
                     });
                 };
 
                 const onMouseUpFn = () => {
-                    // Forcer une dernière mise à jour
                     params.addDiff((diff) => {
                         diff.resizeAreas();
                     });
-                    params.submitAction("Create new area");
+                    params.submitAction("Create or update area");
                 };
 
                 currentHandlers = {
@@ -232,6 +312,7 @@ export const handleAreaDragFromCorner = (
 
         function joinAreas() {
             if (!row) {
+                console.error("Row invalide pour la fusion");
                 throw new Error("Expected row to be valid.");
             }
 
@@ -240,9 +321,10 @@ export const handleAreaDragFromCorner = (
 
             // Vérifier que les viewports sont disponibles pour toutes les zones éligibles
             const eligibleAreaIds = eligibleAreaIndices.map((i) => row.areas[i].id);
+
             for (const id of eligibleAreaIds) {
                 if (!areaToViewport[id]) {
-                    console.error('Viewport not available for area:', id);
+                    console.error('Viewport manquant pour la zone:', id);
                     params.cancelAction();
                     return { onMove: undefined, onMouseUp: undefined };
                 }
@@ -262,23 +344,36 @@ export const handleAreaDragFromCorner = (
             const onMoveFn: ((mousePosition: Vec2) => void) | null = (vec) => {
                 lastMousePosition = vec;
 
+                let foundEligibleArea = false;
                 for (let i = 0; i < eligibleAreaIndices.length; i += 1) {
                     const eligibleAreaIndex = eligibleAreaIndices[i];
                     const eligibleAreaId = row.areas[eligibleAreaIndex].id;
+                    const eligibleAreaViewport = areaToViewport[eligibleAreaId];
 
-                    if (!isVecInRect(vec, areaToViewport[eligibleAreaId])) {
+                    if (!eligibleAreaViewport) {
+                        console.error('Viewport manquant pour la zone', eligibleAreaId);
                         continue;
                     }
 
+                    // Convertir viewport en format attendu pour isVecInRect
+                    const rect = {
+                        left: eligibleAreaViewport.left,
+                        top: eligibleAreaViewport.top,
+                        right: eligibleAreaViewport.left + eligibleAreaViewport.width,
+                        bottom: eligibleAreaViewport.top + eligibleAreaViewport.height
+                    };
+
+                    // Vérifier si le point est dans le rectangle
+                    if (!(vec.x >= rect.left && vec.x <= rect.right &&
+                        vec.y >= rect.top && vec.y <= rect.bottom)) {
+                        continue;
+                    }
+
+                    foundEligibleArea = true;
                     const arrowDirection = getArrowDirection(row, areaIndex, eligibleAreaIndex);
                     const nextAreaId = row.areas[eligibleAreaIndices[i]].id;
 
-                    const mergeArea = Math.min(areaIndex, eligibleAreaIndex);
-                    const mergeInto = eligibleAreaIndex > areaIndex ? 1 : -1;
-
-                    areaIndex = eligibleAreaIndex;
-                    eligibleAreaIndices = getEligibleAreaIndices(state, row, areaIndex);
-
+                    // Mettre à jour la prévisualisation de fusion
                     params.dispatch(
                         areaActions.setJoinAreasPreview({
                             areaId: nextAreaId,
@@ -287,26 +382,85 @@ export const handleAreaDragFromCorner = (
                         }),
                     );
                     params.performDiff(() => { });
+                    break;
+                }
+
+                // Si on n'est plus sur une zone éligible, réinitialiser la prévisualisation
+                if (!foundEligibleArea) {
+                    params.dispatch(
+                        areaActions.setJoinAreasPreview({
+                            areaId: null,
+                            direction: null,
+                            eligibleAreaIds: getEligibleAreaIds(eligibleAreaIndices),
+                        }),
+                    );
+                    params.performDiff(() => { });
                 }
             };
 
             const onMouseUpFn: (() => void) | undefined = () => {
-                if (!isVecInRect(lastMousePosition, areaToViewport[row.areas[areaIndex].id])) {
+                // Déterminer si on est sur une zone éligible pour la fusion
+                let targetAreaIndex = -1;
+                let targetAreaId = null;
+
+                for (let i = 0; i < eligibleAreaIndices.length; i += 1) {
+                    const eligibleAreaIndex = eligibleAreaIndices[i];
+                    const eligibleAreaId = row.areas[eligibleAreaIndex].id;
+                    const eligibleAreaViewport = areaToViewport[eligibleAreaId];
+
+                    if (!eligibleAreaViewport) {
+                        console.error('Viewport manquant pour la zone', eligibleAreaId);
+                        continue;
+                    }
+
+                    // Convertir viewport en format attendu pour vérifier la position
+                    const rect = {
+                        left: eligibleAreaViewport.left,
+                        top: eligibleAreaViewport.top,
+                        right: eligibleAreaViewport.left + eligibleAreaViewport.width,
+                        bottom: eligibleAreaViewport.top + eligibleAreaViewport.height
+                    };
+
+                    // Vérifier si le point est dans le rectangle
+                    if (lastMousePosition.x >= rect.left &&
+                        lastMousePosition.x <= rect.right &&
+                        lastMousePosition.y >= rect.top &&
+                        lastMousePosition.y <= rect.bottom) {
+                        targetAreaIndex = eligibleAreaIndex;
+                        targetAreaId = eligibleAreaId;
+                        break;
+                    }
+                }
+
+                // Si on n'est pas sur une zone éligible, annuler la fusion
+                if (targetAreaIndex === -1) {
                     // Nettoyer les états temporaires avant d'annuler
                     params.dispatch(areaActions.cleanupTemporaryStates());
                     params.cancelAction();
                     return;
                 }
 
-                params.dispatch(areaActions.joinAreas({
-                    rowId: row.id,
-                    mergeArea: Math.min(areaIndex, areaIndex + 1),
-                    mergeInto: areaIndex < row.areas.length - 1 ? 1 : -1
-                }));
-                // Nettoyer les états temporaires après la fusion
-                params.dispatch(areaActions.cleanupTemporaryStates());
-                params.addDiff(() => { });
-                params.submitAction("Join areas");
+                try {
+                    // Déterminer quelle zone est fusionnée avec quelle autre zone
+                    const mergeArea = areaIndex;  // On utilise l'index de la zone qu'on déplace
+                    const mergeInto = targetAreaIndex > areaIndex ? 1 : -1;
+
+                    // Effectuer la fusion
+                    params.dispatch(areaActions.joinAreas({
+                        rowId: row.id,
+                        mergeArea: mergeArea,
+                        mergeInto: mergeInto
+                    }));
+
+                    // Nettoyer les états temporaires après la fusion
+                    params.dispatch(areaActions.cleanupTemporaryStates());
+                    params.addDiff(() => { });
+                    params.submitAction("Join areas");
+                } catch (error) {
+                    console.error('Error joining areas:', error);
+                    params.dispatch(areaActions.cleanupTemporaryStates());
+                    params.cancelAction();
+                }
             };
 
             return {
@@ -338,6 +492,7 @@ export const handleAreaDragFromCorner = (
                     }
                 } else {
                     // Sinon on crée une nouvelle zone
+                    // Détermine l'orientation en fonction de la direction du déplacement
                     const horizontal = Math.abs(moveVec.x) > Math.abs(moveVec.y);
                     createNewArea(horizontal);
                 }

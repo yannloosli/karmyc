@@ -2,10 +2,10 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AreaType } from '../../constants';
 import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from '../../types/areaTypes';
 import { CardinalDirection } from '../../types/directions';
+import { Rect } from '../../types/geometry';
 import { computeAreaToParentRow } from '../../utils/areaToParentRow';
 import { areaToRow } from '../../utils/areaToRow';
 import { joinAreas as joinAreasUtil } from '../../utils/joinArea';
-import { Rect } from '../../utils/math/types';
 import { validateArea } from '../../utils/validation';
 import { areaInitialStates } from '../initialStates';
 import { areaStateReducerRegistry } from '../registries/areaRegistry';
@@ -188,38 +188,93 @@ export const areaSlice = createSlice({
         }>) => {
             const { rowId, mergeArea, mergeInto } = action.payload;
             const row = state.layout[rowId] as AreaRowLayout;
-            const { area, removedAreaId } = joinAreasUtil(row, mergeArea, mergeInto);
 
-            const shouldRemoveRow = row.areas.length === 2;
-            const areaToParentRow = computeAreaToParentRow(state);
-
-            if (shouldRemoveRow && state.rootId === row.id) {
-                state.rootId = area.id;
-            }
-
-            // Mettre à jour le layout
-            Object.keys(state.layout).forEach((id) => {
-                if (id === removedAreaId || (shouldRemoveRow && id === row.id)) {
-                    delete state.layout[id];
-                    return;
-                }
-
-                if (id === areaToParentRow[row.id]) {
-                    const parentRow = state.layout[id] as AreaRowLayout;
-                    parentRow.areas = parentRow.areas.map((x) =>
-                        x.id === row.id ? { id: area.id, size: x.size } : x
-                    );
-                } else if (id === area.id) {
-                    state.layout[id] = area;
-                }
+            console.log('=== Début fusion dans le reducer ===', {
+                rowId,
+                mergeArea,
+                mergeInto,
+                row
             });
 
-            // Supprimer la zone fusionnée
-            delete state.areas[removedAreaId];
-            state.joinPreview = null;
+            if (!row || !row.areas) {
+                state.errors = ['Ligne invalide pour la fusion'];
+                return;
+            }
 
-            // Sauvegarder l'état après la fusion
-            localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
+            try {
+                const result = joinAreasUtil(row, mergeArea, mergeInto);
+                console.log('Résultat joinAreasUtil:', result);
+
+                const { area, removedAreaId } = result;
+                const shouldRemoveRow = row.areas.length === 2;
+                const areaToParentRow = computeAreaToParentRow(state);
+
+                // Conserver le type de la zone source
+                const sourceAreaId = row.areas[mergeArea].id;
+                const sourceArea = state.areas[sourceAreaId];
+
+                console.log('État avant mise à jour:', {
+                    shouldRemoveRow,
+                    sourceAreaId,
+                    sourceArea,
+                    areaToParentRow,
+                    currentLayout: state.layout
+                });
+
+                if (shouldRemoveRow && state.rootId === row.id) {
+                    state.rootId = area.id;
+                }
+
+                // Mettre à jour le layout
+                Object.keys(state.layout).forEach((id) => {
+                    if (id === removedAreaId || (shouldRemoveRow && id === row.id)) {
+                        console.log(`Suppression du layout ${id}`);
+                        delete state.layout[id];
+                        return;
+                    }
+
+                    if (id === areaToParentRow[row.id]) {
+                        const parentRow = state.layout[id] as AreaRowLayout;
+                        console.log(`Mise à jour de la ligne parente ${id}:`, parentRow);
+                        parentRow.areas = parentRow.areas.map((x) =>
+                            x.id === row.id ? { id: area.id, size: x.size } : x
+                        );
+                    } else if (id === row.id) {
+                        console.log(`Mise à jour de la ligne ${id} avec:`, area);
+                        // Mettre à jour la ligne avec la nouvelle zone
+                        state.layout[id] = area;
+                    } else if (id === area.id) {
+                        console.log(`Mise à jour de la zone ${id} avec:`, area);
+                        state.layout[id] = area;
+                    }
+                });
+
+                // Mettre à jour la zone résultante avec le type de la source
+                state.areas[area.id] = {
+                    ...sourceArea,
+                    id: area.id
+                };
+
+                console.log('État après mise à jour:', {
+                    newLayout: state.layout,
+                    newAreas: state.areas,
+                    newRootId: state.rootId
+                });
+
+                // Supprimer la zone fusionnée
+                delete state.areas[removedAreaId];
+                state.joinPreview = null;
+                state.errors = [];
+
+                // Sauvegarder l'état après la fusion
+                const stateToSave = validateLoadedState(state);
+                console.log('État à sauvegarder:', stateToSave);
+                localStorage.setItem('areaState', JSON.stringify(stateToSave));
+            } catch (error) {
+                console.error('Erreur lors de la fusion:', error);
+                state.errors = [(error as Error).message];
+                state.joinPreview = null;
+            }
         },
         convertAreaToRow: (state, action: PayloadAction<{
             areaId: string;
@@ -349,14 +404,52 @@ export const areaSlice = createSlice({
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
         cleanupTemporaryStates: (state) => {
-            state.errors = [];
-            state.activeAreaId = null;
             state.joinPreview = null;
             state.areaToOpen = null;
+            state.errors = [];
         },
         resetState: () => {
             localStorage.removeItem('areaState');
             return validateLoadedState({});
+        },
+        addAreaToRow: (state, action: PayloadAction<{
+            rowId: string;
+            afterAreaId: string;
+        }>) => {
+            const { rowId, afterAreaId } = action.payload;
+            const row = state.layout[rowId] as AreaRowLayout;
+
+            if (!row || row.type !== 'area_row') {
+                state.errors = ['Ligne non trouvée ou invalide'];
+                return;
+            }
+
+            const areaIndex = row.areas.findIndex(a => a.id === afterAreaId);
+            if (areaIndex === -1) {
+                state.errors = ['Zone non trouvée dans la ligne'];
+                return;
+            }
+
+            // Créer une nouvelle zone avec le même type que la zone précédente
+            const newAreaId = (++state._id).toString();
+            const sourceArea = state.areas[afterAreaId];
+            state.areas[newAreaId] = {
+                id: newAreaId,
+                type: sourceArea.type,
+                state: areaInitialStates[sourceArea.type]
+            };
+
+            // Ajouter la nouvelle zone dans la ligne après la zone spécifiée
+            row.areas.splice(areaIndex + 1, 0, { id: newAreaId, size: 0 });
+
+            // Mettre à jour le layout
+            state.layout[newAreaId] = {
+                type: 'area',
+                id: newAreaId
+            };
+
+            // Sauvegarder l'état
+            localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
     },
 });

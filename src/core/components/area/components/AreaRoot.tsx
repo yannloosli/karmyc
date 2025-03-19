@@ -77,7 +77,7 @@ const AreaRootComponent: React.FC = () => {
     };
 
     return (
-        <div data-area-root>
+        <div data-area-root style={{ position: 'relative' }}>
             {viewport &&
                 Object.keys(layout).map((id) => {
                     const layoutItem = layout[id];

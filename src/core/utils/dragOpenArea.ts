@@ -8,6 +8,7 @@ import { performOperation } from "~/state/operation";
 import { getActionState } from "~/state/stateUtils";
 import { Area } from "~/types/areaTypes";
 import { mouseDownMoveAction } from "~/util/action/mouseDownMoveAction";
+import { Vec2 } from "../../util/math/vec2";
 
 interface Options {
     area: Area;

@@ -1,11 +1,11 @@
 import { AREA_MIN_CONTENT_WIDTH } from "../../../constants";
 import { areaSlice } from "../../../store/slices/areaSlice";
 import { AreaRowLayout } from "../../../types/areaTypes";
+import type { Rect } from "../../../types/geometry";
 import { computeAreaRowToMinSize } from "../../../utils/areaRowToMinSize";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../../utils/getAreaViewport";
 import { capToRange, interpolate } from "../../../utils/math";
-import type { Rect } from "../../../utils/math/types";
 import { Vec2 } from "../../../utils/math/vec2";
 import { requestAction } from "../../../utils/requestAction";
 import { getActionState } from "../../../utils/stateUtils";
@@ -133,6 +133,8 @@ export const handleDragAreaResize = (
         });
 
         params.addListener.once("mouseup", () => {
+            // Nettoyer l'état de prévisualisation
+            params.dispatch(areaActions.setViewports({ viewports: {} }));
             params.addDiff((diff) => diff.resizeAreas());
             params.submitAction("Resize areas");
         });

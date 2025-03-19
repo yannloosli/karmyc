@@ -12,263 +12,279 @@ import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from "~/types/areaTypes";
 type AreaAction = ActionType<typeof actions>;
 
 export interface AreaReducerState {
-	_id: number;
-	rootId: string;
-	joinPreview: null | {
-		areaId: string | null;
-		movingInDirection: CardinalDirection | null;
-		eligibleAreaIds: string[];
-	};
-	layout: {
-		[key: string]: AreaRowLayout | AreaLayout;
-	};
-	areas: {
-		[key: string]: Area;
-	};
-	areaToOpen: null | AreaToOpen;
+    _id: number;
+    rootId: string;
+    joinPreview: null | {
+        areaId: string | null;
+        movingInDirection: CardinalDirection | null;
+        eligibleAreaIds: string[];
+    };
+    layout: {
+        [key: string]: AreaRowLayout | AreaLayout;
+    };
+    areas: {
+        [key: string]: Area;
+    };
+    areaToOpen: null | AreaToOpen;
 }
 
 export const initialAreaState: AreaReducerState = {
-	_id: 0,
-	layout: {
-		"0": {
-			type: "area",
-			id: "0",
-		},
-	},
-	areas: {
-		"0": {
-			type: AreaType.Project,
-			state: {},
-		},
-	},
-	joinPreview: null,
-	rootId: "0",
-	areaToOpen: null,
+    _id: 0,
+    layout: {
+        "0": {
+            type: "area",
+            id: "0",
+        },
+    },
+    areas: {
+        "0": {
+            type: AreaType.Project,
+            state: {},
+        },
+    },
+    joinPreview: null,
+    rootId: "0",
+    areaToOpen: null,
 };
 
 export const areaReducer = (state: AreaReducerState, action: AreaAction): AreaReducerState => {
-	switch (action.type) {
-		case getType(areaActions.setFields): {
-			const { fields } = action.payload;
-			return { ...state, ...fields };
-		}
+    switch (action.type) {
+    case getType(areaActions.setFields): {
+        const { fields } = action.payload;
+        return { ...state, ...fields };
+    }
 
-		case getType(areaActions.setJoinAreasPreview): {
-			const { areaId, from, eligibleAreaIds } = action.payload;
-			return {
-				...state,
-				joinPreview: {
-					areaId,
-					movingInDirection: from,
-					eligibleAreaIds,
-				},
-			};
-		}
+    case getType(areaActions.setJoinAreasPreview): {
+        const { areaId, from, eligibleAreaIds } = action.payload;
+        return {
+            ...state,
+            joinPreview: {
+                areaId,
+                movingInDirection: from,
+                eligibleAreaIds,
+            },
+        };
+    }
 
-		case getType(areaActions.joinAreas): {
-			const { areaRowId, areaIndex, mergeInto } = action.payload;
+    case getType(areaActions.joinAreas): {
+        const { areaRowId, areaIndex, mergeInto } = action.payload;
 
-			const row = state.layout[areaRowId] as AreaRowLayout;
-			const { area, removedAreaId } = joinAreas(row, areaIndex, mergeInto);
+        const row = state.layout[areaRowId] as AreaRowLayout;
+        const { area, removedAreaId } = joinAreas(row, areaIndex, mergeInto);
 
-			const shouldRemoveRow = row.areas.length === 2;
-			const areaToParentRow = computeAreaToParentRow(state);
+        // Calculer l'ID de la zone source (celle qui se déplace)
+        const sourceIndex = areaIndex - mergeInto;
+        const sourceId = row.areas[sourceIndex].id;
+        const sourceArea = state.areas[sourceId] as Area<AreaType>;
 
-			const newState = {
-				...state,
-				rootId: shouldRemoveRow && state.rootId === row.id ? area.id : state.rootId,
-				layout: Object.keys(state.layout).reduce<AreaReducerState["layout"]>((obj, id) => {
-					if (id === removedAreaId) {
-						return obj;
-					}
+        // Calculer l'ID de la zone cible (celle qui est remplacée)
+        const targetIndex = areaIndex;
+        const targetId = row.areas[targetIndex].id;
 
-					if (shouldRemoveRow && id === row.id) {
-						return obj;
-					}
+        const shouldRemoveRow = row.areas.length === 2;
+        const areaToParentRow = computeAreaToParentRow(state);
 
-					if (id === areaToParentRow[row.id]) {
-						obj[id] = {
-							...state.layout[id],
-							areas: (state.layout[id] as AreaRowLayout).areas.map((x) =>
-								x.id === row.id ? { id: area.id, size: x.size } : x,
-							),
-						} as AreaRowLayout;
-					} else if (id === area.id) {
-						obj[id] = area;
-					} else {
-						obj[id] = state.layout[id];
-					}
+        const newState = {
+            ...state,
+            rootId: shouldRemoveRow && state.rootId === row.id ? area.id : state.rootId,
+            layout: Object.keys(state.layout).reduce<AreaReducerState["layout"]>((obj, id) => {
+                if (id === removedAreaId) {
+                    return obj;
+                }
 
-					return obj;
-				}, {}),
-				areas: Object.keys(state.areas).reduce<AreaReducerState["areas"]>((obj, key) => {
-					if (key !== removedAreaId) {
-						obj[key] = state.areas[key];
-					}
+                if (shouldRemoveRow && id === row.id) {
+                    return obj;
+                }
 
-					return obj;
-				}, {}),
-				joinPreview: null,
-			};
+                if (id === areaToParentRow[row.id]) {
+                    obj[id] = {
+                        ...state.layout[id],
+                        areas: (state.layout[id] as AreaRowLayout).areas.map((x) =>
+                            x.id === row.id ? { id: area.id, size: x.size } : x,
+                        ),
+                    } as AreaRowLayout;
+                } else if (id === area.id) {
+                    obj[id] = area;
+                } else {
+                    obj[id] = state.layout[id];
+                }
 
-			return newState;
-		}
+                return obj;
+            }, {}),
+            areas: Object.keys(state.areas).reduce<AreaReducerState["areas"]>((obj, key) => {
+                if (key !== removedAreaId) {
+                    if (key === sourceId) {
+                        // La zone source prend la position de la cible
+                        obj[targetId] = {
+                            type: sourceArea.type,
+                            state: sourceArea.state
+                        };
+                    } else {
+                        obj[key] = state.areas[key];
+                    }
+                }
+                return obj;
+            }, {}),
+            joinPreview: null,
+        };
 
-		case getType(areaActions.convertAreaToRow): {
-			const { cornerParts, areaId, horizontal } = action.payload;
+        return newState;
+    }
 
-			const newState: AreaReducerState = {
-				...state,
-				layout: { ...state.layout },
-				areas: { ...state.areas },
-			};
+    case getType(areaActions.convertAreaToRow): {
+        const { cornerParts, areaId, horizontal } = action.payload;
 
-			const rowId = areaId;
-			const idForOldArea = (++newState._id).toString();
-			const idForNewArea = (++newState._id).toString();
+        const newState: AreaReducerState = {
+            ...state,
+            layout: { ...state.layout },
+            areas: { ...state.areas },
+        };
 
-			const row = areaToRow(rowId, idForOldArea, idForNewArea, horizontal, cornerParts);
+        const rowId = areaId;
+        const idForOldArea = (++newState._id).toString();
+        const idForNewArea = (++newState._id).toString();
 
-			// Rename 'areaId' to 'idForOldArea' and delete the old 'areaId' area
-			newState.areas[idForOldArea] = { ...newState.areas[areaId] };
-			delete newState.areas[areaId];
+        const row = areaToRow(rowId, idForOldArea, idForNewArea, horizontal, cornerParts);
 
-			// Add new area to areas
-			newState.areas[idForNewArea] = { ...newState.areas[idForOldArea] };
+        // Rename 'areaId' to 'idForOldArea' and delete the old 'areaId' area
+        newState.areas[idForOldArea] = { ...newState.areas[areaId] };
+        delete newState.areas[areaId];
 
-			// Add old and new layouts
-			newState.layout[idForOldArea] = { type: "area", id: idForOldArea };
-			newState.layout[idForNewArea] = { type: "area", id: idForNewArea };
+        // Add new area to areas
+        newState.areas[idForNewArea] = { ...newState.areas[idForOldArea] };
 
-			// Replace old area with 'row'
-			newState.layout[areaId] = row;
+        // Add old and new layouts
+        newState.layout[idForOldArea] = { type: "area", id: idForOldArea };
+        newState.layout[idForNewArea] = { type: "area", id: idForNewArea };
 
-			return newState;
-		}
+        // Replace old area with 'row'
+        newState.layout[areaId] = row;
 
-		case getType(areaActions.insertAreaIntoRow): {
-			const { rowId, area, insertIndex } = action.payload;
+        return newState;
+    }
 
-			const row = state.layout[rowId] as AreaRowLayout;
+    case getType(areaActions.insertAreaIntoRow): {
+        const { rowId, area, insertIndex } = action.payload;
 
-			const areas = [...row.areas];
+        const row = state.layout[rowId] as AreaRowLayout;
 
-			const newAreaId = (state._id + 1).toString();
+        const areas = [...row.areas];
 
-			areas.splice(insertIndex, 0, { id: newAreaId, size: 0 });
+        const newAreaId = (state._id + 1).toString();
 
-			return {
-				...state,
-				_id: state._id + 1,
-				layout: {
-					...state.layout,
-					[row.id]: { ...row, areas },
-					[newAreaId]: { type: "area", id: newAreaId },
-				},
-				areas: { ...state.areas, [newAreaId]: area },
-			};
-		}
+        areas.splice(insertIndex, 0, { id: newAreaId, size: 0 });
 
-		case getType(areaActions.wrapAreaInRow): {
-			const { areaId, orientation } = action.payload;
+        return {
+            ...state,
+            _id: state._id + 1,
+            layout: {
+                ...state.layout,
+                [row.id]: { ...row, areas },
+                [newAreaId]: { type: "area", id: newAreaId },
+            },
+            areas: { ...state.areas, [newAreaId]: area },
+        };
+    }
 
-			const areaToParentRow = computeAreaToParentRow(state);
+    case getType(areaActions.wrapAreaInRow): {
+        const { areaId, orientation } = action.payload;
 
-			const parentRowId = areaToParentRow[areaId];
+        const areaToParentRow = computeAreaToParentRow(state);
 
-			if (!parentRowId) {
-				// Is top-level area.
-				throw new Error("Not implemented.");
-			}
+        const parentRowId = areaToParentRow[areaId];
 
-			const parentRow = { ...(state.layout[parentRowId] as AreaRowLayout) };
+        if (!parentRowId) {
+            // Is top-level area.
+            throw new Error("Not implemented.");
+        }
 
-			const newRow: AreaRowLayout = {
-				type: "area_row",
-				id: (state._id + 1).toString(),
-				areas: [{ size: 1, id: areaId }],
-				orientation,
-			};
+        const parentRow = { ...(state.layout[parentRowId] as AreaRowLayout) };
 
-			parentRow.areas = parentRow.areas.map((area) => {
-				if (area.id === areaId) {
-					return { ...area, id: newRow.id };
-				}
-				return area;
-			});
+        const newRow: AreaRowLayout = {
+            type: "area_row",
+            id: (state._id + 1).toString(),
+            areas: [{ size: 1, id: areaId }],
+            orientation,
+        };
 
-			return {
-				...state,
-				_id: state._id + 1,
-				layout: {
-					...state.layout,
-					[newRow.id]: newRow,
-					[parentRow.id]: parentRow,
-				},
-			};
-		}
+        parentRow.areas = parentRow.areas.map((area) => {
+            if (area.id === areaId) {
+                return { ...area, id: newRow.id };
+            }
+            return area;
+        });
 
-		case getType(areaActions.setRowSizes): {
-			const { rowId, sizes } = action.payload;
-			const row = state.layout[rowId];
+        return {
+            ...state,
+            _id: state._id + 1,
+            layout: {
+                ...state.layout,
+                [newRow.id]: newRow,
+                [parentRow.id]: parentRow,
+            },
+        };
+    }
 
-			if (row.type !== "area_row") {
-				throw new Error("Expected layout to be of type 'area_row'.");
-			}
+    case getType(areaActions.setRowSizes): {
+        const { rowId, sizes } = action.payload;
+        const row = state.layout[rowId];
 
-			if (row.areas.length !== sizes.length) {
-				throw new Error("Expected row areas to be the same length as sizes.");
-			}
+        if (row.type !== "area_row") {
+            throw new Error("Expected layout to be of type 'area_row'.");
+        }
 
-			return {
-				...state,
-				layout: {
-					...state.layout,
-					[row.id]: {
-						...row,
-						areas: row.areas.map((area, i) => ({ ...area, size: sizes[i] })),
-					},
-				},
-			};
-		}
+        if (row.areas.length !== sizes.length) {
+            throw new Error("Expected row areas to be the same length as sizes.");
+        }
 
-		case getType(areaActions.setAreaType): {
-			const { areaId, type, initialState } = action.payload;
+        return {
+            ...state,
+            layout: {
+                ...state.layout,
+                [row.id]: {
+                    ...row,
+                    areas: row.areas.map((area, i) => ({ ...area, size: sizes[i] })),
+                },
+            },
+        };
+    }
 
-			const area = state.areas[areaId];
+    case getType(areaActions.setAreaType): {
+        const { areaId, type, initialState } = action.payload;
 
-			return {
-				...state,
-				areas: {
-					...state.areas,
-					[areaId]: {
-						...area,
-						type,
-						state: initialState || areaInitialStates[type],
-					},
-				},
-			};
-		}
+        const area = state.areas[areaId];
 
-		case getType(areaActions.dispatchToAreaState): {
-			const { areaId, action: _action } = action.payload;
+        return {
+            ...state,
+            areas: {
+                ...state.areas,
+                [areaId]: {
+                    ...area,
+                    type,
+                    state: initialState || areaInitialStates[type],
+                },
+            },
+        };
+    }
 
-			const area = state.areas[areaId];
+    case getType(areaActions.dispatchToAreaState): {
+        const { areaId, action: _action } = action.payload;
 
-			return {
-				...state,
-				areas: {
-					...state.areas,
-					[areaId]: {
-						...area,
-						state: areaStateReducerRegistry[area.type](area.state as any, _action),
-					},
-				},
-			};
-		}
+        const area = state.areas[areaId];
 
-		default:
-			return state;
-	}
+        return {
+            ...state,
+            areas: {
+                ...state.areas,
+                [areaId]: {
+                    ...area,
+                    state: areaStateReducerRegistry[area.type](area.state as any, _action),
+                },
+            },
+        };
+    }
+
+    default:
+        return state;
+    }
 };

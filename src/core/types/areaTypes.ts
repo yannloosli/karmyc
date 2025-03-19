@@ -1,6 +1,7 @@
 import { ComponentType } from "react";
 import { AreaType } from "~/core/constants";
-import { Rect, Vec2 } from "./math";
+import { Vec2 } from "../../util/math/vec2";
+import { Rect } from "./math";
 
 export interface AreaComponentProps<T = any> {
     id: string;

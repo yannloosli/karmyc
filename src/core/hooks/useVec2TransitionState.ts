@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Vec2 } from "~/core/types/math";
+import { Vec2 } from "../../util/math/vec2";
 
 interface TransitionOptions {
     duration: number;

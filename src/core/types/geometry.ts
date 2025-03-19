@@ -3,8 +3,8 @@ export interface Rect {
     top: number;
     width: number;
     height: number;
-    right: number;
-    bottom: number;
+    right?: number;
+    bottom?: number;
 }
 
 export interface Point {

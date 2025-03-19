@@ -1,6 +1,10 @@
 import { AREA_PLACEMENT_TRESHOLD } from "~/core/constants";
 import { AreaReducerState } from "~/core/types/areaTypes";
+import { Vec2 } from "../../util/math/vec2";
+import { Rect } from "../types/geometry";
 import { isVecInRect } from "./math";
+
+export type PlaceArea = "top" | "left" | "right" | "bottom" | "replace";
 
 export const getHoveredAreaId = (
     position: Vec2,
@@ -26,8 +30,6 @@ export const getHoveredAreaId = (
 
     return areaId;
 };
-
-export type PlaceArea = "top" | "left" | "right" | "bottom" | "replace";
 
 export const getAreaToOpenPlacementInViewport = (rect: Rect, position: Vec2): PlaceArea => {
     const w = rect.width;

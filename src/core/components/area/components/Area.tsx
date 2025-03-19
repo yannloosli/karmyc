@@ -6,8 +6,8 @@ import { _areaReactKeyRegistry, areaComponentRegistry } from "~/core/store/regis
 import { openContextMenu } from "~/core/store/slices/contextMenuSlice";
 import styles from "~/core/styles/Area.styles";
 import { AreaComponentProps } from "~/core/types/areaTypes";
+import { Rect } from "~/core/types/geometry";
 import { AreaIdContext } from "~/core/utils/AreaIdContext";
-import { Rect } from "~/core/utils/math/types";
 import { Vec2 } from "~/core/utils/math/vec2";
 import { requestAction } from "~/core/utils/requestAction";
 import { compileStylesheetLabelled } from "~/core/utils/stylesheets";
@@ -86,10 +86,6 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
 
     const dispatch = useDispatch();
 
-    console.log('Area type:', type);
-    console.log('Available types:', Object.keys(typeToIndex));
-    console.log('Type index:', typeToIndex[type]);
-
     // Vérifier si le type est valide
     if (!typeToIndex.hasOwnProperty(type)) {
         console.error(`Invalid area type: ${type}`);
@@ -153,7 +149,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
                 <div
                     key={dir}
                     className={s("area__corner", { [dir]: true })}
-                    onMouseDown={(e) => handleAreaDragFromCorner(e, dir as "ne", id, viewport)}
+                    onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as "ne", id, viewport)}
                 />
             ))}
             <button className={s("selectAreaButton")} onMouseDown={openSelectArea}>

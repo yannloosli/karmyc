@@ -9,6 +9,7 @@ import { _setAreaViewport, getAreaRootViewport } from "../../../utils/getAreaVie
 import { compileStylesheet } from "../../../utils/stylesheets";
 import { handleDragAreaResize } from "../handlers/areaDragResize";
 
+// Styles avec couleurs de débogage visibles
 const s = compileStylesheet(({ css }) => ({
     separator: css`
 		position: absolute;
@@ -50,41 +51,69 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         }
     }, [row.areas, areaToViewport, layout, rootId]);
 
-    return (
-        <>
-            {row.areas.slice(1).map((area, i) => {
-                const viewport = viewportsRef.current[area.id] || areaToViewport[area.id];
+    // Créer un tableau pour collecter les séparateurs
+    const separators = [];
 
-                if (!viewport) {
-                    console.warn(`No viewport found for area ${area.id}, separator will not be rendered`);
-                    return null;
-                }
+    // Méthode améliorée : ne pas utiliser slice(1) mais calculer 
+    // la position entre deux zones adjacentes
+    for (let i = 0; i < row.areas.length - 1; i++) {
+        const currentArea = row.areas[i];
+        const nextArea = row.areas[i + 1];
 
-                const horizontal = row.orientation === "horizontal";
+        if (!currentArea || !nextArea) continue;
 
-                const separatorRect: Rect = horizontal
-                    ? {
-                        height: viewport.height - AREA_BORDER_WIDTH * 4,
-                        width: AREA_BORDER_WIDTH * 2,
-                        left: viewport.left - AREA_BORDER_WIDTH,
-                        top: viewport.top + AREA_BORDER_WIDTH * 2,
-                    }
-                    : {
-                        height: AREA_BORDER_WIDTH * 2,
-                        width: viewport.width - AREA_BORDER_WIDTH * 4,
-                        left: viewport.left + AREA_BORDER_WIDTH * 2,
-                        top: viewport.top - AREA_BORDER_WIDTH,
-                    };
+        const currentViewport = areaToViewport[currentArea.id];
+        const nextViewport = areaToViewport[nextArea.id];
 
-                return (
-                    <div
-                        key={area.id}
-                        className={s("separator", { horizontal })}
-                        style={separatorRect}
-                        onMouseDown={e => handleDragAreaResize(e, row, horizontal, i + 1)}
-                    />
-                );
-            })}
-        </>
-    );
+        if (!currentViewport || !nextViewport) {
+            console.warn(`Missing viewport for area separator between ${currentArea.id} and ${nextArea.id}`);
+            continue;
+        }
+
+        // Déterminer l'orientation
+        const horizontal = row.orientation === "horizontal";
+
+        // Calculer la position du séparateur basée sur les deux viewports adjacents
+        let separatorRect: Rect;
+
+        if (horizontal) {
+            // Pour une orientation horizontale, le séparateur est entre la fin de la zone actuelle
+            // et le début de la zone suivante (verticalement)
+            separatorRect = {
+                left: nextViewport.left - AREA_BORDER_WIDTH,
+                top: nextViewport.top + AREA_BORDER_WIDTH * 2,
+                width: AREA_BORDER_WIDTH * 2,
+                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4, 20)
+            };
+        } else {
+            // Pour une orientation verticale, le séparateur est entre la fin de la zone actuelle
+            // et le début de la zone suivante (horizontalement)
+            separatorRect = {
+                left: nextViewport.left + AREA_BORDER_WIDTH * 2,
+                top: nextViewport.top - AREA_BORDER_WIDTH,
+                width: Math.max(nextViewport.width - AREA_BORDER_WIDTH * 4, 20),
+                height: AREA_BORDER_WIDTH * 2
+            };
+        }
+
+        separators.push(
+            <div
+                key={`sep-${currentArea.id}-${nextArea.id}`}
+                className={s("separator", { horizontal })}
+                style={{
+                    ...separatorRect,
+                    // Styles supplémentaires pour rendre le séparateur visible
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'visible',
+                    fontSize: '10px',
+                    color: 'white'
+                }}
+                onMouseDown={e => handleDragAreaResize(e, row, horizontal, i + 1)}
+            />
+        );
+    }
+
+    return <>{separators}</>;
 };

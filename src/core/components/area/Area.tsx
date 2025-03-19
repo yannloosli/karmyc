@@ -1,6 +1,6 @@
 import React, { ComponentType } from "react";
 import { AreaType } from "~/core/constants";
-import { Rect } from "~/core/types/math";
+import { Rect } from "~/core/types/geometry";
 
 export interface AreaComponentProps<T = any> {
     id: string;
