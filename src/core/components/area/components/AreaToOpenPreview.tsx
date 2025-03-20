@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Rect } from "~/core/types/geometry";
-import { areaComponentRegistry } from "../../../../area/areaRegistry";
-import { useVec2TransitionState } from "../../../../hook/useNumberTransitionState";
-import { Vec2 } from "../../../../util/math/vec2";
 import { AREA_BORDER_WIDTH, AREA_PLACEMENT_TRESHOLD } from "../../../constants";
+import { useVec2TransitionState } from "../../../hooks/useNumberTransitionState";
 import { RootState } from "../../../store";
+import { areaComponentRegistry } from "../../../store/registries/areaRegistry";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
 import { AreaToOpen } from "../../../types/areaTypes";
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from "../../../utils/areaUtils";
 import { contractRect } from "../../../utils/math";
+import { Vec2 } from "../../../utils/math/vec2";
 import { compileStylesheetLabelled } from "../../../utils/stylesheets";
 import { AreaComponent } from "./Area";
 

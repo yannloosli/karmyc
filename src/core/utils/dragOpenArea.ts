@@ -1,17 +1,78 @@
-import { areaOperations } from "~/area/areaOperations";
-import { areaActions } from "~/area/state/areaActions";
-import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from "~/area/util/areaUtils";
-import { getAreaRootViewport } from "~/area/util/getAreaViewport";
+import { AreaRowLayout } from "~/core/types/areaTypes";
+import { computeAreaToParentRow } from "~/core/utils/areaToParentRow";
 import { computeAreaToViewport } from "~/core/utils/areaToViewport";
 import { RequestActionParams } from "~/listener/requestAction";
 import { performOperation } from "~/state/operation";
 import { getActionState } from "~/state/stateUtils";
 import { Area } from "~/types/areaTypes";
-import { mouseDownMoveAction } from "~/util/action/mouseDownMoveAction";
-import { Vec2 } from "../../util/math/vec2";
+import * as areaActions from "../store/slices/areaSlice";
+import { mouseDownMoveAction } from "./action/mouseDownMoveAction";
+import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from "./areaUtils";
+import { getAreaRootViewport } from "./getAreaViewport";
+import { Vec2 } from "./math/vec2";
 
 interface Options {
     area: Area;
+}
+
+function dragArea(op: Operation, area: Area, targetAreaId: string, placement: PlaceArea) {
+    op.add(areaActions.setFields({ areaToOpen: null }));
+
+    const areaState = op.state.area;
+
+    if (placement === "replace") {
+        op.add(areaActions.setAreaType(targetAreaId, area.type, area.state));
+        return;
+    }
+
+    let orientation: AreaRowOrientation;
+    let iOff: 0 | 1;
+
+    switch (placement) {
+    case "top":
+    case "left":
+        iOff = 0;
+        break;
+    case "bottom":
+    case "right":
+        iOff = 1;
+        break;
+    }
+
+    switch (placement) {
+    case "bottom":
+    case "top":
+        orientation = "vertical";
+        break;
+    case "left":
+    case "right":
+        orientation = "horizontal";
+        break;
+    }
+
+    const areaToParentRow = computeAreaToParentRow(areaState);
+
+    const parentRow = areaState.layout[areaToParentRow[targetAreaId]] as AreaRowLayout | undefined;
+
+    if (parentRow && parentRow.orientation === orientation) {
+        const targetIndex = parentRow.areas.map((x) => x.id).indexOf(targetAreaId);
+        const insertIndex = targetIndex + iOff;
+        op.add(areaActions.insertAreaIntoRow({ rowId: parentRow.id, area, insertIndex }));
+
+        const sizes = parentRow.areas.map((x) => x.size);
+        const size = sizes[targetIndex] / 2;
+        sizes.splice(targetIndex, 0, 1);
+        sizes[targetIndex] = size;
+        sizes[targetIndex + 1] = size;
+        op.add(areaActions.setRowSizes(parentRow.id, sizes));
+        return;
+    }
+
+    op.add(areaActions.wrapAreaInRow(targetAreaId, orientation));
+    const newRowId = (areaState._id + 1).toString();
+    op.add(areaActions.insertAreaIntoRow({ rowId: newRowId, area, insertIndex: iOff }));
+    op.add(areaActions.setRowSizes({ rowId: newRowId, sizes: [1, 1] }));
+    op.addDiff((diff) => diff.resizeAreas());
 }
 
 export const dragOpenArea = (e: React.MouseEvent, options: Options) => {
@@ -38,7 +99,7 @@ export const dragOpenArea = (e: React.MouseEvent, options: Options) => {
         const viewport = areaToViewport[areaId];
         const placement = getAreaToOpenPlacementInViewport(viewport, position);
 
-        performOperation(params, (op) => areaOperations.dragArea(op, area, areaId!, placement));
+        performOperation(params, (op) => dragArea(op, area, areaId!, placement));
         params.submitAction();
     };
 

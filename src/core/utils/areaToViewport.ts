@@ -27,6 +27,9 @@ export const computeAreaToViewport = (
 
     const areaToViewport: { [key: string]: { left: number; top: number; width: number; height: number } } = {};
 
+    // Liste pour suivre les IDs visités pour éviter les boucles infinies
+    const visitedIds = new Set<string>();
+
     // Vérifiez la structure des zones
     Object.entries(layout).forEach(([id, area]) => {
         if (!area) {
@@ -41,8 +44,15 @@ export const computeAreaToViewport = (
             console.error("Invalid area or contentArea in computeArea", { area, contentArea });
             return;
         }
+
+        // Éviter de recalculer un viewport déjà visité
+        if (visitedIds.has(area.id)) {
+            return;
+        }
+        visitedIds.add(area.id);
+
         console.log("[computeArea] Computing viewport for area:", { areaId: area.id, contentArea });
-        areaToViewport[area.id] = contentArea;
+        areaToViewport[area.id] = { ...contentArea };
     }
 
     function computeRow(row: AreaRowLayout, contentArea: { left: number; top: number; width: number; height: number }) {
@@ -51,9 +61,15 @@ export const computeAreaToViewport = (
             return;
         }
 
+        // Éviter de recalculer un viewport déjà visité
+        if (visitedIds.has(row.id)) {
+            return;
+        }
+        visitedIds.add(row.id);
+
         console.log("[computeRow] Computing viewports for row:", { rowId: row.id, areas: row.areas, contentArea });
 
-        areaToViewport[row.id] = contentArea;
+        areaToViewport[row.id] = { ...contentArea };
 
         const size = row.orientation === "horizontal" ? contentArea.width : contentArea.height;
 
@@ -68,18 +84,29 @@ export const computeAreaToViewport = (
         });
 
         // Si aucune taille n'est définie, distribuer équitablement
-        const hasNoSizes = row.areas.every(area => !area.size);
+        const hasNoSizes = row.areas.every(area => !area.size && area.size !== 0);
         if (hasNoSizes) {
             console.log(`Row ${row.id} has areas without sizes, distributing equally`);
             const equalSize = 1 / row.areas.length;
             row.areas.forEach(area => area.size = equalSize);
         }
 
+        // S'assurer que toutes les tailles sont valides
+        row.areas.forEach((area, i) => {
+            if (typeof area.size !== 'number' || isNaN(area.size) || area.size < 0) {
+                console.warn(`Invalid size for area ${area.id}: ${area.size}, defaulting to 1/${row.areas.length}`);
+                area.size = 1 / row.areas.length;
+            }
+        });
+
         const totalArea = row.areas.reduce((acc, area) => acc + (area.size || 0), 0);
 
         if (totalArea <= 0) {
             console.error("Total area is zero or negative", { rowId: row.id, totalArea });
-            return;
+            // Corriger en distribuant équitablement
+            const equalSize = 1 / row.areas.length;
+            row.areas.forEach(area => area.size = equalSize);
+            return computeRow(row, contentArea); // Relancer avec des tailles corrigées
         }
 
         let left = contentArea.left;
@@ -92,14 +119,13 @@ export const computeAreaToViewport = (
 
             // Vérifiez et corrigez les zones sans ID défini dans le layout
             if (!layout[area.id]) {
-                console.error(`Area ${area.id} referenced in row ${row.id} is not defined in layout`);
+                console.warn(`Area ${area.id} referenced in row ${row.id} is not defined in layout, creating it`);
 
                 // Créer une entrée pour cette zone
                 layout[area.id] = {
                     type: "area",
                     id: area.id
                 };
-                console.log(`Created missing layout entry for area ${area.id}`);
             }
 
             const layoutItem = layout[area.id];
@@ -147,6 +173,7 @@ export const computeAreaToViewport = (
             areaToViewport[area.id] = { ...contentAreaForArea };
             console.log(`[computeRow] Set viewport for ${area.id}:`, areaToViewport[area.id]);
 
+            // Traiter récursivement chaque zone
             if (layoutItem.type === "area_row") {
                 computeRow(layoutItem as AreaRowLayout, contentAreaForArea);
             } else {
@@ -163,11 +190,35 @@ export const computeAreaToViewport = (
     }
 
     // Vérifiez que tous les IDs du layout ont un viewport
+    // et créez des viewports pour les IDs manquants
     Object.keys(layout).forEach(id => {
         if (!areaToViewport[id]) {
-            console.warn(`No viewport calculated for layout id ${id}`);
+            // Essayez de trouver un parent pour cet ID
+            const parentId = findParentId(layout, id);
+            if (parentId && areaToViewport[parentId]) {
+                // Utiliser le viewport du parent comme fallback
+                console.warn(`Creating fallback viewport for layout id ${id} based on parent ${parentId}`);
+                areaToViewport[id] = { ...areaToViewport[parentId] };
+            } else {
+                // Utiliser le viewport root comme dernier recours
+                console.warn(`No viewport calculated for layout id ${id}, using root viewport`);
+                areaToViewport[id] = { ...viewport };
+            }
         }
     });
+
+    // Fonction helper pour trouver le parent d'un ID
+    function findParentId(layout: { [key: string]: AreaLayout | AreaRowLayout }, childId: string): string | null {
+        for (const [id, item] of Object.entries(layout)) {
+            if (item.type === "area_row") {
+                const row = item as AreaRowLayout;
+                if (row.areas && row.areas.some(area => area.id === childId)) {
+                    return id;
+                }
+            }
+        }
+        return null;
+    }
 
     console.log("[computeAreaToViewport] Final result:", areaToViewport);
 

@@ -1,190 +1,32 @@
 # Journal des modifications (CHANGELOG)
 
-Ce document trace chronologiquement toutes les modifications significatives apportées au projet de refactorisation du système de mise en page.
+## [Non publié] - 2023-03-20
 
-## Format des entrées
+### Ajouté
+- Implémentation du module Project dans la nouvelle architecture core
+  - Création d'un slice Redux pour la gestion des compositions
+  - Création de hooks personnalisés pour interagir avec le slice (useProject, useProjectActions)
+  - Implémentation du système de menu contextuel pour le projet
+  - Création de nouveaux composants UI adaptés à l'architecture core
 
-```
-## [Version/Étape] - YYYY-MM-DD
+### Transformé
+- Migration des fonctionnalités du module project vers l'architecture core
+  - Gestion des compositions
+  - Menu contextuel
+  - Composants UI (Project, ProjectComp)
 
-### Ajouts
-- [Fonctionnalité ou fichier ajouté]
-- ...
+### À faire
+- Implémenter la fonctionnalité de glisser-déposer des compositions
+- Connecter l'interface des compositions avec le store des compositions
+- Compléter l'implémentation du menu contextuel pour les paramètres des compositions
+- Implémenter les utilitaires pour ouvrir des compositions dans des zones spécifiques
 
-### Modifications
-- [Changement apporté]
-- ...
+## [Initial] - 2023-03-17
 
-### Corrections
-- [Bug corrigé]
-- ...
-
-### Suppressions
-- [Élément supprimé]
-- ...
-
-### Dépendances
-- [Dépendance ajoutée ou mise à jour]
-- ...
-```
-
-## Historique des modifications
-
-<!-- Les entrées seront ajoutées ici au fur et à mesure du projet -->
-
-## Conception de l'API de hooks - 2024-04-23
-
-### Ajouts
-- Création du document HooksAPIDesign.md détaillant la conception de l'API de hooks
-- Conception des hooks d'enregistrement des types de zones (`useRegisterAreaType`, `useAreaTypes`)
-- Conception des hooks d'enregistrement des actions (`useRegisterAction`, `useRegisterActionValidator`)
-- Conception des hooks pour les menus contextuels (`useContextMenu`, `useRegisterContextMenuAction`)
-- Conception des hooks d'initialisation (`useLayoutCore`, `useLayoutCoreProvider`)
-- Conception des hooks d'accès aux données (`useAreaState`, `useAreaLayout`)
-- Ajout d'exemples d'utilisation pour chaque catégorie de hooks
-- Documentation des considérations de performance pour les hooks
-
-### Modifications
-- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 2.4
-
-## Initialisation - 2024-04-10
-
-### Ajouts
-- Création du document BranchPurpose.md détaillant la feuille de route complète du projet
-- Création des documents de suivi : CHANGELOG.md, TROUBLESHOOTING.md
-- Création des documents de feedback : OperatorFeedback.md, AgentFeedback.md
-- Définition de la structure de documentation et du processus de travail
-- Établissement des procédures de continuité entre les sessions
-- Identification des composants à analyser dans la phase initiale
-
-## Analyse du flux de données - 2024-04-16
-
-### Ajouts
-- Ajout d'une section complète "Analyse du flux de données" dans TechnicalAnalysis.md
-- Création de diagrammes mermaid pour visualiser les flux de données
-- Documentation des points d'entrée et de sortie des données
-- Documentation des modèles d'état (state patterns)
-- Documentation des flux de données pour les zones (areas)
-- Documentation des flux de données pour les actions et opérations
-- Documentation du système de différences
-- Analyse des modèles de communication
-
-### Modifications
-- Mise à jour de BranchPurpose.md pour marquer la phase 1.2 comme terminée
-
-## Conception de la structure 'core' - 2024-04-17
-
-### Ajouts
-- Définition d'une structure complète pour le dossier 'core' orientée bundling et distribution npm
-- Création d'un schéma d'organisation des sous-dossiers avec justifications
-- Établissement des conventions de nommage pour les fichiers et exports
-- Définition claire des interfaces publiques vs. privées
-- Documentation de la stratégie d'exportation pour contrôler l'API publique
-- Ajout des configurations recommandées pour Rollup, package.json et TypeScript
-
-### Modifications
-- Mise à jour de TechnicalAnalysis.md avec une nouvelle section sur la conception du dossier 'core'
-- Mise à jour de BranchPurpose.md pour marquer les tâches de la section 2.1 comme terminées
-
-## Conception du store Redux-Toolkit - 2024-04-20
-
-### Ajouts
-- Création du document StoreReduxAnalysis.md analysant la structure actuelle du store Redux
-- Création du document StoreReduxDesign.md détaillant la conception du nouveau store avec Redux-Toolkit
-- Conception détaillée de la structure des slices Redux pour chaque domaine fonctionnel
-- Conception du système d'historique basé sur redux-undo
-- Conception du système d'actions modulaire avec architecture de plugins
-- Définition des hooks personnalisés pour faciliter l'accès au store
-- Création de diagrammes pour visualiser l'architecture du store
-- Élaboration d'une stratégie de migration progressive
-
-### Dépendances
-- Identification du besoin d'ajouter @reduxjs/toolkit et redux-undo comme dépendances
-
-## Mise à jour de la conception du store Redux-Toolkit - 2024-04-21
-
-### Ajouts
-- Mise à jour du document StoreReduxDesign.md avec une structure alignée sur l'analyse technique
-- Intégration de la structure de dossiers proposée dans la section 4.1 de TechnicalAnalysis.md
-- Conception détaillée du point d'entrée principal pour le composant bundlisable
-- Définition des conventions de nommage pour les types (préfixes T et I)
-- Ajout d'un provider React principal pour faciliter l'intégration
-- Conception d'un système d'exports explicites pour contrôler l'API publique
-
-### Modifications
-- Réorganisation de la structure des dossiers pour s'aligner avec les recommandations de l'analyse technique
-- Amélioration de la séparation entre API publique et implémentation interne
-- Mise à jour des exemples de code pour refléter la nouvelle structure
-
-## Conception du système d'actions modulaire - 2024-04-22
-
-### Ajouts
-- Création du document ActionSystemDesign.md détaillant la conception du système d'actions modulaire
-- Conception d'une architecture de plugins pour les actions avec système de priorité
-- Définition des interfaces pour l'enregistrement des actions et des validateurs
-- Conception d'un système de validation des actions avec mécanismes personnalisables
-- Création de hooks React pour faciliter l'enregistrement des plugins et validateurs
-- Conception de l'intégration avec le système d'historique
-- Documentation des exemples d'utilisation et des considérations de performance
-
-### Modifications
-- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 2.3
-
-## Début de l'implémentation - 2024-04-24
-
-### Ajouts
-- Création de la structure de dossiers pour le module core
-- Implémentation des types de base (area, actions, contextMenu, history, store, core)
-- Implémentation du registre d'actions avec système de validation
-- Implémentation des validateurs d'actions communs
-- Implémentation des priorités d'actions
-- Implémentation des middlewares Redux pour les actions et l'historique
-
-### Dépendances
-- Ajout de @reduxjs/toolkit, redux-undo et redux-persist comme dépendances
-
-### Modifications
-- Mise à jour de BranchPurpose.md pour refléter l'avancement des tâches de la section 3.1 et 3.2
-
-## Mise à jour vers React 17 - 2024-04-24
-
-### Modifications
-- Mise à jour de la compatibilité React de 16.12.0 vers React 17
-- Mise à jour de la documentation pour refléter le changement de version
-
-### Dépendances
-- Mise à jour de la version de React vers 17.x
-
-## [Unreleased]
-
-### Added
-- Système d'actions modulaire avec plugins et validation
-- Hook `useActions` pour l'initialisation des plugins
-- Hook `useArea` pour la gestion des zones
-- Hook `useProject` pour la gestion des projets
-- Hook `useContextMenu` pour la gestion du menu contextuel
-- Composant `ContextMenu` pour l'affichage du menu contextuel
-- Provider principal `CoreProvider` avec système d'initialisation
-- Middleware Redux pour le système d'actions
-
-### Changed
-- Refactorisation du système de menu contextuel
-- Simplification des types du menu contextuel
-- Amélioration de la structure des slices Redux
-- Mise à jour de la documentation
-
-### Fixed
-- Problèmes de typage dans le menu contextuel
-- Conflits d'interfaces dans les types
-- Gestion des états dans les slices Redux
-
-### Removed
-- Ancien système de menu contextuel incompatible
-- Types redondants et obsolètes
-
-## [0.1.0] - 2024-03-17
-
-### Added
-- Structure initiale du projet
-- Configuration de base
-- Documentation initiale
+### Ajouté
+- Structure initiale du core avec les modules suivants
+  - store: Configuration de Redux Toolkit
+  - hooks: API de hooks pour utiliser les fonctionnalités du core
+  - components: Composants UI réutilisables
+  - actions: Système d'actions modulaire
+  - types: Types TypeScript partagés

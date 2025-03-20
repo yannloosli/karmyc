@@ -27,9 +27,12 @@ import {
 
 // Import des reducers
 import { errorMiddleware } from './errorHandling';
+import { registerDefaultKeyboardShortcuts } from './initializers/registerDefaultKeyboardShortcuts';
 import areaReducer from './slices/areaSlice';
 import { contextMenuReducer } from './slices/contextMenuSlice';
 import diffReducer from './slices/diffSlice';
+import historyReducer from './slices/historySlice';
+import notificationReducer from './slices/notificationSlice';
 import projectReducer from './slices/projectSlice';
 import stateReducer from './slices/stateSlice';
 import toolbarReducer from './slices/toolbarSlice';
@@ -45,11 +48,13 @@ const persistConfig = {
 // Combiner les reducers
 const rootReducer = combineReducers({
     area: areaReducer,
+    history: historyReducer,
     project: projectReducer,
     toolbar: toolbarReducer,
     diff: diffReducer,
     state: stateReducer,
-    contextMenu: contextMenuReducer
+    contextMenu: contextMenuReducer,
+    notification: notificationReducer
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -59,14 +64,7 @@ export const store = configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
-            serializableCheck: {
-                // Ignorer les actions non sérialisables
-                ignoredActions: [
-                    'state/transitionState',
-                    'diff/applyDiff',
-                    'diff/revertDiff'
-                ]
-            }
+            serializableCheck: false,
         }).concat(errorMiddleware, diffMiddleware, stateMiddleware),
     devTools: process.env.NODE_ENV !== 'production'
 });
@@ -89,3 +87,12 @@ export * from './slices/toolbarSlice';
 
 // Export du gestionnaire d'erreurs
 export { ErrorHandler, errorUtils } from './errorHandling';
+
+// Initialiser les raccourcis clavier
+registerDefaultKeyboardShortcuts();
+
+// Exporter une fonction pour réinitialiser les raccourcis clavier
+// Peut être utile si des modules externes ajoutent leurs propres raccourcis
+export function resetAndRegisterKeyboardShortcuts() {
+    registerDefaultKeyboardShortcuts();
+}

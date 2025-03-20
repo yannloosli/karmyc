@@ -4,6 +4,7 @@ import { AREA_BORDER_WIDTH } from "../../../constants";
 import { RootState } from "../../../store";
 import { cssZIndex } from "../../../styles/cssVariables";
 import { AreaRowLayout } from "../../../types/areaTypes";
+import { Rect } from "../../../types/geometry";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { _setAreaViewport, getAreaRootViewport } from "../../../utils/getAreaViewport";
 import { compileStylesheet } from "../../../utils/stylesheets";
@@ -96,6 +97,10 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             };
         }
 
+        const handleMouseDown = (e: React.MouseEvent) => {
+            handleDragAreaResize(e, row, horizontal, i + 1);
+        };
+
         separators.push(
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
@@ -110,7 +115,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
                     fontSize: '10px',
                     color: 'white'
                 }}
-                onMouseDown={e => handleDragAreaResize(e, row, horizontal, i + 1)}
+                onMouseDown={handleMouseDown}
             />
         );
     }

@@ -6,9 +6,9 @@ L'objectif de cette branche est d'identifier et de créer un système de mise en
 ## Composition actuelle
 Le système est actuellement composé des éléments suivants :
 - [ ] `area` - Gestion des zones d'affichage
-- [ ] `store` - Gestion de l'état global
+- [x] `store` - Gestion de l'état global
 - [ ] `contextmenu` - Menus contextuels
-- [ ] `project` - Gestion des projets
+- [x] `project` - Gestion des projets
 - [ ] `diff` - Système de comparaison
 - [ ] `state` - Gestion des états spécifiques
 - [ ] `toolbar` - Interface des barres d'outils
@@ -257,6 +257,14 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 #### 3.1 Refactorisation de la structure
 - [x] Créer le dossier 'core' et ses sous-dossiers
 - [ ] Migrer les composants existants vers la nouvelle structure
+  - [x] Migrer le module project
+  - [ ] Migrer le module area
+  - [ ] Migrer le module contextmenu
+  - [ ] Migrer le module state
+  - [ ] Migrer le module diff
+  - [ ] Migrer le module toolbar
+  - [ ] Migrer le module listener
+  - [ ] Migrer le module history
 - [ ] Mettre à jour les imports dans tous les fichiers
 - [ ] Assurer la compatibilité avec le code existant
 - [ ] **Mettre à jour la documentation avec la structure finale implémentée**
@@ -281,16 +289,25 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [x] **Documenter l'implémentation finale du store avec exemples d'utilisation**
 
 #### 3.3 Système d'actions
-- [ ] Implémenter le système de plugins pour les actions
-- [ ] Créer le registre central des actions
+- [x] Implémenter le système de plugins pour les actions
+- [x] Créer le registre central des actions
 - [ ] Développer les mécanismes de dispatch et d'exécution
+  - [x] Développer les actions pour le module project
+  - [ ] Développer les actions pour le module area
+  - [ ] Développer les actions pour le module contextmenu
+  - [ ] Développer les actions pour le module state
 - [ ] Intégrer avec le système d'historique (undo/redo)
 - [ ] **Mettre à jour la documentation du système d'actions avec le code final**
 
 #### 3.4 Hooks et API publique
-- [ ] Implémenter les hooks d'enregistrement
-- [ ] Créer les hooks d'initialisation
+- [x] Implémenter les hooks d'enregistrement
+- [x] Créer les hooks d'initialisation
 - [ ] Développer les hooks d'accès aux données
+  - [x] Développer les hooks pour le module project (useProject, useProjectActions)
+  - [ ] Développer les hooks pour le module area
+  - [ ] Développer les hooks pour le module contextmenu
+  - [ ] Développer les hooks pour le module state
+  - [ ] Développer les hooks pour le module diff
 - [ ] Documenter l'API publique
 - [ ] **Finaliser la documentation de référence de l'API avec tous les hooks implémentés**
 

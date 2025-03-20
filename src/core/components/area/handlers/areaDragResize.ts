@@ -18,13 +18,41 @@ export const handleDragAreaResize = (
     horizontal: boolean,
     areaIndex: number, // 1 is the first separator
 ) => {
-    requestAction({}, (params) => {
+    // Validation des entrées
+    if (!row || !row.areas || row.areas.length === 0) {
+        console.error("Invalid row provided for resize:", row);
+        return;
+    }
+
+    if (areaIndex < 1 || areaIndex >= row.areas.length) {
+        console.error("Invalid areaIndex for resize:", { areaIndex, areasLength: row.areas.length });
+        return;
+    }
+
+    // Indiquer que cette action est une opération de drag qui doit maintenir les listeners jusqu'au mouseup
+    requestAction({ isDragAction: true }, (params) => {
         const areaState = getActionState().area;
+
+        if (!areaState || !areaState.layout || !areaState.rootId) {
+            console.error("Invalid area state for resize:", areaState);
+            params.cancelAction();
+            return;
+        }
+
         const rowToMinSize = computeAreaRowToMinSize(areaState.rootId, areaState.layout);
+
+        const rootViewport = getAreaRootViewport();
+
+        if (!rootViewport) {
+            console.error("Unable to get root viewport");
+            params.cancelAction();
+            return;
+        }
+
         const areaToViewport = computeAreaToViewport(
             areaState.layout,
             areaState.rootId,
-            getAreaRootViewport(),
+            rootViewport,
         );
 
         const a0 = row.areas[areaIndex - 1];
@@ -41,8 +69,25 @@ export const handleDragAreaResize = (
 
         if (!v0 || !v1) {
             console.error('Missing viewports:', { a0: a0.id, a1: a1.id, viewports: areaToViewport });
-            params.cancelAction();
-            return;
+
+            // Tentative de recalcul des viewports
+            const recalculatedViewports = computeAreaToViewport(
+                areaState.layout,
+                areaState.rootId,
+                rootViewport,
+            );
+
+            const newV0 = recalculatedViewports[a0.id];
+            const newV1 = recalculatedViewports[a1.id];
+
+            if (!newV0 || !newV1) {
+                console.error('Still missing viewports after recalculation');
+                params.cancelAction();
+                return;
+            }
+
+            // Mettre à jour les références
+            Object.assign(areaToViewport, recalculatedViewports);
         }
 
         const getMinSize = (id: string) => {
@@ -58,7 +103,7 @@ export const handleDragAreaResize = (
 
             const minSize = rowToMinSize[layout.id];
             if (!minSize) {
-                console.error('Min size not found for row:', layout.id);
+                console.warn('Min size not found for row:', layout.id);
                 return 1;
             }
 
@@ -69,26 +114,54 @@ export const handleDragAreaResize = (
         const m1 = getMinSize(a1.id);
 
         const sizeToShare = a0.size + a1.size;
+        if (isNaN(sizeToShare) || sizeToShare <= 0) {
+            console.error("Invalid size to share:", { a0Size: a0.size, a1Size: a1.size, sum: sizeToShare });
+            // Correction des tailles
+            a0.size = 0.5;
+            a1.size = 0.5;
+        }
+
+        // Utiliser les viewports recalculés si nécessaire
+        const v0Ref = areaToViewport[a0.id];
+        const v1Ref = areaToViewport[a1.id];
 
         const sharedViewport: Rect = {
-            width: horizontal ? v0.width + v1.width : v0.width,
-            height: !horizontal ? v0.height + v1.height : v0.height,
-            left: v0.left,
-            top: v0.top,
+            width: horizontal ? v0Ref.width + v1Ref.width : v0Ref.width,
+            height: !horizontal ? v0Ref.height + v1Ref.height : v0Ref.height,
+            left: v0Ref.left,
+            top: v0Ref.top,
         };
 
         const viewportSize = horizontal ? sharedViewport.width : sharedViewport.height;
-        const tMin0 = (AREA_MIN_CONTENT_WIDTH * m0) / viewportSize;
-        const tMin1 = (AREA_MIN_CONTENT_WIDTH * m1) / viewportSize;
-
-        if (tMin0 + tMin1 >= 0.99) {
-            console.warn('Not enough space to resize');
+        if (viewportSize <= 0) {
+            console.error("Invalid viewport size:", viewportSize);
             params.cancelAction();
             return;
         }
 
+        const tMin0 = (AREA_MIN_CONTENT_WIDTH * m0) / viewportSize;
+        const tMin1 = (AREA_MIN_CONTENT_WIDTH * m1) / viewportSize;
+
+        if (tMin0 + tMin1 >= 0.99) {
+            console.warn('Not enough space to resize:', { tMin0, tMin1 });
+            params.cancelAction();
+            return;
+        }
+
+        // Variables pour suivre l'état du drag
+        let isDragging = true;
+        let lastVec = Vec2.fromEvent(_e as any);
+
         params.addListener.repeated("mousemove", (e) => {
+            if (!isDragging) return;
+
             const vec = Vec2.fromEvent(e);
+
+            // Vérifier si la souris a vraiment bougé pour éviter des mises à jour inutiles
+            if (Math.abs(vec.x - lastVec.x) < 1 && Math.abs(vec.y - lastVec.y) < 1) {
+                return;
+            }
+            lastVec = vec;
 
             const t0 = horizontal ? sharedViewport.left : sharedViewport.top;
             const t1 = horizontal
@@ -99,6 +172,12 @@ export const handleDragAreaResize = (
             const t = capToRange(tMin0, 1 - tMin1, (val - t0) / (t1 - t0));
 
             const sizes = [t, 1 - t].map((v) => interpolate(0, sizeToShare, v));
+
+            // Validation des tailles
+            if (sizes.some(s => isNaN(s) || s < 0)) {
+                console.error("Invalid calculated sizes:", sizes);
+                return;
+            }
 
             // Mettre à jour les tailles
             params.dispatch(areaActions.setRowSizes({
@@ -113,29 +192,40 @@ export const handleDragAreaResize = (
             // Mettre à jour les viewports
             const newViewports: Record<string, Rect> = {};
             const newV0: Rect = {
-                ...v0,
-                width: horizontal ? sharedViewport.width * t : v0.width,
-                height: !horizontal ? sharedViewport.height * t : v0.height
+                ...v0Ref,
+                width: horizontal ? sharedViewport.width * t : v0Ref.width,
+                height: !horizontal ? sharedViewport.height * t : v0Ref.height
             };
             const newV1: Rect = {
-                ...v1,
-                left: horizontal ? v0.left + sharedViewport.width * t : v1.left,
-                top: !horizontal ? v0.top + sharedViewport.height * t : v1.top,
-                width: horizontal ? sharedViewport.width * (1 - t) : v1.width,
-                height: !horizontal ? sharedViewport.height * (1 - t) : v1.height
+                ...v1Ref,
+                left: horizontal ? v0Ref.left + sharedViewport.width * t : v1Ref.left,
+                top: !horizontal ? v0Ref.top + sharedViewport.height * t : v1Ref.top,
+                width: horizontal ? sharedViewport.width * (1 - t) : v1Ref.width,
+                height: !horizontal ? sharedViewport.height * (1 - t) : v1Ref.height
             };
+
+            // Validation des viewports
+            if (newV0.width <= 0 || newV0.height <= 0 || newV1.width <= 0 || newV1.height <= 0) {
+                console.error("Invalid viewport dimensions:", { newV0, newV1 });
+                return;
+            }
 
             newViewports[a0.id] = newV0;
             newViewports[a1.id] = newV1;
 
             params.dispatch(areaActions.setViewports({ viewports: newViewports }));
+
             params.performDiff((diff) => diff.resizeAreas());
         });
 
-        params.addListener.once("mouseup", () => {
+        params.addListener.once("mouseup", (e) => {
+            isDragging = false;
+
             // Nettoyer l'état de prévisualisation
             params.dispatch(areaActions.setViewports({ viewports: {} }));
             params.addDiff((diff) => diff.resizeAreas());
+
+            // Important : Soumettre explicitement l'action à la fin du drag
             params.submitAction("Resize areas");
         });
     });

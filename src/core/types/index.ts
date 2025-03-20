@@ -26,3 +26,16 @@ export * from './core';
 
 // Types liés aux directions
 export * from './directions';
+
+/**
+ * Définition d'un raccourci clavier
+ */
+export interface KeyboardShortcut {
+    key: string;
+    name: string;
+    fn: (areaId: string, params: any) => void;
+    modifierKeys?: string[];
+    optionalModifierKeys?: string[];
+    history?: boolean;
+    shouldAddToStack?: (areaId: string, prevState: any, nextState: any) => boolean;
+}

@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AREA_BORDER_WIDTH, AreaType } from "~/core/constants";
 import { useAreaKeyboardShortcuts } from "~/core/hooks/useAreaKeyboardShortcuts";
+import { RootState } from "~/core/store";
 import { _areaReactKeyRegistry, areaComponentRegistry } from "~/core/store/registries/areaRegistry";
+import { setActiveArea } from "~/core/store/slices/areaSlice";
 import { openContextMenu } from "~/core/store/slices/contextMenuSlice";
 import styles from "~/core/styles/Area.styles";
 import { AreaComponentProps } from "~/core/types/areaTypes";
@@ -85,6 +87,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     }
 
     const dispatch = useDispatch();
+    const active = useSelector((state: RootState) => state.area.activeAreaId === id);
 
     // Vérifier si le type est valide
     if (!typeToIndex.hasOwnProperty(type)) {
@@ -141,10 +144,56 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     const areaStateKey = _areaReactKeyRegistry[type];
     const key = areaStateKey ? state[areaStateKey] : id;
 
-    useAreaKeyboardShortcuts(id, type, viewport);
+    // Récupérer le viewport pour les raccourcis clavier
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
+
+    // Mettre à jour le viewport lorsque le composant est monté ou redimensionné
+    useEffect(() => {
+        const updateViewport = () => {
+            if (viewportRef.current) {
+                const rect = viewportRef.current.getBoundingClientRect();
+                setKeyboardViewport({
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                });
+            }
+        };
+
+        updateViewport();
+
+        // Observer les redimensionnements
+        const resizeObserver = new ResizeObserver(updateViewport);
+        if (viewportRef.current) {
+            resizeObserver.observe(viewportRef.current);
+        }
+
+        // Nettoyer l'observateur lors du démontage
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, []);
+
+    // Utiliser les raccourcis clavier
+    useAreaKeyboardShortcuts(id, type, keyboardViewport);
+
+    // Activer la zone lorsqu'elle est cliquée
+    const onActivate = () => {
+        if (!active) {
+            dispatch(setActiveArea(id));
+        }
+    };
 
     return (
-        <div data-areaid={id} className={s("area", { raised: !!raised })} style={viewport}>
+        <div
+            ref={viewportRef}
+            data-areaid={id}
+            className={s("area", { raised: !!raised })}
+            style={viewport}
+            onClick={onActivate}
+        >
             {["ne", "nw", "se", "sw"].map((dir) => (
                 <div
                     key={dir}
