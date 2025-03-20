@@ -1,1 +1,0 @@
-export const AREA_PLACEMENT_TRESHOLD = 0.25;
