@@ -9,7 +9,6 @@ types/
 ├── core.ts             # Types fondamentaux du core
 ├── actions.ts          # Types liés aux actions
 ├── area.ts            # Types liés aux zones
-├── project.ts         # Types liés aux projets
 ├── state.ts           # Types liés aux états
 ├── toolbar.ts         # Types liés à la barre d'outils
 └── internal.ts        # Types internes (non exportés)
@@ -75,11 +74,6 @@ import { IArea, IProject, IAction } from '@core/types';
 
 // Utilisation dans un composant
 function AreaComponent({ area }: { area: IArea }) {
-  // ...
-}
-
-// Utilisation dans un hook
-function useProject(): IProject | null {
   // ...
 }
 

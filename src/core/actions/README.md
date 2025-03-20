@@ -11,7 +11,6 @@ actions/
 ├── validation.ts        # Système de validation des actions
 ├── plugins/             # Plugins d'actions
 │   ├── area/           # Actions liées aux zones
-│   ├── project/        # Actions liées aux projets
 │   └── toolbar/        # Actions liées à la barre d'outils
 └── validators/         # Validateurs d'actions
 ```
@@ -83,13 +82,6 @@ Actions spécifiques à la gestion des zones :
 - Modification de zones
 - Suppression de zones
 - Sélection de zones
-
-### Plugin Project
-Actions liées à la gestion des projets :
-- Création de projets
-- Sauvegarde de projets
-- Chargement de projets
-- Export/Import de projets
 
 ### Plugin Toolbar
 Actions pour la barre d'outils :

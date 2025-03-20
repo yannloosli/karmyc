@@ -28,7 +28,7 @@ yarn add @core
 ## Utilisation de Base
 
 ```typescript
-import { CoreProvider, useArea, useProject } from '@core';
+import { CoreProvider, useArea } from '@core';
 
 function App() {
   return (
@@ -40,7 +40,6 @@ function App() {
 
 function MyEditor() {
   const { areas, addArea } = useArea();
-  const { currentProject } = useProject();
 
   return (
     <div>

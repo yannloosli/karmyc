@@ -1,7 +1,6 @@
 import { AreaType } from '../constants';
 import { Area } from '../types/areaTypes';
 import { ContextMenuItem } from '../types/contextMenu';
-import { IProject } from '../types/core';
 import { IDiff } from '../types/diff';
 import { IState } from '../types/state';
 import { IToolbarItem } from '../types/toolbar';
@@ -12,21 +11,6 @@ export const validateArea = (area: Area<AreaType>): { isValid: boolean; errors: 
 
     if (!area.type) errors.push('Type manquant');
     if (!area.state) errors.push('État manquant');
-
-    return {
-        isValid: errors.length === 0,
-        errors,
-    };
-};
-
-// Validation des projets
-export const validateProject = (project: IProject): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-
-    if (!project.id) errors.push('ID manquant');
-    if (!project.name) errors.push('Nom manquant');
-    if (!project.createdAt) errors.push('Date de création manquante');
-    if (!project.updatedAt) errors.push('Date de mise à jour manquante');
 
     return {
         isValid: errors.length === 0,

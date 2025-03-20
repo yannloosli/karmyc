@@ -33,7 +33,6 @@ import { contextMenuReducer } from './slices/contextMenuSlice';
 import diffReducer from './slices/diffSlice';
 import historyReducer from './slices/historySlice';
 import notificationReducer from './slices/notificationSlice';
-import projectReducer from './slices/projectSlice';
 import stateReducer from './slices/stateSlice';
 import toolbarReducer from './slices/toolbarSlice';
 
@@ -41,7 +40,7 @@ import toolbarReducer from './slices/toolbarSlice';
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['project', 'toolbar', 'state'], // Persister les projets, toolbars et états
+    whitelist: ['toolbar', 'state'], // Persister les projets, toolbars et états
     blacklist: ['undoable', 'diff'], // Ne pas persister l'historique undo/redo et les diffs
 };
 
@@ -49,7 +48,6 @@ const persistConfig = {
 const rootReducer = combineReducers({
     area: areaReducer,
     history: historyReducer,
-    project: projectReducer,
     toolbar: toolbarReducer,
     diff: diffReducer,
     state: stateReducer,
@@ -81,7 +79,6 @@ export * from './selectors';
 export * from './slices/areaSlice';
 export * from './slices/contextMenuSlice';
 export * from './slices/diffSlice';
-export * from './slices/projectSlice';
 export * from './slices/stateSlice';
 export * from './slices/toolbarSlice';
 

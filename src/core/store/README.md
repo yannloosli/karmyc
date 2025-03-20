@@ -8,7 +8,6 @@ Ce dossier contient la gestion de l'état global de l'application utilisant Redu
 store/
 ├── slices/              # Slices Redux pour chaque domaine
 │   ├── area.ts         # Gestion des zones
-│   ├── project.ts      # Gestion des projets
 │   ├── contextMenu.ts  # Gestion des menus contextuels
 │   ├── state.ts        # Gestion des états
 │   ├── diff.ts         # Gestion des différences
@@ -42,25 +41,6 @@ const areaSlice = createSlice({
     addArea: (state, action) => { /* ... */ },
     removeArea: (state, action) => { /* ... */ },
     updateArea: (state, action) => { /* ... */ }
-  }
-});
-```
-
-### projectSlice
-Gère l'état des projets.
-
-```typescript
-const initialState = {
-  projects: [],
-  currentProjectId: null
-};
-
-const projectSlice = createSlice({
-  name: 'project',
-  initialState,
-  reducers: {
-    createProject: (state, action) => { /* ... */ },
-    updateProject: (state, action) => { /* ... */ }
   }
 });
 ```

@@ -15,10 +15,8 @@ export * from './useActions';
 export * from './useArea';
 export * from './useContextMenu';
 export * from './useInitialize';
-export * from './useProject';
 export * from './useUndoable';
 
 // Nouveaux hooks
-export * from './useDependencies';
 export * from './useHistory';
 export * from './usePerformance';

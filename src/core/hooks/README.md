@@ -8,11 +8,9 @@ Ce dossier contient les hooks React personnalisés qui fournissent une API réut
 hooks/
 ├── useArea.ts                    # Hook pour la gestion des zones
 ├── useActions.ts                 # Hook pour l'accès aux actions
-├── useProject.ts                 # Hook pour la gestion des projets
 ├── useHistory.ts                 # Hook pour l'historique (undo/redo)
 ├── useContextMenu.ts             # Hook pour les menus contextuels
 ├── usePerformance.ts             # Hook pour l'optimisation des performances
-├── useDependencies.ts            # Hook pour la gestion des dépendances
 ├── useInitialize.ts              # Hook pour l'initialisation
 ├── useUndoable.ts                # Hook pour les actions annulables
 ├── useRegisterAction.ts          # Hook pour l'enregistrement d'actions
@@ -37,22 +35,14 @@ Hook pour accéder et exécuter les actions enregistrées.
 const { executeAction, registerAction } = useActions();
 ```
 
-### useProject
-Hook pour la gestion des projets.
-
-```tsx
-const { currentProject, createProject, updateProject } = useProject();
-```
-
 ## Utilisation
 
 ```tsx
-import { useArea, useActions, useProject } from '@core/hooks';
+import { useArea, useActions } from '@core/hooks';
 
 function MyComponent() {
   const { areas, addNewArea } = useArea();
   const { executeAction } = useActions();
-  const { currentProject } = useProject();
 
   // Utilisation des hooks...
 }

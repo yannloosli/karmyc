@@ -8,7 +8,6 @@ Ce dossier contient les constantes et configurations globales utilisées dans to
 constants/
 ├── index.ts             # Export des constantes publiques
 ├── area.ts             # Constantes liées aux zones
-├── project.ts          # Constantes liées aux projets
 ├── actions.ts          # Constantes liées aux actions
 ├── validation.ts       # Constantes de validation
 └── theme.ts           # Constantes de thème
@@ -32,19 +31,6 @@ export const AREA_CONSTANTS = {
 } as const;
 ```
 
-### Projets
-
-```typescript
-// src/core/constants/project.ts
-export const PROJECT_CONSTANTS = {
-  MAX_AREAS: 100,
-  MAX_NAME_LENGTH: 50,
-  AUTO_SAVE_INTERVAL: 30000, // 30 secondes
-  SUPPORTED_FORMATS: ['json', 'xml'],
-  MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB
-} as const;
-```
-
 ### Actions
 
 ```typescript
@@ -55,12 +41,7 @@ export const ACTION_TYPES = {
     REMOVE: 'area/remove',
     UPDATE: 'area/update',
     SELECT: 'area/select'
-  },
-  PROJECT: {
-    CREATE: 'project/create',
-    SAVE: 'project/save',
-    LOAD: 'project/load'
-  }
+  },=
 } as const;
 ```
 
