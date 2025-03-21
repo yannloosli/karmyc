@@ -1,6 +1,6 @@
-# History Core
+# Historique
 
-Ce dossier contient le système de gestion de l'historique qui permet d'annuler et de rétablir les actions dans l'éditeur d'animation.
+Ce dossier contient le système de gestion de l'historique qui permet d'annuler et de rétablir les actions dans le système de layout.
 
 ## Structure
 
@@ -44,7 +44,7 @@ const diff = generateDiff(previousState, currentState, {
 ## Utilisation
 
 ```typescript
-import { useHistory } from '@core/hooks';
+import { useHistory } from '@/hooks';
 
 function MyComponent() {
   const { undo, redo, canUndo, canRedo } = useHistory();

@@ -10,15 +10,6 @@ export const joinAreas = (
     // La cible est à gauche (mergeInto = -1) ou à droite (mergeInto = 1) de la source
     const targetIndex = sourceIndex + mergeInto;
 
-    console.log('Indices de fusion:', {
-        sourceIndex,
-        targetIndex,
-        mergeInto,
-        rowLength: row.areas.length,
-        areas: row.areas,
-        direction: mergeInto === -1 ? 'ouest' : 'est'
-    });
-
     // Vérifier que les indices sont valides
     if (sourceIndex < 0 || sourceIndex >= row.areas.length ||
         targetIndex < 0 || targetIndex >= row.areas.length) {

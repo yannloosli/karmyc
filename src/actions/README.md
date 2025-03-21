@@ -1,6 +1,6 @@
-# Actions Core
+# Actions
 
-Ce dossier contient le système d'actions modulaire qui permet d'enregistrer, valider et exécuter des actions dans l'éditeur d'animation.
+Ce dossier contient le système d'actions modulaire qui permet d'enregistrer, valider et exécuter des actions dans le système de layout.
 
 ## Structure
 
@@ -56,7 +56,7 @@ const areaValidator = createActionValidator({
 ## Utilisation
 
 ```typescript
-import { useActions } from '@core/hooks';
+import { useActions } from '@/hooks';
 import { actionRegistry } from './actions/registry';
 
 function MyComponent() {

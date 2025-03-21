@@ -64,10 +64,6 @@ class AnalyticsCollector {
             this.events.shift();
         }
 
-        // Log des événements importants
-        if (action.type.startsWith('area/')) {
-            console.log(`[Analytics] ${action.type}`, event);
-        }
     }
 
     getEvents() {

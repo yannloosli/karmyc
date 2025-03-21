@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-Ce document présente la conception détaillée du système d'actions modulaire pour le core layout system de l'éditeur d'animation. Ce système vise à remplacer et améliorer le système d'actions existant en le rendant plus modulaire, extensible et maintenable.
+Ce document présente la conception détaillée du système d'actions modulaire pour le composant Karmyc. Ce système vise à remplacer et améliorer le système d'actions existant en le rendant plus modulaire, extensible et maintenable.
 
 ## 2. Analyse du système existant
 
@@ -54,7 +54,7 @@ graph TD
 #### 3.2.1 Types d'actions
 
 ```typescript
-// src/core/types/actions.ts
+// src/types/actions.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 export type TActionHandler<T extends AnyAction = AnyAction> = (action: T) => void;
@@ -82,7 +82,7 @@ export interface IActionRegistryOptions {
 #### 3.2.2 Registre d'actions
 
 ```typescript
-// src/core/actions/registry.ts
+// src/actions/registry.ts
 import { AnyAction } from '@reduxjs/toolkit';
 import { 
   IActionPlugin, 
@@ -210,7 +210,7 @@ export { ActionRegistry };
 #### 3.2.3 Middleware Redux
 
 ```typescript
-// src/core/store/middleware/actions.ts
+// src/store/middleware/actions.ts
 import { Middleware } from '@reduxjs/toolkit';
 import { actionRegistry } from '../../actions/registry';
 
@@ -228,7 +228,7 @@ export const actionsMiddleware: Middleware = store => next => action => {
 ### 3.3 Hooks React
 
 ```typescript
-// src/core/hooks/useActionPlugin.ts
+// src/hooks/useActionPlugin.ts
 import { useEffect } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 import { actionRegistry } from '../actions/registry';
@@ -285,7 +285,7 @@ Le système de priorité permet de contrôler l'ordre d'exécution des plugins d
 ### 4.1 Niveaux de priorité recommandés
 
 ```typescript
-// src/core/actions/priorities.ts
+// src/actions/priorities.ts
 export enum ActionPriority {
   CRITICAL = 1000,  // Actions critiques (sécurité, validation)
   HIGH = 800,       // Actions importantes (historique, journalisation)
@@ -302,7 +302,7 @@ Le système de validation permet de vérifier qu'une action est valide avant de 
 ### 5.1 Validateurs communs
 
 ```typescript
-// src/core/actions/validators.ts
+// src/actions/validators.ts
 import { AnyAction } from '@reduxjs/toolkit';
 import { TActionValidator, IActionValidationResult } from '../types/actions';
 
@@ -342,7 +342,7 @@ export const hasRequiredFields = (fields: string[]): TActionValidator => {
 Le système d'actions sera intégré avec le système d'historique pour permettre l'annulation et la restauration des actions.
 
 ```typescript
-// src/core/actions/plugins/historyPlugin.ts
+// src/actions/plugins/historyPlugin.ts
 import { AnyAction } from '@reduxjs/toolkit';
 import { IActionPlugin } from '../../types/actions';
 import { ActionPriority } from '../priorities';
@@ -374,8 +374,8 @@ export const historyPlugin: IActionPlugin = {
 
 ```typescript
 // Exemple d'utilisation dans un composant React
-import { useActionPlugin } from '../core/hooks/useActionPlugin';
-import { ActionPriority } from '../core/actions/priorities';
+import { useActionPlugin } from '../hooks/useActionPlugin';
+import { ActionPriority } from '../actions/priorities';
 
 function MyComponent() {
   useActionPlugin(
@@ -396,8 +396,8 @@ function MyComponent() {
 
 ```typescript
 // Exemple d'utilisation dans un composant React
-import { useActionValidator } from '../core/hooks/useActionPlugin';
-import { hasRequiredFields } from '../core/actions/validators';
+import { useActionValidator } from '../re/hooks/useActionPlugin';
+import { hasRequiredFields } from '../actions/validators';
 
 function MyComponent() {
   useActionValidator(
@@ -413,8 +413,8 @@ function MyComponent() {
 
 ```typescript
 // Exemple d'utilisation avec le store Redux
-import { useAppDispatch } from '../core/hooks';
-import { addArea } from '../core/store/slices/area';
+import { useAppDispatch } from '../hooks';
+import { addArea } from '../store/slices/area';
 
 function MyComponent() {
   const dispatch = useAppDispatch();

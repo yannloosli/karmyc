@@ -1,7 +1,7 @@
 import { debounce } from 'lodash';
 import React from "react";
 import ReactDOM from 'react-dom';
-import { CoreProvider } from "~/providers/CoreProvider";
+import { KarmycProvider } from "~/providers/KarmycProvider";
 import { sendDiffsToSubscribers } from "~/store/diffSubscription";
 import { App } from "./App";
 import { initAreaRegistries } from "./store/registries/initRegistries";
@@ -12,9 +12,9 @@ initAreaRegistries();
 
 const Root = () => (
     <React.StrictMode>
-        <CoreProvider>
+        <KarmycProvider>
             <App />
-        </CoreProvider>
+        </KarmycProvider>
     </React.StrictMode>
 );
 

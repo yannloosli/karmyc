@@ -17,7 +17,7 @@ export interface IInitializeOptions {
 /**
  * Configuration du module core
  */
-export interface ICoreConfig {
+export interface IKarmycConfig {
     areas: {
         types: string[];
         layout: any;
@@ -39,7 +39,7 @@ export interface IProject {
     updatedAt: string;
 }
 
-export interface ICoreOptions {
+export interface IKarmycOptions {
     enableLogging?: boolean;
     plugins?: IActionPlugin[];
     validators?: Array<{
@@ -48,8 +48,8 @@ export interface ICoreOptions {
     }>;
 }
 
-export interface ICoreProviderProps {
+export interface IKarmycProviderProps {
     children: React.ReactNode;
-    options?: ICoreOptions;
+    options?: IKarmycOptions;
     customStore?: any; // TODO: Typer correctement avec le type du store
 }

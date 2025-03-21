@@ -24,15 +24,6 @@ export function exceedsDirectionVector(
         const absX = Math.abs(moveVec.x);
         const absY = Math.abs(moveVec.y);
 
-        console.log('Exceeds calculation:', {
-            moveVec,
-            direction,
-            dot,
-            adjustedThreshold,
-            absX,
-            absY
-        });
-
         return absX > absY ? "x" : "y";
     }
 

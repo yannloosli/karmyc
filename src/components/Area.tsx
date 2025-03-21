@@ -1,29 +1,29 @@
 import styled from '@emotion/styled';
 import React from 'react';
-import { IArea } from '../types/core';
+import { IArea } from '../types/karmyc';
 
 /**
  * Interface définissant les propriétés du composant Area
  */
 interface AreaProps {
-  /** L'objet zone à afficher */
-  area: IArea;
-  /** Indique si la zone est actuellement sélectionnée */
-  isActive?: boolean;
-  /** Callback appelé lorsque la zone est sélectionnée */
-  onSelect?: (area: IArea) => void;
-  /** Contenu enfant à afficher dans la zone */
-  children?: React.ReactNode;
+    /** L'objet zone à afficher */
+    area: IArea;
+    /** Indique si la zone est actuellement sélectionnée */
+    isActive?: boolean;
+    /** Callback appelé lorsque la zone est sélectionnée */
+    onSelect?: (area: IArea) => void;
+    /** Contenu enfant à afficher dans la zone */
+    children?: React.ReactNode;
 }
 
 /**
  * Interface pour les propriétés stylisées de la zone
  */
 interface StyledAreaProps {
-  /** L'objet zone pour le positionnement */
-  area: IArea;
-  /** État de sélection de la zone */
-  isActive: boolean;
+    /** L'objet zone pour le positionnement */
+    area: IArea;
+    /** État de sélection de la zone */
+    isActive: boolean;
 }
 
 const StyledArea = styled.div<StyledAreaProps>`
@@ -57,24 +57,24 @@ const StyledArea = styled.div<StyledAreaProps>`
  * </Area>
  */
 export const Area: React.FC<AreaProps> = ({
-  area,
-  isActive = false,
-  onSelect,
-  children,
+    area,
+    isActive = false,
+    onSelect,
+    children,
 }) => {
-  const handleClick = () => {
-    if (onSelect) {
-      onSelect(area);
-    }
-  };
+    const handleClick = () => {
+        if (onSelect) {
+            onSelect(area);
+        }
+    };
 
-  return (
-    <StyledArea
-      area={area}
-      isActive={isActive}
-      onClick={handleClick}
-    >
-      {children}
-    </StyledArea>
-  );
+    return (
+        <StyledArea
+            area={area}
+            isActive={isActive}
+            onClick={handleClick}
+        >
+            {children}
+        </StyledArea>
+    );
 }; 

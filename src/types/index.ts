@@ -22,7 +22,7 @@ export * from './history';
 export * from './store';
 
 // Types liés au module core
-export * from './core';
+export * from './karmyc';
 
 // Types liés aux directions
 export * from './directions';

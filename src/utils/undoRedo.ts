@@ -19,7 +19,6 @@ export const setupUndoRedoKeyboardShortcuts = (): () => void => {
             const historyState = state.history;
 
             if (!historyState || historyState.currentIndex <= 0) {
-                console.log("Rien à annuler");
                 return;
             }
 
@@ -59,7 +58,6 @@ export const setupUndoRedoKeyboardShortcuts = (): () => void => {
             const historyState = state.history;
 
             if (!historyState || historyState.currentIndex >= historyState.items.length - 1) {
-                console.log("Rien à refaire");
                 return;
             }
 

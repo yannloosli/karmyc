@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-Ce document présente l'analyse détaillée de la structure actuelle du système de mise en page de l'éditeur d'animation. Cette analyse s'inscrit dans le cadre du projet de refactorisation visant à créer un système de mise en page central, modulaire et maintenable.
+Ce document présente l'analyse détaillée de la structure actuelle du système de mise en page du système de layout. Cette analyse s'inscrit dans le cadre du projet de refactorisation visant à créer un système de mise en page central, modulaire et maintenable.
 
 ## 2. Vue d'ensemble de l'architecture
 
@@ -971,7 +971,7 @@ const packageJson = require('./package.json');
 export default [
   // Configuration pour le code JavaScript
   {
-    input: 'src/core/index.ts',
+    input: 'src/index.ts',
     output: [
       {
         file: packageJson.main,
@@ -995,7 +995,7 @@ export default [
   },
   // Configuration pour les fichiers de déclaration TypeScript
   {
-    input: 'dist/esm/types/core/index.d.ts',
+    input: 'dist/esm/types/karmyc/index.d.ts',
     output: [{ file: 'dist/index.d.ts', format: 'esm' }],
     plugins: [dts()],
   },
@@ -1008,9 +1008,9 @@ Le fichier `package.json` doit être configuré pour prendre en charge différen
 
 ```json
 {
-  "name": "animation-editor-core",
+  "name": "karmyc-layout",
   "version": "0.1.0",
-  "description": "Core layout system for animation editor",
+  "description": "Core layout system for layout system",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
@@ -1143,10 +1143,10 @@ Pour contrôler précisément ce qui est exposé aux utilisateurs de la biblioth
 
 #### 4.6.1 Fichier index.ts principal
 
-Le fichier `src/core/index.ts` est le point d'entrée principal et ne doit exporter que l'API publique :
+Le fichier `src/index.ts` est le point d'entrée principal et ne doit exporter que l'API publique :
 
 ```typescript
-// src/core/index.ts
+// src/index.ts
 
 // Exporter les hooks publics
 export * from './hooks';
@@ -1172,7 +1172,7 @@ export { initCore } from './init';
 Chaque sous-dossier doit avoir son propre fichier `index.ts` qui n'exporte que les éléments destinés à être publics :
 
 ```typescript
-// src/core/hooks/index.ts
+// src/hooks/index.ts
 
 // Exporter les hooks publics
 export { useArea } from './useArea';

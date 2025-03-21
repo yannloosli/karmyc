@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-Ce document présente la conception détaillée de l'API de hooks pour le core layout system de l'éditeur d'animation. Ces hooks fourniront une interface simple et intuitive pour interagir avec le système, permettant aux développeurs d'enregistrer des types de zones, des actions, des menus contextuels et d'initialiser le système avec une configuration personnalisée.
+Ce document présente la conception détaillée de l'API de hooks pour le composant Karmyc. Ces hooks fourniront une interface simple et intuitive pour interagir avec le système, permettant aux développeurs d'enregistrer des types de zones, des actions, des menus contextuels et d'initialiser le système avec une configuration personnalisée.
 
 ## 2. Vue d'ensemble
 
@@ -21,7 +21,7 @@ L'API de hooks sera organisée en plusieurs catégories :
 Ce hook permet d'enregistrer un nouveau type de zone avec son composant, son réducteur d'état et ses raccourcis clavier.
 
 ```typescript
-// src/core/hooks/useRegisterAreaType.ts
+// src/hooks/useRegisterAreaType.ts
 import { useEffect } from 'react';
 import { areaRegistry } from '../area/registry';
 import { TAreaComponent, TAreaReducer, TAreaKeyboardShortcuts } from '../types/area';
@@ -85,7 +85,7 @@ export function useRegisterAreaType<T extends string, S>(
 Ce hook permet d'accéder à la liste des types de zones enregistrés.
 
 ```typescript
-// src/core/hooks/useAreaTypes.ts
+// src/hooks/useAreaTypes.ts
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { areaRegistry } from '../area/registry';
@@ -117,7 +117,7 @@ export function useAreaTypes<T extends string>(filter?: (areaType: T) => boolean
 Ce hook permet d'enregistrer une action avec son handler.
 
 ```typescript
-// src/core/hooks/useRegisterAction.ts
+// src/hooks/useRegisterAction.ts
 import { useEffect } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 import { actionRegistry } from '../actions/registry';
@@ -158,7 +158,7 @@ export function useRegisterAction<T extends AnyAction = AnyAction>(
 Ce hook permet d'enregistrer un validateur pour un type d'action spécifique.
 
 ```typescript
-// src/core/hooks/useRegisterActionValidator.ts
+// src/hooks/useRegisterActionValidator.ts
 import { useEffect } from 'react';
 import { AnyAction } from '@reduxjs/toolkit';
 import { actionRegistry } from '../actions/registry';
@@ -191,7 +191,7 @@ export function useRegisterActionValidator<T extends AnyAction = AnyAction>(
 Ce hook permet de créer et gérer un menu contextuel.
 
 ```typescript
-// src/core/hooks/useContextMenu.ts
+// src/hooks/useContextMenu.ts
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { contextMenuActions } from '../store/slices/contextMenu';
@@ -250,7 +250,7 @@ export function useContextMenu() {
 Ce hook permet d'enregistrer une action de menu contextuel.
 
 ```typescript
-// src/core/hooks/useRegisterContextMenuAction.ts
+// src/hooks/useRegisterContextMenuAction.ts
 import { useEffect } from 'react';
 import { contextMenuRegistry } from '../contextMenu/registry';
 import { IContextMenuAction } from '../types/contextMenu';
@@ -277,39 +277,34 @@ export function useRegisterContextMenuAction(
 
 ## 6. Hook d'initialisation
 
-### 6.1 `useLayoutCore`
+### 6.1 `useKarmycLayout`
 
 Ce hook principal permet d'initialiser le système de mise en page avec une configuration personnalisée.
 
 ```typescript
-// src/core/hooks/useLayoutCore.ts
-import { useEffect } from 'react';
-import { coreRegistry } from '../registry';
-import { ICoreConfig } from '../types/core';
+// src/hooks/useKarmycLayout.ts
+import { karmycRegistry } from '../registry';
+import { IKarmycConfig } from '../types/karmyc';
 
-/**
- * Hook principal pour initialiser le système de mise en page
- * @param config - Configuration du système
- */
-export function useLayoutCore(config: ICoreConfig): void {
+// Hook pour initialiser le système de layout
+export function useKarmycLayout(config: IKarmycConfig): void {
   useEffect(() => {
-    // Initialiser le système avec la configuration fournie
-    coreRegistry.initialize(config);
+    // Initialiser le registre
+    karmycRegistry.initialize(config);
     
-    // Nettoyer lors du démontage du composant
     return () => {
-      coreRegistry.cleanup();
+      karmycRegistry.cleanup();
     };
   }, [config]);
 }
 ```
 
-### 6.2 `useLayoutCoreProvider`
+### 6.2 `useKarmycLayoutProvider`
 
 Ce hook crée un provider React pour le système de mise en page.
 
 ```typescript
-// src/core/hooks/useLayoutCoreProvider.ts
+// src/hooks/useKarmycLayoutProvider.ts
 import React, { useMemo } from 'react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -317,14 +312,14 @@ import { rootReducer } from '../store/rootReducer';
 import { actionsMiddleware } from '../store/middleware/actions';
 import { historyMiddleware } from '../store/middleware/history';
 import { persistenceMiddleware } from '../store/middleware/persistence';
-import { ICoreConfig } from '../types/core';
+import { IKarmycConfig } from '../types/karmyc';
 
 /**
  * Hook pour créer un provider React pour le système de mise en page
  * @param config - Configuration du système
  * @returns Provider React
  */
-export function useLayoutCoreProvider(config: ICoreConfig) {
+export function useKarmycLayoutProvider(config: IKarmycConfig) {
   // Créer le store Redux
   const store = useMemo(() => {
     return configureStore({
@@ -339,13 +334,13 @@ export function useLayoutCoreProvider(config: ICoreConfig) {
   }, [config.initialState]);
   
   // Créer le provider
-  const LayoutCoreProvider = useMemo(() => {
+  const KarmycLayoutProvider = useMemo(() => {
     return ({ children }: { children: React.ReactNode }) => (
       <Provider store={store}>{children}</Provider>
     );
   }, [store]);
   
-  return LayoutCoreProvider;
+  return KarmycLayoutProvider;
 }
 ```
 
@@ -356,7 +351,7 @@ export function useLayoutCoreProvider(config: ICoreConfig) {
 Ce hook permet d'accéder à l'état d'une zone spécifique.
 
 ```typescript
-// src/core/hooks/useAreaState.ts
+// src/hooks/useAreaState.ts
 import { useSelector } from 'react-redux';
 import { selectAreaState } from '../store/selectors/area';
 
@@ -375,7 +370,7 @@ export function useAreaState<T = any>(areaId: string): T {
 Ce hook permet d'accéder à la disposition des zones.
 
 ```typescript
-// src/core/hooks/useAreaLayout.ts
+// src/hooks/useAreaLayout.ts
 import { useSelector } from 'react-redux';
 import { selectAreaLayout } from '../store/selectors/area';
 import { IAreaLayout } from '../types/area';
@@ -394,7 +389,7 @@ export function useAreaLayout(): IAreaLayout {
 ### 8.1 Enregistrement d'un type de zone
 
 ```tsx
-import { useRegisterAreaType } from '@core/hooks/useRegisterAreaType';
+import { useRegisterAreaType } from '@/hooks/useRegisterAreaType';
 import { TimelineComponent } from './TimelineComponent';
 import { timelineReducer } from './timelineReducer';
 import { timelineKeyboardShortcuts } from './timelineKeyboardShortcuts';
@@ -420,8 +415,8 @@ function TimelineRegistration() {
 ### 8.2 Enregistrement d'une action
 
 ```tsx
-import { useRegisterAction } from '@core/hooks/useRegisterAction';
-import { ActionPriority } from '@core/actions/priorities';
+import { useRegisterAction } from '@/hooks/useRegisterAction';
+import { ActionPriority } from '@/actions/priorities';
 
 function ActionRegistration() {
   useRegisterAction(
@@ -441,7 +436,7 @@ function ActionRegistration() {
 ### 8.3 Utilisation d'un menu contextuel
 
 ```tsx
-import { useContextMenu } from '@core/hooks/useContextMenu';
+import { useContextMenu } from '@/hooks/useContextMenu';
 
 function ContextMenuExample() {
   const { openContextMenu, closeContextMenu } = useContextMenu();
@@ -483,29 +478,29 @@ function ContextMenuExample() {
 ### 8.4 Initialisation du système
 
 ```tsx
-import { useLayoutCore, useLayoutCoreProvider } from '@core/hooks';
+import { useKarmycLayout, useKarmycLayoutProvider } from '@/hooks';
 
 function App() {
   // Créer le provider
-  const LayoutCoreProvider = useLayoutCoreProvider({
+  const KarmycLayoutProvider = useKarmycLayoutProvider({
     initialState: {
       // État initial
     },
     enablePersistence: true,
-    persistenceKey: 'animation-editor'
+    persistenceKey: 'karmyc-layout'
   });
   
   return (
-    <LayoutCoreProvider>
-      <CoreInitializer />
+    <KarmycLayoutProvider>
+      <KarmycInitializer />
       <MainApplication />
-    </LayoutCoreProvider>
+    </KarmycLayoutProvider>
   );
 }
 
-function CoreInitializer() {
-  // Initialiser le système
-  useLayoutCore({
+function KarmycInitializer() {
+  // Initialiser le système de layout
+  useKarmycLayout({
     defaultAreaTypes: ['timeline', 'workspace', 'properties'],
     defaultLayout: {
       // Configuration de la disposition par défaut

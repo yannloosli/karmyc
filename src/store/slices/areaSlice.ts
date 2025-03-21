@@ -10,6 +10,39 @@ import { validateArea } from '../../utils/validation';
 import { areaInitialStates } from '../initialStates';
 import { areaStateReducerRegistry } from '../registries/areaRegistry';
 
+// Fonction pour trouver tous les IDs connectés au root
+function findConnectedIds(layout: Record<string, AreaLayout | AreaRowLayout>, rootId: string): Set<string> {
+    const connectedIds = new Set<string>();
+
+    // Fonction récursive pour parcourir la structure à partir du root
+    function traverse(id: string) {
+        // Si ID déjà visité ou non existant
+        if (connectedIds.has(id) || !layout[id]) {
+            return;
+        }
+
+        // Marquer l'ID comme connecté
+        connectedIds.add(id);
+
+        // Si c'est une ligne, traverser tous ses enfants
+        const item = layout[id];
+        if (item.type === "area_row") {
+            const row = item as AreaRowLayout;
+            if (row.areas && Array.isArray(row.areas)) {
+                row.areas.forEach(area => {
+                    if (area && area.id) {
+                        traverse(area.id);
+                    }
+                });
+            }
+        }
+    }
+
+    // Démarrer la traversée à partir du root
+    traverse(rootId);
+    return connectedIds;
+}
+
 // Fonction pour valider et nettoyer l'état chargé
 function validateLoadedState(state: Partial<AreaState>): AreaState {
     const defaultState: AreaState = {
@@ -74,12 +107,42 @@ function validateLoadedState(state: Partial<AreaState>): AreaState {
         return defaultState;
     }
 
+    // Vérifier que le rootId existe
+    const rootId = state.rootId && validatedLayout[state.rootId] ? state.rootId : defaultState.rootId;
+
+    // Vérifier que toutes les zones sont connectées au root
+    const connectedIds = findConnectedIds(validatedLayout, rootId);
+
+    // Filtrer les zones non connectées au root
+    const cleanedLayout: typeof validatedLayout = {};
+    Object.keys(validatedLayout).forEach(id => {
+        if (connectedIds.has(id)) {
+            cleanedLayout[id] = validatedLayout[id];
+        } else {
+            console.warn(`Zone ${id} non connectée au root ${rootId}, suppression`);
+        }
+    });
+
+    // Filtrer également les areas pour ne garder que celles connectées
+    const cleanedAreas: typeof validatedAreas = {};
+    Object.keys(validatedAreas).forEach(id => {
+        if (connectedIds.has(id)) {
+            cleanedAreas[id] = validatedAreas[id];
+        }
+    });
+
+    // S'il ne reste aucune zone après le nettoyage, retourner l'état par défaut
+    if (Object.keys(cleanedLayout).length === 0) {
+        console.warn("Aucune zone connectée au root, utilisation de l'état par défaut");
+        return defaultState;
+    }
+
     return {
         ...defaultState,
         _id: Math.max(maxId, defaultState._id),
-        layout: validatedLayout,
-        areas: validatedAreas,
-        rootId: state.rootId || defaultState.rootId,
+        layout: cleanedLayout,
+        areas: cleanedAreas,
+        rootId: rootId,
     };
 }
 
@@ -189,13 +252,6 @@ export const areaSlice = createSlice({
             const { rowId, mergeArea, mergeInto } = action.payload;
             const row = state.layout[rowId] as AreaRowLayout;
 
-            console.log('=== Début fusion dans le reducer ===', {
-                rowId,
-                mergeArea,
-                mergeInto,
-                row
-            });
-
             if (!row || !row.areas) {
                 state.errors = ['Ligne invalide pour la fusion'];
                 return;
@@ -203,7 +259,6 @@ export const areaSlice = createSlice({
 
             try {
                 const result = joinAreasUtil(row, mergeArea, mergeInto);
-                console.log('Résultat joinAreasUtil:', result);
 
                 const { area, removedAreaId } = result;
                 const shouldRemoveRow = row.areas.length === 2;
@@ -213,62 +268,144 @@ export const areaSlice = createSlice({
                 const sourceAreaId = row.areas[mergeArea].id;
                 const sourceArea = state.areas[sourceAreaId];
 
-                console.log('État avant mise à jour:', {
-                    shouldRemoveRow,
-                    sourceAreaId,
-                    sourceArea,
-                    areaToParentRow,
-                    currentLayout: state.layout
-                });
-
                 if (shouldRemoveRow && state.rootId === row.id) {
                     state.rootId = area.id;
                 }
 
-                // Mettre à jour le layout
-                Object.keys(state.layout).forEach((id) => {
-                    if (id === removedAreaId || (shouldRemoveRow && id === row.id)) {
-                        console.log(`Suppression du layout ${id}`);
-                        delete state.layout[id];
+                // Ne chercher que les enfants directs de la zone supprimée, sans inclure les structures parentes
+                const removedChildrenIds = new Set<string>([removedAreaId]);
+
+                // Vérifier si la zone supprimée est une ligne avec ses propres enfants
+                if (state.layout[removedAreaId]?.type === "area_row") {
+                    const removedRow = state.layout[removedAreaId] as AreaRowLayout;
+                    if (removedRow.areas && Array.isArray(removedRow.areas)) {
+                        // Ajouter uniquement les enfants directs de la ligne supprimée
+                        removedRow.areas.forEach(childArea => {
+                            if (childArea && childArea.id) {
+                                removedChildrenIds.add(childArea.id);
+                            }
+                        });
+                    }
+                }
+
+                console.debug(`Zones à supprimer après fusion: ${Array.from(removedChildrenIds).join(', ')}`);
+
+                // Approche simplifiée : créer un nouvel état propre au lieu de manipuler l'existant
+
+                // 1. Nettoyer le layout
+                const newLayout: { [key: string]: AreaRowLayout | AreaLayout } = {};
+
+                Object.entries(state.layout).forEach(([id, layoutItem]) => {
+                    // Ne supprimer que la zone à supprimer et ses enfants directs
+                    if (removedChildrenIds.has(id)) {
+                        // Cas spécial: déplacer les petits-enfants vers le haut si nécessaire
+                        if (id === removedAreaId && layoutItem.type === "area_row") {
+                            const removedRow = layoutItem as AreaRowLayout;
+                            // On ne fait rien ici car les petits-enfants ne doivent pas être supprimés
+                        }
+                        return; // Ignorer cette zone (elle sera supprimée)
+                    }
+
+                    // Pour les lignes, vérifier et mettre à jour les références
+                    if (layoutItem.type === "area_row") {
+                        const rowLayout = layoutItem as AreaRowLayout;
+
+                        // Si c'est la ligne parent de la ligne fusionnée
+                        if (id === areaToParentRow[row.id]) {
+                            const newAreas = rowLayout.areas.map(x =>
+                                x.id === row.id ? { id: area.id, size: x.size } : x
+                            );
+                            newLayout[id] = {
+                                ...rowLayout,
+                                areas: newAreas
+                            };
+                        }
+                        // Si c'est la ligne fusionnée et qu'on doit la remplacer
+                        else if (id === row.id && !shouldRemoveRow) {
+                            newLayout[id] = area;
+                        }
+                        // Sinon, conserver la ligne telle quelle mais filtrer les zones directement supprimées
+                        else {
+                            // Ne filtrer que les zones directement supprimées
+                            const validAreas = rowLayout.areas.filter(a =>
+                                !removedChildrenIds.has(a.id)
+                            );
+
+                            // Ne garder la ligne que si elle a encore des zones
+                            if (validAreas.length > 0) {
+                                // Normaliser les tailles quand on a supprimé des zones
+                                if (validAreas.length !== rowLayout.areas.length) {
+                                    const totalSize = validAreas.reduce((sum, a) => sum + (a.size || 0), 0);
+                                    if (Math.abs(totalSize - 1.0) > 0.001 && totalSize > 0) {
+                                        const factor = 1.0 / totalSize;
+                                        validAreas.forEach(a => {
+                                            a.size = (a.size || 0) * factor;
+                                        });
+                                    }
+                                }
+
+                                newLayout[id] = {
+                                    ...rowLayout,
+                                    areas: validAreas
+                                };
+                            }
+                        }
+                    }
+                    // Pour les zones simples, les garder telles quelles
+                    else if (id === area.id) {
+                        newLayout[id] = area;
+                    }
+                    else {
+                        newLayout[id] = layoutItem;
+                    }
+                });
+
+                // 2. Nettoyer les areas
+                const newAreas: { [key: string]: Area<AreaType> } = {};
+
+                Object.entries(state.areas).forEach(([id, areaItem]) => {
+                    // Ignorer uniquement la zone supprimée et ses enfants directs
+                    if (removedChildrenIds.has(id)) {
                         return;
                     }
 
-                    if (id === areaToParentRow[row.id]) {
-                        const parentRow = state.layout[id] as AreaRowLayout;
-                        console.log(`Mise à jour de la ligne parente ${id}:`, parentRow);
-                        parentRow.areas = parentRow.areas.map((x) =>
-                            x.id === row.id ? { id: area.id, size: x.size } : x
-                        );
-                    } else if (id === row.id) {
-                        console.log(`Mise à jour de la ligne ${id} avec:`, area);
-                        // Mettre à jour la ligne avec la nouvelle zone
-                        state.layout[id] = area;
-                    } else if (id === area.id) {
-                        console.log(`Mise à jour de la zone ${id} avec:`, area);
-                        state.layout[id] = area;
+                    // Ajouter la zone résultante de la fusion
+                    if (id === area.id) {
+                        newAreas[id] = {
+                            ...sourceArea,
+                            id: area.id
+                        };
+                    }
+                    // Garder les autres zones
+                    else {
+                        newAreas[id] = areaItem;
                     }
                 });
 
-                // Mettre à jour la zone résultante avec le type de la source
-                state.areas[area.id] = {
-                    ...sourceArea,
-                    id: area.id
-                };
+                // 3. Mettre à jour l'état global
+                state.layout = newLayout;
+                state.areas = newAreas;
 
-                console.log('État après mise à jour:', {
-                    newLayout: state.layout,
-                    newAreas: state.areas,
-                    newRootId: state.rootId
-                });
+                // Réinitialiser l'activeAreaId si c'était une des zones supprimées
+                if (state.activeAreaId && removedChildrenIds.has(state.activeAreaId)) {
+                    state.activeAreaId = null;
+                }
 
-                // Supprimer la zone fusionnée
-                delete state.areas[removedAreaId];
+                // Nettoyer les viewports pour toutes les zones supprimées
+                for (const id of removedChildrenIds) {
+                    if (state.viewports[id]) {
+                        delete state.viewports[id];
+                    }
+                }
+
                 state.joinPreview = null;
                 state.errors = [];
 
+                // Ajouter le nettoyage des zones déconnectées pour s'assurer que tout est cohérent
+                cleanDisconnectedAreas(state);
+
                 // Sauvegarder l'état après la fusion
                 const stateToSave = validateLoadedState(state);
-                console.log('État à sauvegarder:', stateToSave);
                 localStorage.setItem('areaState', JSON.stringify(stateToSave));
             } catch (error) {
                 console.error('Erreur lors de la fusion:', error);
@@ -287,6 +424,38 @@ export const areaSlice = createSlice({
             const idForNewArea = (++state._id).toString();
 
             const row = areaToRow(areaId, idForOldArea, idForNewArea, horizontal, cornerParts);
+
+            // Validation et normalisation des tailles des zones
+            const MIN_AREA_SIZE = 0.1; // Taille minimale de 10%
+            if (row.areas && row.areas.length > 0) {
+                // Vérification des tailles
+                let hasSizeIssue = false;
+                let totalSize = 0;
+
+                // Vérifier chaque taille
+                row.areas.forEach(area => {
+                    if (typeof area.size !== 'number' || isNaN(area.size) || area.size <= 0) {
+                        console.warn(`Invalid size detected for area ${area.id}, fixing...`);
+                        area.size = 0.5; // Taille par défaut
+                        hasSizeIssue = true;
+                    } else if (area.size < MIN_AREA_SIZE) {
+                        console.warn(`Area ${area.id} has size ${area.size} below minimum ${MIN_AREA_SIZE}, adjusting...`);
+                        area.size = MIN_AREA_SIZE;
+                        hasSizeIssue = true;
+                    }
+                    totalSize += area.size;
+                });
+
+                // Normaliser les tailles si nécessaire
+                if (Math.abs(totalSize - 1.0) > 0.001 || hasSizeIssue) {
+                    console.debug(`Normalizing area sizes in row ${row.id} (total: ${totalSize})`);
+                    // Si le total est trop différent de 1.0
+                    const factor = 1.0 / totalSize;
+                    row.areas.forEach(area => {
+                        area.size = area.size * factor;
+                    });
+                }
+            }
 
             // S'assurer que l'area d'origine a un type
             if (!state.areas[areaId] || state.areas[areaId].type === undefined) {
@@ -327,6 +496,9 @@ export const areaSlice = createSlice({
                 );
             }
 
+            // Ajouter le nettoyage des zones déconnectées
+            cleanDisconnectedAreas(state);
+
             // Sauvegarder l'état après la conversion
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
@@ -362,6 +534,9 @@ export const areaSlice = createSlice({
             }
 
             row.areas = row.areas.map((area, i) => ({ ...area, size: sizes[i] }));
+
+            // Ajouter le nettoyage des zones déconnectées
+            cleanDisconnectedAreas(state);
 
             // Sauvegarder l'état après la modification des tailles
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
@@ -451,6 +626,12 @@ export const areaSlice = createSlice({
             // Sauvegarder l'état
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
+        cleanState: (state) => {
+            cleanDisconnectedAreas(state);
+            const stateToSave = validateLoadedState(state);
+            localStorage.setItem('areaState', JSON.stringify(stateToSave));
+            return stateToSave;
+        },
     },
 });
 
@@ -468,5 +649,75 @@ export const selectActiveArea = (state: { area: AreaState }) =>
 export const selectAreaById = (id: string) => (state: { area: AreaState }) =>
     state.area.areas[id] || null;
 export const selectAreaErrors = (state: { area: AreaState }) => state.area.errors;
+
+// Fonction pour trouver tous les enfants d'une zone récursivement
+function findAllChildrenLayouts(
+    layoutMap: { [key: string]: AreaLayout | AreaRowLayout },
+    rootId: string,
+    result: Set<string> = new Set()
+): Set<string> {
+    const layout = layoutMap[rootId];
+
+    // Si cette zone a déjà été visitée ou n'existe pas
+    if (!layout || result.has(rootId)) {
+        return result;
+    }
+
+    // Ajouter cette zone au résultat
+    result.add(rootId);
+
+    // Si c'est une ligne, ajouter tous ses enfants récursivement
+    if (layout.type === "area_row") {
+        const rowLayout = layout as AreaRowLayout;
+
+        if (rowLayout.areas && Array.isArray(rowLayout.areas)) {
+            for (const area of rowLayout.areas) {
+                if (area && area.id) {
+                    findAllChildrenLayouts(layoutMap, area.id, result);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+// Fonction utilitaire pour nettoyer l'état et supprimer les zones non connectées au root
+function cleanDisconnectedAreas(state: AreaState): void {
+    // Vérifier que le rootId existe
+    if (!state.rootId || !state.layout[state.rootId]) {
+        console.error("Root ID invalide dans l'état");
+        return;
+    }
+
+    // Trouver toutes les zones connectées au root
+    const connectedIds = findConnectedIds(state.layout, state.rootId);
+
+    // Trouver les zones déconnectées
+    const disconnectedLayoutIds = Object.keys(state.layout).filter(id => !connectedIds.has(id));
+    const disconnectedAreaIds = Object.keys(state.areas).filter(id => !connectedIds.has(id));
+
+    if (disconnectedLayoutIds.length > 0 || disconnectedAreaIds.length > 0) {
+        // Supprimer les layouts déconnectés
+        disconnectedLayoutIds.forEach(id => {
+            delete state.layout[id];
+        });
+
+        // Supprimer les areas déconnectées
+        disconnectedAreaIds.forEach(id => {
+            delete state.areas[id];
+
+            // Nettoyer également les viewports associés
+            if (state.viewports[id]) {
+                delete state.viewports[id];
+            }
+        });
+
+        // Réinitialiser l'activeAreaId si c'était une zone déconnectée
+        if (state.activeAreaId && !connectedIds.has(state.activeAreaId)) {
+            state.activeAreaId = null;
+        }
+    }
+}
 
 export default areaSlice.reducer; 

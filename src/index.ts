@@ -1,6 +1,6 @@
 /**
- * Point d'entrée principal du module core
- * Ce fichier exporte l'API publique du module core
+ * Point d'entrée principal du module Karmyc
+ * Ce fichier exporte l'API publique du module Karmyc
  */
 
 // Exporter les hooks publics
@@ -17,7 +17,7 @@ export type { Area as AreaType } from './types/area';
 export * from './constants';
 
 // Exporter le provider principal
-export { CoreProvider } from './providers/CoreProvider';
+export { KarmycProvider } from './providers/KarmycProvider';
 
 // Exporter le store
 export { store } from './store';

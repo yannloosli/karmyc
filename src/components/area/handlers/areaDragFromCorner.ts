@@ -6,7 +6,7 @@ import type { Rect } from "../../../types/geometry";
 import type { RequestActionParams } from "../../../types/requestAction";
 import { computeAreaToParentRow } from "../../../utils/areaToParentRow";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
-import { getAreaRootViewport } from "../../../utils/getAreaViewport";
+import { getAreaRootViewport, setAreaResizing } from "../../../utils/getAreaViewport";
 import { capToRange } from "../../../utils/math";
 import { Vec2 } from "../../../utils/math/vec2";
 import { requestAction } from "../../../utils/requestAction";
@@ -76,6 +76,11 @@ export const handleAreaDragFromCorner = (
     areaId: string,
     viewport: Rect,
 ) => {
+    e.preventDefault();
+
+    // Activer le flag de redimensionnement
+    setAreaResizing(true);
+
     const initialMousePosition = Vec2.fromEvent(e);
     let lastMousePosition: Vec2 = initialMousePosition;
     let currentHandlers: { onMove?: (vec: Vec2) => void; onMouseUp?: () => void } = {};
@@ -483,18 +488,21 @@ export const handleAreaDragFromCorner = (
                     return;
                 }
 
-                // Si Alt est enfoncé, on fusionne
-                if (e.altKey) {
+                // Détermine si le mouvement est vers l'intérieur ou l'extérieur de la zone
+                // Pour chaque coin, on définit ce que signifie "vers l'intérieur"
+                const isMovingInwards = determineIfMovingInwards(corner, moveVec);
+
+                if (isMovingInwards) {
+                    // Si on se déplace vers l'intérieur, on crée une nouvelle zone (division)
+                    const horizontal = Math.abs(moveVec.x) > Math.abs(moveVec.y);
+                    createNewArea(horizontal);
+                } else {
+                    // Si on se déplace vers l'extérieur, on fusionne
                     const handlers = joinAreas();
                     currentHandlers = handlers;
                     if (handlers.onMove) {
                         handlers.onMove(mousePosition);
                     }
-                } else {
-                    // Sinon on crée une nouvelle zone
-                    // Détermine l'orientation en fonction de la direction du déplacement
-                    const horizontal = Math.abs(moveVec.x) > Math.abs(moveVec.y);
-                    createNewArea(horizontal);
                 }
                 handlerSet = true;
                 return;
@@ -505,6 +513,26 @@ export const handleAreaDragFromCorner = (
             }
         };
 
+        // Fonction pour déterminer si le mouvement est vers l'intérieur de la zone
+        function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2): boolean {
+            switch (corner) {
+            case "ne":
+                // Pour le coin nord-est, "vers l'intérieur" signifie déplacement vers le sud-ouest
+                return moveVec.x < 0 && moveVec.y > 0;
+            case "nw":
+                // Pour le coin nord-ouest, "vers l'intérieur" signifie déplacement vers le sud-est
+                return moveVec.x > 0 && moveVec.y > 0;
+            case "se":
+                // Pour le coin sud-est, "vers l'intérieur" signifie déplacement vers le nord-ouest
+                return moveVec.x < 0 && moveVec.y < 0;
+            case "sw":
+                // Pour le coin sud-ouest, "vers l'intérieur" signifie déplacement vers le nord-est
+                return moveVec.x > 0 && moveVec.y < 0;
+            default:
+                return false;
+            }
+        }
+
         const handleMouseUp = (e: MouseEvent) => {
             e.preventDefault();
             window.removeEventListener("mousemove", handleMouseMove);
@@ -512,6 +540,9 @@ export const handleAreaDragFromCorner = (
 
             // Toujours nettoyer les états temporaires d'abord
             params.dispatch(areaActions.cleanupTemporaryStates());
+
+            // Désactiver le flag de redimensionnement
+            setAreaResizing(false);
 
             if (currentHandlers.onMouseUp) {
                 currentHandlers.onMouseUp();

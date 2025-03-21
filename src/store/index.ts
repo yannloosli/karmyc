@@ -13,7 +13,7 @@
 // Le store sera implémenté et exporté ici au fur et à mesure
 // de l'implémentation du système 
 
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, Middleware } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux';
 import { persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
@@ -28,7 +28,7 @@ import {
 // Import des reducers
 import { errorMiddleware } from './errorHandling';
 import { registerDefaultKeyboardShortcuts } from './initializers/registerDefaultKeyboardShortcuts';
-import areaReducer from './slices/areaSlice';
+import areaReducer, { areaSlice } from './slices/areaSlice';
 import { contextMenuReducer } from './slices/contextMenuSlice';
 import diffReducer from './slices/diffSlice';
 import historyReducer from './slices/historySlice';
@@ -57,13 +57,57 @@ const rootReducer = combineReducers({
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
+// Créer un middleware pour le nettoyage périodique de l'état
+const areaCleanupMiddleware: Middleware = api => {
+    // Définir un intervalle pour le nettoyage (toutes les 60 secondes)
+    const CLEANUP_INTERVAL = 60 * 1000;
+
+    // Flag pour suivre si le nettoyage est en cours
+    let cleanupRunning = false;
+
+    // Fonction de nettoyage
+    const performCleanup = () => {
+        if (cleanupRunning) return;
+
+        try {
+            cleanupRunning = true;
+
+            // Vérifier si un nettoyage est nécessaire
+            const state = api.getState().area;
+
+            // Vérifier la présence de zones déconnectées
+            const rootId = state.rootId;
+            if (rootId && state.layout[rootId]) {
+                api.dispatch(areaSlice.actions.cleanState());
+            }
+        } catch (e) {
+            console.error("Erreur lors du nettoyage périodique des zones:", e);
+        } finally {
+            cleanupRunning = false;
+        }
+    };
+
+    // Lancer le nettoyage périodique
+    const interval = setInterval(performCleanup, CLEANUP_INTERVAL);
+
+    // Nettoyer l'intervalle si le store est détruit
+    window.addEventListener('beforeunload', () => {
+        clearInterval(interval);
+    });
+
+    return next => action => {
+        // Continuer la chaîne de middleware
+        return next(action);
+    };
+};
+
 // Créer le store avec tous les middlewares
 export const store = configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: false,
-        }).concat(errorMiddleware, diffMiddleware, stateMiddleware),
+        }).concat(errorMiddleware, diffMiddleware, stateMiddleware, areaCleanupMiddleware),
     devTools: process.env.NODE_ENV !== 'production'
 });
 

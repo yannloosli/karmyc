@@ -18,7 +18,7 @@ constants/
 ### Zones
 
 ```typescript
-// src/core/constants/area.ts
+// src/constants/area.ts
 export const AREA_CONSTANTS = {
   MIN_WIDTH: 50,
   MIN_HEIGHT: 50,
@@ -34,7 +34,7 @@ export const AREA_CONSTANTS = {
 ### Actions
 
 ```typescript
-// src/core/constants/actions.ts
+// src/constants/actions.ts
 export const ACTION_TYPES = {
   AREA: {
     ADD: 'area/add',
@@ -48,7 +48,7 @@ export const ACTION_TYPES = {
 ## Utilisation
 
 ```typescript
-import { AREA_CONSTANTS, PROJECT_CONSTANTS, ACTION_TYPES } from '@core/constants';
+import { AREA_CONSTANTS, PROJECT_CONSTANTS, ACTION_TYPES } from '@/constants';
 
 function MyComponent() {
   // Utilisation des constantes de zone

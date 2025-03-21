@@ -1,6 +1,6 @@
-# Hooks Core
+# Hooks
 
-Ce dossier contient les hooks React personnalisés qui fournissent une API réutilisable pour interagir avec le store Redux et les fonctionnalités de l'éditeur d'animation.
+Ce dossier contient les hooks React personnalisés qui permettent d'interagir avec le store Redux et les fonctionnalités du système de layout.
 
 ## Structure
 
@@ -38,7 +38,7 @@ const { executeAction, registerAction } = useActions();
 ## Utilisation
 
 ```tsx
-import { useArea, useActions } from '@core/hooks';
+import { useArea, useActions } from '@/hooks';
 
 function MyComponent() {
   const { areas, addNewArea } = useArea();

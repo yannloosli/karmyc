@@ -72,7 +72,7 @@ const throttledScroll = throttle((event) => {
 ## Utilisation
 
 ```typescript
-import { validateArea, serialize, debounce } from '@core/utils';
+import { validateArea, serialize, debounce } from '@/utils';
 
 function MyComponent() {
   // Validation

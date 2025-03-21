@@ -120,7 +120,7 @@ Chaque slice représente un domaine fonctionnel de l'application et encapsule :
 ### 2.2 Structure d'un Slice
 
 ```typescript
-// src/core/store/slices/area.ts
+// src/store/slices/area.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TArea, TAreaState } from '../../types/area';
 
@@ -161,7 +161,7 @@ export default areaSlice.reducer;
 #### 2.3.1 Slice de Transition d'État
 
 ```typescript
-// src/core/store/slices/state.ts
+// src/store/slices/state.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TStateTransition, TStateState } from '../../types/state';
 
@@ -206,7 +206,7 @@ export default stateSlice.reducer;
 #### 2.3.2 Slice de Différences
 
 ```typescript
-// src/core/store/slices/diff.ts
+// src/store/slices/diff.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TDiff, TDiffState } from '../../types/diff';
 
@@ -240,7 +240,7 @@ export default diffSlice.reducer;
 #### 2.3.3 Slice de Barre d'Outils
 
 ```typescript
-// src/core/store/slices/toolbar.ts
+// src/store/slices/toolbar.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TToolbarState, TToolbarAction } from '../../types/toolbar';
 
@@ -275,7 +275,7 @@ export default toolbarSlice.reducer;
 Les sélecteurs sont définis dans le même fichier que le slice ou dans un fichier séparé pour les sélecteurs plus complexes :
 
 ```typescript
-// src/core/store/slices/area.ts (suite)
+// src/store/slices/area.ts (suite)
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../../types/store';
 
@@ -309,7 +309,7 @@ export const selectAreaById = (id: string) =>
 ### 3.1 Point d'entrée du Store
 
 ```typescript
-// src/core/store/index.ts
+// src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
 import { rootReducer } from './rootReducer';
 import { historyMiddleware } from './middleware/history';
@@ -347,7 +347,7 @@ export * from './slices/project';
 ### 3.2 Root Reducer
 
 ```typescript
-// src/core/store/rootReducer.ts
+// src/store/rootReducer.ts
 import { combineReducers } from '@reduxjs/toolkit';
 import areaReducer from './slices/area';
 import contextMenuReducer from './slices/contextMenu';
@@ -367,7 +367,7 @@ export const rootReducer = combineReducers({
 ### 4.1 Intégration avec redux-undo
 
 ```typescript
-// src/core/history/undoable.ts
+// src/history/undoable.ts
 import undoable, { includeAction, excludeAction, StateWithHistory } from 'redux-undo';
 import { Reducer } from '@reduxjs/toolkit';
 import { TUndoableOptions } from '../types/history';
@@ -389,7 +389,7 @@ export function createUndoableReducer<S>(
 ### 4.2 Middleware d'historique
 
 ```typescript
-// src/core/store/middleware/history.ts
+// src/store/middleware/history.ts
 import { Middleware } from '@reduxjs/toolkit';
 import { ActionCreators } from 'redux-undo';
 import { generateDiff } from '../../utils/diff';
@@ -417,7 +417,7 @@ export const historyMiddleware: Middleware = store => next => action => {
 ### 4.3 Sélecteurs pour l'historique
 
 ```typescript
-// src/core/history/selectors.ts
+// src/history/selectors.ts
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../types/store';
 
@@ -454,7 +454,7 @@ export const selectHistoryLength = createSelector(
 ### 5.1 Types d'actions
 
 ```typescript
-// src/core/types/actions.ts
+// src/types/actions.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 export type TActionHandler = (action: AnyAction) => void;
@@ -476,7 +476,7 @@ export type TActionValidator = (action: AnyAction) => IActionValidationResult;
 ### 5.2 Registre d'actions
 
 ```typescript
-// src/core/actions/registry.ts
+// src/actions/registry.ts
 import { AnyAction } from '@reduxjs/toolkit';
 import { IActionPlugin, TActionValidator, IActionValidationResult } from '../types/actions';
 
@@ -535,7 +535,7 @@ export const actionRegistry = new ActionRegistry();
 ### 5.3 Middleware d'actions
 
 ```typescript
-// src/core/store/middleware/actions.ts
+// src/store/middleware/actions.ts
 import { Middleware } from '@reduxjs/toolkit';
 import { actionRegistry } from '../../actions/registry';
 
@@ -555,7 +555,7 @@ export const actionsMiddleware: Middleware = store => next => action => {
 ### 6.1 Hooks de base
 
 ```typescript
-// src/core/hooks/index.ts
+// src/hooks/index.ts
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 
@@ -566,7 +566,7 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 ### 6.2 Hooks spécifiques
 
 ```typescript
-// src/core/hooks/useArea.ts
+// src/hooks/useArea.ts
 import { useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from './index';
 import { addArea, removeArea, updateArea, setActiveArea, selectAllAreas, selectActiveArea } from '../store/slices/area';
@@ -607,11 +607,11 @@ export function useArea() {
 ### 6.3 Hook d'initialisation
 
 ```typescript
-// src/core/hooks/useInitialize.ts
+// src/hooks/useInitialize.ts
 import { useEffect } from 'react';
 import { useAppDispatch } from './index';
 import { actionRegistry } from '../actions/registry';
-import { IInitializeOptions } from '../types/core';
+import { IInitializeOptions } from '../types/karmyc';
 
 export function useInitialize(options: IInitializeOptions = {}) {
   const dispatch = useAppDispatch();
@@ -646,11 +646,11 @@ export function useInitialize(options: IInitializeOptions = {}) {
 ## 7. Provider principal
 
 ```typescript
-// src/core/providers/CoreProvider.tsx
+// src/providers/CoreProvider.tsx
 import React, { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { store } from '../store';
-import { IInitializeOptions } from '../types/core';
+import { IInitializeOptions } from '../types/karmyc';
 import { useInitialize } from '../hooks/useInitialize';
 
 interface CoreProviderProps {
@@ -659,7 +659,7 @@ interface CoreProviderProps {
   customStore?: typeof store;
 }
 
-const CoreInitializer: React.FC<{ options?: IInitializeOptions }> = ({ options = {} }) => {
+const KarmycInitializer: React.FC<{ options?: IInitializeOptions }> = ({ options = {} }) => {
   useInitialize(options);
   return null;
 };
@@ -671,7 +671,7 @@ export const CoreProvider: React.FC<CoreProviderProps> = ({
 }) => {
   return (
     <Provider store={customStore}>
-      <CoreInitializer options={options} />
+      <KarmycInitializer options={options} />
       {children}
     </Provider>
   );
@@ -681,7 +681,7 @@ export const CoreProvider: React.FC<CoreProviderProps> = ({
 ## 8. Point d'entrée principal
 
 ```typescript
-// src/core/index.ts
+// src/index.ts
 // Exporter les hooks publics
 export * from './hooks';
 

@@ -1,6 +1,6 @@
-# Composants Core
+# Composants Karmyc
 
-Ce dossier contient les composants React réutilisables qui forment la base de l'interface utilisateur de l'éditeur d'animation.
+Ce dossier contient les composants React réutilisables qui forment la base de l'interface utilisateur du système de layout.
 
 ## Structure
 
@@ -27,7 +27,7 @@ Menu contextuel personnalisable qui peut être attaché à n'importe quel élém
 ## Utilisation
 
 ```tsx
-import { Area, ContextMenu } from '@core/components';
+import { Area, ContextMenu } from '@/components';
 
 // Exemple d'utilisation d'une zone
 <Area

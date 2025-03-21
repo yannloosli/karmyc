@@ -200,7 +200,7 @@ src/
 #### 2.3.1 Configuration du store
 
 ```typescript
-// src/core/store/index.ts
+// src/store/index.ts
 import { configureStore } from '@reduxjs/toolkit';
 import { rootReducer } from './rootReducer';
 import { historyMiddleware } from '../history/historyMiddleware';
@@ -223,7 +223,7 @@ export type AppDispatch = typeof store.dispatch;
 #### 2.3.2 Root Reducer
 
 ```typescript
-// src/core/store/rootReducer.ts
+// src/store/rootReducer.ts
 import { combineReducers } from '@reduxjs/toolkit';
 import areaReducer from '../slices/area/areaSlice';
 import contextMenuReducer from '../slices/contextMenu/contextMenuSlice';
@@ -239,7 +239,7 @@ export const rootReducer = combineReducers({
 #### 2.3.3 Hooks personnalisés
 
 ```typescript
-// src/core/store/hooks.ts
+// src/store/hooks.ts
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from './index';
 
@@ -261,7 +261,7 @@ export const useActionState = () => {
 #### 2.4.1 Exemple de slice pour Area
 
 ```typescript
-// src/core/slices/area/areaSlice.ts
+// src/slices/area/areaSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AreaReducerState } from '~/area/state/areaReducer';
 
@@ -288,7 +288,7 @@ export default areaSlice.reducer;
 #### 2.4.2 Sélecteurs optimisés
 
 ```typescript
-// src/core/slices/area/selectors.ts
+// src/slices/area/selectors.ts
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from '../../store';
 
@@ -305,7 +305,7 @@ export const selectAreaById = createSelector(
 Pour gérer l'historique des actions, nous utiliserons redux-undo avec une configuration personnalisée :
 
 ```typescript
-// src/core/history/undoableReducer.ts
+// src/history/undoableReducer.ts
 import undoable, { includeAction } from 'redux-undo';
 
 export function createUndoableReducer(reducer, options = {}) {
@@ -327,7 +327,7 @@ export function createUndoableReducer(reducer, options = {}) {
 #### 2.6.1 Registre d'actions
 
 ```typescript
-// src/core/actions/registry.ts
+// src/actions/registry.ts
 import { AnyAction } from '@reduxjs/toolkit';
 
 type ActionHandler = (action: AnyAction) => void;
@@ -364,7 +364,7 @@ export const actionRegistry = new ActionRegistry();
 #### 2.6.2 Middleware pour les actions
 
 ```typescript
-// src/core/actions/middleware.ts
+// src/actions/middleware.ts
 import { Middleware } from '@reduxjs/toolkit';
 import { actionRegistry } from './registry';
 
@@ -392,7 +392,7 @@ Pour migrer progressivement du système actuel vers Redux-Toolkit, nous suivrons
 #### 2.7.1 Wrapper de compatibilité
 
 ```typescript
-// src/core/compatibility/storeWrapper.ts
+// src/compatibility/storeWrapper.ts
 import { store as oldStore } from '~/state/store';
 import { store as newStore } from '../store';
 

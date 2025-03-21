@@ -70,7 +70,7 @@ export interface IStateTransition {
 ## Utilisation
 
 ```typescript
-import { IArea, IProject, IAction } from '@core/types';
+import { IArea, IProject, IAction } from '@/types';
 
 // Utilisation dans un composant
 function AreaComponent({ area }: { area: IArea }) {

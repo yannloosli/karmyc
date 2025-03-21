@@ -29,14 +29,6 @@ export const NormalContextMenu: React.FC = () => {
     const name = useSelector(selectContextMenuTargetId);
     const metadata = useSelector(selectContextMenuMetadata);
 
-    console.log('NormalContextMenu render:', {
-        isVisible,
-        position,
-        items,
-        name,
-        metadata
-    });
-
     const [rect, setRect] = useState<Rect | null>(null);
     const [reduceStackRect, setReduceStackRect] = useState<Rect | null>(null);
     const [stack, setStack] = useState<
@@ -46,7 +38,6 @@ export const NormalContextMenu: React.FC = () => {
     const mouseOverOptionListener = useRef<number | null>(null);
 
     useEffect(() => {
-        console.log('Stack effect triggered:', { isVisible, items, position });
         if (!isVisible) {
             setStack([]);
             return;
@@ -70,11 +61,9 @@ export const NormalContextMenu: React.FC = () => {
     useEffect(() => {
         setTimeout(() => {
             const els = document.querySelectorAll("[data-option-list]");
-            console.log('Found option lists:', els.length);
             const rects: Rect[] = [];
             els.forEach((el) => {
                 const domRect = el.getBoundingClientRect();
-                console.log('Option list rect:', domRect);
                 rects.push({
                     left: domRect.left,
                     top: domRect.top,
@@ -85,7 +74,6 @@ export const NormalContextMenu: React.FC = () => {
                 });
             });
             const boundingRect = boundingRectOfRects(rects);
-            console.log('Bounding rect:', boundingRect);
             setRect(boundingRect);
 
             if (rects.length > 1) {
@@ -110,15 +98,12 @@ export const NormalContextMenu: React.FC = () => {
 
     const onMouseMove = (e: React.MouseEvent) => {
         const { clientX: x, clientY: y } = e;
-        console.log('Mouse move:', { x, y, rect });
 
         if (!rect) {
-            console.log('No rect available for mouse move');
             return;
         }
 
         if (stack.length > 1 && reduceStackRect && !isVecInRect({ x, y }, reduceStackRect)) {
-            console.log('Reducing stack due to mouse position');
             setStack(stack.slice(0, stack.length - 1));
             return;
         }
@@ -128,8 +113,6 @@ export const NormalContextMenu: React.FC = () => {
             x > rect.left + rect.width + CLOSE_MENU_BUFFER ||
             y < rect.top - CLOSE_MENU_BUFFER ||
             y > rect.top + rect.height + CLOSE_MENU_BUFFER;
-
-        console.log('Should close menu:', { shouldClose, x, y, rect, CLOSE_MENU_BUFFER });
 
         if (shouldClose) {
             dispatch(closeContextMenu());
@@ -203,7 +186,6 @@ export const NormalContextMenu: React.FC = () => {
                 onMouseDown={() => dispatch(closeContextMenu())}
             />
             {stack.map(({ options, position }, i) => {
-                console.log('Rendering stack item:', { i, position, options });
                 return (
                     <div
                         className={s("container")}
@@ -220,7 +202,6 @@ export const NormalContextMenu: React.FC = () => {
                         )}
 
                         {options.map((option, j) => {
-                            console.log('Rendering option:', { i, j, option });
                             const Icon = option.icon;
 
                             if (option.children) {

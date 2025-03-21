@@ -1,11 +1,11 @@
-# Core Module
+# Karmyc
 
-Le module Core est le cœur de l'éditeur d'animation. Il fournit une architecture modulaire et extensible pour la gestion des zones, des projets, des actions et de l'état global.
+Karmyc est un système de layout modulaire et extensible. Il fournit une architecture flexible pour la gestion des zones, des projets, des actions et de l'état global.
 
 ## Structure
 
 ```
-core/
+src/
 ├── actions/           # Système d'actions modulaire
 ├── components/        # Composants React réutilisables
 ├── constants/         # Constantes et configurations
@@ -20,15 +20,15 @@ core/
 ## Installation
 
 ```bash
-npm install @core
+npm install @karmyc
 # ou
-yarn add @core
+yarn add @karmyc
 ```
 
 ## Utilisation de Base
 
 ```typescript
-import { CoreProvider, useArea } from '@core';
+import { CoreProvider, useArea } from '@karmyc';
 
 function App() {
   return (
@@ -56,17 +56,12 @@ function MyEditor() {
 - Gestion des dimensions et positions
 - Système de grille et d'alignement
 
-### 2. Gestion des Projets
-- Création et sauvegarde de projets
-- Import/Export de projets
-- Gestion des métadonnées
-
-### 3. Système d'Actions
+### 2. Système d'Actions
 - Actions modulaires et extensibles
 - Validation des actions
 - Historique des actions (undo/redo)
 
-### 4. État Global
+###3. État Global
 - Store Redux optimisé
 - Sélecteurs performants
 - Persistance des données
@@ -74,15 +69,10 @@ function MyEditor() {
 ## Documentation
 
 ### API
-- [API des Composants](components/README.md)
-- [API des Hooks](hooks/README.md)
-- [API du Store](store/README.md)
-- [API des Actions](actions/README.md)
-- [API des Types](types/README.md)
-- [API des Utils](utils/README.md)
-- [API des Constants](constants/README.md)
-- [API de l'Historique](history/README.md)
-- [API des Providers](providers/README.md)
+- [API des Composants](docs/api/components.md)
+- [API des Hooks](docs/api/hooks.md)
+- [Architecture](docs/architecture/)
+- [Guides](docs/guides/)
 
 ## Bonnes Pratiques
 
@@ -101,26 +91,9 @@ function MyEditor() {
    - Maintenir les tests à jour
    - Suivre les conventions de code
 
-## Contribution
-
-1. Fork le projet
-2. Créer une branche pour votre fonctionnalité
-3. Ajouter des tests
-4. Mettre à jour la documentation
-5. Soumettre une pull request
-
-## Support
-
-- [Documentation Technique](docs/)
-- [Changelog](CHANGELOG.md)
-
-## Licence
-
-MIT 
-
 ## Raccourcis clavier
 
-Le système de raccourcis clavier a été entièrement migré de l'ancien module `area` vers le nouveau système `core`. L'implémentation comprend:
+Le système de raccourcis clavier permet une interaction fluide avec les zones. L'implémentation comprend:
 
 ### Structure
 
@@ -136,7 +109,7 @@ Pour utiliser les raccourcis clavier dans une zone:
 
 ```typescript
 // Dans un composant Area
-import { useAreaKeyboardShortcuts } from "~/hooks/useAreaKeyboardShortcuts";
+import { useAreaKeyboardShortcuts } from '@karmyc';
 
 function MyAreaComponent({ id, type, viewport }) {
   // Utiliser les raccourcis clavier
@@ -150,8 +123,7 @@ Pour ajouter un nouveau raccourci clavier:
 
 ```typescript
 // Dans un fichier d'initialisation
-import { keyboardShortcutRegistry } from "~/store/registries/keyboardShortcutRegistry";
-import { AreaType } from "~/constants";
+import { keyboardShortcutRegistry, AreaType } from '@karmyc';
 
 // Enregistrer un raccourci clavier
 keyboardShortcutRegistry.registerShortcuts(AreaType.MyCustomArea, [
@@ -168,10 +140,10 @@ keyboardShortcutRegistry.registerShortcuts(AreaType.MyCustomArea, [
 ]);
 ```
 
-### Améliorations par rapport à l'ancien système
+### Fonctionnalités du système de raccourcis
 
-1. **Registre moderne**: Utilisation d'une API plus propre et extensible pour l'enregistrement des raccourcis.
-2. **Intégration complète**: Fonctionne parfaitement avec le nouveau store Redux.
-3. **Historique amélioré**: Meilleure gestion des opérations undo/redo.
-4. **Detection précise**: Détection plus précise du focus grâce aux observateurs de redimensionnement.
+1. **Registre moderne**: Utilisation d'une API propre et extensible pour l'enregistrement des raccourcis.
+2. **Intégration complète**: Fonctionne parfaitement avec le store Redux.
+3. **Historique**: Gestion des opérations undo/redo.
+4. **Detection précise**: Détection précise du focus grâce aux observateurs de redimensionnement.
 5. **Typesafe**: Utilisation complète de TypeScript pour une meilleure sécurité des types. 

@@ -1,12 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useRef } from "react";
 import { useSelector } from "react-redux";
 import { AREA_BORDER_WIDTH } from "../../../constants";
 import { RootState } from "../../../store";
 import { cssZIndex } from "../../../styles/cssVariables";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { Rect } from "../../../types/geometry";
-import { computeAreaToViewport } from "../../../utils/areaToViewport";
-import { _setAreaViewport, getAreaRootViewport } from "../../../utils/getAreaViewport";
 import { compileStylesheet } from "../../../utils/stylesheets";
 import { handleDragAreaResize } from "../handlers/areaDragResize";
 
@@ -35,22 +33,21 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const { layout, rootId } = useSelector((state: RootState) => state.area);
     const viewportsRef = useRef(areaToViewport);
 
-    // Mettre à jour les viewports quand ils changent
-    useEffect(() => {
-        // Vérifier si des viewports sont manquants
-        const missingViewports = row.areas.some(area => !areaToViewport[area.id]);
+    // Validation basique avant de continuer
+    if (!row || !row.areas || row.areas.length <= 1) {
+        return null;
+    }
 
-        if (missingViewports) {
-            const rootViewport = getAreaRootViewport();
-            if (rootViewport && layout && rootId) {
-                const newMap = computeAreaToViewport(layout, rootId, rootViewport);
-                if (Object.keys(newMap).length > 0) {
-                    viewportsRef.current = { ...areaToViewport, ...newMap };
-                    _setAreaViewport(viewportsRef.current);
-                }
-            }
-        }
-    }, [row.areas, areaToViewport, layout, rootId]);
+    // Vérifier que tous les viewports nécessaires sont disponibles
+    const allViewportsAvailable = row.areas.every(area =>
+        areaToViewport[area.id] &&
+        layout[area.id] // S'assurer que la zone existe toujours dans le layout
+    );
+
+    // Si des viewports sont manquants, ne pas essayer de rendre les séparateurs
+    if (!allViewportsAvailable) {
+        return null;
+    }
 
     // Créer un tableau pour collecter les séparateurs
     const separators = [];
@@ -63,13 +60,14 @@ export const AreaRowSeparators: React.FC<Props> = props => {
 
         if (!currentArea || !nextArea) continue;
 
-        const currentViewport = areaToViewport[currentArea.id];
-        const nextViewport = areaToViewport[nextArea.id];
-
-        if (!currentViewport || !nextViewport) {
-            console.warn(`Missing viewport for area separator between ${currentArea.id} and ${nextArea.id}`);
+        // Vérifier que les deux zones existent dans le layout et ont des viewports
+        if (!layout[currentArea.id] || !layout[nextArea.id] ||
+            !areaToViewport[currentArea.id] || !areaToViewport[nextArea.id]) {
             continue;
         }
+
+        const currentViewport = areaToViewport[currentArea.id];
+        const nextViewport = areaToViewport[nextArea.id];
 
         // Déterminer l'orientation
         const horizontal = row.orientation === "horizontal";

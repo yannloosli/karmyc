@@ -1,84 +1,97 @@
-# Providers Core
+# Providers
 
-Ce dossier contient les providers React qui fournissent le contexte et les fonctionnalités globales à l'application.
+Ce dossier contient les providers React qui fournissent le contexte et l'état global à l'application.
 
 ## Structure
 
 ```
 providers/
-├── CoreProvider.tsx     # Provider principal qui initialise le core
-├── StoreProvider.tsx    # Provider pour le store Redux
-├── ThemeProvider.tsx    # Provider pour le thème
-└── HistoryProvider.tsx  # Provider pour l'historique
+├── KarmycProvider.tsx     # Provider principal qui initialise Karmyc
+├── KarmycInitializer.tsx  # Composant qui initialise le système
+└── README.md             # Ce fichier
 ```
 
-## Providers Principaux
+## Providers principaux
 
-### CoreProvider
-Provider principal qui initialise et configure le core de l'application.
+Ces providers sont essentiels pour le fonctionnement du système et doivent être intégrés dans l'application.
+
+### KarmycProvider
+
+Le provider principal qui enveloppe l'application et initialise le système de layout.
 
 ```typescript
-import { CoreProvider } from '@core/providers';
+import { KarmycProvider } from '@/providers';
 
 function App() {
   return (
-    <CoreProvider
+    <KarmycProvider
       options={{
-        enableHistory: true,
-        enablePersistence: true,
-        theme: 'light'
+        enableLogging: true,
+        plugins: [myCustomPlugin]
       }}
     >
-      <MyApp />
-    </CoreProvider>
+      <MyApplication />
+    </KarmycProvider>
   );
 }
 ```
 
+## Providers secondaires (implicitement inclus)
+
+Ces providers sont inclus automatiquement par le KarmycProvider et n'ont pas besoin d'être importés séparément.
+
 ### StoreProvider
-Provider qui configure et fournit le store Redux.
+
+Provider Redux qui gère l'état global de l'application.
 
 ```typescript
-import { StoreProvider } from '@core/providers';
+import { StoreProvider } from '@/providers';
 
 function MyApp() {
   return (
-    <StoreProvider
-      initialState={initialState}
-      middleware={[logger, thunk]}
-    >
-      <AppContent />
+    <StoreProvider>
+      <MyComponent />
     </StoreProvider>
   );
 }
 ```
 
-## Utilisation
+### Utilisation combinée (non nécessaire)
+
+Le KarmycProvider intègre déjà tous les autres providers, mais voici comment les utiliser manuellement si nécessaire :
 
 ```typescript
-import { CoreProvider, StoreProvider } from '@core/providers';
+import { KarmycProvider, StoreProvider } from '@/providers';
 
 function App() {
   return (
-    <CoreProvider>
+    <KarmycProvider>
       <StoreProvider>
-        <ThemeProvider>
-          <HistoryProvider>
-            <AppContent />
-          </HistoryProvider>
-        </ThemeProvider>
+        <MyApplication />
       </StoreProvider>
-    </CoreProvider>
+    </KarmycProvider>
   );
 }
 ```
 
+## Options du KarmycProvider
+
+Le KarmycProvider accepte les options suivantes :
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `enableLogging` | boolean | Active les logs de débogage |
+| `plugins` | IActionPlugin[] | Plugins d'action personnalisés |
+| `validators` | { actionType: string, validator: Function }[] | Validateurs d'action personnalisés |
+
+Ces options permettent de personnaliser le comportement du système.
+
 ## Configuration
 
-### Options du CoreProvider
+### Options du KarmycProvider
 
 ```typescript
-interface ICoreOptions {
+interface IKarmycOptions {
   /** Active/désactive la gestion de l'historique */
   enableHistory?: boolean;
   /** Active/désactive la persistance des données */

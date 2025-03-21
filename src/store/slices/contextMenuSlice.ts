@@ -22,13 +22,6 @@ export const contextMenuSlice = createSlice({
             metadata?: Record<string, any>;
         }>) => {
             const { position, items, targetId, metadata } = action.payload;
-            console.log('contextMenuSlice - openContextMenu:', {
-                position,
-                items,
-                targetId,
-                metadata,
-                currentState: state
-            });
 
             // Validation de la position
             const positionValidation = validatePosition(position);
@@ -54,8 +47,6 @@ export const contextMenuSlice = createSlice({
             state.metadata = metadata;
             state.errors = [];
             state.customContextMenu = null;
-
-            console.log('contextMenuSlice - state after update:', state);
         },
 
         openCustomContextMenu: (state, action: PayloadAction<OpenCustomContextMenuOptions>) => {

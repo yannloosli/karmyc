@@ -14,7 +14,6 @@ export const App: React.FC = () => {
             modifierKeys: ['Command'],
             name: 'Save',
             fn: () => {
-                console.log("Save triggered");
                 (window as any).saveActionState();
                 console.log("Saved!");
             }
