@@ -1,14 +1,11 @@
 import { debounce } from 'lodash';
 import React from "react";
 import ReactDOM from 'react-dom';
-import { CoreProvider } from "~/core/providers/CoreProvider";
-import { DiffType } from "~/diff/diffs";
-import "~/globals";
-import { sendDiffsToSubscribers } from "~/listener/diffListener";
-import { getActionState } from "~/state/stateUtils";
-import "~/state/undoRedo";
+import { CoreProvider } from "~/providers/CoreProvider";
+import { sendDiffsToSubscribers } from "~/store/diffSubscription";
 import { App } from "./App";
-import { initAreaRegistries } from "./core/store/registries/initRegistries";
+import { initAreaRegistries } from "./store/registries/initRegistries";
+import { getActionState } from "./utils/stateUtils";
 
 // Initialiser les registres
 initAreaRegistries();
@@ -33,7 +30,13 @@ document.addEventListener("contextmenu", (e) => e.preventDefault(), false);
 
 const handleResize = debounce(() => {
     requestAnimationFrame(() => {
-        sendDiffsToSubscribers(getActionState(), [{ type: DiffType.ResizeAreas }]);
+        sendDiffsToSubscribers(getActionState(), [{
+            id: `resize-${Date.now()}`,
+            timestamp: Date.now(),
+            type: 'ResizeAreas',
+            changes: [],
+            metadata: {}
+        }]);
     });
 }, 100);
 

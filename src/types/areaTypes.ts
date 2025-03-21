@@ -1,47 +1,60 @@
+import { ComponentType } from "react";
 import { AreaType } from "~/constants";
-import { FlowAreaState } from "~/flow/state/flowAreaReducer";
-import { TimelineAreaState } from "~/timeline/timelineAreaReducer";
-import { WorkspaceAreaState } from "~/workspace/workspaceAreaReducer";
+import { Vec2 } from "../../util/math/vec2";
+import { Rect } from "./math";
 
-export interface AreaToOpen {
-	position: Vec2;
-	area: Area;
+export interface AreaComponentProps<T = any> {
+    id: string;
+    state: T;
+    type: AreaType;
+    viewport: Rect;
+    raised?: boolean;
+    Component: ComponentType<any>;
 }
 
-interface _AreaStates {
-	[AreaType.FlowEditor]: FlowAreaState;
-	[AreaType.Timeline]: TimelineAreaState;
-	[AreaType.Workspace]: WorkspaceAreaState;
-	[AreaType.History]: {};
-	[AreaType.Project]: {};
-}
-
-export type AreaState<T extends AreaType> = _AreaStates[T];
-
-export interface Area<T extends AreaType = AreaType> {
-	type: T;
-	state: AreaState<T>;
+export interface Area<T extends AreaType> {
+    id: string;
+    type: T;
+    state: any;
+    viewport?: Rect;
 }
 
 export interface AreaLayout {
-	type: "area";
-	id: string;
+    id: string;
+    type: "area";
 }
 
-export type AreaRowOrientation = "horizontal" | "vertical";
-
-export type AreaRowLayout = {
-	type: "area_row";
-	id: string;
-	orientation: AreaRowOrientation;
-	areas: Array<{ size: number; id: string }>;
-};
-
-export interface AreaComponentProps<T> {
-	width: number;
-	height: number;
-	left: number;
-	top: number;
-	areaState: T;
-	areaId: string;
+export interface AreaRowLayout {
+    type: "area_row";
+    id: string;
+    areas: Array<{
+        id: string;
+        size: number;
+    }>;
+    orientation: "horizontal" | "vertical";
 }
+
+export interface AreaToOpen {
+    position: Vec2;
+    area: {
+        type: AreaType;
+        state: any;
+    };
+}
+
+export interface AreaState {
+    type: AreaType;
+    state: any;
+}
+
+export interface AreaReducerState {
+    areas: {
+        [key: string]: any;
+    };
+    layout: {
+        [key: string]: {
+            type: string;
+        };
+    };
+    areaToOpen: AreaToOpen | null;
+} 

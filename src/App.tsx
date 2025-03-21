@@ -1,19 +1,30 @@
 import React, { useEffect } from "react";
-import { AreaRoot } from "~/core/components/area/components/AreaRoot";
-import { addListener, removeListener } from "~/listener/addListener";
-import { isKeyCodeOf } from "~/listener/keyboard";
+import { AreaRoot } from "~/components/area/components/AreaRoot";
+import { keyboardShortcutRegistry } from "~/store/registries/keyboardShortcutRegistry";
+import { setupKeyboardListeners } from "~/utils/keyboard";
 
 export const App: React.FC = () => {
     useEffect(() => {
-        const token = addListener.repeated("keydown", { modifierKeys: ["Command"] }, (e) => {
-            if (isKeyCodeOf("S", e.keyCode)) {
-                e.preventDefault();
+        // Configurer les écouteurs de clavier
+        const cleanupKeyboard = setupKeyboardListeners();
+
+        // Enregistrer le raccourci Cmd+S
+        const shortcutId = keyboardShortcutRegistry.register({
+            key: 'S',
+            modifierKeys: ['Command'],
+            name: 'Save',
+            fn: () => {
+                console.log("Save triggered");
                 (window as any).saveActionState();
                 console.log("Saved!");
             }
         });
+
         return () => {
-            removeListener(token);
+            // Nettoyer les écouteurs
+            cleanupKeyboard();
+            // Supprimer le raccourci
+            keyboardShortcutRegistry.remove(shortcutId);
         };
     }, []);
 

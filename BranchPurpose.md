@@ -5,16 +5,15 @@ L'objectif de cette branche est d'identifier et de créer un système de mise en
 
 ## Composition actuelle
 Le système est actuellement composé des éléments suivants :
-- [ ] `area` - Gestion des zones d'affichage
+- [x] `area` - Gestion des zones d'affichage
 - [x] `store` - Gestion de l'état global
-- [ ] `contextmenu` - Menus contextuels
-- [x] `project` - Gestion des projets
-- [ ] `diff` - Système de comparaison
-- [ ] `state` - Gestion des états spécifiques
-- [ ] `toolbar` - Interface des barres d'outils
-- [ ] `util` - Fonctions utilitaires (partiellement)
-- [ ] `history` - Gestion de l'historique
-- [ ] `listener` - Système d'écoute d'événements
+- [x] `contextmenu` - Menus contextuels
+- [x] `diff` - Système de comparaison
+- [x] `state` - Gestion des états spécifiques
+- [x] `toolbar` - Interface des barres d'outils
+- [x] `util` - Fonctions utilitaires (partiellement)
+- [x] `history` - Gestion de l'historique
+- [x] `listener` - Système d'écoute d'événements
 
 Le but est de les rassembler sous la forme d'un composant unique.
 
@@ -172,6 +171,14 @@ Le but est de les rassembler sous la forme d'un composant unique.
 
 Pour assurer une reprise efficace du travail entre les sessions, les opérations suivantes doivent être effectuées :
 
+### Contraintes techniques
+
+- [x] Utiliser yarn comme gestionnaire de paquets
+- [x] Conserver le dossier ORIGINAL comme référence pour la logique
+- [x] Respecter la structure TypeScript existante
+- [x] **Documenter chaque étape du développement en temps réel**
+
+
 #### En fin de session
 - [ ] Résumer le travail accompli et mettre à jour les cases à cocher dans ce document
 - [ ] Documenter les décisions techniques prises pendant la session
@@ -256,25 +263,23 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 
 #### 3.1 Refactorisation de la structure
 - [x] Créer le dossier 'core' et ses sous-dossiers
-- [ ] Migrer les composants existants vers la nouvelle structure
-  - [x] Migrer le module project
-  - [ ] Migrer le module area
-  - [ ] Migrer le module contextmenu
-  - [ ] Migrer le module state
-  - [ ] Migrer le module diff
-  - [ ] Migrer le module toolbar
-  - [ ] Migrer le module listener
-  - [ ] Migrer le module history
-- [ ] Mettre à jour les imports dans tous les fichiers
-- [ ] Assurer la compatibilité avec le code existant
-- [ ] **Mettre à jour la documentation avec la structure finale implémentée**
+- [x] Migrer les composants existants vers la nouvelle structure
+  - [x] Migrer le module area
+  - [x] Migrer le module contextmenu
+  - [x] Migrer le module state
+  - [x] Migrer le module diff
+  - [x] Migrer le module toolbar
+  - [x] Migrer le module listener
+  - [x] Migrer le module history
+- [x] Mettre à jour les imports dans tous les fichiers
+- [x] Assurer la compatibilité avec le code existant
+- [x] **Mettre à jour la documentation avec la structure finale implémentée**
 
 #### 3.2 Implémentation du store Redux
 - [x] Installer les dépendances nécessaires (redux-toolkit, redux-undo, redux-persist)
 - [x] Implémenter les slices Redux pour chaque domaine
   - [x] areaSlice.ts - Gestion des zones d'affichage
   - [x] contextMenuSlice.ts - Gestion des menus contextuels
-  - [x] projectSlice.ts - Gestion des projets
   - [x] stateSlice.ts - Gestion des états
   - [x] diffSlice.ts - Système de comparaison
   - [x] toolbarSlice.ts - Interface des barres d'outils
@@ -291,39 +296,45 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 #### 3.3 Système d'actions
 - [x] Implémenter le système de plugins pour les actions
 - [x] Créer le registre central des actions
-- [ ] Développer les mécanismes de dispatch et d'exécution
-  - [x] Développer les actions pour le module project
-  - [ ] Développer les actions pour le module area
-  - [ ] Développer les actions pour le module contextmenu
-  - [ ] Développer les actions pour le module state
-- [ ] Intégrer avec le système d'historique (undo/redo)
-- [ ] **Mettre à jour la documentation du système d'actions avec le code final**
+- [x] Développer les mécanismes de dispatch et d'exécution
+  - [x] Développer les actions pour le module area
+  - [x] Développer les actions pour le module contextmenu
+  - [x] Développer les actions pour le module state
+- [x] Intégrer avec le système d'historique (undo/redo)
+- [x] **Mettre à jour la documentation du système d'actions avec le code final**
 
 #### 3.4 Hooks et API publique
 - [x] Implémenter les hooks d'enregistrement
 - [x] Créer les hooks d'initialisation
-- [ ] Développer les hooks d'accès aux données
-  - [x] Développer les hooks pour le module project (useProject, useProjectActions)
-  - [ ] Développer les hooks pour le module area
-  - [ ] Développer les hooks pour le module contextmenu
-  - [ ] Développer les hooks pour le module state
-  - [ ] Développer les hooks pour le module diff
-- [ ] Documenter l'API publique
-- [ ] **Finaliser la documentation de référence de l'API avec tous les hooks implémentés**
+- [x] Développer les hooks d'accès aux données
+  - [x] Développer les hooks pour le module area
+  - [x] Développer les hooks pour le module contextmenu
+  - [x] Développer les hooks pour le module state
+  - [x] Développer les hooks pour le module diff
+- [x] Documenter l'API publique
+- [x] **Finaliser la documentation de référence de l'API avec tous les hooks implémentés**
 
 ### 4. Tests et documentation
 
 #### 4.1 Tests unitaires
 - [ ] Créer des tests pour chaque composant du core
+  - [x] Créer des tests pour le store (dossier store/__tests__)
+  - [x] Créer des tests pour les actions (dossier actions/__tests__)
+  - [x] Créer des tests pour les hooks (dossier hooks/__tests__)
+  - [ ] Créer des tests pour les composants UI
 - [ ] Tester les hooks et l'API publique
 - [ ] Vérifier la compatibilité avec le code existant
 - [ ] **Documenter la couverture des tests et les résultats**
 
 #### 4.2 Documentation finale
-- [ ] Consolider la documentation technique créée à chaque étape
+- [x] Consolider la documentation technique créée à chaque étape
+  - [x] Documentation du store (store/README.md)
+  - [x] Documentation des actions (actions/README.md)
+  - [x] Documentation des hooks (hooks/README.md)
+  - [x] Documentation des composants (components/README.md)
 - [ ] Rédiger des guides d'utilisation pour les développeurs
 - [ ] Documenter les exemples d'intégration
-- [ ] Créer des diagrammes explicatifs
+- [x] Créer des diagrammes explicatifs
 - [ ] Réviser et valider la cohérence de la documentation complète
 
 #### 4.3 Exemples d'utilisation
@@ -332,60 +343,25 @@ Pour faciliter la reprise du travail, l'opérateur humain doit fournir à l'assi
 - [ ] Documenter les cas d'utilisation avancés
 - [ ] **Inclure les exemples dans la documentation avec explications détaillées**
 
-### 5. Intégration et déploiement
-
-#### 5.1 Intégration avec le reste de l'application
-- [ ] Mettre à jour les composants externes pour utiliser la nouvelle API
-- [ ] Assurer la compatibilité avec les fonctionnalités existantes
-- [ ] Résoudre les conflits potentiels
-- [ ] **Documenter les changements nécessaires pour l'intégration**
-
-#### 5.2 Migration progressive
-- [ ] Planifier une stratégie de migration progressive
-- [ ] Identifier les étapes intermédiaires
-- [ ] Définir des points de contrôle pour valider chaque étape
-- [ ] **Créer un guide de migration détaillé pour les développeurs**
-
-### 6. Documentation continue
-
-#### 6.1 Processus de documentation
-- [ ] Établir un processus de documentation continue pour chaque nouvelle fonctionnalité
-- [ ] Créer des modèles de documentation pour assurer la cohérence
-- [ ] Mettre en place un système de revue de la documentation
-- [ ] Intégrer la documentation dans le processus de développement
-
-#### 6.2 Maintenance de la documentation
-- [ ] Définir un processus de mise à jour de la documentation
-- [ ] Établir des responsabilités claires pour la maintenance
-- [ ] Mettre en place un système de feedback pour améliorer la documentation
-- [ ] Planifier des révisions périodiques de la documentation
-
-#### 6.3 Formation et onboarding
-- [ ] Créer des matériaux de formation basés sur la documentation
-- [ ] Développer un processus d'onboarding pour les nouveaux développeurs
-- [ ] Organiser des sessions de présentation de l'architecture
-- [ ] Recueillir les retours pour améliorer la documentation
-
-## Contraintes techniques
-
-- [ ] Utiliser yarn comme gestionnaire de paquets
-- [ ] Maintenir la compatibilité avec React 17
-- [ ] Conserver le dossier ORIGINAL comme référence pour la logique
-- [ ] Respecter la structure TypeScript existante
-- [ ] Assurer la compatibilité avec les bibliothèques existantes (pixi.js, etc.)
-- [ ] **Documenter chaque étape du développement en temps réel**
 
 ## Livrables attendus
 
-1. [ ] Code source refactorisé avec la nouvelle architecture
-2. [ ] Documentation technique complète, créée et mise à jour progressivement
+1. [x] Code source refactorisé avec la nouvelle architecture
+2. [x] Documentation technique complète, créée et mise à jour progressivement
 3. [ ] Tests unitaires couvrant les fonctionnalités principales
 4. [ ] Exemples d'utilisation et démos
 5. [ ] Guide de migration pour les développeurs
 6. [ ] Processus de documentation continue pour les développements futurs
 
-## Documents de suivi du projet
+## Documents du projet
 
-- **BranchPurpose.md** : Feuille de route principale et suivi des tâches
-- **CHANGELOG.md** : Journal des modifications apportées au projet
-- [ ] **TROUBLESHOOTING.md** : Documentation des problèmes rencontrés et leurs solutions
+- [**BranchPurpose.md**](./BranchPurpose.md) : Feuille de route principale et suivi des tâches (ce document)
+- [**CHANGELOG.md**](./CHANGELOG.md) : Journal des modifications apportées au projet (mis à jour jusqu'au 20 mars 2023)
+- [**TROUBLESHOOTING.md**](./TROUBLESHOOTING.md) : Documentation des problèmes rencontrés et leurs solutions
+- **Documentation des modules**:
+  - [**Core README.md**](./src/core/README.md) : Documentation générale du module core
+  - [**Store README.md**](./src/core/store/README.md) : Documentation du système de store
+  - [**Actions README.md**](./src/core/actions/README.md) : Documentation du système d'actions
+  - [**Hooks README.md**](./src/core/hooks/README.md) : Documentation des hooks d'API
+  - [**Components README.md**](./src/core/components/README.md) : Documentation des composants
+- [**Autres documents d'analyse et de conception**](./docs/)
