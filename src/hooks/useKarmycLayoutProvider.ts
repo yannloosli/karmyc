@@ -1,37 +1,35 @@
-import React, { useMemo } from 'react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { rootReducer } from '../store/rootReducer';
-import { actionsMiddleware } from '../store/middleware/actions';
-import { historyMiddleware } from '../store/middleware/history';
-import { persistenceMiddleware } from '../store/middleware/persistence';
-import { IKarmycConfig } from '../types/karmyc';
+import { useMemo } from 'react';
+import { IKarmycOptions } from '../types/karmyc';
 
 /**
- * Hook pour créer un provider React pour le système de mise en page
- * @param config - Configuration du système
- * @returns Provider React
+ * Hook qui fournit une configuration pour le KarmycProvider
+ * 
+ * Ce hook est utilisé pour créer une configuration pour le KarmycProvider
+ * et permet de configurer facilement le système de layout.
+ * 
+ * @param options - Options de configuration pour le système
+ * @returns Configuration pour le KarmycProvider
  */
-export function useKarmycLayoutProvider(config: IKarmycConfig) {
-    // Créer le store Redux
-    const store = useMemo(() => {
-        return configureStore({
-            reducer: rootReducer,
-            middleware: (getDefaultMiddleware) =>
-                getDefaultMiddleware({
-                    serializableCheck: false,
-                    immutableCheck: true
-                }).concat(actionsMiddleware, historyMiddleware, persistenceMiddleware),
-            preloadedState: config.initialState
-        });
-    }, [config.initialState]);
+export function useKarmycLayoutProvider(options: IKarmycOptions = {}) {
+    // Mémoriser les options pour éviter les re-rendus inutiles
+    const memoizedOptions = useMemo(() => {
+        return {
+            // Valeurs par défaut
+            enableLogging: options.enableLogging ?? false,
+            plugins: options.plugins ?? [],
+            validators: options.validators ?? [],
+            initialAreas: options.initialAreas ?? [],
+            customReducers: options.customReducers ?? {},
+            keyboardShortcutsEnabled: options.keyboardShortcutsEnabled ?? true,
+        };
+    }, [
+        options.enableLogging,
+        options.plugins,
+        options.validators,
+        options.initialAreas,
+        options.customReducers,
+        options.keyboardShortcutsEnabled
+    ]);
 
-    // Créer le provider
-    const LayoutCoreProvider = useMemo(() => {
-        return ({ children }: { children: React.ReactNode }) => (
-            <Provider store= { store } > { children } </Provider>
-    );
-}, [store]);
-
-return LayoutCoreProvider;
+    return memoizedOptions;
 } 

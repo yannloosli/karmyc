@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { historyPlugin } from '../actions/plugins/history';
 import { actionRegistry } from '../actions/registry';
+import { useArea } from '../hooks/useArea';
 import { IKarmycOptions } from '../types/karmyc';
 
 interface IKarmycInitializerProps {
@@ -8,6 +9,9 @@ interface IKarmycInitializerProps {
 }
 
 export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {} }) => {
+    // Utiliser le hook useArea pour créer des zones
+    const { createArea } = useArea();
+
     useEffect(() => {
         // Enregistrer les plugins par défaut
         const defaultPlugins = [historyPlugin];
@@ -27,11 +31,42 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
             });
         }
 
+        // Initialiser les zones personnalisées si spécifiées
+        if (options.initialAreas && options.initialAreas.length > 0) {
+            options.initialAreas.forEach(area => {
+                createArea(
+                    area.type,
+                    area.state,
+                    area.position
+                );
+            });
+
+            if (options.enableLogging) {
+                console.log(`${options.initialAreas.length} zones initialisées`);
+            }
+        }
+
+        // Enregistrer les reducers personnalisés
+        if (options.customReducers) {
+            // NOTE: L'intégration directe de reducers personnalisés dans un store existant
+            // n'est pas possible après sa création. Dans une future itération, nous allons
+            // implémenter une solution basée sur des réducteurs asynchrones ou un store configurable.
+            // Pour l'instant, nous enregistrons uniquement les intentions.
+
+            if (options.enableLogging) {
+                console.log(`${Object.keys(options.customReducers).length} reducers personnalisés à enregistrer`);
+                console.log('Note: L\'intégration des reducers personnalisés sera disponible dans une future version');
+            }
+        }
+
         // Logging si activé
         if (options.enableLogging) {
             console.log('Karmyc initialisé avec:', {
                 plugins: pluginIds,
-                validators: options.validators?.length || 0
+                validators: options.validators?.length || 0,
+                initialAreas: options.initialAreas?.length || 0,
+                customReducers: options.customReducers ? Object.keys(options.customReducers).length : 0,
+                keyboardShortcutsEnabled: options.keyboardShortcutsEnabled || false
             });
         }
 
@@ -41,7 +76,7 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                 actionRegistry.unregisterPlugin(id);
             });
         };
-    }, [options]);
+    }, [options, createArea]);
 
     return null;
 }; 

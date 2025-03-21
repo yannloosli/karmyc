@@ -1,56 +1,67 @@
 import { useEffect } from 'react';
 import { areaRegistry } from '../area/registry';
-import { TAreaComponent, TAreaKeyboardShortcuts, TAreaReducer } from '../types/area';
 
 /**
- * Hook pour enregistrer un type de zone
+ * Hook pour enregistrer un type de zone personnalisé
+ * 
  * @param areaType - Type de zone à enregistrer
  * @param component - Composant React pour ce type de zone
- * @param reducer - Réducteur d'état pour ce type de zone
- * @param keyboardShortcuts - Raccourcis clavier pour ce type de zone (optionnel)
- * @param options - Options supplémentaires (optionnel)
+ * @param initialState - État initial pour ce type de zone
+ * @param options - Options supplémentaires (facultatif)
  */
-export function useRegisterAreaType<T extends string, S>(
-  areaType: T,
-  component: TAreaComponent<S>,
-  reducer: TAreaReducer<S>,
-  keyboardShortcuts?: TAreaKeyboardShortcuts,
-  options?: {
-    reactKey?: keyof S;
-    displayName?: string;
-    icon?: React.ComponentType;
-  }
+export function useRegisterAreaType<T = any>(
+    areaType: string,
+    component: React.ComponentType<any>,
+    initialState: T,
+    options?: {
+        displayName?: string;
+        icon?: React.ComponentType;
+        defaultSize?: { width: number, height: number };
+        supportedActions?: string[];
+    }
 ): void {
-  useEffect(() => {
-    // Enregistrer le composant
-    areaRegistry.registerComponent(areaType, component);
-    
-    // Enregistrer le réducteur
-    areaRegistry.registerReducer(areaType, reducer);
-    
-    // Enregistrer les raccourcis clavier si fournis
-    if (keyboardShortcuts) {
-      areaRegistry.registerKeyboardShortcuts(areaType, keyboardShortcuts);
-    }
-    
-    // Enregistrer les options supplémentaires
-    if (options) {
-      if (options.reactKey) {
-        areaRegistry.registerReactKey(areaType, options.reactKey);
-      }
-      
-      if (options.displayName) {
-        areaRegistry.registerDisplayName(areaType, options.displayName);
-      }
-      
-      if (options.icon) {
-        areaRegistry.registerIcon(areaType, options.icon);
-      }
-    }
-    
-    // Nettoyer lors du démontage du composant
-    return () => {
-      areaRegistry.unregisterAreaType(areaType);
-    };
-  }, [areaType, component, reducer, keyboardShortcuts, options]);
+    useEffect(() => {
+        // Enregistrer le composant dans le registre unique
+        areaRegistry.registerComponent(areaType, component);
+
+        // Enregistrer l'état initial si supporté
+        areaRegistry.registerInitialState(areaType, initialState);
+
+        // Enregistrer les options supplémentaires
+        if (options) {
+            if (options.displayName) {
+                areaRegistry.registerDisplayName(areaType, options.displayName);
+            }
+
+            if (options.icon) {
+                areaRegistry.registerIcon(areaType, options.icon);
+            }
+
+            if (options.defaultSize) {
+                areaRegistry.registerDefaultSize(areaType, options.defaultSize);
+            } else if (process.env.NODE_ENV === 'development') {
+                console.log(`DefaultSize n'est pas encore supporté pour ${areaType}`);
+            }
+
+            if (options.supportedActions) {
+                areaRegistry.registerSupportedActions(areaType, options.supportedActions);
+            } else if (process.env.NODE_ENV === 'development') {
+                console.log(`SupportedActions n'est pas encore supporté pour ${areaType}`);
+            }
+        }
+
+        // Nettoyer lors du démontage du composant
+        return () => {
+            areaRegistry.unregisterAreaType(areaType);
+        };
+    }, [
+        areaType,
+        component,
+        initialState,
+        options,
+        options?.displayName,
+        options?.defaultSize,
+        options?.supportedActions,
+        options?.icon
+    ]);
 } 

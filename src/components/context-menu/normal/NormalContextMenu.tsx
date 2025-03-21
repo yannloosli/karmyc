@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AreaType, CONTEXT_MENU_OPTION_HEIGHT, DEFAULT_CONTEXT_MENU_WIDTH } from "../../../constants";
+import { actionRegistry } from "../../../store/registries/actionRegistry";
 import { updateArea } from "../../../store/slices/areaSlice";
 import {
     closeContextMenu,
@@ -155,8 +156,16 @@ export const NormalContextMenu: React.FC = () => {
     };
 
     const handleAction = (actionId: string, itemMetadata?: Record<string, any>) => {
+        console.log(`Tentative d'exécution de l'action: ${actionId}`, { metadata, itemMetadata });
         dispatch(closeContextMenu());
 
+        // Tentative d'exécution via le registre d'actions
+        if (actionRegistry.executeAction(actionId, { ...metadata, ...itemMetadata })) {
+            console.log(`Action ${actionId} exécutée via le registre d'actions`);
+            return; // Action exécutée avec succès
+        }
+
+        // Actions intégrées si l'action n'est pas dans le registre
         switch (actionId) {
         case 'area.project':
             dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.Project } }));

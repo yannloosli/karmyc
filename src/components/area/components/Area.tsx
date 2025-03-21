@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AREA_BORDER_WIDTH, AreaType } from "~/constants";
-import { useAreaKeyboardShortcuts } from "~/hooks/useAreaKeyboardShortcuts";
+import { areaRegistry } from "~/area/registry";
+import { AREA_BORDER_WIDTH, AreaType, AreaTypeValue } from "~/constants";
 import { RootState } from "~/store";
-import { _areaReactKeyRegistry, areaComponentRegistry } from "~/store/registries/areaRegistry";
+import { _areaReactKeyRegistry } from "~/store/registries/areaRegistry";
 import { setActiveArea } from "~/store/slices/areaSlice";
 import { openContextMenu } from "~/store/slices/contextMenuSlice";
 import styles from "~/styles/Area.styles";
@@ -27,14 +27,14 @@ interface OwnProps {
 
 interface StateProps {
     state: any;
-    type: AreaType;
+    type: AreaTypeValue;
     raised: boolean;
     Component: React.ComponentType<AreaComponentProps<any>>;
 }
 
 type Props = StateProps & OwnProps;
 
-const areaTypeOptions: Array<{ icon: React.ComponentType; type: AreaType; label: string }> = [
+const areaTypeOptions: Array<{ icon: React.ComponentType; type: AreaTypeValue; label: string }> = [
     {
         icon: PenIcon,
         type: AreaType.Project,
@@ -62,10 +62,10 @@ const areaTypeOptions: Array<{ icon: React.ComponentType; type: AreaType; label:
     },
 ];
 
-const typeToIndex: Record<AreaType, number> = areaTypeOptions.reduce((obj, { type }, i) => {
+const typeToIndex: Record<AreaTypeValue, number> = areaTypeOptions.reduce((obj, { type }, i) => {
     obj[type] = i;
     return obj;
-}, {} as Record<AreaType, number>);
+}, {} as Record<AreaTypeValue, number>);
 
 export const AreaComponent: React.FC<AreaComponentProps> = ({
     id,
@@ -89,16 +89,25 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     const dispatch = useDispatch();
     const active = useSelector((state: RootState) => state.area.activeAreaId === id);
 
-    // Vérifier si le type est valide
-    if (!typeToIndex.hasOwnProperty(type)) {
-        console.error(`Invalid area type: ${type}`);
-        return null;
-    }
+    // Vérifier s'il s'agit d'un type personnalisé ou standard
+    let isCustomType = !typeToIndex.hasOwnProperty(type);
+    let IconComponent: React.ComponentType = PenIcon; // Utiliser PenIcon par défaut
 
-    const { icon: Icon } = areaTypeOptions[typeToIndex[type]];
+    // Pour les types standard, utiliser l'icône définie
+    if (!isCustomType) {
+        IconComponent = areaTypeOptions[typeToIndex[type]].icon;
+    } else {
+        // Pour les types personnalisés, essayer de récupérer l'icône du registre
+        const registeredIcon = areaRegistry.getIcon(type);
+        if (registeredIcon) {
+            IconComponent = registeredIcon;
+        }
+        console.log(`Utilisation du type personnalisé: ${type}`);
+    }
 
     const openSelectArea = (_: React.MouseEvent) => {
         const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
+        console.log("Ouverture du menu contextuel zone à la position:", pos);
         requestAction({}, (params) => {
             dispatch(
                 openContextMenu({
@@ -132,6 +141,30 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
                             id: "history",
                             label: "History",
                             actionId: "area.history",
+                            metadata: { areaId: id }
+                        },
+                        {
+                            id: "separator",
+                            label: "───────────────",
+                            actionId: "area.separator",
+                            metadata: { areaId: id }
+                        },
+                        {
+                            id: "create-text-note",
+                            label: "Convertir en note",
+                            actionId: "area.create-text-note",
+                            metadata: { areaId: id }
+                        },
+                        {
+                            id: "create-color-picker",
+                            label: "Convertir en palette",
+                            actionId: "area.create-color-picker",
+                            metadata: { areaId: id }
+                        },
+                        {
+                            id: "create-image-viewer",
+                            label: "Convertir en image",
+                            actionId: "area.create-image-viewer",
                             metadata: { areaId: id }
                         }
                     ],
@@ -176,8 +209,8 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
         };
     }, []);
 
-    // Utiliser les raccourcis clavier
-    useAreaKeyboardShortcuts(id, type, keyboardViewport);
+    // Les raccourcis clavier sont maintenant gérés par les types d'area individuels
+    // qui utilisent useAreaKeyboardShortcuts avec leurs propres raccourcis
 
     // Activer la zone lorsqu'elle est cliquée
     const onActivate = () => {
@@ -202,7 +235,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
                 />
             ))}
             <button className={s("selectAreaButton")} onMouseDown={openSelectArea}>
-                <Icon />
+                <IconComponent />
             </button>
             <div className={s("area__content")}>
                 <AreaIdContext.Provider value={id}>
@@ -233,8 +266,8 @@ const mapStateToProps = (state: any, ownProps: OwnProps): StateProps => {
     const isEligibleForJoin = joinPreview && joinPreview.eligibleAreaIds.indexOf(id) !== -1;
     const isBeingJoined = joinPreview && joinPreview.areaId === id;
 
-    const areaType = areas[id].type as AreaType;
-    const component = areaComponentRegistry[areaType];
+    const areaType = areas[id].type as AreaTypeValue;
+    const component = areaRegistry.getComponent(areaType);
 
     if (!component) {
         throw new Error(`No component registered for area type: ${areaType}`);

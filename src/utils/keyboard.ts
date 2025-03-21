@@ -1,3 +1,4 @@
+import { keyboardShortcutRegistry } from "../store/registries/keyboardShortcutRegistry";
 import { KeyboardShortcut } from "../types";
 
 /**
@@ -76,16 +77,45 @@ export function isKeyDown(key: string): boolean {
  */
 export function setupKeyboardListeners(): () => void {
     const handleKeyDown = (e: KeyboardEvent) => {
-        const key = getKeyFromKeyCode(e.keyCode);
-        if (key) {
-            updateKeyState(key, true);
-        }
+        console.log(`KeyDown - keyCode: ${e.keyCode}, key: ${e.key}, ctrl: ${e.ctrlKey}, shift: ${e.shiftKey}, alt: ${e.altKey}, meta: ${e.metaKey}`);
 
-        // Gérer également les modificateurs
-        if (e.shiftKey) updateKeyState("Shift", true);
+        // Gérer les modificateurs immédiatement
         if (e.ctrlKey) updateKeyState("Control", true);
+        if (e.shiftKey) updateKeyState("Shift", true);
         if (e.altKey) updateKeyState("Alt", true);
         if (e.metaKey) updateKeyState("Command", true);
+
+        // Récupérer la touche depuis le code ou le nom de la touche directement
+        let key = getKeyFromKeyCode(e.keyCode);
+        if (!key && e.key) {
+            // Si getKeyFromKeyCode échoue, utiliser e.key
+            key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+        }
+
+        if (key) {
+            // Mettre à jour l'état
+            updateKeyState(key, true);
+
+            // Récupérer les modificateurs actifs
+            const activeModifiers = new Set<ModifierKey>();
+            if (e.ctrlKey) activeModifiers.add("Control");
+            if (e.shiftKey) activeModifiers.add("Shift");
+            if (e.altKey) activeModifiers.add("Alt");
+            if (e.metaKey) activeModifiers.add("Command");
+
+            console.log(`Touche détectée: ${key}, modificateurs:`, Array.from(activeModifiers));
+
+            // Vérifier si on doit empêcher le comportement par défaut
+            const shouldPreventDefault = checkShouldPreventDefault(key, activeModifiers);
+            if (shouldPreventDefault) {
+                console.log(`⛔ PRÉVENTION du comportement par défaut pour ${key} + ${Array.from(activeModifiers).join('+')}`);
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Vérifier et exécuter les raccourcis correspondants
+            checkAndExecuteShortcuts(key);
+        }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -101,14 +131,133 @@ export function setupKeyboardListeners(): () => void {
         if (!e.metaKey) updateKeyState("Command", false);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    // S'assurer que nos gestionnaires sont exécutés en premier pour intercepter les événements
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('keyup', handleKeyUp, { capture: true });
 
     // Nettoyage lorsque le composant est démonté
     return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
+        window.removeEventListener('keydown', handleKeyDown, { capture: true });
+        window.removeEventListener('keyup', handleKeyUp, { capture: true });
     };
+}
+
+/**
+ * Vérifie si on doit empêcher le comportement par défaut du navigateur
+ * pour la combinaison de touches donnée
+ */
+function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey>): boolean {
+    // Raccourcis à intercepter
+    const shortcutsToIntercept = [
+        { key: 'R', modifiers: ['Control'] },  // Ctrl+R (Refresh)
+        { key: 'S', modifiers: ['Control'] },  // Ctrl+S (Save)
+        { key: 'P', modifiers: ['Control'] },  // Ctrl+P (Print)
+        { key: 'F', modifiers: ['Control'] },  // Ctrl+F (Find)
+    ];
+
+    console.log(`checkShouldPreventDefault - Touche: ${key}, Modificateurs:`, Array.from(activeModifiers));
+
+    // Convertir key et modificateurs pour une comparaison insensible à la casse
+    const lowerKey = key.toLowerCase();
+
+    // Vérifier si la combinaison correspond à un raccourci à intercepter
+    for (const shortcut of shortcutsToIntercept) {
+        // Comparer les touches de manière insensible à la casse
+        if (key === shortcut.key || lowerKey === shortcut.key.toLowerCase()) {
+            console.log(`Match trouvé avec la touche ${shortcut.key}`);
+
+            // Vérifier si tous les modificateurs requis sont actifs
+            const requiredModifiers = new Set(shortcut.modifiers);
+            let allModifiersMatch = true;
+
+            // Vérifier que tous les modificateurs requis sont actifs
+            for (const modKey of requiredModifiers) {
+                if (!activeModifiers.has(modKey as ModifierKey)) {
+                    console.log(`Modificateur manquant: ${modKey}`);
+                    allModifiersMatch = false;
+                    break;
+                }
+            }
+
+            // Vérifier qu'il n'y a pas de modificateurs supplémentaires
+            if (allModifiersMatch) {
+                console.log(`Tous les modificateurs requis sont présents.`);
+
+                // Permettre des modificateurs supplémentaires si nécessaire
+                // (ex: Ctrl+Shift+S devrait aussi être intercepté si on veut intercepter Ctrl+S)
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Vérifie et exécute les raccourcis clavier correspondant à la touche pressée
+ */
+function checkAndExecuteShortcuts(key: string): void {
+    console.log(`Touche pressée: ${key}`);
+
+    // Récupérer les modificateurs actifs
+    const activeModifiers = new Set<ModifierKey>();
+    for (const modKey of modifierKeys) {
+        if (isKeyDown(modKey)) {
+            activeModifiers.add(modKey);
+            console.log(`Modificateur actif: ${modKey}`);
+        }
+    }
+
+    // Récupérer l'ID de la zone active
+    let activeAreaId = null;
+    let activeAreaType = null;
+
+    try {
+        // Essayer d'accéder au store pour obtenir la zone active
+        const store = (window as any).store;
+        if (store && store.getState) {
+            const state = store.getState();
+            if (state && state.area) {
+                activeAreaId = state.area.activeAreaId;
+                if (activeAreaId && state.area.areas[activeAreaId]) {
+                    activeAreaType = state.area.areas[activeAreaId].type;
+                    console.log(`Zone active: ${activeAreaId}, Type: ${activeAreaType}`);
+                }
+            }
+        } else {
+            console.warn("Store non disponible pour les raccourcis clavier");
+        }
+    } catch (error) {
+        console.error("Erreur lors de l'accès à la zone active:", error);
+    }
+
+    if (!activeAreaId || !activeAreaType) {
+        console.log("Aucune zone active pour les raccourcis clavier");
+        return;
+    }
+
+    // Récupérer les raccourcis pour ce type de zone
+    const shortcuts = keyboardShortcutRegistry.getShortcuts(activeAreaType);
+
+    console.log(`Raccourcis disponibles pour ${activeAreaType}:`,
+        shortcuts ? shortcuts.map(s => `${s.key} (${s.modifierKeys?.join('+') || ''})`) : "Aucun");
+
+    if (!shortcuts || shortcuts.length === 0) {
+        return;
+    }
+
+    // Trouver le meilleur raccourci correspondant
+    const bestShortcut = findBestShortcut(shortcuts, key, activeModifiers);
+
+    if (bestShortcut) {
+        console.log(`Exécution du raccourci: ${bestShortcut.name} sur la zone ${activeAreaId}`);
+        // Exécuter la fonction du raccourci avec l'ID de la zone active
+        try {
+            bestShortcut.fn(activeAreaId, {});
+        } catch (error) {
+            console.error(`Erreur lors de l'exécution du raccourci ${bestShortcut.name}:`, error);
+        }
+    }
 }
 
 /**
@@ -145,7 +294,8 @@ export function findBestShortcut(
 
         // Vérifier qu'il n'y a pas de modificateurs supplémentaires actifs
         // sauf s'ils sont dans optionalModifierKeys
-        const optionalModifiers = new Set(shortcut.optionalModifierKeys || []);
+        const optionalModifiers = new Set<string>([]); // Si optionalModifierKeys n'existe pas, utiliser un ensemble vide
+
         let hasExtraModifiers = false;
 
         for (const activeModKey of activeModifiers) {

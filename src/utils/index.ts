@@ -8,4 +8,5 @@
 
 export * from './diff';
 export * from './history';
+export * from './id';
 export * from './validation';

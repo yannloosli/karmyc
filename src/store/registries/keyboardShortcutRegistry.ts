@@ -1,4 +1,3 @@
-import { AreaType } from "../../constants";
 import { KeyboardShortcut } from "../../types";
 
 /**
@@ -6,9 +5,10 @@ import { KeyboardShortcut } from "../../types";
  * Permet d'enregistrer, récupérer et supprimer des raccourcis
  */
 interface KeyboardShortcutRegistry {
-    registerShortcuts: (areaType: AreaType, shortcuts: KeyboardShortcut[]) => void;
-    getShortcuts: (areaType: AreaType) => KeyboardShortcut[];
-    clearShortcuts: (areaType: AreaType) => void;
+    registerShortcuts: (areaType: string, shortcuts: KeyboardShortcut[]) => void;
+    getShortcuts: (areaType: string) => KeyboardShortcut[];
+    clearShortcuts: (areaType: string) => void;
+    unregisterShortcuts: (areaType: string) => void;
 
     // Méthodes simplifiées pour utilisation directe
     register: (shortcut: KeyboardShortcut) => string; // Retourne un ID unique
@@ -16,7 +16,7 @@ interface KeyboardShortcutRegistry {
 }
 
 // Stockage en mémoire des raccourcis par type de zone
-const shortcutsStorage = new Map<AreaType, KeyboardShortcut[]>();
+const shortcutsStorage = new Map<string, KeyboardShortcut[]>();
 
 // Stockage des raccourcis globaux avec id
 const globalShortcuts = new Map<string, KeyboardShortcut>();
@@ -32,6 +32,10 @@ export const keyboardShortcutRegistry: KeyboardShortcutRegistry = {
     },
 
     clearShortcuts: (areaType) => {
+        shortcutsStorage.delete(areaType);
+    },
+
+    unregisterShortcuts: (areaType) => {
         shortcutsStorage.delete(areaType);
     },
 

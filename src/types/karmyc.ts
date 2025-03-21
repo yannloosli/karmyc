@@ -46,6 +46,13 @@ export interface IKarmycOptions {
         actionType: string;
         validator: (action: any) => { valid: boolean; message?: string };
     }>;
+    initialAreas?: Array<{
+        type: string;
+        state?: any;
+        position?: { x: number; y: number };
+    }>;
+    customReducers?: Record<string, any>;
+    keyboardShortcutsEnabled?: boolean;
 }
 
 export interface IKarmycProviderProps {

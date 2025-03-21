@@ -1,404 +1,325 @@
-# Création de zones personnalisées avancées
+# Guide: Créer et utiliser des zones personnalisées
 
-Ce guide explique comment créer des zones personnalisées avec des fonctionnalités avancées pour le système de layout.
+Ce guide vous explique comment créer vos propres types de zones et les utiliser dans votre application avec le système Karmyc.
 
 ## Prérequis
 
-Avant de commencer, assurez-vous d'avoir lu le [guide de démarrage](./getting-started.md) et d'avoir configuré correctement le système de layout dans votre application.
+- Avoir installé le package `@karmyc/layout` dans votre projet
+- Avoir configuré le `KarmycProvider` dans votre application
 
-## Structure avancée d'une zone personnalisée
+## 1. Définir un composant pour votre zone personnalisée
 
-### Interface complète des props
+Commencez par créer un composant React qui représentera votre zone. Ce composant doit accepter les propriétés suivantes :
 
-```typescript
+```tsx
 interface AreaComponentProps<T = any> {
-  // Propriétés de base
-  areaId: string;
-  type: string;
-  areaState: T;
-  
-  // Propriétés de position/taille
-  width: number;
-  height: number;
-  left: number;
-  top: number;
-  
-  // Propriétés d'état
-  isActive: boolean;
-  isResizing: boolean;
-  isDragging: boolean;
-  
-  // Fonctions de mise à jour
-  updateState: (changes: Partial<T>) => void;
-  
-  // Éléments optionnels
-  viewport?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
-}
-```
-
-## Exemple de zone personnalisée avancée
-
-### 1. Création d'un composant avec état interne
-
-```tsx
-// src/components/AdvancedArea.tsx
-import React, { useState, useEffect } from 'react';
-import { AreaComponentProps, useContextMenu } from '@karmyc';
-
-interface AdvancedAreaState {
-  title: string;
-  content: string;
-  backgroundColor: string;
+    id: string;        // Identifiant unique de la zone
+    state: T;          // État spécifique au type de zone
+    width?: number;    // Largeur de la zone (optionnel)
+    height?: number;   // Hauteur de la zone (optionnel)
+    isActive?: boolean; // Indique si la zone est active (optionnel)
 }
 
-export const AdvancedArea: React.FC<AreaComponentProps<AdvancedAreaState>> = ({
-  width,
-  height,
-  left,
-  top,
-  areaState,
-  areaId,
-  isActive,
-  updateState,
+// Exemple de composant personnalisé
+const MyCustomArea: React.FC<AreaComponentProps<{ content: string }>> = ({ 
+    id, 
+    state, 
+    width = 300, 
+    height = 200,
+    isActive = false
 }) => {
-  // État local pour l'édition du titre
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [titleInput, setTitleInput] = useState(areaState.title);
-  
-  // Accès au menu contextuel
-  const { open: openContextMenu } = useContextMenu();
-  
-  // Synchroniser l'état local avec l'état de la zone
-  useEffect(() => {
-    setTitleInput(areaState.title);
-  }, [areaState.title]);
-  
-  // Gestionnaire pour la touche Entrée
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      updateState({ title: titleInput });
-      setIsEditingTitle(false);
-    }
-  };
-  
-  // Gestionnaire de menu contextuel
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    openContextMenu(
-      { x: e.clientX, y: e.clientY },
-      [
-        {
-          id: 'change-color',
-          label: 'Changer la couleur',
-          submenu: [
-            {
-              id: 'color-red',
-              label: 'Rouge',
-              action: () => updateState({ backgroundColor: '#ffcccc' }),
-            },
-            {
-              id: 'color-green',
-              label: 'Vert',
-              action: () => updateState({ backgroundColor: '#ccffcc' }),
-            },
-            {
-              id: 'color-blue',
-              label: 'Bleu',
-              action: () => updateState({ backgroundColor: '#ccccff' }),
-            },
-          ],
-        },
-        {
-          id: 'edit-title',
-          label: 'Modifier le titre',
-          action: () => setIsEditingTitle(true),
-        },
-      ]
-    );
-  };
-  
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left,
-        top,
-        width,
-        height,
-        backgroundColor: areaState.backgroundColor || '#f0f0f0',
-        padding: '16px',
-        borderRadius: '4px',
-        boxShadow: isActive 
-          ? '0 0 0 2px #0066ff, 0 2px 4px rgba(0,0,0,0.1)' 
-          : '0 2px 4px rgba(0,0,0,0.1)',
-        transition: 'background-color 0.3s, box-shadow 0.3s',
-      }}
-      onContextMenu={handleContextMenu}
-    >
-      <div className="area-header">
-        {isEditingTitle ? (
-          <input
-            value={titleInput}
-            onChange={(e) => setTitleInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onBlur={() => {
-              updateState({ title: titleInput });
-              setIsEditingTitle(false);
+    return (
+        <div 
+            style={{ 
+                width, 
+                height, 
+                background: isActive ? '#e6f7ff' : '#f0f0f0',
+                border: isActive ? '2px solid #1890ff' : '1px solid #d9d9d9',
+                borderRadius: '4px',
+                padding: '8px',
+                overflow: 'auto'
             }}
-            autoFocus
-          />
-        ) : (
-          <h2 onDoubleClick={() => setIsEditingTitle(true)}>
-            {areaState.title}
-          </h2>
-        )}
-      </div>
-      
-      <div className="area-content">
-        <p>{areaState.content}</p>
-      </div>
-      
-      <div className="area-footer">
-        <small>ID: {areaId}</small>
-      </div>
-    </div>
-  );
+        >
+            <h3>Zone personnalisée</h3>
+            <p>{state.content}</p>
+        </div>
+    );
 };
 ```
 
-### 2. Enregistrement du type de zone avancée
+## 2. Enregistrer votre type de zone
+
+Utilisez le hook `useRegisterAreaType` pour enregistrer votre composant en tant que type de zone. Ce hook doit être appelé à un niveau élevé de votre application, généralement dans un composant qui est enfant direct du `KarmycProvider`.
 
 ```tsx
-// src/components/AdvancedAreaRegistration.tsx
-import React from 'react';
-import { useRegisterAreaType } from '@karmyc';
-import { AdvancedArea } from './AdvancedArea';
+import { useRegisterAreaType } from '@karmyc/layout';
 
-export const AdvancedAreaRegistration: React.FC = () => {
-  useRegisterAreaType(
-    'advanced',
-    AdvancedArea,
-    {
-      title: 'Zone avancée',
-      content: 'Contenu de la zone avancée',
-      backgroundColor: '#f0f0f0',
-    },
-    {
-      displayName: 'Zone avancée',
-      defaultSize: { width: 400, height: 300 },
-    }
-  );
-  
-  return null;
-};
-```
-
-## Ajout de raccourcis clavier à une zone
-
-### 1. Définition des raccourcis
-
-```tsx
-// src/components/AdvancedAreaShortcuts.tsx
-import React from 'react';
-import { useAreaKeyboardShortcuts } from '@karmyc';
-
-export const AdvancedAreaShortcuts: React.FC = () => {
-  useAreaKeyboardShortcuts('advanced', [
-    {
-      key: 'Delete',
-      name: 'Supprimer la zone',
-      fn: (areaId, params) => {
-        params.deleteArea(areaId);
-      },
-    },
-    {
-      key: 'C',
-      modifierKeys: ['Control'],
-      name: 'Copier la zone',
-      fn: (areaId, params) => {
-        const area = params.getAreaById(areaId);
-        if (area) {
-          params.createArea('advanced', { ...area.state });
+const Setup = () => {
+    // Enregistrer un type de zone personnalisé
+    useRegisterAreaType(
+        'custom-area',                   // Identifiant du type de zone
+        MyCustomArea,                    // Composant React pour la zone
+        { content: 'Contenu initial' },  // État initial
+        {
+            displayName: 'Zone Personnalisée',  // Nom affiché dans l'interface
+            icon: CustomIcon,                   // Icône optionnelle
+            defaultSize: { width: 400, height: 300 }, // Taille par défaut
+            supportedActions: ['edit', 'delete']     // Actions supportées
         }
-      },
-    },
-    {
-      key: 'E',
-      name: 'Modifier le titre',
-      fn: (areaId, params) => {
-        const area = params.getAreaById(areaId);
-        if (area) {
-          // Cette fonction sera traitée par le composant lui-même
-          params.triggerAreaEvent(areaId, 'edit-title');
-        }
-      },
-    },
-  ]);
-  
-  return null;
-};
-```
-
-### 2. Intégration des raccourcis
-
-```tsx
-// src/components/AreaTypeRegistration.tsx
-import React from 'react';
-import { AdvancedAreaRegistration } from './AdvancedAreaRegistration';
-import { AdvancedAreaShortcuts } from './AdvancedAreaShortcuts';
-
-export const AreaTypeRegistration: React.FC = () => {
-  return (
-    <>
-      <AdvancedAreaRegistration />
-      <AdvancedAreaShortcuts />
-    </>
-  );
-};
-```
-
-## Communication entre zones
-
-### 1. Utilisation des événements
-
-```tsx
-// src/components/CommunicatingAreas.tsx
-import React from 'react';
-import { AreaComponentProps, useArea } from '@karmyc';
-
-// Zone émettrice
-export const SenderArea: React.FC<AreaComponentProps<any>> = ({
-  areaId,
-  width,
-  height,
-  left,
-  top,
-}) => {
-  const { areas, triggerAreaEvent } = useArea();
-  
-  const sendMessage = (message: string) => {
-    // Trouver toutes les zones receveuses
-    const receiverAreas = areas.filter(area => area.type === 'receiver');
+    );
     
-    // Envoyer le message à chaque zone receveuse
-    receiverAreas.forEach(area => {
-      triggerAreaEvent(area.id, 'receive-message', { message, fromAreaId: areaId });
-    });
-  };
-  
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left,
-        top,
-        width,
-        height,
-        padding: '16px',
-        backgroundColor: '#e6f7ff',
-      }}
-    >
-      <h2>Zone émettrice</h2>
-      <div>
-        <input
-          type="text"
-          placeholder="Message"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              sendMessage(e.currentTarget.value);
-              e.currentTarget.value = '';
-            }
-          }}
-        />
-        <button onClick={(e) => sendMessage((e.currentTarget.previousSibling as HTMLInputElement).value)}>
-          Envoyer
+    return null;
+};
+
+// Dans votre application
+const App = () => {
+    return (
+        <KarmycProvider>
+            <Setup />
+            <YourApplication />
+        </KarmycProvider>
+    );
+};
+```
+
+## 3. Créer des instances de votre zone
+
+Utilisez le hook `useArea` pour créer des instances de votre zone personnalisée :
+
+```tsx
+import { useArea } from '@karmyc/layout';
+
+const ZoneCreator = () => {
+    const { createArea } = useArea();
+    
+    const handleCreateArea = () => {
+        createArea(
+            'custom-area',                      // Type de zone
+            { content: 'Nouvelle zone créée' }, // État initial spécifique
+            { x: 100, y: 100 }                  // Position initiale (optionnel)
+        );
+    };
+    
+    return (
+        <button onClick={handleCreateArea}>
+            Créer une zone personnalisée
         </button>
-      </div>
-    </div>
-  );
-};
-
-// Zone receveuse
-interface ReceiverState {
-  messages: Array<{ id: number; text: string; fromAreaId: string }>;
-}
-
-export const ReceiverArea: React.FC<AreaComponentProps<ReceiverState>> = ({
-  areaId,
-  width,
-  height,
-  left,
-  top,
-  areaState,
-  updateState,
-}) => {
-  // Gestionnaire d'événements de réception de messages
-  React.useEffect(() => {
-    const handleReceiveMessage = (data: { message: string; fromAreaId: string }) => {
-      updateState({
-        messages: [
-          ...areaState.messages,
-          {
-            id: Date.now(),
-            text: data.message,
-            fromAreaId: data.fromAreaId,
-          },
-        ],
-      });
-    };
-    
-    // Enregistrer le gestionnaire d'événements
-    const { registerAreaEvent, unregisterAreaEvent } = useArea();
-    registerAreaEvent(areaId, 'receive-message', handleReceiveMessage);
-    
-    return () => {
-      unregisterAreaEvent(areaId, 'receive-message');
-    };
-  }, [areaId, areaState.messages, updateState]);
-  
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left,
-        top,
-        width,
-        height,
-        padding: '16px',
-        backgroundColor: '#fff0f6',
-        overflowY: 'auto',
-      }}
-    >
-      <h2>Zone receveuse</h2>
-      <div className="messages">
-        {areaState.messages.length === 0 ? (
-          <p>Aucun message reçu</p>
-        ) : (
-          <ul>
-            {areaState.messages.map(msg => (
-              <li key={msg.id}>
-                <strong>De {msg.fromAreaId}:</strong> {msg.text}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
+    );
 };
 ```
 
-## Bonnes pratiques
+## 4. Gérer l'état de votre zone
 
-1. **Séparation des responsabilités** : Séparez la logique de rendu de la logique métier.
-2. **Optimisation des performances** : Utilisez React.memo et useCallback pour éviter les rendus inutiles.
-3. **Gestion de l'état** : Préférez l'état global pour les données partagées et l'état local pour l'UI.
-4. **Types TypeScript** : Définissez des interfaces précises pour l'état de vos zones.
-5. **Styles** : Utilisez des classes CSS plutôt que des styles inline pour les composants complexes.
-6. **Événements** : Documentez clairement les événements personnalisés utilisés dans vos zones. 
+Vous pouvez mettre à jour l'état de vos zones à tout moment en utilisant les fonctions fournies par le hook `useArea` :
+
+```tsx
+const ZoneManager = () => {
+    const { areas, updateAreaState, deleteArea, setActive } = useArea();
+    
+    // Mettre à jour l'état d'une zone
+    const updateContent = (areaId, newContent) => {
+        updateAreaState(areaId, { content: newContent });
+    };
+    
+    return (
+        <div>
+            {areas.map(area => (
+                <div key={area.id}>
+                    <button onClick={() => setActive(area.id)}>
+                        Activer
+                    </button>
+                    <button onClick={() => updateContent(area.id, 'Contenu mis à jour')}>
+                        Mettre à jour
+                    </button>
+                    <button onClick={() => deleteArea(area.id)}>
+                        Supprimer
+                    </button>
+                </div>
+            ))}
+        </div>
+    );
+};
+```
+
+## 5. Ajouter des raccourcis clavier à votre zone
+
+Vous pouvez ajouter des raccourcis clavier spécifiques à votre type de zone en utilisant le hook `useAreaKeyboardShortcuts` :
+
+```tsx
+import { useAreaKeyboardShortcuts } from '@karmyc/layout';
+
+const KeyboardShortcutsSetup = () => {
+    useAreaKeyboardShortcuts('custom-area', [
+        {
+            key: 'Delete',
+            name: 'Supprimer la zone',
+            fn: (areaId) => {
+                // Logique pour supprimer la zone
+            }
+        },
+        {
+            key: 'S',
+            modifierKeys: ['Control'],
+            name: 'Sauvegarder le contenu',
+            fn: (areaId, params) => {
+                // Logique pour sauvegarder
+            },
+            history: true // Ajoutera cette action à l'historique (undo/redo)
+        }
+    ]);
+    
+    return null;
+};
+```
+
+## 6. Initialiser votre application avec des zones prédéfinies
+
+Vous pouvez initialiser votre application avec des zones prédéfinies en utilisant l'option `initialAreas` du `KarmycProvider` :
+
+```tsx
+const App = () => {
+    return (
+        <KarmycProvider 
+            options={{
+                initialAreas: [
+                    {
+                        type: 'custom-area',
+                        state: { content: 'Zone prédéfinie 1' },
+                        position: { x: 50, y: 50 }
+                    },
+                    {
+                        type: 'custom-area',
+                        state: { content: 'Zone prédéfinie 2' },
+                        position: { x: 400, y: 50 }
+                    }
+                ],
+                enableLogging: true
+            }}
+        >
+            <Setup />
+            <YourApplication />
+        </KarmycProvider>
+    );
+};
+```
+
+## 7. Bonnes pratiques
+
+- **Séparation des préoccupations** : Séparez la définition du composant, l'enregistrement du type et la création des instances.
+- **État immuable** : Traitez l'état de vos zones comme immuable, n'essayez pas de le modifier directement.
+- **Optimisation des performances** : Évitez les rendus inutiles en utilisant React.memo et useCallback.
+- **Gestion des erreurs** : Gérez les cas d'erreur dans vos composants de zone pour éviter les crashs.
+
+## Exemple complet
+
+```tsx
+import React, { useCallback } from 'react';
+import { 
+    KarmycProvider, 
+    useRegisterAreaType, 
+    useArea, 
+    useAreaKeyboardShortcuts 
+} from '@karmyc/layout';
+
+// 1. Définir le composant de zone personnalisée
+const TextEditorArea = React.memo(({ id, state, isActive }) => {
+    const { content } = state;
+    const { updateAreaState } = useArea();
+    
+    const handleChange = useCallback((e) => {
+        updateAreaState(id, { content: e.target.value });
+    }, [id, updateAreaState]);
+    
+    return (
+        <div className={`text-editor ${isActive ? 'active' : ''}`}>
+            <h3>Éditeur de texte</h3>
+            <textarea 
+                value={content} 
+                onChange={handleChange}
+                style={{ width: '100%', height: '180px' }}
+            />
+        </div>
+    );
+});
+
+// 2. Composant de configuration
+const Setup = () => {
+    // Enregistrer le type de zone
+    useRegisterAreaType(
+        'text-editor',
+        TextEditorArea,
+        { content: '' },
+        { displayName: 'Éditeur de texte' }
+    );
+    
+    // Ajouter des raccourcis clavier
+    useAreaKeyboardShortcuts('text-editor', [
+        {
+            key: 'S',
+            modifierKeys: ['Control'],
+            name: 'Sauvegarder',
+            fn: (areaId, params) => {
+                console.log('Sauvegarde du contenu de', areaId);
+                // Logique de sauvegarde ici
+            }
+        }
+    ]);
+    
+    return null;
+};
+
+// 3. Interface utilisateur
+const Application = () => {
+    const { createArea, areas, deleteArea, setActive } = useArea();
+    
+    return (
+        <div className="application">
+            <div className="toolbar">
+                <button onClick={() => createArea('text-editor')}>
+                    Nouvel éditeur de texte
+                </button>
+            </div>
+            
+            <div className="areas-list">
+                <h3>Zones actives ({areas.length})</h3>
+                {areas.map(area => (
+                    <div key={area.id} className="area-item">
+                        <span>ID: {area.id}</span>
+                        <button onClick={() => setActive(area.id)}>Activer</button>
+                        <button onClick={() => deleteArea(area.id)}>Supprimer</button>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// 4. Application principale
+const App = () => {
+    return (
+        <KarmycProvider 
+            options={{ 
+                enableLogging: true,
+                initialAreas: [
+                    { 
+                        type: 'text-editor', 
+                        state: { content: 'Ceci est un éditeur prédéfini.' },
+                        position: { x: 100, y: 100 }
+                    }
+                ]
+            }}
+        >
+            <Setup />
+            <Application />
+        </KarmycProvider>
+    );
+};
+
+export default App;
+```
+
+## Ressources additionnelles
+
+- Documentation complète de l'API : `/docs/api-reference.md`
+- Exemples avancés : `/examples`
+- Guide de débogage : `/docs/debugging.md`

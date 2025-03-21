@@ -87,13 +87,18 @@ export const AREA_BORDER_WIDTH = 2;
 export const TOOLBAR_HEIGHT = 40;
 export const AREA_MIN_CONTENT_WIDTH = 32;
 
-export enum AreaType {
-    Project = "project",
-    Timeline = "composition_timeline",
-    Workspace = "composition_workspace",
-    FlowEditor = "flow",
-    History = "history"
-}
+// AreaType sous forme d'objet constant au lieu d'un enum
+// Cela permet l'extension dynamique avec des types personnalisés
+export const AreaType = {
+    Project: "project",
+    Timeline: "composition_timeline",
+    Workspace: "composition_workspace",
+    FlowEditor: "flow",
+    History: "history"
+} as const;
+
+// Type utilitaire pour faciliter la saisie et la vérification des types de zones
+export type AreaTypeValue = typeof AreaType[keyof typeof AreaType] | string;
 
 export const DEFAULT_CONTEXT_MENU_WIDTH = 180;
 export const CONTEXT_MENU_OPTION_HEIGHT = 20;
