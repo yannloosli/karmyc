@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { TOOLBAR_HEIGHT } from "~/constants";
 import { RootState } from "../../../store";
 import { areaSlice } from "../../../store/slices/areaSlice";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
@@ -184,6 +185,7 @@ const AreaRootComponent: React.FC = () => {
     // Gérer le rendu d'une zone spécifique avec gestion des viewports manquants
     const renderArea = useCallback((id: string, layoutItem: any) => {
         const areaViewport = viewportMap[id];
+
         if (!areaViewport) {
             console.debug(`Skipping render for area ${id} - no viewport available`);
             return null;
@@ -192,7 +194,12 @@ const AreaRootComponent: React.FC = () => {
     }, [viewportMap]);
 
     return (
-        <div data-area-root style={{ position: 'relative' }}>
+        <div data-area-root style={{
+            background: '#2c3e50',
+            position: 'relative',
+            height: `calc(100vh - ${TOOLBAR_HEIGHT * 2}px)`,  // Hauteur totale moins MenuBar et StatusBar
+            overflow: 'hidden'
+        }}>
             {viewport &&
                 validLayoutKeys.map((id) => {
                     const layoutItem = layout[id];

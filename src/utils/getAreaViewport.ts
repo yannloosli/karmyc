@@ -1,4 +1,11 @@
-import { AREA_BORDER_WIDTH, AreaType, TOOLBAR_HEIGHT } from "../constants";
+import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../constants";
+
+interface Rect {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+}
 
 // Stockage des dimensions stables du viewport
 let stableViewport: Rect | null = null;
@@ -10,9 +17,9 @@ const RESIZE_STABILITY_THRESHOLD = 500; // ms
 export const getAreaRootViewport = () => {
     // Calculer les dimensions actuelles de la fenêtre
     const currentViewport: Rect = {
-        top: TOOLBAR_HEIGHT,
+        top: 0,  // Pas de décalage car déjà géré par le flux
         left: 0,
-        height: Math.floor(window.innerHeight - TOOLBAR_HEIGHT),
+        height: Math.floor(window.innerHeight - (TOOLBAR_HEIGHT * 2)),  // Soustraire MenuBar et StatusBar
         width: Math.floor(window.innerWidth),
     };
 
@@ -76,7 +83,7 @@ export const _setAreaViewport = (_viewportMap: { [key: string]: Rect }) => {
     viewportMap = _viewportMap;
 };
 
-export const getAreaViewport = (areaId: string, _: AreaType): Rect => {
+export const getAreaViewport = (areaId: string, _: string): Rect => {
     const viewport = viewportMap[areaId];
 
     if (!viewport) {

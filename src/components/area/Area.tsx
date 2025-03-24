@@ -1,11 +1,10 @@
 import React, { ComponentType } from "react";
-import { AreaType } from "~/constants";
 import { Rect } from "~/types/geometry";
 
 export interface AreaComponentProps<T = any> {
     id: string;
     state: T;
-    type: AreaType;
+    type: string;
     viewport: Rect;
     raised?: boolean;
     Component: ComponentType<any>;

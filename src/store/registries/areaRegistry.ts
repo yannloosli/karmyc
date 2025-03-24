@@ -1,5 +1,4 @@
 import { ComponentType } from "react";
-import { AreaType } from "../../constants";
 import { AreaComponentProps } from "../../types/areaTypes";
 
 interface IAreaRegistry {
@@ -58,37 +57,5 @@ export const areaRegistry: IAreaRegistry = {
     }
 };
 
-interface FlowAreaState { }
-interface TimelineAreaState { }
-interface WorkspaceAreaState { }
-interface HistoryAreaState { }
-interface ProjectAreaState { }
 
-const DummyComponent: ComponentType<any> = () => null;
-
-export const areaComponentRegistry: Record<AreaType, ComponentType<AreaComponentProps<any>>> = {
-    [AreaType.FlowEditor]: DummyComponent,
-    [AreaType.Timeline]: DummyComponent,
-    [AreaType.Workspace]: DummyComponent,
-    [AreaType.History]: DummyComponent,
-    [AreaType.Project]: DummyComponent,
-};
-
-export const _areaReactKeyRegistry: {
-    [key in AreaType]?: string;
-} = {};
-
-export const registerAreaComponent = (
-    type: AreaType,
-    component: React.ComponentType<AreaComponentProps<any>>,
-    stateKey?: string
-) => {
-    areaComponentRegistry[type] = component;
-    if (stateKey) {
-        _areaReactKeyRegistry[type] = stateKey;
-    }
-};
-
-export const areaStateReducerRegistry: {
-    [key in AreaType]?: (state: any, action: any) => any;
-} = {}; 
+export const areaComponentRegistry: Record<string, ComponentType<AreaComponentProps<any>>> = {};

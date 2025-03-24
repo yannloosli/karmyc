@@ -1,4 +1,3 @@
-import { AreaType } from '../constants';
 import { Area } from '../types/areaTypes';
 import { ContextMenuItem } from '../types/contextMenu';
 import { IDiff } from '../types/diff';
@@ -6,7 +5,7 @@ import { IState } from '../types/state';
 import { IToolbarItem } from '../types/toolbar';
 
 // Validation des zones
-export const validateArea = (area: Area<AreaType>): { isValid: boolean; errors: string[] } => {
+export const validateArea = (area: Area<string>): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
     if (!area.type) errors.push('Type manquant');

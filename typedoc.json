@@ -1,0 +1,12 @@
+{
+    "entryPoints": [
+        "src/index.ts"
+    ],
+    "out": "docs",
+    "name": "Karmyc Layout Documentation",
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeExternals": true,
+    "theme": "default",
+    "readme": "README.md"
+}

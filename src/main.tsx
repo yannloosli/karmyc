@@ -5,11 +5,8 @@ import { KarmycProvider } from "~/providers/KarmycProvider";
 import { sendDiffsToSubscribers } from "~/store/diffSubscription";
 import { App } from "./App";
 import { store } from "./store";
-import { initAreaRegistries } from "./store/registries/initRegistries";
 import { getActionState } from "./utils/stateUtils";
 
-// Initialiser les registres
-initAreaRegistries();
 
 // Rendre le store accessible globalement dès le départ pour les raccourcis clavier
 if (typeof window !== 'undefined') {

@@ -19,6 +19,7 @@ interface IAreaRegistry {
     getIcon: (areaType: string) => any;
     getDefaultSize: (areaType: string) => { width: number, height: number } | undefined;
     getSupportedActions: (areaType: string) => string[] | undefined;
+    getRegisteredTypes: () => Set<string>;
 
     // Méthode de désenregistrement
     unregisterAreaType: (areaType: string) => void;
@@ -93,6 +94,11 @@ export const areaRegistry: IAreaRegistry = {
 
     getSupportedActions: (areaType: string) => {
         return areaStorage.get(areaType)?.supportedActions;
+    },
+
+    // Nouvelle méthode pour obtenir tous les types enregistrés
+    getRegisteredTypes: () => {
+        return new Set(Array.from(areaStorage.keys()));
     },
 
     // Méthode de désenregistrement

@@ -27,7 +27,6 @@ import {
 
 // Import des reducers
 import { errorMiddleware } from './errorHandling';
-import { registerDefaultKeyboardShortcuts } from './initializers/registerDefaultKeyboardShortcuts';
 import areaReducer, { areaSlice } from './slices/areaSlice';
 import { contextMenuReducer } from './slices/contextMenuSlice';
 import diffReducer from './slices/diffSlice';
@@ -134,12 +133,3 @@ export * from './slices/toolbarSlice';
 
 // Export du gestionnaire d'erreurs
 export { ErrorHandler, errorUtils } from './errorHandling';
-
-// Initialiser les raccourcis clavier
-registerDefaultKeyboardShortcuts();
-
-// Exporter une fonction pour réinitialiser les raccourcis clavier
-// Peut être utile si des modules externes ajoutent leurs propres raccourcis
-export function resetAndRegisterKeyboardShortcuts() {
-    registerDefaultKeyboardShortcuts();
-}

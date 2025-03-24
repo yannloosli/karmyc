@@ -9,9 +9,7 @@ components/
 ├── Area.tsx              # Composant de base pour les zones interactives
 ├── ContextMenu.tsx       # Menu contextuel personnalisable
 ├── toolbar/             # Composants de la barre d'outils
-├── project/             # Composants liés à la gestion des projets
 ├── icons/               # Icônes réutilisables
-├── history-panel/       # Composants du panneau d'historique
 ├── context-menu/        # Composants du menu contextuel
 └── area/                # Composants spécifiques aux zones
 ```

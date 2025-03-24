@@ -33,10 +33,29 @@ export default ({ css }: StyleParams) => ({
         }
 	`,
 
+    area__structured: css`
+        border-radius: 8px;
+        background: ${cssVariables.gray500};
+        position: absolute;
+        z-index: 1;
+        top: ${AREA_BORDER_WIDTH}px;
+        left: ${AREA_BORDER_WIDTH}px;
+        bottom: ${AREA_BORDER_WIDTH}px;
+        right: ${AREA_BORDER_WIDTH}px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    `,
+
+    area__content_container: css`
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    `,
 
     area__corner: css`
-		width: 10px;
-		height: 10px;
+		width: 15px;
+		height: 15px;
 		position: absolute;
 		z-index: 2;
 		cursor: crosshair;

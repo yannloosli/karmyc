@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useSelector } from "react-redux";
-import { AREA_BORDER_WIDTH } from "../../../constants";
+import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../../../constants";
 import { RootState } from "../../../store";
 import { cssZIndex } from "../../../styles/cssVariables";
 import { AreaRowLayout } from "../../../types/areaTypes";
@@ -80,9 +80,9 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             // et le début de la zone suivante (verticalement)
             separatorRect = {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
-                top: nextViewport.top + AREA_BORDER_WIDTH * 2,
+                top: nextViewport.top + AREA_BORDER_WIDTH * 2 + TOOLBAR_HEIGHT,
                 width: AREA_BORDER_WIDTH * 2,
-                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4, 20)
+                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT * 2, 20)
             };
         } else {
             // Pour une orientation verticale, le séparateur est entre la fin de la zone actuelle

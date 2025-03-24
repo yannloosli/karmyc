@@ -10,7 +10,7 @@ import type { AppDispatch, RootState } from '~/store/store';
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-// Hooks d'API principale (API modulaire)
+// Hooks d'API principale
 export * from './useArea';
 export * from './useAreaKeyboardShortcuts';
 export * from './useContextMenu';
@@ -32,5 +32,31 @@ export * from './useMouseInRect';
 export * from './useNotifications';
 export * from './useNumberTransitionState';
 export * from './usePerformance';
-// Note: useVec2TransitionState est déjà exporté par useNumberTransitionState
-// export * from './useVec2TransitionState';
+
+// Import des hooks d'interface utilisateur depuis les composants directement
+import { useMenuBar } from '../components/area/components/MenuBar';
+import { useStatusBar } from '../components/area/components/StatusBar';
+import { useToolbar } from '../components/area/components/Toolbar';
+
+// Import des types depuis notre module interne
+import {
+    MenuBarComponentProps,
+    StatusBarComponentProps,
+    ToolbarComponentProps,
+    ToolbarSlotComponentProps
+} from '../components/area/hooks';
+
+// Re-export des hooks d'interface utilisateur
+export {
+    useMenuBar,
+    useStatusBar,
+    useToolbar
+};
+
+// Re-export des types d'interface utilisateur
+export type {
+    MenuBarComponentProps,
+    StatusBarComponentProps,
+    ToolbarComponentProps,
+    ToolbarSlotComponentProps
+};

@@ -3,14 +3,16 @@
     "scripts": {
         "dev": "vite",
         "build": "vite build",
-        "preview": "vite preview",
+        "bundle": "rollup -c",
         "tscheck": "tsc --noEmit --skipLibCheck",
         "test": "jest",
-        "test:watch": "jest --watchAll"
+        "lint": "eslint . --ext .ts,.tsx",
+        "test:watch": "jest --watchAll",
+        "docs": "typedoc src/index.ts"
     },
     "author": {
-        "name": "Alex Harri Jónsson",
-        "email": "alexharri2919@gmail.com"
+        "name": "Yann Loosli",
+        "email": "yann@gamesberry.fr"
     },
     "license": "MIT",
     "dependencies": {
@@ -80,5 +82,21 @@
         "eslint-plugin-react-hooks": "^4.2.0",
         "typescript": "^4.3.5",
         "vite": "^6.2.0"
-    }
+    },
+    "peerDependencies": {
+        "react": "^17.0.0 || ^18.0.0",
+        "react-dom": "^17.0.0 || ^18.0.0",
+        "redux": "^4.0.0",
+        "react-redux": "^7.0.0 || ^8.0.0"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "keywords": [
+        "react",
+        "layout",
+        "modular",
+        "drag-and-drop",
+        "customizable"
+    ]
 }

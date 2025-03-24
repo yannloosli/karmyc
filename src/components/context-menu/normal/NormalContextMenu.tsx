@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { AreaType, CONTEXT_MENU_OPTION_HEIGHT, DEFAULT_CONTEXT_MENU_WIDTH } from "../../../constants";
+import { CONTEXT_MENU_OPTION_HEIGHT, DEFAULT_CONTEXT_MENU_WIDTH } from "../../../constants";
 import { actionRegistry } from "../../../store/registries/actionRegistry";
-import { updateArea } from "../../../store/slices/areaSlice";
 import {
     closeContextMenu,
     selectContextMenuItems,
@@ -164,27 +163,6 @@ export const NormalContextMenu: React.FC = () => {
             console.log(`Action ${actionId} exécutée via le registre d'actions`);
             return; // Action exécutée avec succès
         }
-
-        // Actions intégrées si l'action n'est pas dans le registre
-        switch (actionId) {
-        case 'area.project':
-            dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.Project } }));
-            break;
-        case 'area.timeline':
-            dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.Timeline } }));
-            break;
-        case 'area.workspace':
-            dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.Workspace } }));
-            break;
-        case 'area.floweditor':
-            dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.FlowEditor } }));
-            break;
-        case 'area.history':
-            dispatch(updateArea({ id: metadata?.areaId, changes: { type: AreaType.History } }));
-            break;
-        default:
-            console.warn(`Action non gérée: ${actionId}`);
-        }
     };
 
     return (
@@ -203,13 +181,6 @@ export const NormalContextMenu: React.FC = () => {
                         key={i}
                         onMouseMove={onMouseMove}
                     >
-                        {i === 0 && name && (
-                            <>
-                                <div className={s("name")}>{name}</div>
-                                <div className={s("separator")} />
-                            </>
-                        )}
-
                         {options.map((option, j) => {
                             const Icon = option.icon;
 

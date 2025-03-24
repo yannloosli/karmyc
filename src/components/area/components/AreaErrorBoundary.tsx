@@ -1,12 +1,11 @@
 import React from "react";
-import { AreaType } from "../../../constants";
 import { AreaComponentProps } from "../../../types/areaTypes";
 
 interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;
     areaId: string;
     areaState: any;
-    type: AreaType;
+    type: string;
     viewport: {
         left: number;
         top: number;

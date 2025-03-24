@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AreaType, AreaTypeValue } from '../../constants';
+import { AreaTypeValue } from '../../constants';
 import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from '../../types/areaTypes';
 import { CardinalDirection } from '../../types/directions';
 import { Rect } from '../../types/geometry';
@@ -7,8 +7,6 @@ import { computeAreaToParentRow } from '../../utils/areaToParentRow';
 import { areaToRow } from '../../utils/areaToRow';
 import { joinAreas as joinAreasUtil } from '../../utils/joinArea';
 import { validateArea } from '../../utils/validation';
-import { areaInitialStates } from '../initialStates';
-import { areaStateReducerRegistry } from '../registries/areaRegistry';
 
 // Fonction pour trouver tous les IDs connectés au root
 function findConnectedIds(layout: Record<string, AreaLayout | AreaRowLayout>, rootId: string): Set<string> {
@@ -55,13 +53,7 @@ function validateLoadedState(state: Partial<AreaState>): AreaState {
                 id: "0",
             },
         },
-        areas: {
-            "0": {
-                id: "0",
-                type: AreaType.Project,
-                state: areaInitialStates[AreaType.Project],
-            },
-        },
+        areas: {},
         viewports: {},
         joinPreview: null,
         rootId: "0",
@@ -92,8 +84,8 @@ function validateLoadedState(state: Partial<AreaState>): AreaState {
             validatedAreas[id] = {
                 ...area,
                 id,
-                type: area.type || AreaType.Project,
-                state: area.state || areaInitialStates[area.type || AreaType.Project],
+                type: area.type,
+                state: area.state,
             };
         }
         // Vérifier que c'est une ligne valide
@@ -194,7 +186,7 @@ export const areaSlice = createSlice({
             state.areas[areaId] = {
                 ...action.payload,
                 id: areaId,
-                state: action.payload.state || areaInitialStates[action.payload.type],
+                state: action.payload.state,
             };
 
             // Ajouter la zone au layout
@@ -547,26 +539,17 @@ export const areaSlice = createSlice({
                 }
             }
 
-            // S'assurer que l'area d'origine a un type
-            if (!state.areas[areaId] || state.areas[areaId].type === undefined) {
-                state.areas[areaId] = {
-                    ...state.areas[areaId],
-                    type: AreaType.Project,
-                    state: areaInitialStates[AreaType.Project]
-                };
-            }
-
             // Renommer et déplacer l'ancienne zone en s'assurant qu'elle a un type
             state.areas[idForOldArea] = {
                 ...state.areas[areaId],
-                type: state.areas[areaId].type || AreaType.Project,
-                state: state.areas[areaId].state || areaInitialStates[state.areas[areaId].type || AreaType.Project]
+                type: state.areas[areaId].type,
+                state: state.areas[areaId].state
             };
 
             state.areas[idForNewArea] = {
                 ...state.areas[areaId],
-                type: state.areas[areaId].type || AreaType.Project,
-                state: state.areas[areaId].state || areaInitialStates[state.areas[areaId].type || AreaType.Project]
+                type: state.areas[areaId].type,
+                state: state.areas[areaId].state
             };
 
             delete state.areas[areaId];
@@ -656,10 +639,6 @@ export const areaSlice = createSlice({
                 // Option 1: État initial fourni
                 newState = initState;
                 console.log(`Utilisation de l'état initial fourni:`, newState);
-            } else if (areaInitialStates[type]) {
-                // Option 2: État initial du registre
-                newState = { ...areaInitialStates[type] };
-                console.log(`Utilisation de l'état initial du registre:`, newState);
             } else {
                 // Option 3: État par défaut basé sur le type
                 console.warn(`Aucun état initial trouvé pour le type ${type}, création d'un état par défaut`);
@@ -693,21 +672,6 @@ export const areaSlice = createSlice({
 
             // Sauvegarder l'état après le changement de type
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
-        },
-        dispatchToAreaState: (state, action: PayloadAction<{
-            areaId: string;
-            action: any;
-        }>) => {
-            const { areaId, action: areaAction } = action.payload;
-            const area = state.areas[areaId];
-            const reducer = areaStateReducerRegistry[area.type];
-
-            if (reducer) {
-                state.areas[areaId] = {
-                    ...area,
-                    state: reducer(area.state, areaAction),
-                };
-            }
         },
         setViewports: (state, action: PayloadAction<{ viewports: Record<string, Rect> }>) => {
             state.viewports = { ...state.viewports, ...action.payload.viewports };
@@ -747,7 +711,7 @@ export const areaSlice = createSlice({
             state.areas[newAreaId] = {
                 id: newAreaId,
                 type: sourceArea.type,
-                state: areaInitialStates[sourceArea.type]
+                state: {}
             };
 
             // Ajouter la nouvelle zone dans la ligne après la zone spécifiée
@@ -772,7 +736,7 @@ export const areaSlice = createSlice({
 });
 
 // Actions
-export const { addArea, removeArea, updateArea, setActiveArea, clearErrors, setFields, setJoinAreasPreview, joinAreas, convertAreaToRow, insertAreaIntoRow, setRowSizes, setAreaType, dispatchToAreaState, setViewports, cleanupTemporaryStates, resetState } = areaSlice.actions;
+export const { addArea, removeArea, updateArea, setActiveArea, clearErrors, setFields, setJoinAreasPreview, joinAreas, convertAreaToRow, insertAreaIntoRow, setRowSizes, setAreaType, setViewports, cleanupTemporaryStates, resetState } = areaSlice.actions;
 
 // Sélecteurs
 export const selectAreaState = (state: { area: AreaState }) => state.area;

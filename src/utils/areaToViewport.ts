@@ -144,8 +144,8 @@ export const computeAreaToViewport = (
         // S'assurer que les dimensions sont valides
         const validContentArea = {
             ...contentArea,
-            width: Math.max(contentArea.width, 10),
-            height: Math.max(contentArea.height, 10)
+            width: Math.max(contentArea.width, 200),
+            height: Math.max(contentArea.height, 200)
         };
 
         areaToViewport[area.id] = { ...validContentArea };
@@ -166,8 +166,8 @@ export const computeAreaToViewport = (
         // S'assurer que les dimensions sont valides et stables
         const validContentArea = {
             ...contentArea,
-            width: Math.max(contentArea.width, 10),
-            height: Math.max(contentArea.height, 10)
+            width: Math.max(contentArea.width, 200),
+            height: Math.max(contentArea.height, 200)
         };
 
         // Affecter le viewport complet à la ligne parente avant de calculer les enfants

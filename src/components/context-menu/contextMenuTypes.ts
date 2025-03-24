@@ -1,5 +1,5 @@
-import { Vec2 } from "../../../util/math/vec2";
 import { Rect } from "../../types/geometry";
+import { Vec2 } from "../../utils/math/vec2";
 
 export interface ContextMenuBaseProps {
     updateRect: (rect: Rect) => void;

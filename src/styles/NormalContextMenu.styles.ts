@@ -45,12 +45,6 @@ export default ({ css }: StyleParams) => ({
 		text-overflow: ellipsis;
 	`,
 
-    separator: css`
-		background: ${cssVariables.dark500};
-		height: 1px;
-		display: block;
-		margin: 4px 0;
-	`,
 
     option: css`
 		padding: 0;

@@ -1,18 +1,17 @@
 import { ComponentType } from "react";
-import { AreaType } from "~/constants";
-import { Vec2 } from "../../util/math/vec2";
+import { Vec2 } from "../utils/math/vec2";
 import { Rect } from "./math";
 
 export interface AreaComponentProps<T = any> {
     id: string;
     state: T;
-    type: AreaType;
+    type: string;
     viewport: Rect;
     raised?: boolean;
     Component: ComponentType<any>;
 }
 
-export interface Area<T extends AreaType> {
+export interface Area<T extends string> {
     id: string;
     type: T;
     state: any;
@@ -37,13 +36,13 @@ export interface AreaRowLayout {
 export interface AreaToOpen {
     position: Vec2;
     area: {
-        type: AreaType;
+        type: string;
         state: any;
     };
 }
 
 export interface AreaState {
-    type: AreaType;
+    type: string;
     state: any;
 }
 

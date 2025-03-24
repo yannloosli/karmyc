@@ -11,7 +11,6 @@ export * from './components';
 
 // Exporter les types publics
 export type * from './types/actions';
-export type { Area as AreaType } from './types/area';
 
 // Exporter les constantes publiques
 export * from './constants';
@@ -25,9 +24,7 @@ export { store } from './store';
 // Exporter les actions publiques
 export {
     // Actions de area
-    addArea,
-    // Actions de project
-    createProject, removeArea, setActiveArea, updateArea, updateProject
+    addArea, removeArea, setActiveArea, updateArea
 } from './store';
 
 // Exporter les utilitaires
