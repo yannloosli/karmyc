@@ -11,13 +11,11 @@ import { getActionState } from "./utils/stateUtils";
 // Rendre le store accessible globalement dès le départ pour les raccourcis clavier
 if (typeof window !== 'undefined') {
     (window as any).store = store;
-    console.log('Store exposé globalement pour les raccourcis clavier');
 
     // Intercepter Ctrl+R et Ctrl+S globalement pour s'assurer que nos raccourcis fonctionnent
     window.addEventListener('keydown', (e) => {
         // Vérifier si on doit intercepter cet événement
         if (e.ctrlKey && (e.key === 'r' || e.key === 'R' || e.key === 's' || e.key === 'S')) {
-            console.log(`Interception globale de Ctrl+${e.key.toUpperCase()}`);
             e.preventDefault();
             e.stopPropagation();
 
@@ -63,22 +61,17 @@ if (typeof window !== 'undefined') {
             }
 
             const areaType = area.type;
-            console.log(`Zone active: ${activeAreaId}, type: ${areaType}`);
 
             // Exécuter l'action en fonction du type de zone et de la touche
             switch (areaType) {
             case 'text-note':
                 if (key === 'S') {
-                    console.log(`Exécution de l'action Sauvegarder pour text-note ${activeAreaId}`);
-                    // Simuler l'action de sauvegarde
-                    console.log(`Sauvegarde du texte de la zone ${activeAreaId}`);
                     alert(`Texte sauvegardé : ${area.state?.content || ''}`);
                 }
                 break;
 
             case 'color-picker':
                 if (key === 'R') {
-                    console.log(`Exécution de l'action Réinitialiser pour color-picker ${activeAreaId}`);
                     // Réinitialiser la couleur directement
                     if (store.dispatch) {
                         const defaultColor = '#1890ff';
@@ -115,7 +108,6 @@ if (typeof window !== 'undefined') {
 
             case 'image-viewer':
                 if (key === 'R') {
-                    console.log(`Exécution de l'action Recharger pour image-viewer ${activeAreaId}`);
                     // Action de rechargement d'image
                     if (store.dispatch) {
                         // Simuler un rechargement en ajoutant un timestamp à l'URL

@@ -41,12 +41,21 @@ function safeCloneLayout(item: AreaLayout | AreaRowLayout): AreaLayout | AreaRow
     // Si c'est une ligne, cloner également ses zones
     if (item.type === "area_row") {
         const rowItem = item as AreaRowLayout;
+        const clonedAreas = rowItem.areas.map(area => {
+            if (!area.id) {
+                console.warn(`Area in row ${rowItem.id} has no ID`);
+            }
+            if (typeof area.size !== 'number' || isNaN(area.size)) {
+                console.warn(`Area ${area.id} in row ${rowItem.id} has invalid size: ${area.size}`);
+            }
+            return { ...area };
+        });
         return {
             ...baseClone,
             type: "area_row",
             id: rowItem.id,
             orientation: rowItem.orientation,
-            areas: rowItem.areas.map(area => ({ ...area }))
+            areas: clonedAreas
         } as AreaRowLayout;
     }
 
@@ -137,8 +146,22 @@ export const computeAreaToViewport = (
 
         // Éviter de recalculer un viewport déjà visité
         if (visitedIds.has(area.id)) {
+            console.debug(`Skipping already visited area ${area.id}`);
             return;
         }
+
+        // Vérifier si la zone a un type valide
+        if (!area.type) {
+            console.warn(`Area ${area.id} has no type, defaulting to 'area'`);
+            area.type = 'area';
+        }
+
+        // Vérifier si la zone a une taille valide
+        if (contentArea.width <= 0 || contentArea.height <= 0) {
+            console.warn(`Area ${area.id} has invalid content area size: ${contentArea.width}x${contentArea.height}`);
+            return;
+        }
+
         visitedIds.add(area.id);
 
         // S'assurer que les dimensions sont valides
@@ -202,6 +225,11 @@ export const computeAreaToViewport = (
 
         // Premier passage : détecter les zones de taille nulle ou invalide
         row.areas.forEach((area, i) => {
+            // Convertir les tailles en pourcentage en tailles normalisées si nécessaire
+            if (area.size > 1) {
+                area.size = area.size / 100;
+            }
+
             if (typeof area.size !== 'number' || isNaN(area.size) || area.size <= 0) {
                 hasInvalidSizes = true;
                 if (area.size === 0) {
@@ -243,13 +271,23 @@ export const computeAreaToViewport = (
             });
         }
 
+        // Vérification finale des tailles
+        const finalTotal = row.areas.reduce((acc, area) => acc + (area.size || 0), 0);
+        if (Math.abs(finalTotal - 1.0) > 0.001) {
+            console.error(`Failed to normalize sizes in row ${row.id}: final total=${finalTotal}`);
+            // En cas d'échec, utiliser une distribution égale
+            const equalSize = 1.0 / row.areas.length;
+            row.areas.forEach(area => {
+                area.size = equalSize;
+            });
+        }
+
         let left = validContentArea.left;
         let top = validContentArea.top;
         let remainingWidth = validContentArea.width;
         let remainingHeight = validContentArea.height;
 
         // Calculer les positions et dimensions exactes pour chaque zone
-        // Éviter l'accumulation d'erreurs d'arrondi en conservant le reste
         for (let i = 0; i < row.areas.length; i++) {
             const area = row.areas[i];
             const layoutItem = mutableLayout[area.id];
@@ -259,27 +297,15 @@ export const computeAreaToViewport = (
                 continue;
             }
 
-            // Garantir des tailles stables pour la dernière zone
+            // Calculer les dimensions en fonction de l'orientation
             let areaWidth, areaHeight;
 
-            // Déterminer les dimensions en fonction de l'orientation et de la position
-            if (i === row.areas.length - 1) {
-                // Pour la dernière zone, utiliser tout l'espace restant pour éviter les erreurs d'arrondi
-                areaWidth = row.orientation === "horizontal" ? remainingWidth : validContentArea.width;
-                areaHeight = row.orientation === "horizontal" ? validContentArea.height : remainingHeight;
+            if (row.orientation === "horizontal") {
+                areaWidth = Math.max(0, Math.floor(area.size * validContentArea.width));
+                areaHeight = validContentArea.height;
             } else {
-                // Pour les autres zones, calculer proportionnellement mais en utilisant des valeurs précises
-                if (row.orientation === "horizontal") {
-                    // Calculer une largeur proportionnelle mais limiter aux 99% pour éviter les erreurs de bord
-                    const rawWidth = area.size * validContentArea.width;
-                    areaWidth = Math.max(10, Math.floor(rawWidth)); // Au moins 10px
-                    areaHeight = validContentArea.height;
-                } else {
-                    // Orientation verticale
-                    areaWidth = validContentArea.width;
-                    const rawHeight = area.size * validContentArea.height;
-                    areaHeight = Math.max(10, Math.floor(rawHeight)); // Au moins 10px
-                }
+                areaWidth = validContentArea.width;
+                areaHeight = Math.max(0, Math.floor(area.size * validContentArea.height));
             }
 
             // S'assurer que nous ne dépassons pas l'espace restant
@@ -289,6 +315,13 @@ export const computeAreaToViewport = (
             // S'assurer que nous avons des dimensions minimales
             areaWidth = Math.max(areaWidth, 10);
             areaHeight = Math.max(areaHeight, 10);
+
+            // Si les dimensions sont invalides, utiliser une taille par défaut
+            if (areaWidth <= 0 || areaHeight <= 0) {
+                console.warn(`Invalid dimensions for area ${area.id}: ${areaWidth}x${areaHeight}, using default size`);
+                areaWidth = Math.max(10, Math.floor(validContentArea.width / row.areas.length));
+                areaHeight = Math.max(10, validContentArea.height);
+            }
 
             const nextArea = {
                 left,

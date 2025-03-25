@@ -27,13 +27,16 @@ export default ({ css, keyframes }: StyleParams) => {
         areaToOpenContainer: css`
 			z-index: ${cssZIndex.area.areaToOpen};
 			transform: scale(0.5);
-			position: absolute;
+			position: fixed;
 			opacity: 0.8;
 			animation: ${areaToOpenContainerAnimation} 0.3s;
 			cursor: grabbing;
+			pointer-events: all;
+			user-select: none;
+			touch-action: none;
 
-			& > * > * {
-				pointer-events: none;
+			& > * {
+				pointer-events: all;
 			}
 		`,
 
@@ -44,6 +47,15 @@ export default ({ css, keyframes }: StyleParams) => {
 			border-radius: 8px;
 			opacity: 1;
 			overflow: hidden;
+			pointer-events: all;
+			cursor: copy;
+			transition: background-color 0.2s ease;
+			user-select: none;
+			touch-action: none;
+
+			&:hover, &.dragover {
+				background: ${hexToRGBAString(cssVariables.primary700, 0.15)};
+			}
 		`,
 
         placement: css`

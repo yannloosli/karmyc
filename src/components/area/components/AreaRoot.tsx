@@ -23,7 +23,7 @@ interface Rect {
 }
 
 const AreaRootComponent: React.FC = () => {
-    const { layout, rootId, joinPreview } = useSelector((state: RootState) => state.area);
+    const { layout, rootId, joinPreview, areaToOpen } = useSelector((state: RootState) => state.area);
     const [viewportMap, setViewportMap] = useState<{ [areaId: string]: Rect }>({});
     const [viewport, setViewport] = useState(getAreaRootViewport());
     const layoutRef = useRef(layout);
@@ -232,7 +232,7 @@ const AreaRootComponent: React.FC = () => {
                     movingInDirection={joinPreview.movingInDirection!}
                 />
             )}
-            <AreaToOpenPreview areaToViewport={viewportMap} />
+            {Object.keys(viewportMap).length > 0 && <AreaToOpenPreview areaToViewport={viewportMap} />}
             <div className={s("cursorCapture", { active: !!joinPreview })} />
         </div>
     );

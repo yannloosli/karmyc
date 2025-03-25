@@ -1,5 +1,5 @@
 import { ComponentType } from "react";
-import { Vec2 } from "../utils/math/vec2";
+import { Point } from "./geometry";
 import { Rect } from "./math";
 
 export interface AreaComponentProps<T = any> {
@@ -16,6 +16,8 @@ export interface Area<T extends string> {
     type: T;
     state: any;
     viewport?: Rect;
+    position?: Point;
+    size?: { width: number; height: number };
 }
 
 export interface AreaLayout {
@@ -34,7 +36,7 @@ export interface AreaRowLayout {
 }
 
 export interface AreaToOpen {
-    position: Vec2;
+    position: Point;
     area: {
         type: string;
         state: any;

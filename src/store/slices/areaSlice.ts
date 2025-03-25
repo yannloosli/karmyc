@@ -1,11 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { AreaTypeValue } from '../../constants';
-import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from '../../types/areaTypes';
+import { Area, AreaLayout, AreaRowLayout } from '../../types/areaTypes';
 import { CardinalDirection } from '../../types/directions';
-import { Rect } from '../../types/geometry';
+import { Point, Rect } from '../../types/geometry';
 import { computeAreaToParentRow } from '../../utils/areaToParentRow';
 import { areaToRow } from '../../utils/areaToRow';
+import { computeAreaToViewport } from '../../utils/areaToViewport';
+import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../../utils/areaUtils';
+import { getAreaRootViewport } from '../../utils/getAreaViewport';
 import { joinAreas as joinAreasUtil } from '../../utils/joinArea';
+import { Vec2 } from '../../utils/math/vec2';
 import { validateArea } from '../../utils/validation';
 
 // Fonction pour trouver tous les IDs connectés au root
@@ -157,7 +161,13 @@ export interface AreaState {
     viewports: {
         [key: string]: Rect;
     };
-    areaToOpen: null | AreaToOpen;
+    areaToOpen: null | {
+        position: Point;
+        area: {
+            type: string;
+            state: any;
+        };
+    };
 }
 
 // Charger et nettoyer l'état initial depuis le localStorage
@@ -169,7 +179,6 @@ export const areaSlice = createSlice({
     initialState,
     reducers: {
         addArea: (state, action: PayloadAction<Area<AreaTypeValue>>) => {
-            console.log("addArea reducer appelé avec:", action.payload);
             const validation = validateArea(action.payload);
             if (!validation.isValid) {
                 state.errors = validation.errors;
@@ -179,8 +188,6 @@ export const areaSlice = createSlice({
 
             // Utiliser l'ID fourni ou générer un nouvel ID
             const areaId = action.payload.id || (++state._id).toString();
-
-            console.log(`Ajout de la zone ${areaId} de type ${action.payload.type}`);
 
             // Ajouter la zone à l'état
             state.areas[areaId] = {
@@ -192,7 +199,6 @@ export const areaSlice = createSlice({
             // Ajouter la zone au layout
             // Si aucun rootId n'existe encore, cette zone devient la root
             if (!state.rootId) {
-                console.log(`Définition de la zone ${areaId} comme root`);
                 state.rootId = areaId;
                 state.layout[areaId] = {
                     type: 'area',
@@ -202,7 +208,6 @@ export const areaSlice = createSlice({
                 // Sinon, si rootId existe mais n'est pas une ligne, le transformer en ligne
                 const rootLayout = state.layout[state.rootId];
                 if (rootLayout && rootLayout.type === 'area') {
-                    console.log(`Transformation de la root ${state.rootId} en ligne`);
                     const rowId = `row-${Date.now()}`;
 
                     // Créer une nouvelle ligne
@@ -227,7 +232,6 @@ export const areaSlice = createSlice({
                 }
                 // Si la root est déjà une ligne, ajouter la zone à cette ligne
                 else if (rootLayout && rootLayout.type === 'area_row') {
-                    console.log(`Ajout de la zone ${areaId} à la ligne root ${state.rootId}`);
 
                     // Ajouter la zone au layout
                     state.layout[areaId] = {
@@ -627,8 +631,6 @@ export const areaSlice = createSlice({
                 return;
             }
 
-            console.log(`Changement de type pour la zone ${areaId} : ${area.type} -> ${type}`);
-
             // Déterminer l'état initial approprié
             // 1. Utiliser l'état initial fourni s'il existe
             // 2. Sinon, utiliser l'état initial par défaut du registre
@@ -638,7 +640,6 @@ export const areaSlice = createSlice({
             if (initState) {
                 // Option 1: État initial fourni
                 newState = initState;
-                console.log(`Utilisation de l'état initial fourni:`, newState);
             } else {
                 // Option 3: État par défaut basé sur le type
                 console.warn(`Aucun état initial trouvé pour le type ${type}, création d'un état par défaut`);
@@ -658,8 +659,6 @@ export const areaSlice = createSlice({
                     newState = {};
                     break;
                 }
-
-                console.log(`État par défaut créé:`, newState);
             }
 
             // Conserver toutes les propriétés existantes sauf 'type' et 'state'
@@ -732,11 +731,192 @@ export const areaSlice = createSlice({
             localStorage.setItem('areaState', JSON.stringify(stateToSave));
             return stateToSave;
         },
+        setAreaToOpen: (state, action: PayloadAction<{
+            position: Point;
+            area: {
+                type: string;
+                state: any;
+            };
+        }>) => {
+            state.areaToOpen = action.payload;
+        },
+        updateAreaToOpenPosition: (state, action: PayloadAction<{ x: number; y: number }>) => {
+            if (!state.areaToOpen) {
+                console.warn('updateAreaToOpenPosition appelé sans areaToOpen actif, initialisation...');
+                state.areaToOpen = {
+                    position: action.payload,
+                    area: {
+                        type: 'image-viewer',
+                        state: {}
+                    }
+                };
+            } else {
+                state.areaToOpen.position = action.payload;
+            }
+        },
+        finalizeAreaPlacement: (state) => {
+            if (!state.areaToOpen) return;
+
+            const { position, area } = state.areaToOpen;
+            const newAreaId = `area-${Date.now()}`;
+
+            // Créer la nouvelle zone
+            const newArea: Area<AreaTypeValue> = {
+                id: newAreaId,
+                type: area.type,
+                state: area.state,
+                position: position,
+                size: { width: 300, height: 200 }
+            };
+
+            // Ajouter la nouvelle zone au state.areas
+            state.areas[newAreaId] = newArea;
+
+            const rootViewport = getAreaRootViewport();
+            const areaToViewport = computeAreaToViewport(
+                state.layout,
+                state.rootId,
+                rootViewport,
+            );
+
+            const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), state, areaToViewport);
+
+            if (!targetAreaId) {
+                // Si la souris n'est pas au-dessus d'une zone, on annule
+                state.areaToOpen = null;
+                delete state.areas[newAreaId]; // Nettoyer si on annule
+                return;
+            }
+
+            const viewport = areaToViewport[targetAreaId];
+            const placement = getAreaToOpenPlacementInViewport(viewport, Vec2.new(position.x, position.y));
+
+            // Nettoyer l'état de drag
+            state.areaToOpen = null;
+
+            if (placement === "replace") {
+                // Remplacer la zone existante
+                state.areas[targetAreaId] = newArea;
+                return;
+            }
+
+            // Déterminer l'orientation et l'index d'insertion
+            let orientation: "horizontal" | "vertical" = "horizontal";
+            let iOff: 0 | 1 = 0;
+
+            switch (placement) {
+            case "top":
+            case "left":
+                iOff = 0;
+                break;
+            case "bottom":
+            case "right":
+                iOff = 1;
+                break;
+            }
+
+            switch (placement) {
+            case "bottom":
+            case "top":
+                orientation = "vertical";
+                break;
+            case "left":
+            case "right":
+                orientation = "horizontal";
+                break;
+            }
+
+            // Vérifier si la zone cible est dans une rangée existante
+            const areaToParentRow = computeAreaToParentRow(state);
+            const parentRow = state.layout[areaToParentRow[targetAreaId]] as AreaRowLayout | undefined;
+
+            if (parentRow && parentRow.orientation === orientation) {
+                // Insérer dans la rangée existante
+                const targetIndex = parentRow.areas.map((x) => x.id).indexOf(targetAreaId);
+                const insertIndex = targetIndex + iOff;
+
+                // Ajouter la zone à la rangée
+                const areas = [...parentRow.areas];
+                areas.splice(insertIndex, 0, { id: newAreaId, size: 0.5 });
+
+                // Mettre à jour les tailles
+                const sizes = areas.map(x => x.size);
+                const size = sizes[targetIndex] / 2;
+                sizes[targetIndex] = size;
+                sizes[insertIndex] = size;
+
+                // Normaliser les tailles
+                const totalSize = sizes.reduce((acc, size) => acc + size, 0);
+                if (Math.abs(totalSize - 1.0) > 0.001) {
+                    const factor = 1.0 / totalSize;
+                    sizes.forEach((_, i) => {
+                        sizes[i] = sizes[i] * factor;
+                    });
+                }
+
+                state.layout[parentRow.id] = { ...parentRow, areas: areas.map((area, i) => ({ ...area, size: sizes[i] })) };
+                state.layout[newAreaId] = { type: "area", id: newAreaId };
+            } else {
+                // Créer une nouvelle rangée
+                const newRowId = (state._id + 1).toString();
+                state._id += 1;
+
+                // Créer la nouvelle rangée
+                const newRow: AreaRowLayout = {
+                    type: "area_row",
+                    id: newRowId,
+                    orientation,
+                    areas: [
+                        { id: iOff === 0 ? newAreaId : targetAreaId, size: 0.5 },
+                        { id: iOff === 0 ? targetAreaId : newAreaId, size: 0.5 }
+                    ]
+                };
+
+                // Mettre à jour le layout
+                state.layout[newRowId] = newRow;
+                state.layout[newAreaId] = { type: "area", id: newAreaId };
+
+                // Mettre à jour le layout parent si nécessaire
+                const parentRowId = areaToParentRow[targetAreaId];
+                if (parentRowId) {
+                    const parentRow = state.layout[parentRowId] as AreaRowLayout;
+                    parentRow.areas = parentRow.areas.map(area =>
+                        area.id === targetAreaId ? { ...area, id: newRowId } : area
+                    );
+                } else {
+                    // Si pas de parent, c'est la nouvelle root
+                    state.rootId = newRowId;
+                }
+            }
+        },
+        clearAreaToOpen: (state) => {
+            state.areaToOpen = null;
+        }
     },
 });
 
 // Actions
-export const { addArea, removeArea, updateArea, setActiveArea, clearErrors, setFields, setJoinAreasPreview, joinAreas, convertAreaToRow, insertAreaIntoRow, setRowSizes, setAreaType, setViewports, cleanupTemporaryStates, resetState } = areaSlice.actions;
+export const {
+    addArea,
+    removeArea,
+    updateArea,
+    setActiveArea,
+    clearErrors,
+    setFields,
+    setJoinAreasPreview,
+    joinAreas,
+    convertAreaToRow,
+    insertAreaIntoRow,
+    setRowSizes,
+    setAreaType,
+    setViewports,
+    cleanupTemporaryStates,
+    resetState,
+    setAreaToOpen,
+    updateAreaToOpenPosition,
+    finalizeAreaPlacement,
+    clearAreaToOpen
+} = areaSlice.actions;
 
 // Sélecteurs
 export const selectAreaState = (state: { area: AreaState }) => state.area;

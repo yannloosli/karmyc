@@ -1,8 +1,6 @@
-import { AREA_PLACEMENT_TRESHOLD } from "~/constants";
 import { AreaReducerState } from "~/types/areaTypes";
-import { Vec2 } from "../../util/math/vec2";
 import { Rect } from "../types/geometry";
-import { isVecInRect } from "./math";
+import { Vec2 } from "../utils/math/vec2";
 
 export type PlaceArea = "top" | "left" | "right" | "bottom" | "replace";
 
@@ -12,54 +10,97 @@ export const getHoveredAreaId = (
     areaToViewport: {
         [areaId: string]: Rect;
     },
+    draggedElementDimensions?: Vec2,
 ): string | undefined => {
+    // Si on a les dimensions de l'élément dragué, on calcule le centre
+    const centerPosition = draggedElementDimensions
+        ? Vec2.new(
+            position.x + draggedElementDimensions.x / 4, // Diviser par 4 car l'élément est à l'échelle 0.5
+            position.y + draggedElementDimensions.y / 4
+        )
+        : position;
+
+    console.debug('getHoveredAreaId - Position:', {
+        original: { x: position.x, y: position.y },
+        center: { x: centerPosition.x, y: centerPosition.y }
+    });
+
     let areaId: string | undefined;
+    let minDistance = Infinity;
 
-    const keys = Object.keys(areaState.areas);
-    for (let i = 0; i < keys.length; i += 1) {
-        if (areaState.layout[keys[i]].type !== "area") {
-            continue;
-        }
+    // Parcourir toutes les zones et trouver la plus proche
+    Object.entries(areaToViewport).forEach(([id, viewport]) => {
+        // Calculer la distance au centre du viewport
+        const centerX = viewport.left + viewport.width / 2;
+        const centerY = viewport.top + viewport.height / 2;
+        const distance = Math.sqrt(
+            Math.pow(centerPosition.x - centerX, 2) +
+            Math.pow(centerPosition.y - centerY, 2)
+        );
 
-        const areaViewport = areaToViewport[keys[i]];
-        if (isVecInRect(position, areaViewport)) {
-            areaId = keys[i];
-            break;
+        // Si cette zone est plus proche que la précédente, la sélectionner
+        if (distance < minDistance) {
+            minDistance = distance;
+            areaId = id;
         }
-    }
+    });
 
     return areaId;
 };
 
-export const getAreaToOpenPlacementInViewport = (rect: Rect, position: Vec2): PlaceArea => {
-    const w = rect.width;
-    const h = rect.height;
+export function getAreaToOpenPlacementInViewport(
+    viewport: { left: number; top: number; width: number; height: number },
+    position: Vec2
+): PlaceArea {
+    console.log('getAreaToOpenPlacementInViewport - Entrée:', {
+        viewport,
+        position: { x: position.x, y: position.y }
+    });
 
-    const x = position.x - rect.left;
-    const y = position.y - rect.top;
+    // Calculer la position relative dans le viewport
+    const relativeX = position.x - viewport.left;
+    const relativeY = position.y - viewport.top;
 
-    let placement: PlaceArea | undefined;
-    let dist = Infinity;
+    // Calculer les distances aux bords
+    const distanceToLeft = relativeX;
+    const distanceToRight = viewport.width - relativeX;
+    const distanceToTop = relativeY;
+    const distanceToBottom = viewport.height - relativeY;
 
-    const treshold = Math.min(w, h) * AREA_PLACEMENT_TRESHOLD;
+    // Calculer la distance au centre
+    const centerX = viewport.width / 2;
+    const centerY = viewport.height / 2;
+    const distanceToCenter = Math.sqrt(
+        Math.pow(relativeX - centerX, 2) +
+        Math.pow(relativeY - centerY, 2)
+    );
 
-    const tests: Array<{ placement: PlaceArea; dist: number }> = [
-        { placement: "left", dist: x },
-        { placement: "top", dist: y },
-        { placement: "right", dist: w - x },
-        { placement: "bottom", dist: h - y },
-    ];
-
-    for (const test of tests) {
-        if (test.dist < treshold && test.dist < dist) {
-            dist = test.dist;
-            placement = test.placement;
-        }
-    }
-
-    if (!placement) {
+    // Si on est proche du centre, on retourne "replace"
+    const centerThreshold = Math.min(viewport.width, viewport.height) * 0.3; // 30% de la taille minimale
+    if (distanceToCenter < centerThreshold) {
         return "replace";
     }
 
+    // Trouver la distance minimale aux bords
+    const minDistance = Math.min(
+        distanceToLeft,
+        distanceToRight,
+        distanceToTop,
+        distanceToBottom
+    );
+
+    // Déterminer le placement en fonction de la distance minimale
+    let placement: PlaceArea;
+    if (minDistance === distanceToLeft) {
+        placement = "left";
+    } else if (minDistance === distanceToRight) {
+        placement = "right";
+    } else if (minDistance === distanceToTop) {
+        placement = "top";
+    } else {
+        placement = "bottom";
+    }
+
+    console.log('getAreaToOpenPlacementInViewport - Placement choisi:', placement);
     return placement;
-};
+}

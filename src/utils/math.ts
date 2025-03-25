@@ -1,6 +1,7 @@
 import { intersectInfiniteLines } from "~/utils/math/intersection/intersectInfiniteLines";
 import { Mat2 } from "~/utils/math/mat";
-import { Point, Rect } from '../types/geometry';
+import type { Point, Rect } from '../types/geometry';
+import { Vec2 } from './math/vec2';
 
 export const interpolate = (a: number, b: number, t: number) => a * (1 - t) + b * t;
 
@@ -12,9 +13,9 @@ export interface Point {
 export function isVecInRect(vec: Point, rect: Rect): boolean {
     return (
         vec.x >= rect.left &&
-        vec.x <= rect.right &&
+        vec.x <= rect.left + rect.width &&
         vec.y >= rect.top &&
-        vec.y <= rect.bottom
+        vec.y <= rect.top + rect.height
     );
 }
 

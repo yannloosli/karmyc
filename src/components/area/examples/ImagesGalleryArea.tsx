@@ -1,23 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useArea } from '~/hooks/useArea';
+import useAreaDragAndDrop from '~/hooks/useAreaDragAndDrop';
+import { RootState } from '~/store';
 import { AreaComponentProps } from '~/types/areaTypes';
+import { ImageData, ImagesGalleryState } from '~/types/image';
+import { Vec2 } from '~/utils/math/vec2';
+import { AreaToOpenPreview } from '../components/AreaToOpenPreview';
 import { useMenuBar } from '../components/MenuBar';
 import { useStatusBar } from '../components/StatusBar';
 import { useToolbar } from '../components/Toolbar';
-
-interface GalleryImage {
-    id: string;
-    url: string;
-    caption?: string;
-}
-
-interface ImagesGalleryState {
-    images: GalleryImage[];
-    selectedImageId: string | null;
-    zoom: number;
-    filter: string;
-    sortBy: string;
-}
 
 export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>> = ({
     id,
@@ -25,15 +17,19 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     viewport
 }) => {
     const { updateAreaState } = useArea();
+    const { handleDragStart, handleDragOver, handleDragEnd, handleDrop } = useAreaDragAndDrop();
     const { registerComponent: registerMenuComponent } = useMenuBar('images-gallery', id);
     const { registerComponent: registerStatusComponent } = useStatusBar('images-gallery', id);
     const {
         registerComponent: registerToolbarComponent,
         registerSlotComponent
     } = useToolbar('images-gallery', id);
+    const areaState = useSelector((state: RootState) => state.area);
 
     // États locaux
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
+    const [isDraggingOver, setIsDraggingOver] = useState(false);
+    const [dragOffset, setDragOffset] = useState<Vec2 | null>(null);
 
     // S'assurer que les propriétés existent
     const images = state?.images || [];
@@ -43,14 +39,16 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     const sortBy = state?.sortBy || 'default';
 
     // Trouver l'image actuellement sélectionnée
-    const selectedImage = images.find((img: GalleryImage) => img.id === selectedImageId) || images[0];
+    const selectedImage = images.find(img => img.id === selectedImageId) || images[0];
 
     // Fonction pour ajouter une nouvelle image
     const addImage = () => {
-        const newImage: GalleryImage = {
+        const newImage: ImageData = {
             id: Date.now().toString(),
             url: `https://picsum.photos/300/400?t=${Date.now()}`,
-            caption: ''
+            caption: '',
+            width: 300,
+            height: 400
         };
 
         updateAreaState(id, {
@@ -117,7 +115,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     };
 
     // Tri des images selon le critère sélectionné
-    const sortedImages = [...images].sort((a: GalleryImage, b: GalleryImage) => {
+    const sortedImages = [...images].sort((a: ImageData, b: ImageData) => {
         if (sortBy === 'title') {
             return (a.caption || '').localeCompare(b.caption || '');
         }
@@ -129,6 +127,75 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         }
         return 0;
     });
+
+    const handleLocalDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        console.log('ImagesGalleryArea - DragStart');
+        const imageId = e.currentTarget.getAttribute('data-source-id');
+        if (!imageId) {
+            console.warn('ImagesGalleryArea - Pas d\'imageId trouvé');
+            return;
+        }
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        setDragOffset(Vec2.new(
+            e.clientX - rect.left,
+            e.clientY - rect.top
+        ));
+
+        // Configurer les données de transfert
+        e.dataTransfer.setData('text/plain', imageId);
+        e.dataTransfer.effectAllowed = 'move';
+
+        setIsDraggingOver(true);
+        handleDragStart(e);
+    }, [handleDragStart]);
+
+    const handleLocalDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(true);
+        handleDragOver(e);
+    }, [handleDragOver]);
+
+    const handleLocalDragEnd = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        console.log('ImagesGalleryArea - DragEnd');
+        if (isDraggingOver) {
+            console.log('ImagesGalleryArea - Drag toujours en cours, ignore DragEnd');
+            return;
+        }
+        setDragOffset(null);
+        setIsDraggingOver(false);
+        handleDragEnd(e);
+    }, [handleDragEnd, isDraggingOver]);
+
+    const handleLocalDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(true);
+        console.log('ImagesGalleryArea - DragEnter');
+    }, []);
+
+    const handleLocalDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Vérifier si on quitte vraiment la zone de drop
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
+            setIsDraggingOver(false);
+            console.log('ImagesGalleryArea - DragLeave (vérifié)');
+        }
+    }, []);
+
+    const handleLocalDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(false);
+        setDragOffset(null);
+        console.log('ImagesGalleryArea - Drop');
+        handleDrop(e);
+    }, [handleDrop]);
 
     useEffect(() => {
         // DEBUG: Log au début du useEffect
@@ -191,7 +258,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         // Nom de l'image (gauche)
         registerStatusComponent(
             () => {
-                const img = images.find((img: GalleryImage) => img.id === selectedImageId);
+                const img = images.find((img: ImageData) => img.id === selectedImageId);
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span role="img" aria-label="image">🖼️</span>
@@ -279,7 +346,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             () => (
                 <button
                     onClick={() => {
-                        const currentIndex = images.findIndex((img: GalleryImage) => img.id === selectedImageId);
+                        const currentIndex = images.findIndex((img: ImageData) => img.id === selectedImageId);
                         const prevIndex = currentIndex > 0 ? currentIndex - 1 : images.length - 1;
                         selectImage(images[prevIndex].id);
                     }}
@@ -304,7 +371,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             () => (
                 <button
                     onClick={() => {
-                        const currentIndex = images.findIndex((img: GalleryImage) => img.id === selectedImageId);
+                        const currentIndex = images.findIndex((img: ImageData) => img.id === selectedImageId);
                         const nextIndex = currentIndex < images.length - 1 ? currentIndex + 1 : 0;
                         selectImage(images[nextIndex].id);
                     }}
@@ -371,15 +438,19 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     ]);
 
     return (
-        <div style={{
-            width: viewport.width,
-            height: viewport.height,
-            padding: '1rem',
-            background: '#fff',
-            display: 'grid',
-            gridTemplateColumns: '200px 1fr',
-            gap: '1rem'
-        }}>
+        <div
+            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
+            style={{
+                width: viewport.width,
+                height: viewport.height,
+                padding: '1rem',
+                background: '#fff',
+                display: 'grid',
+                gridTemplateColumns: '200px 1fr',
+                gap: '1rem',
+                position: 'relative'
+            }}
+        >
             {/* Sidebar avec la liste des images */}
             <div style={{
                 borderRight: '1px solid #d9d9d9',
@@ -397,13 +468,26 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     {sortedImages.map(img => (
                         <div
                             key={img.id}
+                            draggable
+                            data-source-id={img.id}
                             style={{
                                 border: selectedImageId === img.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
                                 borderRadius: '4px',
                                 padding: '0.5rem',
-                                cursor: 'pointer'
+                                cursor: 'move',
+                                backgroundColor: isDraggingOver ? '#f0f0f0' : 'transparent',
+                                userSelect: 'none',
+                                touchAction: 'none',
+                                position: 'relative',
+                                zIndex: isDraggingOver ? 1000 : 1,
+                                transform: isDraggingOver ? 'scale(1.05)' : 'scale(1)',
+                                transition: 'transform 0.2s ease-out',
+                                willChange: 'transform',
+                                pointerEvents: 'auto'
                             }}
                             onClick={() => selectImage(img.id)}
+                            onDragStart={handleLocalDragStart}
+                            onDragEnd={handleLocalDragEnd}
                         >
                             <img
                                 src={img.url}
@@ -412,7 +496,13 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                                     width: '100%',
                                     height: '100px',
                                     objectFit: 'cover',
-                                    borderRadius: '2px'
+                                    borderRadius: '2px',
+                                    pointerEvents: 'auto',
+                                    userSelect: 'none',
+                                    touchAction: 'none',
+                                    transform: isDraggingOver ? 'scale(1.05)' : 'scale(1)',
+                                    transition: 'transform 0.2s ease-out',
+                                    willChange: 'transform'
                                 }}
                             />
                             <div style={{
@@ -448,7 +538,8 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1rem'
+                gap: '1rem',
+                position: 'relative'
             }}>
                 {selectedImageId ? (
                     <>
@@ -495,6 +586,11 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     </div>
                 )}
             </div>
+
+            {/* Prévisualisation de la zone à ouvrir */}
+            {areaState.areaToOpen && (
+                <AreaToOpenPreview areaToViewport={areaState.areaToViewport} />
+            )}
         </div>
     );
 }; 

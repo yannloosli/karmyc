@@ -239,8 +239,7 @@ function checkAndExecuteShortcuts(key: string): void {
     // Récupérer les raccourcis pour ce type de zone
     const shortcuts = keyboardShortcutRegistry.getShortcuts(activeAreaType);
 
-    console.log(`Raccourcis disponibles pour ${activeAreaType}:`,
-        shortcuts ? shortcuts.map(s => `${s.key} (${s.modifierKeys?.join('+') || ''})`) : "Aucun");
+    shortcuts ? shortcuts.map(s => `${s.key} (${s.modifierKeys?.join('+') || ''})`) : "Aucun";
 
     if (!shortcuts || shortcuts.length === 0) {
         return;
@@ -250,7 +249,6 @@ function checkAndExecuteShortcuts(key: string): void {
     const bestShortcut = findBestShortcut(shortcuts, key, activeModifiers);
 
     if (bestShortcut) {
-        console.log(`Exécution du raccourci: ${bestShortcut.name} sur la zone ${activeAreaId}`);
         // Exécuter la fonction du raccourci avec l'ID de la zone active
         try {
             bestShortcut.fn(activeAreaId, {});

@@ -8,6 +8,8 @@
 
 // Types liés aux zones
 export * from './area';
+export * from './areaTypes';
+export * from './image';
 
 // Types liés aux actions
 export * from './actions';

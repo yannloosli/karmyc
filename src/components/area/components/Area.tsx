@@ -67,11 +67,9 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     if (registeredIcon) {
         IconComponent = registeredIcon;
     }
-    console.log(`Utilisation du type personnalisé: ${type}`);
 
     const openSelectArea = (_: React.MouseEvent) => {
         const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
-        console.log("Ouverture du menu contextuel zone à la position:", pos);
 
         requestAction({}, () => {
             dispatch(

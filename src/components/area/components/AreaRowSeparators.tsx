@@ -96,6 +96,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         }
 
         const handleMouseDown = (e: React.MouseEvent) => {
+            e.stopPropagation();
             handleDragAreaResize(e, row, horizontal, i + 1);
         };
 

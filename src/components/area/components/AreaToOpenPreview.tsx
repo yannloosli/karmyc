@@ -1,13 +1,16 @@
-import React, { useEffect, useMemo } from "react";
-import { useSelector } from "react-redux";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { areaRegistry } from "~/area/registry";
 import { Rect } from "~/types/geometry";
 import { AREA_BORDER_WIDTH, AREA_PLACEMENT_TRESHOLD } from "../../../constants";
 import { useVec2TransitionState } from "../../../hooks/useNumberTransitionState";
 import { RootState } from "../../../store";
-import { areaComponentRegistry } from "../../../store/registries/areaRegistry";
+import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from "../../../store/slices/areaSlice";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
 import { AreaToOpen } from "../../../types/areaTypes";
+import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from "../../../utils/areaUtils";
+import { getAreaRootViewport } from "../../../utils/getAreaViewport";
 import { contractRect } from "../../../utils/math";
 import { Vec2 } from "../../../utils/math/vec2";
 import { compileStylesheetLabelled } from "../../../utils/stylesheets";
@@ -17,55 +20,164 @@ interface RenderAreaToOpenProps {
     viewport: Rect;
     areaToOpen: AreaToOpen;
     dimensions: Vec2;
+    areaState: RootState['area'];
+    areaToViewport: { [key: string]: Rect };
 }
 
-const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = (props) => {
-    const { areaToOpen, viewport, dimensions } = props;
+// Fonction de debounce
+const debounce = (func: Function, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => {
+    const { areaToOpen, viewport, dimensions, areaState, areaToViewport } = props;
+    const dispatch = useDispatch();
+    const lastUpdateRef = useRef<number>(0);
+    const UPDATE_INTERVAL = 16; // ~60fps
+
+    // Mémoriser le calcul de areaToViewport
+    const memoizedAreaToViewport = useMemo(() => {
+        return computeAreaToViewport(areaState.layout, areaState.rootId, getAreaRootViewport());
+    }, [areaState.layout, areaState.rootId]);
+
+    // Fonction pour vérifier si une area est une leaf
+    const isAreaLeaf = useCallback((areaId: string): boolean => {
+        // Parcourir le layout pour trouver l'area
+        const layout = areaState.layout[areaId];
+        if (!layout) return false;
+
+        // Si c'est une area (pas un row), c'est une leaf
+        return layout.type === 'area';
+    }, [areaState.layout]);
+
+    // Calculer l'ID de l'area cible
+    const targetId = useMemo(() => {
+        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
+        return getHoveredAreaId(position, areaState, areaToViewport, dimensions);
+    }, [areaToOpen.position, areaState, areaToViewport, dimensions]);
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+
+        const now = performance.now();
+        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+            const position = Vec2.new(e.clientX, e.clientY);
+            console.log('AreaToOpenPreview - handleDragOver:', { position });
+            dispatch(updateAreaToOpenPosition(position));
+            lastUpdateRef.current = now;
+        }
+    }, [dispatch]);
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        console.log('AreaToOpenPreview - handleDrop - Position:', { x: e.clientX, y: e.clientY });
+
+        // Récupérer le sourceId depuis les données de transfert
+        const sourceId = e.dataTransfer.getData('text/plain');
+        if (!sourceId) {
+            console.warn('AreaToOpenPreview - handleDrop - Pas de sourceId trouvé');
+            dispatch(clearAreaToOpen());
+            return;
+        }
+
+        // Mettre à jour l'état de l'area à ouvrir avec le sourceId
+        if (areaToOpen) {
+            const position = Vec2.new(e.clientX, e.clientY);
+            const placement = getAreaToOpenPlacementInViewport(viewport, position);
+
+            console.log('AreaToOpenPreview - handleDrop - Placement:', placement);
+            console.log('AreaToOpenPreview - handleDrop - SourceId:', sourceId);
+
+            // Mettre à jour l'état avec le sourceId et le type correct
+            dispatch(setAreaToOpen({
+                position: { x: e.clientX, y: e.clientY },
+                area: {
+                    type: 'image-viewer',
+                    state: {
+                        imageUrl: sourceId,
+                        caption: ''
+                    }
+                }
+            }));
+
+            // Attendre le prochain tick pour s'assurer que le state est mis à jour
+            Promise.resolve().then(() => {
+                dispatch(finalizeAreaPlacement());
+            });
+        }
+    }, [dispatch, areaToOpen, viewport]);
 
     const placement = useMemo(() => {
-        return getAreaToOpenPlacementInViewport(viewport, areaToOpen.position);
-    }, [viewport, areaToOpen]);
+        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
+        return getAreaToOpenPlacementInViewport(viewport, position);
+    }, [viewport, areaToOpen.position]);
 
-    const treshold = Math.min(viewport.width, viewport.height) * AREA_PLACEMENT_TRESHOLD;
-    const O = Vec2.new(treshold, treshold);
+    // Mémoriser les calculs des lignes de placement
+    const placementLinesMemo = useMemo(() => {
+        const treshold = Math.min(viewport.width, viewport.height) * AREA_PLACEMENT_TRESHOLD;
+        const O = Vec2.new(treshold, treshold);
 
-    const w = viewport.width;
-    const h = viewport.height;
+        const w = viewport.width;
+        const h = viewport.height;
 
-    const nw_0 = Vec2.new(0, 0);
-    const nw_1 = nw_0.add(O);
-    const ne_0 = Vec2.new(w, 0);
-    const ne_1 = ne_0.add(O.scaleX(-1));
-    const sw_0 = Vec2.new(0, h);
-    const sw_1 = sw_0.add(O.scaleY(-1));
-    const se_0 = Vec2.new(w, h);
-    const se_1 = se_0.add(O.scale(-1));
+        const nw_0 = Vec2.new(0, 0);
+        const ne_0 = Vec2.new(w, 0);
+        const se_0 = Vec2.new(w, h);
+        const sw_0 = Vec2.new(0, h);
 
-    const lines = [
-        [nw_0, nw_1],
-        [ne_0, ne_1],
-        [sw_0, sw_1],
-        [se_0, se_1],
-        [nw_1, ne_1],
-        [ne_1, se_1],
-        [se_1, sw_1],
-        [sw_1, nw_1],
-    ];
+        const nw_1 = nw_0.add(O);
+        const ne_1 = ne_0.add(O.scaleX(-1));
+        const se_1 = se_0.add(O.scale(-1));
+        const sw_1 = sw_0.add(O.scaleY(-1));
 
-    const placementLines: Record<PlaceArea, Vec2[]> = {
-        left: [nw_0, nw_1, sw_1, sw_0],
-        top: [nw_0, ne_0, ne_1, nw_1],
-        right: [ne_1, ne_0, se_0, se_1],
-        bottom: [sw_0, sw_1, se_1, se_0],
-        replace: [nw_1, ne_1, se_1, sw_1],
-    };
+        const lines = [
+            [nw_0, nw_1],
+            [ne_0, ne_1],
+            [sw_0, sw_1],
+            [se_0, se_1],
+            [nw_1, ne_1],
+            [ne_1, se_1],
+            [se_1, sw_1],
+            [sw_1, nw_1],
+        ];
 
-    const hlines = placementLines[placement];
-    const hd =
-        hlines
-            .map((p) => [p.x, p.y].join(","))
-            .map((str, i) => [i === 0 ? "M" : "L", str].join(" "))
+        const placementLines: Record<PlaceArea, Vec2[]> = {
+            left: [nw_0, nw_1, sw_1, sw_0],
+            top: [nw_0, ne_0, ne_1, nw_1],
+            right: [ne_1, ne_0, se_0, se_1],
+            bottom: [sw_0, sw_1, se_1, se_0],
+            replace: [nw_1, ne_1, se_1, sw_1],
+        };
+
+        return { lines, placementLines };
+    }, [viewport.width, viewport.height]);
+
+    // Mémoriser le calcul du path SVG
+    const pathData = useMemo(() => {
+        const hlines = placementLinesMemo.placementLines[placement];
+        return hlines
+            .map((p: Vec2) => [p.x, p.y].join(","))
+            .map((str: string, i: number) => [i === 0 ? "M" : "L", str].join(" "))
             .join(" ") + " Z";
+    }, [placementLinesMemo.placementLines, placement]);
+
+    // Récupérer le composant depuis le registre
+    const Component = areaRegistry.getComponent(areaToOpen.area.type);
+    if (!Component) {
+        return null;
+    }
 
     return (
         <>
@@ -74,11 +186,21 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = (props) => {
                 style={{
                     left: areaToOpen.position.x,
                     top: areaToOpen.position.y,
+                    transition: 'all 0.1s ease-out',
+                    position: 'fixed',
+                    zIndex: 1001,
+                    cursor: 'move',
+                    pointerEvents: 'auto',
+                    userSelect: 'none',
+                    touchAction: 'none',
+                    willChange: 'transform'
                 }}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
             >
                 <AreaComponent
                     id="-1"
-                    Component={areaComponentRegistry[areaToOpen.area.type]}
+                    Component={Component}
                     raised
                     state={areaToOpen.area.state}
                     type={areaToOpen.area.type}
@@ -90,20 +212,49 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = (props) => {
                     }}
                 />
             </div>
-            <div
-                className={s("areaToOpenTargetOverlay")}
-                style={contractRect(viewport, AREA_BORDER_WIDTH)}
-            >
-                <svg width={w} height={h} className={s("placement")}>
-                    {lines.map(([p0, p1], i) => (
-                        <line key={i} x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} />
-                    ))}
-                    <path d={hd} />
-                </svg>
-            </div>
+            {targetId && isAreaLeaf(targetId) && (
+                <div
+                    className={s("areaToOpenTargetOverlay")}
+                    style={{
+                        ...contractRect(viewport, AREA_BORDER_WIDTH),
+                        transition: 'opacity 0.1s ease-out',
+                        position: 'absolute',
+                        zIndex: 1000,
+                        pointerEvents: 'auto',
+                        userSelect: 'none',
+                        touchAction: 'none',
+                        willChange: 'transform'
+                    }}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                    onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('AreaToOpenPreview - DragEnter sur overlay');
+                    }}
+                    onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('AreaToOpenPreview - DragLeave sur overlay');
+                    }}
+                >
+                    <svg width={viewport.width} height={viewport.height} className={s("placement")}>
+                        {placementLinesMemo.lines.map(([p0, p1], i) => (
+                            <line
+                                key={i}
+                                x1={p0.x}
+                                y1={p0.y}
+                                x2={p1.x}
+                                y2={p1.y}
+                            />
+                        ))}
+                        <path d={pathData} />
+                    </svg>
+                </div>
+            )}
         </>
     );
-};
+});
 
 const s = compileStylesheetLabelled(AreaRootStyles);
 
@@ -111,27 +262,30 @@ interface OwnProps {
     areaToViewport: { [key: string]: Rect };
 }
 
-export const AreaToOpenPreview: React.FC<OwnProps> = (props) => {
+export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
     const areaState = useSelector((state: RootState) => state.area);
     const { areaToOpen } = areaState;
-
-    const areaToOpenTargetId =
-        areaToOpen && getHoveredAreaId(areaToOpen.position, areaState, props.areaToViewport);
-
-    const areaToOpenTargetViewport = areaToOpenTargetId && props.areaToViewport[areaToOpenTargetId];
 
     const [areaToOpenDimensions, setAreaToOpenDimensions] = useVec2TransitionState(
         Vec2.new(100, 100),
         { duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] },
     );
 
+    const areaToOpenTargetId = useMemo(() => {
+        if (!areaToOpen || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
+        return getHoveredAreaId(areaToOpen.position, areaState, props.areaToViewport, areaToOpenDimensions);
+    }, [areaToOpen, areaState, props.areaToViewport, areaToOpenDimensions]);
+
+    const areaToOpenTargetViewport = areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
+
     useEffect(() => {
-        if (!areaToOpenTargetId) {
-            return;
-        }
+        if (!areaToOpenTargetId) return;
 
         const viewport = props.areaToViewport[areaToOpenTargetId];
-        setAreaToOpenDimensions(Vec2.new(viewport.width, viewport.height));
+        if (!viewport) return;
+
+        const dimensions = Vec2.new(viewport.width, viewport.height);
+        setAreaToOpenDimensions(dimensions);
     }, [areaToOpenTargetId, props.areaToViewport]);
 
     if (!areaToOpen || !areaToOpenTargetViewport) {
@@ -141,8 +295,10 @@ export const AreaToOpenPreview: React.FC<OwnProps> = (props) => {
     return (
         <RenderAreaToOpen
             areaToOpen={areaToOpen}
-            dimensions={areaToOpenDimensions}
             viewport={areaToOpenTargetViewport}
+            dimensions={areaToOpenDimensions}
+            areaState={areaState}
+            areaToViewport={props.areaToViewport}
         />
     );
-};
+});

@@ -113,7 +113,6 @@ export const store = configureStore({
 // Rendre le store accessible globalement pour les raccourcis clavier
 if (typeof window !== 'undefined') {
     (window as any).store = store;
-    console.log('Store exposé globalement pour les raccourcis clavier');
 }
 
 // Enregistrer les plugins par défaut
