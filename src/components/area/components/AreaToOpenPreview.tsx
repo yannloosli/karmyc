@@ -92,13 +92,15 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
 
         // Mettre à jour l'état avec le sourceId et le type correct
         const sourceData = JSON.parse(sourceId);
-        if (sourceData.type !== 'menubar') {
-            console.warn('AreaToOpenPreview - handleDrop - Type de source invalide:', sourceData.type);
-            dispatch(clearAreaToOpen());
+        console.log('AreaToOpenPreview - handleDrop - Source data:', sourceData);
+
+        // Si c'est une création de nouvelle zone, on garde l'areaToOpen actuel
+        if (sourceData.type === 'create-new') {
+            dispatch(finalizeAreaPlacement());
             return;
         }
 
-        // Récupérer l'area source depuis le store
+        // Pour les autres types (comme menubar), on garde le comportement existant
         const sourceArea = areaState.areas[sourceData.areaId];
         if (!sourceArea) {
             console.warn('AreaToOpenPreview - handleDrop - Area source non trouvée:', sourceData.areaId);

@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useArea } from '~/hooks/useArea';
-import useAreaDragAndDrop from '~/hooks/useAreaDragAndDrop';
 import { RootState } from '~/store';
-import { areaSlice, finalizeAreaPlacement, setAreaToOpen } from '~/store/slices/areaSlice';
+import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen } from '~/store/slices/areaSlice';
 import { AreaComponentProps } from '~/types/areaTypes';
 import { ImageData, ImagesGalleryState } from '~/types/image';
 import { computeAreaToViewport } from '~/utils/areaToViewport';
@@ -130,15 +129,13 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     viewport
 }) => {
     const { updateAreaState } = useArea();
-    const { handleDragStart, handleDragOver, handleDrop } = useAreaDragAndDrop();
     const { registerMenuComponent, registerStatusComponent, registerToolbarComponent, registerSlotComponent } = useGalleryComponents('images-gallery', id);
     const areaState = useSelector((state: RootState) => state.area);
     const dispatch = useDispatch();
 
     // États locaux
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
-    const [isDraggingOver, setIsDraggingOver] = useState(false);
-    const dragRef = useRef<{ startX: number; startY: number } | null>(null);
+    const dragRef = useRef<{ startX: number; startY: number; image: ImageData | null } | null>(null);
     const lastUpdateRef = useRef<number>(0);
     const UPDATE_INTERVAL = 16; // ~60fps
 
@@ -469,14 +466,26 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         changeFilter
     ]);
 
-    const handleLocalDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    const handleStart = useCallback((e: React.DragEvent) => {
+        console.log('🔄 DRAG START');
         const imageId = e.currentTarget.getAttribute('data-source-id');
         if (!imageId) {
             console.warn('ImagesGalleryArea - Pas d\'imageId trouvé');
             return;
         }
 
+        const image = images.find(img => img.id === imageId);
+        if (!image) return;
+
+        console.log('📦 Image trouvée:', imageId);
+
         const rect = e.currentTarget.getBoundingClientRect();
+        dragRef.current = {
+            startX: e.clientX - rect.left,
+            startY: e.clientY - rect.top,
+            image
+        };
+        console.log('📍 Position initiale:', dragRef.current);
 
         // Créer une image de drag invisible
         const dragImage = document.createElement('div');
@@ -488,79 +497,72 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         dragImage.style.opacity = '0.01';
         document.body.appendChild(dragImage);
 
-        // Configurer les données de transfert
-        const dragData = {
-            type: 'image',
-            areaType: 'images-gallery',
-            areaId: id,
-            imageId,
-            image: images.find(img => img.id === imageId)
-        };
-        e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+        // Configurer l'effet de drag
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            type: 'create-new',
+            areaType: 'image-viewer',
+            imageId,
+            areaId: id
+        }));
         e.dataTransfer.setDragImage(dragImage, 0, 0);
+        console.log('🎯 Drag configuré avec dataTransfer');
 
         // Nettoyer l'image de drag après un court délai
         setTimeout(() => {
             document.body.removeChild(dragImage);
         }, 0);
+    }, [images, id]);
 
-        // Initialiser areaToOpen avec la position exacte
-        dispatch(setAreaToOpen({
-            position: { x: e.clientX, y: e.clientY },
-            area: {
-                type: 'image-viewer',
-                state: { image: dragData.image }
-            }
-        }));
+    const handleMove = useCallback((e: React.DragEvent) => {
+        console.log('🔄 DRAG MOVE', {
+            clientX: e.clientX,
+            clientY: e.clientY,
+            dragRef: dragRef.current
+        });
 
-        // Utiliser le hook global avec l'imageId comme sourceId
-        const event = {
-            ...e,
-            currentTarget: {
-                ...e.currentTarget,
-                getAttribute: () => imageId,
-                getBoundingClientRect: () => rect
-            }
-        } as React.DragEvent<HTMLDivElement>;
-        handleDragStart(event);
-    }, [id, images, dispatch, handleDragStart]);
-
-    const handleLocalDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
 
-        // Utiliser le hook global
-        handleDragOver(e);
-    }, [handleDragOver]);
-
-    const handleLocalDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDraggingOver(true);
-        console.log('ImagesGalleryArea - DragEnter');
-    }, []);
-
-    const handleLocalDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Vérifier si on quitte vraiment la zone de drop
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX;
-        const y = e.clientY;
-        if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-            setIsDraggingOver(false);
-            console.log('ImagesGalleryArea - DragLeave (vérifié)');
+        if (!dragRef.current || !dragRef.current.image) {
+            console.warn('❌ Pas de dragRef ou d\'image trouvé');
+            return;
         }
-    }, []);
 
-    const handleLocalDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        const now = performance.now();
+        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+            console.log('🎯 Mise à jour de la preview');
+            dispatch(setAreaToOpen({
+                position: {
+                    x: e.clientX - dragRef.current.startX,
+                    y: e.clientY - dragRef.current.startY
+                },
+                area: {
+                    type: 'image-viewer',
+                    state: { image: dragRef.current.image }
+                }
+            }));
+            lastUpdateRef.current = now;
+        }
+    }, [dispatch]);
+
+    const handleRelease = useCallback((e: React.DragEvent) => {
+        console.log('🔄 DRAG RELEASE');
         e.preventDefault();
         e.stopPropagation();
+
+        if (!dragRef.current || !dragRef.current.image) return;
 
         const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-        if (data.type !== 'image') return;
+        console.log('🔄 DRAG RELEASE - DATA:', data);
+        if (data.type !== 'create-new') return;
+
+        // Calculer la position finale
+        const position = {
+            x: e.clientX - dragRef.current.startX,
+            y: e.clientY - dragRef.current.startY
+        };
 
         // Récupérer l'ID de la zone cible
         const areaToViewport = computeAreaToViewport(
@@ -568,41 +570,22 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             areaState.rootId || '',
             getAreaRootViewport()
         );
-        const targetAreaId = getHoveredAreaId(Vec2.new(e.clientX, e.clientY), areaState, areaToViewport);
+        const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), areaState, areaToViewport);
 
-        if (targetAreaId && targetAreaId !== id) {
-            // Si on a une zone cible différente, on déplace l'image
-            const targetViewport = areaToViewport[targetAreaId];
-            if (targetViewport) {
-                // Calculer les nouvelles tailles pour les zones siblings
-                const parentRow = areaState.layout[targetAreaId];
-                if (parentRow && parentRow.type === 'area_row') {
-                    const totalSize = parentRow.areas.reduce((acc: number, area: any) => acc + area.size, 0);
-                    const newSize = totalSize / (parentRow.areas.length + 1);
-
-                    // Mettre à jour les tailles des zones existantes
-                    const newSizes = parentRow.areas.map((area: any) => area.size * (1 - newSize / totalSize));
-                    newSizes.push(newSize);
-
-                    // Mettre à jour le layout
-                    dispatch(areaSlice.actions.setRowSizes({
-                        rowId: parentRow.id,
-                        sizes: newSizes
-                    }));
-                }
-            }
+        if (targetAreaId) {
+            // Si on a une zone cible, on finalise le placement avec l'image
+            dispatch(finalizeAreaPlacement());
+        } else {
+            // Sinon on annule
+            dispatch(clearAreaToOpen());
         }
 
-        // Finaliser le placement
-        dispatch(finalizeAreaPlacement());
-
-        // Utiliser le hook global
-        handleDrop(e);
-    }, [dispatch, id, areaState, handleDrop]);
+        dragRef.current = null;
+    }, [dispatch, areaState]);
 
     return (
         <div
-            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'} ${isDraggingOver ? 'dragging' : ''}`}
+            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
             style={{
                 width: viewport.width,
                 height: viewport.height,
@@ -631,8 +614,11 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     {sortedImages.map(img => (
                         <div
                             key={img.id}
-                            draggable
                             data-source-id={img.id}
+                            draggable
+                            onDragStart={handleStart}
+                            onDragOver={handleMove}
+                            onDragEnd={handleRelease}
                             style={{
                                 border: selectedImageId === img.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
                                 borderRadius: '4px',
@@ -649,7 +635,6 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                                 pointerEvents: 'auto'
                             }}
                             onClick={() => selectImage(img.id)}
-                            onDragStart={handleLocalDragStart}
                         >
                             <img
                                 src={img.url}
