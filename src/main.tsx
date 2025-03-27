@@ -1,6 +1,6 @@
 import { debounce } from 'lodash';
 import React from "react";
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { KarmycProvider } from "~/providers/KarmycProvider";
 import { sendDiffsToSubscribers } from "~/store/diffSubscription";
 import { App } from "./App";
@@ -146,8 +146,8 @@ const Root = () => (
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
-    // @ts-expect-error TO CHECK WHEN UPGRADING REACT
-    ReactDOM.render(<Root />, rootElement);
+    const root = createRoot(rootElement);
+    root.render(<Root />);
 }
 
 // Disable right click context menu

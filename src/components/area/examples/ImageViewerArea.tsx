@@ -274,7 +274,6 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
         }}>
             {/* Zone d'affichage de l'image */}
             <div style={{
-                flex: 1,
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -288,7 +287,8 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
                         maxHeight: '100%',
                         transform: `scale(${zoom})`,
                         filter: filter,
-                        transition: 'transform 0.3s, filter 0.3s'
+                        pointerEvents: 'none',
+                        transition: 'filter 0.3s'
                     }}
                 />
             </div>
@@ -298,11 +298,13 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
                 type="text"
                 value={image.caption || ''}
                 onChange={handleCaptionChange}
-                placeholder="Ajouter une légende..."
+                placeholder="Légende de l'image"
                 style={{
-                    padding: '0.5rem',
                     border: '1px solid #d9d9d9',
-                    borderRadius: '4px'
+                    borderRadius: '2px',
+                    padding: '4px',
+                    margin: '0 8px 8px 8px',
+                    fontFamily: 'inherit'
                 }}
             />
         </div>

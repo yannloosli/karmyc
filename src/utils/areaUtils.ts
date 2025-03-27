@@ -15,8 +15,8 @@ export const getHoveredAreaId = (
     // Si on a les dimensions de l'élément dragué, on calcule le centre
     const centerPosition = draggedElementDimensions
         ? Vec2.new(
-            position.x + draggedElementDimensions.x / 4, // Diviser par 4 car l'élément est à l'échelle 0.5
-            position.y + draggedElementDimensions.y / 4
+            position.x + draggedElementDimensions.x / 15,
+            position.y + draggedElementDimensions.y / 15
         )
         : position;
 
@@ -30,13 +30,30 @@ export const getHoveredAreaId = (
 
     // Parcourir toutes les zones et trouver la plus proche
     Object.entries(areaToViewport).forEach(([id, viewport]) => {
-        // Calculer la distance au centre du viewport
-        const centerX = viewport.left + viewport.width / 2;
-        const centerY = viewport.top + viewport.height / 2;
-        const distance = Math.sqrt(
-            Math.pow(centerPosition.x - centerX, 2) +
-            Math.pow(centerPosition.y - centerY, 2)
-        );
+        // Ne considérer que les leafs (type === 'area')
+        const layout = areaState.layout[id];
+        if (!layout || layout.type !== 'area') return;
+
+        // Calculer la distance au bord le plus proche
+        const distanceToLeft = Math.abs(centerPosition.x - viewport.left);
+        const distanceToRight = Math.abs(centerPosition.x - (viewport.left + viewport.width));
+        const distanceToTop = Math.abs(centerPosition.y - viewport.top);
+        const distanceToBottom = Math.abs(centerPosition.y - (viewport.top + viewport.height));
+
+        // Si le point est à l'intérieur de la zone, la distance est 0
+        const isInside = centerPosition.x >= viewport.left &&
+            centerPosition.x <= viewport.left + viewport.width &&
+            centerPosition.y >= viewport.top &&
+            centerPosition.y <= viewport.top + viewport.height;
+
+        if (isInside) {
+            areaId = id;
+            minDistance = 0;
+            return;
+        }
+
+        // Sinon, calculer la distance minimale aux bords
+        const distance = Math.min(distanceToLeft, distanceToRight, distanceToTop, distanceToBottom);
 
         // Si cette zone est plus proche que la précédente, la sélectionner
         if (distance < minDistance) {
@@ -52,10 +69,6 @@ export function getAreaToOpenPlacementInViewport(
     viewport: { left: number; top: number; width: number; height: number },
     position: Vec2
 ): PlaceArea {
-    console.log('getAreaToOpenPlacementInViewport - Entrée:', {
-        viewport,
-        position: { x: position.x, y: position.y }
-    });
 
     // Calculer la position relative dans le viewport
     const relativeX = position.x - viewport.left;

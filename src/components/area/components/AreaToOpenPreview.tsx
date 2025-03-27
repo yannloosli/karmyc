@@ -5,7 +5,7 @@ import { Rect } from "~/types/geometry";
 import { AREA_BORDER_WIDTH, AREA_PLACEMENT_TRESHOLD } from "../../../constants";
 import { useVec2TransitionState } from "../../../hooks/useNumberTransitionState";
 import { RootState } from "../../../store";
-import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from "../../../store/slices/areaSlice";
+import { areaSlice, clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from "../../../store/slices/areaSlice";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
 import { AreaToOpen } from "../../../types/areaTypes";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
@@ -82,8 +82,6 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('AreaToOpenPreview - handleDrop - Position:', { x: e.clientX, y: e.clientY });
-
         // Récupérer le sourceId depuis les données de transfert
         const sourceId = e.dataTransfer.getData('text/plain');
         if (!sourceId) {
@@ -92,32 +90,43 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
             return;
         }
 
-        // Mettre à jour l'état de l'area à ouvrir avec le sourceId
-        if (areaToOpen) {
-            const position = Vec2.new(e.clientX, e.clientY);
-            const placement = getAreaToOpenPlacementInViewport(viewport, position);
-
-            console.log('AreaToOpenPreview - handleDrop - Placement:', placement);
-            console.log('AreaToOpenPreview - handleDrop - SourceId:', sourceId);
-
-            // Mettre à jour l'état avec le sourceId et le type correct
-            dispatch(setAreaToOpen({
-                position: { x: e.clientX, y: e.clientY },
-                area: {
-                    type: 'image-viewer',
-                    state: {
-                        imageUrl: sourceId,
-                        caption: ''
-                    }
-                }
-            }));
-
-            // Attendre le prochain tick pour s'assurer que le state est mis à jour
-            Promise.resolve().then(() => {
-                dispatch(finalizeAreaPlacement());
-            });
+        // Mettre à jour l'état avec le sourceId et le type correct
+        const sourceData = JSON.parse(sourceId);
+        if (sourceData.type !== 'menubar') {
+            console.warn('AreaToOpenPreview - handleDrop - Type de source invalide:', sourceData.type);
+            dispatch(clearAreaToOpen());
+            return;
         }
-    }, [dispatch, areaToOpen, viewport]);
+
+        // Récupérer l'area source depuis le store
+        const sourceArea = areaState.areas[sourceData.areaId];
+        if (!sourceArea) {
+            console.warn('AreaToOpenPreview - handleDrop - Area source non trouvée:', sourceData.areaId);
+            dispatch(clearAreaToOpen());
+            return;
+        }
+
+        // Sauvegarder les informations de l'area source avant de la supprimer
+        const sourceAreaInfo = {
+            type: sourceArea.type,
+            state: sourceArea.state
+        };
+
+        // Mettre à jour l'areaToOpen avec le type et le state corrects AVANT de supprimer l'area source
+        dispatch(setAreaToOpen({
+            position: { x: e.clientX, y: e.clientY },
+            area: sourceAreaInfo
+        }));
+
+        // Supprimer l'area source
+        dispatch(areaSlice.actions.removeArea(sourceData.areaId));
+
+        // Nettoyer l'état des zones déconnectées
+        dispatch(areaSlice.actions.cleanState());
+
+        // Finaliser le placement
+        dispatch(finalizeAreaPlacement());
+    }, [dispatch, areaState.areas]);
 
     const placement = useMemo(() => {
         const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
@@ -186,9 +195,8 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                 style={{
                     left: areaToOpen.position.x,
                     top: areaToOpen.position.y,
-                    transition: 'all 0.1s ease-out',
                     position: 'fixed',
-                    zIndex: 1001,
+                    zIndex: 10001,
                     cursor: 'move',
                     pointerEvents: 'auto',
                     userSelect: 'none',
@@ -219,7 +227,7 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                         ...contractRect(viewport, AREA_BORDER_WIDTH),
                         transition: 'opacity 0.1s ease-out',
                         position: 'absolute',
-                        zIndex: 1000,
+                        zIndex: 10000,
                         pointerEvents: 'auto',
                         userSelect: 'none',
                         touchAction: 'none',
@@ -266,15 +274,19 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
     const areaState = useSelector((state: RootState) => state.area);
     const { areaToOpen } = areaState;
 
+    // Dimensions visuelles de la preview (avec animation)
     const [areaToOpenDimensions, setAreaToOpenDimensions] = useVec2TransitionState(
         Vec2.new(100, 100),
         { duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] },
     );
 
+    // Dimensions fixes pour la détection de la zone cible
+    const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
+
     const areaToOpenTargetId = useMemo(() => {
         if (!areaToOpen || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
-        return getHoveredAreaId(areaToOpen.position, areaState, props.areaToViewport, areaToOpenDimensions);
-    }, [areaToOpen, areaState, props.areaToViewport, areaToOpenDimensions]);
+        return getHoveredAreaId(areaToOpen.position, areaState, props.areaToViewport, detectionDimensions);
+    }, [areaToOpen, areaState, props.areaToViewport, detectionDimensions]);
 
     const areaToOpenTargetViewport = areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
 

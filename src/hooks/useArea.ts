@@ -26,16 +26,11 @@ export function useArea() {
 
     // Actions
     const createArea = useCallback((areaType: string, initialState?: any, position?: { x: number, y: number }) => {
-        console.log(`Création d'une zone de type ${areaType}`, { initialState, position });
-
         // Utiliser l'état initial par défaut si non fourni
         const state = initialState || areaRegistry.getInitialState(areaType);
 
         // Utiliser la taille par défaut du type de zone
         const defaultSize = areaRegistry.getDefaultSize(areaType) || { width: 300, height: 200 };
-
-        console.log(`Taille par défaut pour ${areaType}:`, defaultSize);
-        console.log(`État initial pour ${areaType}:`, state);
 
         // Générer un id unique pour la zone
         const id = `area-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -47,8 +42,6 @@ export function useArea() {
             position: position || { x: 0, y: 0 },
             size: defaultSize
         };
-
-        console.log(`Envoi de l'action addArea avec la zone:`, area);
 
         // @ts-ignore - Ignorer les erreurs de typage pour le moment
         dispatch(addArea(area));

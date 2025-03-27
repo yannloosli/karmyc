@@ -72,9 +72,16 @@ let lastValidViewportSize = { width: 0, height: 0 };
 
 export const computeAreaToViewport = (
     layout: { [key: string]: AreaLayout | AreaRowLayout },
-    rootId: string,
+    rootId: string | null,
     viewport: { left: number; top: number; width: number; height: number }
 ) => {
+    // Si rootId est null, retourner un objet vide
+    if (!rootId) {
+        return {};
+    }
+
+    const result: { [key: string]: { left: number; top: number; width: number; height: number } } = {};
+
     // Créer une copie modifiable du layout pour ne pas modifier l'original
     const mutableLayout: { [key: string]: AreaLayout | AreaRowLayout } = {};
 

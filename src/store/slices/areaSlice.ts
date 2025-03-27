@@ -13,8 +13,13 @@ import { Vec2 } from '../../utils/math/vec2';
 import { validateArea } from '../../utils/validation';
 
 // Fonction pour trouver tous les IDs connectés au root
-function findConnectedIds(layout: Record<string, AreaLayout | AreaRowLayout>, rootId: string): Set<string> {
+function findConnectedIds(layout: Record<string, AreaLayout | AreaRowLayout>, rootId: string | null): Set<string> {
     const connectedIds = new Set<string>();
+
+    // Si rootId est null, retourner un Set vide
+    if (!rootId) {
+        return connectedIds;
+    }
 
     // Fonction récursive pour parcourir la structure à partir du root
     function traverse(id: string) {
@@ -51,16 +56,11 @@ function validateLoadedState(state: Partial<AreaState>): AreaState {
         _id: 0,
         errors: [],
         activeAreaId: null,
-        layout: {
-            "0": {
-                type: "area",
-                id: "0",
-            },
-        },
+        layout: {},
         areas: {},
         viewports: {},
         joinPreview: null,
-        rootId: "0",
+        rootId: null,
         areaToOpen: null,
     };
 
@@ -144,7 +144,7 @@ function validateLoadedState(state: Partial<AreaState>): AreaState {
 
 export interface AreaState {
     _id: number;
-    rootId: string;
+    rootId: string | null;
     errors: string[];
     activeAreaId: string | null;
     joinPreview: null | {
@@ -172,7 +172,10 @@ export interface AreaState {
 
 // Charger et nettoyer l'état initial depuis le localStorage
 const savedState = localStorage.getItem('areaState');
+console.log('Chargement initial - État sauvegardé:', savedState ? JSON.parse(savedState) : null);
+
 const initialState: AreaState = savedState ? validateLoadedState(JSON.parse(savedState)) : validateLoadedState({});
+console.log('Chargement initial - État validé:', initialState);
 
 export const areaSlice = createSlice({
     name: 'area',
@@ -278,6 +281,44 @@ export const areaSlice = createSlice({
         },
         removeArea: (state, action: PayloadAction<string>) => {
             const areaId = action.payload;
+
+            // Trouver la rangée parente de la zone à supprimer
+            const areaToParentRow = computeAreaToParentRow(state);
+            const parentRowId = areaToParentRow[areaId];
+
+            if (parentRowId) {
+                const parentRow = state.layout[parentRowId] as AreaRowLayout;
+                if (parentRow && parentRow.areas) {
+                    // Trouver l'index de la zone à supprimer
+                    const targetIndex = parentRow.areas.findIndex(a => a.id === areaId);
+                    if (targetIndex !== -1) {
+                        // Supprimer la zone de la rangée
+                        parentRow.areas.splice(targetIndex, 1);
+
+                        // Ne redimensionner que si c'est une feuille (pas une rangée)
+                        if (state.layout[areaId]?.type === "area") {
+                            // Trouver les zones siblings (même rangée, même orientation)
+                            const siblings = parentRow.areas.filter(a =>
+                                state.layout[a.id]?.type === "area"
+                            );
+
+                            if (siblings.length > 0) {
+                                // Calculer la taille totale des siblings
+                                const totalSize = siblings.reduce((acc, a) => acc + (a.size || 0), 0);
+                                if (totalSize > 0) {
+                                    const factor = 1.0 / totalSize;
+                                    // Redimensionner uniquement les siblings
+                                    siblings.forEach(area => {
+                                        area.size = (area.size || 0) * factor;
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Supprimer la zone
             delete state.areas[areaId];
             if (state.activeAreaId === areaId) {
                 state.activeAreaId = null;
@@ -757,25 +798,35 @@ export const areaSlice = createSlice({
         finalizeAreaPlacement: (state) => {
             if (!state.areaToOpen) return;
 
+            console.log('finalizeAreaPlacement - Début:', {
+                state,
+                areaToOpen: state.areaToOpen
+            });
+
             const { position, area } = state.areaToOpen;
-            const newAreaId = `area-${Date.now()}`;
+            const sourceAreaId = area.state?.sourceId;
+            const newAreaId = sourceAreaId || `area-${Date.now()}`;
 
-            // Créer la nouvelle zone
-            const newArea: Area<AreaTypeValue> = {
-                id: newAreaId,
-                type: area.type,
-                state: area.state,
-                position: position,
-                size: { width: 300, height: 200 }
-            };
-
-            // Ajouter la nouvelle zone au state.areas
-            state.areas[newAreaId] = newArea;
+            // Si c'est un déplacement, on garde l'area source
+            let newArea: Area<AreaTypeValue>;
+            if (sourceAreaId && state.areas[sourceAreaId]) {
+                newArea = state.areas[sourceAreaId];
+            } else {
+                // Sinon on crée une nouvelle area
+                newArea = {
+                    id: newAreaId,
+                    type: area.type,
+                    state: area.state,
+                    position: position,
+                    size: { width: 300, height: 200 }
+                };
+                state.areas[newAreaId] = newArea;
+            }
 
             const rootViewport = getAreaRootViewport();
             const areaToViewport = computeAreaToViewport(
                 state.layout,
-                state.rootId,
+                state.rootId || '',
                 rootViewport,
             );
 
@@ -784,7 +835,9 @@ export const areaSlice = createSlice({
             if (!targetAreaId) {
                 // Si la souris n'est pas au-dessus d'une zone, on annule
                 state.areaToOpen = null;
-                delete state.areas[newAreaId]; // Nettoyer si on annule
+                if (!sourceAreaId) {
+                    delete state.areas[newAreaId];
+                }
                 return;
             }
 
@@ -794,105 +847,193 @@ export const areaSlice = createSlice({
             // Nettoyer l'état de drag
             state.areaToOpen = null;
 
-            if (placement === "replace") {
-                // Remplacer la zone existante
-                state.areas[targetAreaId] = newArea;
-                return;
+            // Si c'est un déplacement, on retire d'abord l'élément de sa position d'origine
+            if (sourceAreaId) {
+                const areaToParentRow = computeAreaToParentRow(state);
+                const sourceParentRowId = areaToParentRow[sourceAreaId];
+                if (sourceParentRowId) {
+                    const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
+                    const sourceIndex = sourceParentRow.areas.findIndex(a => a.id === sourceAreaId);
+                    if (sourceIndex !== -1) {
+                        // Retirer l'élément de sa position d'origine
+                        sourceParentRow.areas.splice(sourceIndex, 1);
+
+                        // Si la row source ne contient plus qu'un élément, la convertir en zone simple
+                        if (sourceParentRow.areas.length === 1) {
+                            const lastAreaId = sourceParentRow.areas[0].id;
+                            const lastArea = state.areas[lastAreaId];
+                            const lastAreaLayout = state.layout[lastAreaId];
+
+                            // Mettre à jour les références dans le parent de la source
+                            const sourceGrandParentRowId = areaToParentRow[sourceParentRowId];
+                            if (sourceGrandParentRowId) {
+                                const sourceGrandParentRow = state.layout[sourceGrandParentRowId] as AreaRowLayout;
+                                const sourceParentIndex = sourceGrandParentRow.areas.findIndex(a => a.id === sourceParentRowId);
+                                if (sourceParentIndex !== -1) {
+                                    sourceGrandParentRow.areas[sourceParentIndex] = {
+                                        id: lastAreaId,
+                                        size: sourceGrandParentRow.areas[sourceParentIndex].size
+                                    };
+                                }
+                            } else if (state.rootId === sourceParentRowId) {
+                                // Si c'était la root, mettre à jour le rootId
+                                state.rootId = lastAreaId;
+                            }
+
+                            // Supprimer l'ancienne row
+                            delete state.layout[sourceParentRowId];
+                        } else {
+                            // Redistribuer les tailles des zones restantes
+                            const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + a.size, 0);
+                            if (totalSize > 0) {
+                                sourceParentRow.areas.forEach(a => {
+                                    a.size = a.size / totalSize;
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
-            // Déterminer l'orientation et l'index d'insertion
+            // Déterminer l'orientation basée sur le placement
             let orientation: "horizontal" | "vertical" = "horizontal";
-            let iOff: 0 | 1 = 0;
-
             switch (placement) {
             case "top":
-            case "left":
-                iOff = 0;
-                break;
             case "bottom":
-            case "right":
-                iOff = 1;
-                break;
-            }
-
-            switch (placement) {
-            case "bottom":
-            case "top":
                 orientation = "vertical";
                 break;
             case "left":
             case "right":
                 orientation = "horizontal";
                 break;
+            case "replace":
+                // Remplacer la zone existante
+                state.areas[targetAreaId] = newArea;
+                cleanDisconnectedAreas(state);
+                return;
             }
 
-            // Vérifier si la zone cible est dans une rangée existante
+            // Vérifier si la zone cible est déjà dans une rangée
             const areaToParentRow = computeAreaToParentRow(state);
-            const parentRow = state.layout[areaToParentRow[targetAreaId]] as AreaRowLayout | undefined;
+            const parentRowId = areaToParentRow[targetAreaId];
+            const parentRow = parentRowId ? state.layout[parentRowId] as AreaRowLayout : null;
 
-            if (parentRow && parentRow.orientation === orientation) {
-                // Insérer dans la rangée existante
-                const targetIndex = parentRow.areas.map((x) => x.id).indexOf(targetAreaId);
-                const insertIndex = targetIndex + iOff;
+            if (parentRow) {
+                const targetIndex = parentRow.areas.findIndex(a => a.id === targetAreaId);
+                if (targetIndex === -1) return;
 
-                // Ajouter la zone à la rangée
-                const areas = [...parentRow.areas];
-                areas.splice(insertIndex, 0, { id: newAreaId, size: 0.5 });
+                if (parentRow.orientation === orientation) {
+                    // Même orientation : ajouter comme sibling
+                    const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                    const newSize = totalSize / (parentRow.areas.length + 1);
 
-                // Mettre à jour les tailles
-                const sizes = areas.map(x => x.size);
-                const size = sizes[targetIndex] / 2;
-                sizes[targetIndex] = size;
-                sizes[insertIndex] = size;
+                    // Ajuster les tailles existantes
+                    parentRow.areas = parentRow.areas.map(a => ({
+                        ...a,
+                        size: (a.size || 0) * (1 - 1 / (parentRow.areas.length + 1))
+                    }));
 
-                // Normaliser les tailles
-                const totalSize = sizes.reduce((acc, size) => acc + size, 0);
-                if (Math.abs(totalSize - 1.0) > 0.001) {
-                    const factor = 1.0 / totalSize;
-                    sizes.forEach((_, i) => {
-                        sizes[i] = sizes[i] * factor;
-                    });
+                    // Déterminer l'index d'insertion en fonction du placement
+                    let insertIndex = targetIndex;
+                    if (placement === "bottom" || placement === "right") {
+                        insertIndex += 1;
+                    }
+
+                    // Si c'est un déplacement, on doit gérer différemment l'insertion
+                    if (sourceAreaId) {
+                        // S'assurer que la zone source existe dans le layout
+                        if (!state.layout[sourceAreaId]) {
+                            state.layout[sourceAreaId] = { type: "area", id: sourceAreaId };
+                        }
+
+                        // On insère directement la zone existante
+                        parentRow.areas.splice(insertIndex, 0, {
+                            id: sourceAreaId,
+                            size: newSize
+                        });
+
+                        // Redistribuer les tailles pour s'assurer qu'elles sont correctes
+                        const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                        if (Math.abs(totalSize - 1.0) > 0.001) {
+                            const factor = 1.0 / totalSize;
+                            parentRow.areas.forEach(area => {
+                                area.size = (area.size || 0) * factor;
+                            });
+                        }
+                    } else {
+                        // Pour une nouvelle zone
+                        parentRow.areas.splice(insertIndex, 0, {
+                            id: newAreaId,
+                            size: newSize
+                        });
+                        // Ajouter l'entrée de layout pour la nouvelle area
+                        state.layout[newAreaId] = { type: "area", id: newAreaId };
+                    }
+                } else {
+                    // Orientation différente : créer une nouvelle rangée
+                    const newRowId = `row-${Date.now()}`;
+                    const newRow: AreaRowLayout = {
+                        id: newRowId,
+                        type: "area_row",
+                        orientation,
+                        areas: placement === "top" || placement === "left"
+                            ? [
+                                { id: newAreaId, size: 0.5 },
+                                { id: targetAreaId, size: 0.5 }
+                            ]
+                            : [
+                                { id: targetAreaId, size: 0.5 },
+                                { id: newAreaId, size: 0.5 }
+                            ]
+                    };
+
+                    // Ajouter les nouvelles entrées dans le layout
+                    state.layout[newRowId] = newRow;
+                    if (!sourceAreaId) {
+                        state.layout[newAreaId] = { type: "area", id: newAreaId };
+                    }
+
+                    // Remplacer la référence dans le parent
+                    parentRow.areas[targetIndex] = {
+                        id: newRowId,
+                        size: parentRow.areas[targetIndex].size
+                    };
                 }
-
-                state.layout[parentRow.id] = { ...parentRow, areas: areas.map((area, i) => ({ ...area, size: sizes[i] })) };
-                state.layout[newAreaId] = { type: "area", id: newAreaId };
             } else {
-                // Créer une nouvelle rangée
-                const newRowId = (state._id + 1).toString();
-                state._id += 1;
-
-                // Créer la nouvelle rangée
+                // La zone cible n'a pas de parent (c'est la racine)
+                const newRowId = `row-${Date.now()}`;
                 const newRow: AreaRowLayout = {
-                    type: "area_row",
                     id: newRowId,
+                    type: "area_row",
                     orientation,
-                    areas: [
-                        { id: iOff === 0 ? newAreaId : targetAreaId, size: 0.5 },
-                        { id: iOff === 0 ? targetAreaId : newAreaId, size: 0.5 }
-                    ]
+                    areas: placement === "top" || placement === "left"
+                        ? [
+                            { id: newAreaId, size: 0.5 },
+                            { id: targetAreaId, size: 0.5 }
+                        ]
+                        : [
+                            { id: targetAreaId, size: 0.5 },
+                            { id: newAreaId, size: 0.5 }
+                        ]
                 };
 
-                // Mettre à jour le layout
+                // Ajouter les nouvelles entrées dans le layout
                 state.layout[newRowId] = newRow;
-                state.layout[newAreaId] = { type: "area", id: newAreaId };
-
-                // Mettre à jour le layout parent si nécessaire
-                const parentRowId = areaToParentRow[targetAreaId];
-                if (parentRowId) {
-                    const parentRow = state.layout[parentRowId] as AreaRowLayout;
-                    parentRow.areas = parentRow.areas.map(area =>
-                        area.id === targetAreaId ? { ...area, id: newRowId } : area
-                    );
-                } else {
-                    // Si pas de parent, c'est la nouvelle root
-                    state.rootId = newRowId;
+                if (!sourceAreaId) {
+                    state.layout[newAreaId] = { type: "area", id: newAreaId };
                 }
+
+                // Mettre à jour le root
+                state.rootId = newRowId;
             }
+
+            // Nettoyer les zones déconnectées à la fin
+            cleanDisconnectedAreas(state);
         },
         clearAreaToOpen: (state) => {
             state.areaToOpen = null;
         }
-    },
+    }
 });
 
 // Actions

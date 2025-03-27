@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { TOOLBAR_HEIGHT } from "~/constants";
+import { useLoadingState } from "../../../hooks/useLoadingState";
 import { RootState } from "../../../store";
 import { areaSlice } from "../../../store/slices/areaSlice";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
@@ -8,6 +9,8 @@ import { AreaRowLayout } from "../../../types/areaTypes";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
 import { _setAreaViewport, getAreaRootViewport } from "../../../utils/getAreaViewport";
 import { compileStylesheetLabelled } from "../../../utils/stylesheets";
+import { LoadingIndicator } from "../../common/LoadingIndicator";
+import { EmptyAreaMessage } from '../EmptyAreaMessage';
 import { Area } from "./Area";
 import { AreaRowSeparators } from "./AreaRowSeparators";
 import { AreaToOpenPreview } from "./AreaToOpenPreview";
@@ -26,9 +29,11 @@ const AreaRootComponent: React.FC = () => {
     const { layout, rootId, joinPreview, areaToOpen } = useSelector((state: RootState) => state.area);
     const [viewportMap, setViewportMap] = useState<{ [areaId: string]: Rect }>({});
     const [viewport, setViewport] = useState(getAreaRootViewport());
+    const [isLoading, setIsLoading] = useState(false);
     const layoutRef = useRef(layout);
     const rootIdRef = useRef(rootId);
     const dispatch = useDispatch();
+    const { isLoading: loadingStateIsLoading } = useLoadingState('area-root');
 
     // Ajouter un compteur de tentatives pour limiter les recalculs et éviter les boucles infinies
     const recalculationAttemptsRef = useRef(0);
@@ -44,7 +49,6 @@ const AreaRootComponent: React.FC = () => {
     const validateAndFixStructure = useCallback(() => {
         // Vérifier que le rootId existe dans le layout
         if (!layout[rootId]) {
-            console.error("RootId invalide, nettoyage de l'état");
             dispatch(areaSlice.actions.cleanState());
             return false;
         }
@@ -193,6 +197,35 @@ const AreaRootComponent: React.FC = () => {
         return <Area key={id} viewport={areaViewport} id={id} />;
     }, [viewportMap]);
 
+    // Fonction pour mettre à jour les viewports avec gestion du chargement
+    const updateViewports = useCallback(async () => {
+        if (!rootId) return;
+
+        setIsLoading(true);
+        try {
+            const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
+            setViewportMap(newViewportMap);
+            _setAreaViewport(newViewportMap);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [layout, rootId, viewport]);
+
+    // Mettre à jour les viewports lorsque le layout, le rootId ou le viewport change
+    useEffect(() => {
+        updateViewports();
+    }, [updateViewports]);
+
+    // Mettre à jour le viewport lorsque la fenêtre est redimensionnée
+    useEffect(() => {
+        const handleResize = () => {
+            setViewport(getAreaRootViewport());
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
     return (
         <div data-area-root style={{
             background: '#2c3e50',
@@ -200,8 +233,21 @@ const AreaRootComponent: React.FC = () => {
             height: `calc(100vh - ${TOOLBAR_HEIGHT * 2}px)`,  // Hauteur totale moins MenuBar et StatusBar
             overflow: 'hidden'
         }}>
-            {viewport &&
-                validLayoutKeys.map((id) => {
+            {isLoading && (
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1000
+                }}>
+                    <LoadingIndicator size="medium" />
+                </div>
+            )}
+            {Object.keys(layout).length === 0 ? (
+                <EmptyAreaMessage />
+            ) : (
+                rootId && validLayoutKeys.map((id) => {
                     const layoutItem = layout[id];
                     if (!layoutItem) {
                         return null;
@@ -225,7 +271,8 @@ const AreaRootComponent: React.FC = () => {
                     }
 
                     return renderArea(id, layoutItem);
-                })}
+                })
+            )}
             {joinPreview && joinPreview.areaId && viewportMap[joinPreview.areaId] && (
                 <JoinAreaPreview
                     viewport={viewportMap[joinPreview.areaId]}

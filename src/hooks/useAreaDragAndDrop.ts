@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from '../store/slices/areaSlice';
@@ -7,25 +7,12 @@ import { getHoveredAreaId } from '../utils/areaUtils';
 import { getAreaRootViewport } from '../utils/getAreaViewport';
 import { Vec2 } from '../utils/math/vec2';
 
-const getAdjustedPosition = (x: number, y: number, offset: Vec2 | null) => {
-    if (!offset) return { x, y };
-    return {
-        x: x - offset.x,
-        y: y - offset.y
-    };
-};
-
 const useAreaDragAndDrop = () => {
     const dispatch = useDispatch();
     const areaState = useSelector((state: RootState) => state.area);
-    const isDraggingRef = React.useRef(false);
-    const offsetRef = React.useRef<Vec2 | null>(null);
-    const lastPositionRef = React.useRef<Vec2 | null>(null);
-    const dragOverRef = React.useRef(false);
-    const dragStartTimeRef = React.useRef<number>(0);
-    const lastDragOverTimeRef = React.useRef<number>(0);
-    const hasReceivedDragOverRef = React.useRef(false);
-    const isDragActiveRef = React.useRef(false);
+    const dragRef = useRef<{ startX: number; startY: number; sourceId: string | null } | null>(null);
+    const lastUpdateRef = useRef<number>(0);
+    const UPDATE_INTERVAL = 16; // ~60fps
 
     // Calculer areaToViewport à partir du layout et des viewports
     const areaToViewport = React.useMemo(() => {
@@ -34,34 +21,19 @@ const useAreaDragAndDrop = () => {
     }, [areaState.layout, areaState.rootId]);
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
-        console.log('useAreaDragAndDrop - handleDragStart');
-        isDraggingRef.current = true;
-        isDragActiveRef.current = true;
-        dragOverRef.current = false;
-        hasReceivedDragOverRef.current = false;
-        dragStartTimeRef.current = Date.now();
-        lastDragOverTimeRef.current = 0;
         const rect = e.currentTarget.getBoundingClientRect();
-
-        // Calculer le décalage initial avec plus de précision
-        offsetRef.current = Vec2.new(
-            e.clientX - rect.left,
-            e.clientY - rect.top
-        );
-
-        // Stocker la position initiale
-        lastPositionRef.current = Vec2.new(e.clientX, e.clientY);
-
-        // Initialiser areaToOpen avec une zone par défaut
-        const position = getAdjustedPosition(e.clientX, e.clientY, offsetRef.current);
         const sourceId = (e.currentTarget as HTMLElement).getAttribute('data-source-id');
 
         if (!sourceId) {
             console.warn('useAreaDragAndDrop - Pas de sourceId trouvé');
-            isDraggingRef.current = false;
-            isDragActiveRef.current = false;
             return;
         }
+
+        dragRef.current = {
+            startX: e.clientX - rect.left,
+            startY: e.clientY - rect.top,
+            sourceId
+        };
 
         // Créer une image de drag invisible
         const dragImage = document.createElement('div');
@@ -71,118 +43,95 @@ const useAreaDragAndDrop = () => {
         dragImage.style.top = '-1px';
         dragImage.style.left = '-1px';
         dragImage.style.opacity = '0.01';
+        dragImage.style.pointerEvents = 'none';
         document.body.appendChild(dragImage);
 
         // Configurer l'effet de drag
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', sourceId); // Stocker le sourceId
+        e.dataTransfer.setData('text/plain', sourceId);
         e.dataTransfer.setDragImage(dragImage, 0, 0);
 
-        // Nettoyer l'image de drag après un court délai
-        setTimeout(() => {
-            document.body.removeChild(dragImage);
-        }, 0);
-
-        // Initialiser areaToOpen d'abord
+        // Initialiser areaToOpen
+        const position = {
+            x: e.clientX - dragRef.current.startX,
+            y: e.clientY - dragRef.current.startY
+        };
         dispatch(setAreaToOpen({
-            position: { x: position.x, y: position.y },
+            position,
             area: {
                 type: 'image-viewer',
                 state: { sourceId }
             }
         }));
 
-        // Puis mettre à jour la position
-        dispatch(updateAreaToOpenPosition(position));
-
-        console.log('useAreaDragAndDrop - État initial:', {
-            offset: offsetRef.current,
-            position: lastPositionRef.current,
-            sourceId
+        // Nettoyer l'image de drag
+        requestAnimationFrame(() => {
+            if (document.body.contains(dragImage)) {
+                document.body.removeChild(dragImage);
+            }
         });
     }, [dispatch]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
 
-        // Limiter la fréquence des mises à jour
-        const now = Date.now();
-        if (now - lastDragOverTimeRef.current < 16) { // ~60fps
-            return;
-        }
-        lastDragOverTimeRef.current = now;
+        if (!dragRef.current) return;
 
-        dragOverRef.current = true;
-        hasReceivedDragOverRef.current = true;
-        isDragActiveRef.current = true;
-        console.log('useAreaDragAndDrop - handleDragOver');
-
-        if (isDraggingRef.current && lastPositionRef.current) {
-            const position = getAdjustedPosition(e.clientX, e.clientY, offsetRef.current);
+        const now = performance.now();
+        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
+            const position = {
+                x: e.clientX - dragRef.current.startX,
+                y: e.clientY - dragRef.current.startY
+            };
             dispatch(updateAreaToOpenPosition(position));
-            lastPositionRef.current = Vec2.new(e.clientX, e.clientY);
+            lastUpdateRef.current = now;
         }
     }, [dispatch]);
 
     const handleDragEnd = useCallback((e: React.DragEvent) => {
-        console.log('useAreaDragAndDrop - handleDragEnd');
+        if (!dragRef.current) return;
 
-        // Vérifier si le drag a duré assez longtemps et si on a reçu au moins un DragOver
-        const dragDuration = Date.now() - dragStartTimeRef.current;
-        if (dragDuration < 100 || !hasReceivedDragOverRef.current || !isDragActiveRef.current) {
-            console.log('useAreaDragAndDrop - Drag trop court ou pas de DragOver reçu, ignoré');
+        // Vérifier si le drag a duré assez longtemps
+        const dragDuration = Date.now() - lastUpdateRef.current;
+        if (dragDuration < 100) {
+            console.log('useAreaDragAndDrop - Drag trop court, ignoré');
             return;
         }
 
-        if (!isDraggingRef.current || dragOverRef.current) {
-            console.log('useAreaDragAndDrop - Ignore DragEnd: drag toujours en cours ou over');
-            return;
-        }
-
-        isDraggingRef.current = false;
-        isDragActiveRef.current = false;
-        dragOverRef.current = false;
-        hasReceivedDragOverRef.current = false;
-        offsetRef.current = null;
-        lastPositionRef.current = null;
-        dragStartTimeRef.current = 0;
-        lastDragOverTimeRef.current = 0;
+        dragRef.current = null;
         dispatch(clearAreaToOpen());
     }, [dispatch]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
-        if (!isDraggingRef.current) return;
-
         e.preventDefault();
         e.stopPropagation();
 
-        console.log('useAreaDragAndDrop - handleDrop - dropEffect:', e.dataTransfer.dropEffect);
+        if (!dragRef.current) return;
 
-        // Calculer la position finale ajustée
-        const position = getAdjustedPosition(e.clientX, e.clientY, offsetRef.current);
+        const position = {
+            x: e.clientX - dragRef.current.startX,
+            y: e.clientY - dragRef.current.startY
+        };
+
         const positionVec2 = Vec2.new(position.x, position.y);
         const hoveredAreaId = getHoveredAreaId(positionVec2, areaState, areaToViewport);
 
-        // Si la souris est sur une zone valide, finaliser le placement
         if (hoveredAreaId) {
             dispatch(finalizeAreaPlacement());
         } else {
             dispatch(clearAreaToOpen());
         }
 
-        // Nettoyer l'état
-        isDraggingRef.current = false;
-        offsetRef.current = null;
-        lastPositionRef.current = null;
+        dragRef.current = null;
     }, [dispatch, areaState, areaToViewport]);
 
     return {
         handleDragStart,
         handleDragOver,
         handleDragEnd,
-        handleDrop,
-        isDragging: isDraggingRef.current
+        handleDrop
     };
 };
 

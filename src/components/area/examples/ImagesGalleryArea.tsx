@@ -1,15 +1,128 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useArea } from '~/hooks/useArea';
 import useAreaDragAndDrop from '~/hooks/useAreaDragAndDrop';
 import { RootState } from '~/store';
+import { areaSlice, finalizeAreaPlacement, setAreaToOpen } from '~/store/slices/areaSlice';
 import { AreaComponentProps } from '~/types/areaTypes';
 import { ImageData, ImagesGalleryState } from '~/types/image';
+import { computeAreaToViewport } from '~/utils/areaToViewport';
+import { getHoveredAreaId } from '~/utils/areaUtils';
+import { getAreaRootViewport } from '~/utils/getAreaViewport';
 import { Vec2 } from '~/utils/math/vec2';
 import { AreaToOpenPreview } from '../components/AreaToOpenPreview';
-import { useMenuBar } from '../components/MenuBar';
-import { useStatusBar } from '../components/StatusBar';
-import { useToolbar } from '../components/Toolbar';
+
+// Registre statique pour les composants de la galerie
+const galleryComponentRegistry: Record<string, {
+    menuComponents: Array<{ component: React.ComponentType<any>; identifier: { name: string; type: string } }>;
+    statusComponents: Array<{ component: React.ComponentType<any>; identifier: { name: string; type: string } }>;
+    toolbarComponents: Array<{ component: React.ComponentType<any>; identifier: { name: string; type: string } }>;
+    slotComponents: Array<{ component: React.ComponentType<any>; identifier: { name: string; type: string } }>;
+}> = {};
+
+// Hook personnalisé pour la galerie
+const useGalleryComponents = (areaType: string, areaId: string) => {
+    const registryKey = `${areaType}:${areaId}`;
+
+    const registerMenuComponent = useCallback((
+        component: React.ComponentType<any>,
+        identifier: { name: string; type: string }
+    ) => {
+        if (!galleryComponentRegistry[registryKey]) {
+            galleryComponentRegistry[registryKey] = {
+                menuComponents: [],
+                statusComponents: [],
+                toolbarComponents: [],
+                slotComponents: []
+            };
+        }
+
+        // Nettoyer les composants existants avec le même identifiant
+        galleryComponentRegistry[registryKey].menuComponents = galleryComponentRegistry[registryKey].menuComponents.filter(
+            item => !(item.identifier.name === identifier.name && item.identifier.type === identifier.type)
+        );
+
+        galleryComponentRegistry[registryKey].menuComponents.push({ component, identifier });
+    }, [registryKey]);
+
+    const registerStatusComponent = useCallback((
+        component: React.ComponentType<any>,
+        identifier: { name: string; type: string }
+    ) => {
+        if (!galleryComponentRegistry[registryKey]) {
+            galleryComponentRegistry[registryKey] = {
+                menuComponents: [],
+                statusComponents: [],
+                toolbarComponents: [],
+                slotComponents: []
+            };
+        }
+
+        galleryComponentRegistry[registryKey].statusComponents = galleryComponentRegistry[registryKey].statusComponents.filter(
+            item => !(item.identifier.name === identifier.name && item.identifier.type === identifier.type)
+        );
+
+        galleryComponentRegistry[registryKey].statusComponents.push({ component, identifier });
+    }, [registryKey]);
+
+    const registerToolbarComponent = useCallback((
+        component: React.ComponentType<any>,
+        identifier: { name: string; type: string }
+    ) => {
+        if (!galleryComponentRegistry[registryKey]) {
+            galleryComponentRegistry[registryKey] = {
+                menuComponents: [],
+                statusComponents: [],
+                toolbarComponents: [],
+                slotComponents: []
+            };
+        }
+
+        galleryComponentRegistry[registryKey].toolbarComponents = galleryComponentRegistry[registryKey].toolbarComponents.filter(
+            item => !(item.identifier.name === identifier.name && item.identifier.type === identifier.type)
+        );
+
+        galleryComponentRegistry[registryKey].toolbarComponents.push({ component, identifier });
+    }, [registryKey]);
+
+    const registerSlotComponent = useCallback((
+        slot: string,
+        component: React.ComponentType<any>,
+        identifier: { name: string; type: string }
+    ) => {
+        if (!galleryComponentRegistry[registryKey]) {
+            galleryComponentRegistry[registryKey] = {
+                menuComponents: [],
+                statusComponents: [],
+                toolbarComponents: [],
+                slotComponents: []
+            };
+        }
+
+        galleryComponentRegistry[registryKey].slotComponents = galleryComponentRegistry[registryKey].slotComponents.filter(
+            item => !(item.identifier.name === identifier.name && item.identifier.type === identifier.type)
+        );
+
+        galleryComponentRegistry[registryKey].slotComponents.push({ component, identifier });
+    }, [registryKey]);
+
+    const getComponents = useCallback(() => {
+        return galleryComponentRegistry[registryKey] || {
+            menuComponents: [],
+            statusComponents: [],
+            toolbarComponents: [],
+            slotComponents: []
+        };
+    }, [registryKey]);
+
+    return {
+        registerMenuComponent,
+        registerStatusComponent,
+        registerToolbarComponent,
+        registerSlotComponent,
+        getComponents
+    };
+};
 
 export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>> = ({
     id,
@@ -17,19 +130,17 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     viewport
 }) => {
     const { updateAreaState } = useArea();
-    const { handleDragStart, handleDragOver, handleDragEnd, handleDrop } = useAreaDragAndDrop();
-    const { registerComponent: registerMenuComponent } = useMenuBar('images-gallery', id);
-    const { registerComponent: registerStatusComponent } = useStatusBar('images-gallery', id);
-    const {
-        registerComponent: registerToolbarComponent,
-        registerSlotComponent
-    } = useToolbar('images-gallery', id);
+    const { handleDragStart, handleDragOver, handleDrop } = useAreaDragAndDrop();
+    const { registerMenuComponent, registerStatusComponent, registerToolbarComponent, registerSlotComponent } = useGalleryComponents('images-gallery', id);
     const areaState = useSelector((state: RootState) => state.area);
+    const dispatch = useDispatch();
 
     // États locaux
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
     const [isDraggingOver, setIsDraggingOver] = useState(false);
-    const [dragOffset, setDragOffset] = useState<Vec2 | null>(null);
+    const dragRef = useRef<{ startX: number; startY: number } | null>(null);
+    const lastUpdateRef = useRef<number>(0);
+    const UPDATE_INTERVAL = 16; // ~60fps
 
     // S'assurer que les propriétés existent
     const images = state?.images || [];
@@ -128,79 +239,8 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         return 0;
     });
 
-    const handleLocalDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        console.log('ImagesGalleryArea - DragStart');
-        const imageId = e.currentTarget.getAttribute('data-source-id');
-        if (!imageId) {
-            console.warn('ImagesGalleryArea - Pas d\'imageId trouvé');
-            return;
-        }
-
-        const rect = e.currentTarget.getBoundingClientRect();
-        setDragOffset(Vec2.new(
-            e.clientX - rect.left,
-            e.clientY - rect.top
-        ));
-
-        // Configurer les données de transfert
-        e.dataTransfer.setData('text/plain', imageId);
-        e.dataTransfer.effectAllowed = 'move';
-
-        setIsDraggingOver(true);
-        handleDragStart(e);
-    }, [handleDragStart]);
-
-    const handleLocalDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDraggingOver(true);
-        handleDragOver(e);
-    }, [handleDragOver]);
-
-    const handleLocalDragEnd = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        console.log('ImagesGalleryArea - DragEnd');
-        if (isDraggingOver) {
-            console.log('ImagesGalleryArea - Drag toujours en cours, ignore DragEnd');
-            return;
-        }
-        setDragOffset(null);
-        setIsDraggingOver(false);
-        handleDragEnd(e);
-    }, [handleDragEnd, isDraggingOver]);
-
-    const handleLocalDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDraggingOver(true);
-        console.log('ImagesGalleryArea - DragEnter');
-    }, []);
-
-    const handleLocalDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // Vérifier si on quitte vraiment la zone de drop
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX;
-        const y = e.clientY;
-        if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-            setIsDraggingOver(false);
-            console.log('ImagesGalleryArea - DragLeave (vérifié)');
-        }
-    }, []);
-
-    const handleLocalDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDraggingOver(false);
-        setDragOffset(null);
-        console.log('ImagesGalleryArea - Drop');
-        handleDrop(e);
-    }, [handleDrop]);
-
+    // Effet pour gérer l'enregistrement des composants
     useEffect(() => {
-        // DEBUG: Log au début du useEffect
-        console.log(`ImagesGalleryArea - Enregistrement des composants pour ${id}`);
-
         // --- Menu Bar Components ---
         // Menu déroulant des filtres (premier élément)
         registerMenuComponent(
@@ -266,8 +306,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     </div>
                 );
             },
-            { name: 'imageName', type: 'status' },
-            { order: 10, alignment: 'left', width: 'auto' }
+            { name: 'imageName', type: 'status' }
         );
 
         // Taille de l'image (centre)
@@ -277,8 +316,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     {selectedImageId ? '300 × 200 px' : ''}
                 </div>
             ),
-            { name: 'imageSize', type: 'status' },
-            { order: 20, alignment: 'center', width: 'auto' }
+            { name: 'imageSize', type: 'status' }
         );
 
         // Niveau de zoom (droite)
@@ -289,8 +327,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                     <span>{Math.round(zoom * 100)}%</span>
                 </div>
             ),
-            { name: 'zoomLevel', type: 'status' },
-            { order: 30, alignment: 'right', width: 'auto' }
+            { name: 'zoomLevel', type: 'status' }
         );
 
         // --- Toolbar Slots ---
@@ -411,11 +448,6 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             ),
             { name: 'addImage', type: 'slot' }
         );
-
-        // Nettoyage lors du démontage
-        return () => {
-            console.log(`ImagesGalleryArea - Nettoyage des composants pour ${id}`);
-        };
     }, [
         id,
         selectedImageId,
@@ -437,9 +469,140 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         changeFilter
     ]);
 
+    const handleLocalDragStart = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        const imageId = e.currentTarget.getAttribute('data-source-id');
+        if (!imageId) {
+            console.warn('ImagesGalleryArea - Pas d\'imageId trouvé');
+            return;
+        }
+
+        const rect = e.currentTarget.getBoundingClientRect();
+
+        // Créer une image de drag invisible
+        const dragImage = document.createElement('div');
+        dragImage.style.width = '1px';
+        dragImage.style.height = '1px';
+        dragImage.style.position = 'fixed';
+        dragImage.style.top = '-1px';
+        dragImage.style.left = '-1px';
+        dragImage.style.opacity = '0.01';
+        document.body.appendChild(dragImage);
+
+        // Configurer les données de transfert
+        const dragData = {
+            type: 'image',
+            areaType: 'images-gallery',
+            areaId: id,
+            imageId,
+            image: images.find(img => img.id === imageId)
+        };
+        e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setDragImage(dragImage, 0, 0);
+
+        // Nettoyer l'image de drag après un court délai
+        setTimeout(() => {
+            document.body.removeChild(dragImage);
+        }, 0);
+
+        // Initialiser areaToOpen avec la position exacte
+        dispatch(setAreaToOpen({
+            position: { x: e.clientX, y: e.clientY },
+            area: {
+                type: 'image-viewer',
+                state: { image: dragData.image }
+            }
+        }));
+
+        // Utiliser le hook global avec l'imageId comme sourceId
+        const event = {
+            ...e,
+            currentTarget: {
+                ...e.currentTarget,
+                getAttribute: () => imageId,
+                getBoundingClientRect: () => rect
+            }
+        } as React.DragEvent<HTMLDivElement>;
+        handleDragStart(event);
+    }, [id, images, dispatch, handleDragStart]);
+
+    const handleLocalDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+
+        // Utiliser le hook global
+        handleDragOver(e);
+    }, [handleDragOver]);
+
+    const handleLocalDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOver(true);
+        console.log('ImagesGalleryArea - DragEnter');
+    }, []);
+
+    const handleLocalDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Vérifier si on quitte vraiment la zone de drop
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
+            setIsDraggingOver(false);
+            console.log('ImagesGalleryArea - DragLeave (vérifié)');
+        }
+    }, []);
+
+    const handleLocalDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        if (data.type !== 'image') return;
+
+        // Récupérer l'ID de la zone cible
+        const areaToViewport = computeAreaToViewport(
+            areaState.layout,
+            areaState.rootId || '',
+            getAreaRootViewport()
+        );
+        const targetAreaId = getHoveredAreaId(Vec2.new(e.clientX, e.clientY), areaState, areaToViewport);
+
+        if (targetAreaId && targetAreaId !== id) {
+            // Si on a une zone cible différente, on déplace l'image
+            const targetViewport = areaToViewport[targetAreaId];
+            if (targetViewport) {
+                // Calculer les nouvelles tailles pour les zones siblings
+                const parentRow = areaState.layout[targetAreaId];
+                if (parentRow && parentRow.type === 'area_row') {
+                    const totalSize = parentRow.areas.reduce((acc: number, area: any) => acc + area.size, 0);
+                    const newSize = totalSize / (parentRow.areas.length + 1);
+
+                    // Mettre à jour les tailles des zones existantes
+                    const newSizes = parentRow.areas.map((area: any) => area.size * (1 - newSize / totalSize));
+                    newSizes.push(newSize);
+
+                    // Mettre à jour le layout
+                    dispatch(areaSlice.actions.setRowSizes({
+                        rowId: parentRow.id,
+                        sizes: newSizes
+                    }));
+                }
+            }
+        }
+
+        // Finaliser le placement
+        dispatch(finalizeAreaPlacement());
+
+        // Utiliser le hook global
+        handleDrop(e);
+    }, [dispatch, id, areaState, handleDrop]);
+
     return (
         <div
-            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
+            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'} ${isDraggingOver ? 'dragging' : ''}`}
             style={{
                 width: viewport.width,
                 height: viewport.height,
@@ -475,19 +638,18 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                                 borderRadius: '4px',
                                 padding: '0.5rem',
                                 cursor: 'move',
-                                backgroundColor: isDraggingOver ? '#f0f0f0' : 'transparent',
+                                backgroundColor: 'transparent',
                                 userSelect: 'none',
                                 touchAction: 'none',
                                 position: 'relative',
-                                zIndex: isDraggingOver ? 1000 : 1,
-                                transform: isDraggingOver ? 'scale(1.05)' : 'scale(1)',
+                                zIndex: 1,
+                                transform: 'scale(1)',
                                 transition: 'transform 0.2s ease-out',
                                 willChange: 'transform',
                                 pointerEvents: 'auto'
                             }}
                             onClick={() => selectImage(img.id)}
                             onDragStart={handleLocalDragStart}
-                            onDragEnd={handleLocalDragEnd}
                         >
                             <img
                                 src={img.url}
@@ -500,7 +662,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                                     pointerEvents: 'auto',
                                     userSelect: 'none',
                                     touchAction: 'none',
-                                    transform: isDraggingOver ? 'scale(1.05)' : 'scale(1)',
+                                    transform: 'scale(1)',
                                     transition: 'transform 0.2s ease-out',
                                     willChange: 'transform'
                                 }}
@@ -593,4 +755,4 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             )}
         </div>
     );
-}; 
+};
