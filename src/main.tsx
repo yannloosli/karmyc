@@ -1,6 +1,6 @@
 import { debounce } from 'lodash';
 import React from "react";
-import { createRoot } from 'react-dom/client';
+import { createRoot } from "react-dom/client";
 import { KarmycProvider } from "~/providers/KarmycProvider";
 import { sendDiffsToSubscribers } from "~/store/diffSubscription";
 import { App } from "./App";
@@ -135,13 +135,13 @@ if (typeof window !== 'undefined') {
     }
 }
 
-const Root = () => (
-    <React.StrictMode>
+const Root: React.FC = () => {
+    return (
         <KarmycProvider>
             <App />
         </KarmycProvider>
-    </React.StrictMode>
-);
+    );
+};
 
 const rootElement = document.getElementById("root");
 

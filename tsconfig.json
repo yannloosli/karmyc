@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "esnext",
         "module": "esnext",
-        "jsx": "react",
+        "jsx": "react-jsx",
         "allowJs": true,
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
@@ -30,7 +30,9 @@
         },
         "types": [
             "vite/client",
-            "jest"
+            "jest",
+            "react",
+            "react-dom"
         ]
     },
     "exclude": [
