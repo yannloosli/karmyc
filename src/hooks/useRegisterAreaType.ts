@@ -45,8 +45,20 @@ export function useRegisterAreaType<T = any>(
 
             if (options.supportedActions) {
                 areaRegistry.registerSupportedActions(areaType, options.supportedActions);
-            } else if (process.env.NODE_ENV === 'development') {
-                console.log(`SupportedActions n'est pas encore supporté pour ${areaType}`);
+            } else {
+                // Actions supportées par défaut pour chaque type
+                const defaultActions: Record<string, string[]> = {
+                    'text-note': ['edit', 'delete', 'move', 'resize'],
+                    'color-picker': ['pick', 'delete', 'move', 'resize'],
+                    'image-viewer': ['view', 'delete', 'move', 'resize'],
+                    'images-gallery': ['view', 'delete', 'move', 'resize', 'add']
+                };
+
+                if (defaultActions[areaType]) {
+                    areaRegistry.registerSupportedActions(areaType, defaultActions[areaType]);
+                } else if (process.env.NODE_ENV === 'development') {
+                    console.log(`SupportedActions n'est pas encore supporté pour ${areaType}`);
+                }
             }
         }
 

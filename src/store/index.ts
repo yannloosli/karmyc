@@ -39,7 +39,7 @@ import toolbarReducer from './slices/toolbarSlice';
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['toolbar', 'state'], // Persister les projets, toolbars et états
+    whitelist: ['toolbar', 'state', 'area'], // Ajouter 'area' pour persister les layouts et areas
     blacklist: ['undoable', 'diff'], // Ne pas persister l'historique undo/redo et les diffs
 };
 

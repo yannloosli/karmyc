@@ -281,50 +281,148 @@ export const areaSlice = createSlice({
         },
         removeArea: (state, action: PayloadAction<string>) => {
             const areaId = action.payload;
+            console.log(`[areaSlice] removeArea - Début de la suppression de la zone ${areaId}`);
 
             // Trouver la rangée parente de la zone à supprimer
             const areaToParentRow = computeAreaToParentRow(state);
             const parentRowId = areaToParentRow[areaId];
 
+            // Créer un ensemble pour suivre toutes les zones et rangées à supprimer
+            const itemsToRemove = new Set<string>([areaId]);
+
             if (parentRowId) {
                 const parentRow = state.layout[parentRowId] as AreaRowLayout;
+
                 if (parentRow && parentRow.areas) {
                     // Trouver l'index de la zone à supprimer
                     const targetIndex = parentRow.areas.findIndex(a => a.id === areaId);
+
                     if (targetIndex !== -1) {
+                        console.log(`[areaSlice] removeArea - Zone trouvée à l'index ${targetIndex} dans la rangée ${parentRowId}`);
+
                         // Supprimer la zone de la rangée
                         parentRow.areas.splice(targetIndex, 1);
 
-                        // Ne redimensionner que si c'est une feuille (pas une rangée)
-                        if (state.layout[areaId]?.type === "area") {
-                            // Trouver les zones siblings (même rangée, même orientation)
-                            const siblings = parentRow.areas.filter(a =>
-                                state.layout[a.id]?.type === "area"
-                            );
+                        // Si c'était la dernière zone de la rangée, marquer la rangée pour suppression
+                        if (parentRow.areas.length === 0) {
+                            console.log(`[areaSlice] removeArea - Dernière zone de la rangée ${parentRowId}, marquée pour suppression`);
+                            itemsToRemove.add(parentRowId);
 
-                            if (siblings.length > 0) {
-                                // Calculer la taille totale des siblings
-                                const totalSize = siblings.reduce((acc, a) => acc + (a.size || 0), 0);
-                                if (totalSize > 0) {
-                                    const factor = 1.0 / totalSize;
-                                    // Redimensionner uniquement les siblings
-                                    siblings.forEach(area => {
-                                        area.size = (area.size || 0) * factor;
-                                    });
+                            // Trouver le grand-parent
+                            const grandParentRowId = areaToParentRow[parentRowId];
+
+                            if (grandParentRowId) {
+                                const grandParentRow = state.layout[grandParentRowId] as AreaRowLayout;
+
+                                if (grandParentRow && grandParentRow.areas) {
+                                    console.log(`[areaSlice] removeArea - Grand-parent trouvé: ${grandParentRowId}`);
+
+                                    // Trouver l'index du parent dans le grand-parent
+                                    const parentIndex = grandParentRow.areas.findIndex(a => a.id === parentRowId);
+
+                                    if (parentIndex !== -1) {
+                                        // Supprimer la référence à la rangée parente du grand-parent
+                                        grandParentRow.areas.splice(parentIndex, 1);
+
+                                        // Si le grand-parent est vide, le marquer aussi pour suppression
+                                        if (grandParentRow.areas.length === 0) {
+                                            console.log(`[areaSlice] removeArea - Grand-parent ${grandParentRowId} vide, marqué pour suppression`);
+                                            itemsToRemove.add(grandParentRowId);
+
+                                            // Réinitialiser rootId si nécessaire
+                                            if (state.rootId === grandParentRowId) {
+                                                state.rootId = null;
+                                            }
+                                        } else {
+                                            // Normaliser les tailles des zones restantes dans le grand-parent
+                                            const totalSize = grandParentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                            if (totalSize > 0) {
+                                                const factor = 1.0 / totalSize;
+                                                grandParentRow.areas.forEach(area => {
+                                                    area.size = (area.size || 0) * factor;
+                                                });
+                                                console.log(`[areaSlice] removeArea - Redimensionnement des zones dans le grand-parent, facteur: ${factor}`);
+                                            }
+                                        }
+                                    }
                                 }
+                            }
+                            // Si le parent est la racine, réinitialiser rootId
+                            else if (state.rootId === parentRowId) {
+                                console.log(`[areaSlice] removeArea - La rangée parent ${parentRowId} est la racine, réinitialisation`);
+                                state.rootId = null;
+                            }
+                        } else {
+                            // Recalculer les tailles des zones restantes
+                            const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                            if (totalSize > 0) {
+                                const factor = 1.0 / totalSize;
+                                parentRow.areas.forEach(area => {
+                                    area.size = (area.size || 0) * factor;
+                                });
+                                console.log(`[areaSlice] removeArea - Redimensionnement dans la rangée, facteur: ${factor}`);
                             }
                         }
                     }
                 }
             }
 
-            // Supprimer la zone
-            delete state.areas[areaId];
-            if (state.activeAreaId === areaId) {
-                state.activeAreaId = null;
-            }
+            // Supprimer toutes les zones marquées
+            console.log(`[areaSlice] removeArea - Suppression des zones: ${Array.from(itemsToRemove).join(', ')}`);
+            itemsToRemove.forEach(id => {
+                // Supprimer du tableau des zones
+                if (state.areas[id]) {
+                    delete state.areas[id];
+                }
+
+                // Supprimer du layout
+                if (state.layout[id]) {
+                    delete state.layout[id];
+                }
+
+                // Supprimer des viewports
+                if (state.viewports[id]) {
+                    delete state.viewports[id];
+                }
+
+                // Réinitialiser activeAreaId si nécessaire
+                if (state.activeAreaId === id) {
+                    state.activeAreaId = null;
+                }
+            });
+
+            // Supprimer récursivement les références aux rangées supprimées dans tout le layout
+            Object.entries(state.layout).forEach(([id, item]) => {
+                if (item.type === 'area_row') {
+                    const rowLayout = item as AreaRowLayout;
+                    if (rowLayout.areas) {
+                        // Filtrer les références aux zones supprimées
+                        const originalLength = rowLayout.areas.length;
+                        rowLayout.areas = rowLayout.areas.filter(a => !itemsToRemove.has(a.id));
+
+                        // Si des références ont été supprimées, normaliser les tailles
+                        if (rowLayout.areas.length !== originalLength && rowLayout.areas.length > 0) {
+                            const totalSize = rowLayout.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                            if (totalSize > 0) {
+                                const factor = 1.0 / totalSize;
+                                rowLayout.areas.forEach(area => {
+                                    area.size = (area.size || 0) * factor;
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Nettoyer les zones déconnectées
+            cleanDisconnectedAreas(state);
+
             state.errors = [];
+
+            // Enregistrer l'état
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
+
+            console.log(`[areaSlice] removeArea - Fin de la suppression de la zone ${areaId}`);
         },
         updateArea: (state, action: PayloadAction<{ id: string; changes: Partial<Area<AreaTypeValue>> }>) => {
             const { id, changes } = action.payload;
@@ -798,29 +896,41 @@ export const areaSlice = createSlice({
         finalizeAreaPlacement: (state) => {
             if (!state.areaToOpen) return;
 
-            console.log('finalizeAreaPlacement - Début:', {
-                state,
-                areaToOpen: state.areaToOpen
+            console.log('[areaSlice] finalizeAreaPlacement - Début:', {
+                areaToOpen: state.areaToOpen,
+                areas: Object.keys(state.areas),
+                layout: Object.keys(state.layout)
             });
 
             const { position, area } = state.areaToOpen;
             const sourceAreaId = area.state?.sourceId;
             const newAreaId = sourceAreaId || `area-${Date.now()}`;
 
+            console.log('[areaSlice] finalizeAreaPlacement - IDs:', {
+                sourceAreaId,
+                newAreaId
+            });
+
             // Si c'est un déplacement, on garde l'area source
-            let newArea: Area<AreaTypeValue>;
             if (sourceAreaId && state.areas[sourceAreaId]) {
-                newArea = state.areas[sourceAreaId];
+                console.log('[areaSlice] finalizeAreaPlacement - C\'est un déplacement, area source trouvée');
+                // On garde l'area source, mais on vérifie si elle doit être clonée
+                if (sourceAreaId !== newAreaId) {
+                    state.areas[newAreaId] = {
+                        ...state.areas[sourceAreaId],
+                        id: newAreaId
+                    };
+                }
             } else {
+                console.log('[areaSlice] finalizeAreaPlacement - Création d\'une nouvelle area avec ID:', newAreaId);
                 // Sinon on crée une nouvelle area
-                newArea = {
+                state.areas[newAreaId] = {
                     id: newAreaId,
                     type: area.type,
                     state: area.state,
                     position: position,
                     size: { width: 300, height: 200 }
                 };
-                state.areas[newAreaId] = newArea;
             }
 
             const rootViewport = getAreaRootViewport();
@@ -831,8 +941,10 @@ export const areaSlice = createSlice({
             );
 
             const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), state, areaToViewport);
+            console.log('[areaSlice] finalizeAreaPlacement - Zone cible identifiée:', { targetAreaId });
 
             if (!targetAreaId) {
+                console.log('[areaSlice] finalizeAreaPlacement - Pas de zone cible, annulation');
                 // Si la souris n'est pas au-dessus d'une zone, on annule
                 state.areaToOpen = null;
                 if (!sourceAreaId) {
@@ -843,6 +955,7 @@ export const areaSlice = createSlice({
 
             const viewport = areaToViewport[targetAreaId];
             const placement = getAreaToOpenPlacementInViewport(viewport, Vec2.new(position.x, position.y));
+            console.log('[areaSlice] finalizeAreaPlacement - Placement choisi:', { placement });
 
             // Nettoyer l'état de drag
             state.areaToOpen = null;
@@ -851,46 +964,60 @@ export const areaSlice = createSlice({
             if (sourceAreaId) {
                 const areaToParentRow = computeAreaToParentRow(state);
                 const sourceParentRowId = areaToParentRow[sourceAreaId];
+                console.log('[areaSlice] finalizeAreaPlacement - Rangée parent source:', { sourceParentRowId });
+
                 if (sourceParentRowId) {
                     const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
-                    const sourceIndex = sourceParentRow.areas.findIndex(a => a.id === sourceAreaId);
-                    if (sourceIndex !== -1) {
-                        // Retirer l'élément de sa position d'origine
-                        sourceParentRow.areas.splice(sourceIndex, 1);
+                    if (sourceParentRow) {
+                        console.log('[areaSlice] finalizeAreaPlacement - Rangée parent avant filtrage:', {
+                            areas: sourceParentRow.areas.map(a => a.id)
+                        });
 
-                        // Si la row source ne contient plus qu'un élément, la convertir en zone simple
-                        if (sourceParentRow.areas.length === 1) {
-                            const lastAreaId = sourceParentRow.areas[0].id;
-                            const lastArea = state.areas[lastAreaId];
-                            const lastAreaLayout = state.layout[lastAreaId];
+                        sourceParentRow.areas = sourceParentRow.areas.filter(a => a.id !== sourceAreaId);
 
-                            // Mettre à jour les références dans le parent de la source
-                            const sourceGrandParentRowId = areaToParentRow[sourceParentRowId];
-                            if (sourceGrandParentRowId) {
-                                const sourceGrandParentRow = state.layout[sourceGrandParentRowId] as AreaRowLayout;
-                                const sourceParentIndex = sourceGrandParentRow.areas.findIndex(a => a.id === sourceParentRowId);
-                                if (sourceParentIndex !== -1) {
-                                    sourceGrandParentRow.areas[sourceParentIndex] = {
-                                        id: lastAreaId,
-                                        size: sourceGrandParentRow.areas[sourceParentIndex].size
-                                    };
+                        console.log('[areaSlice] finalizeAreaPlacement - Rangée parent après filtrage:', {
+                            areas: sourceParentRow.areas.map(a => a.id)
+                        });
+
+                        if (sourceParentRow.areas.length === 0) {
+                            console.log('[areaSlice] finalizeAreaPlacement - Suppression de la rangée vide:', sourceParentRowId);
+
+                            // Avant de supprimer la rangée vide, on doit supprimer toutes les références à cette rangée
+                            // dans les autres rangées du layout
+                            Object.entries(state.layout).forEach(([id, layoutItem]) => {
+                                if (layoutItem.type === 'area_row' && id !== sourceParentRowId) {
+                                    const rowLayout = layoutItem as AreaRowLayout;
+                                    const hadReference = rowLayout.areas.some(a => a.id === sourceParentRowId);
+
+                                    // Filtrer les références à la rangée vide
+                                    rowLayout.areas = rowLayout.areas.filter(a => a.id !== sourceParentRowId);
+
+                                    // Si des références ont été supprimées, normaliser les tailles
+                                    if (hadReference && rowLayout.areas.length > 0) {
+                                        console.log(`[areaSlice] finalizeAreaPlacement - Suppression de référence à la rangée vide ${sourceParentRowId} dans ${id}`);
+                                        const totalSize = rowLayout.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                        if (totalSize > 0) {
+                                            const factor = 1.0 / totalSize;
+                                            rowLayout.areas.forEach(area => {
+                                                area.size = (area.size || 0) * factor;
+                                            });
+                                        }
+                                    }
                                 }
-                            } else if (state.rootId === sourceParentRowId) {
-                                // Si c'était la root, mettre à jour le rootId
-                                state.rootId = lastAreaId;
-                            }
+                            });
 
-                            // Supprimer l'ancienne row
+                            // Maintenant on peut supprimer la rangée vide
                             delete state.layout[sourceParentRowId];
-                        } else {
-                            // Redistribuer les tailles des zones restantes
-                            const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + a.size, 0);
-                            if (totalSize > 0) {
-                                sourceParentRow.areas.forEach(a => {
-                                    a.size = a.size / totalSize;
-                                });
-                            }
                         }
+                    }
+                }
+
+                // Suppression de l'area source si elle est différente de l'area cible
+                if (sourceAreaId !== newAreaId) {
+                    console.log('[areaSlice] finalizeAreaPlacement - Suppression de l\'area source:', sourceAreaId);
+                    delete state.areas[sourceAreaId];
+                    if (state.layout[sourceAreaId]) {
+                        delete state.layout[sourceAreaId];
                     }
                 }
             }
@@ -907,22 +1034,114 @@ export const areaSlice = createSlice({
                 orientation = "horizontal";
                 break;
             case "replace":
-                // Remplacer la zone existante
-                state.areas[targetAreaId] = newArea;
-                cleanDisconnectedAreas(state);
+                console.log('[areaSlice] finalizeAreaPlacement - Remplacement de la zone:', {
+                    targetAreaId,
+                    newAreaId
+                });
+
+                // VÉRIFICATION
+                if (!state.areas[newAreaId]) {
+                    console.error('[areaSlice] finalizeAreaPlacement - ERREUR: Area source introuvable:', newAreaId);
+                    return;
+                }
+
+                // Si la zone source est la même que la zone cible, ne rien faire pour éviter la disparition
+                if (sourceAreaId === targetAreaId) {
+                    console.log('[areaSlice] finalizeAreaPlacement - Drop sur soi-même détecté, rien à faire');
+                    return;
+                }
+
+                // Conserver l'état et le type de la zone source
+                const sourceAreaState = { ...state.areas[newAreaId].state };
+                const sourceAreaType = state.areas[newAreaId].type;
+
+                // Mettre à jour la zone cible plutôt que de la remplacer complètement
+                state.areas[targetAreaId] = {
+                    ...state.areas[targetAreaId],
+                    type: sourceAreaType,
+                    state: sourceAreaState
+                };
+
+                console.log('[areaSlice] finalizeAreaPlacement - Zone mise à jour avec conservation de l\'ID:', targetAreaId);
+
+                // Supprimer la zone source si elle est différente
+                if (newAreaId !== targetAreaId) {
+                    console.log('[areaSlice] finalizeAreaPlacement - Suppression de la zone source:', newAreaId);
+
+                    // Trouver la rangée parente de la zone source
+                    const areaToParentRow = computeAreaToParentRow(state);
+                    const sourceParentRowId = areaToParentRow[newAreaId];
+
+                    if (sourceParentRowId) {
+                        console.log('[areaSlice] finalizeAreaPlacement - Rangée parente de la source:', sourceParentRowId);
+                        const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
+
+                        if (sourceParentRow && sourceParentRow.areas) {
+                            // Filtrer la zone source de sa rangée parente
+                            sourceParentRow.areas = sourceParentRow.areas.filter(a => a.id !== newAreaId);
+                            console.log('[areaSlice] finalizeAreaPlacement - Zone supprimée de sa rangée parente');
+
+                            // Si la rangée est maintenant vide, la marquer pour suppression
+                            if (sourceParentRow.areas.length === 0) {
+                                console.log('[areaSlice] finalizeAreaPlacement - Rangée parente source vide, à supprimer');
+                            } else {
+                                // Normaliser les tailles des zones restantes
+                                const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                if (totalSize > 0) {
+                                    const factor = 1.0 / totalSize;
+                                    sourceParentRow.areas.forEach(area => {
+                                        area.size = (area.size || 0) * factor;
+                                    });
+                                    console.log('[areaSlice] finalizeAreaPlacement - Tailles normalisées dans la rangée parente source');
+                                }
+                            }
+                        }
+                    }
+
+                    // Supprimer la zone source et ses entrées
+                    delete state.areas[newAreaId];
+                    delete state.layout[newAreaId];
+                    if (state.viewports[newAreaId]) {
+                        delete state.viewports[newAreaId];
+                    }
+                }
+
+                // Nettoyage complet et validation de l'état
+                validateAndCleanLayout(state);
+
+                // Sauvegarder l'état pour assurer la persistance
+                localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
+
+                // Vérification finale de l'état
+                console.log('[areaSlice] finalizeAreaPlacement - État final (replace):', {
+                    rootId: state.rootId,
+                    areas: Object.keys(state.areas),
+                    layout: Object.keys(state.layout)
+                });
+
                 return;
             }
+
+            console.log('[areaSlice] finalizeAreaPlacement - Orientation choisie:', { orientation });
 
             // Vérifier si la zone cible est déjà dans une rangée
             const areaToParentRow = computeAreaToParentRow(state);
             const parentRowId = areaToParentRow[targetAreaId];
             const parentRow = parentRowId ? state.layout[parentRowId] as AreaRowLayout : null;
 
+            console.log('[areaSlice] finalizeAreaPlacement - Rangée parent cible:', {
+                parentRowId,
+                hasParentRow: !!parentRow
+            });
+
             if (parentRow) {
                 const targetIndex = parentRow.areas.findIndex(a => a.id === targetAreaId);
                 if (targetIndex === -1) return;
 
+                console.log('[areaSlice] finalizeAreaPlacement - Index cible dans la rangée:', { targetIndex });
+
                 if (parentRow.orientation === orientation) {
+                    console.log('[areaSlice] finalizeAreaPlacement - Même orientation, ajout comme frère');
                     // Même orientation : ajouter comme sibling
                     const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
                     const newSize = totalSize / (parentRow.areas.length + 1);
@@ -939,37 +1158,23 @@ export const areaSlice = createSlice({
                         insertIndex += 1;
                     }
 
-                    // Si c'est un déplacement, on doit gérer différemment l'insertion
-                    if (sourceAreaId) {
-                        // S'assurer que la zone source existe dans le layout
-                        if (!state.layout[sourceAreaId]) {
-                            state.layout[sourceAreaId] = { type: "area", id: sourceAreaId };
-                        }
+                    console.log('[areaSlice] finalizeAreaPlacement - Insertion à l\'index:', { insertIndex });
 
-                        // On insère directement la zone existante
-                        parentRow.areas.splice(insertIndex, 0, {
-                            id: sourceAreaId,
-                            size: newSize
-                        });
+                    // Insérer la nouvelle area
+                    parentRow.areas.splice(insertIndex, 0, {
+                        id: newAreaId,
+                        size: newSize
+                    });
 
-                        // Redistribuer les tailles pour s'assurer qu'elles sont correctes
-                        const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
-                        if (Math.abs(totalSize - 1.0) > 0.001) {
-                            const factor = 1.0 / totalSize;
-                            parentRow.areas.forEach(area => {
-                                area.size = (area.size || 0) * factor;
-                            });
-                        }
-                    } else {
-                        // Pour une nouvelle zone
-                        parentRow.areas.splice(insertIndex, 0, {
-                            id: newAreaId,
-                            size: newSize
-                        });
-                        // Ajouter l'entrée de layout pour la nouvelle area
+                    // Ajouter l'area au layout si ce n'est pas un déplacement
+                    if (!sourceAreaId) {
+                        console.log('[areaSlice] finalizeAreaPlacement - Ajout au layout:', { newAreaId });
                         state.layout[newAreaId] = { type: "area", id: newAreaId };
+                    } else {
+                        console.log('[areaSlice] finalizeAreaPlacement - Utilisation de layout existant pour:', { sourceAreaId });
                     }
                 } else {
+                    console.log('[areaSlice] finalizeAreaPlacement - Orientation différente, création d\'une nouvelle rangée');
                     // Orientation différente : créer une nouvelle rangée
                     const newRowId = `row-${Date.now()}`;
                     const newRow: AreaRowLayout = {
@@ -987,9 +1192,15 @@ export const areaSlice = createSlice({
                             ]
                     };
 
+                    console.log('[areaSlice] finalizeAreaPlacement - Nouvelle rangée créée:', {
+                        newRowId,
+                        areas: newRow.areas.map(a => a.id)
+                    });
+
                     // Ajouter les nouvelles entrées dans le layout
                     state.layout[newRowId] = newRow;
                     if (!sourceAreaId) {
+                        console.log('[areaSlice] finalizeAreaPlacement - Ajout au layout (nouvelle rangée):', { newAreaId });
                         state.layout[newAreaId] = { type: "area", id: newAreaId };
                     }
 
@@ -998,8 +1209,14 @@ export const areaSlice = createSlice({
                         id: newRowId,
                         size: parentRow.areas[targetIndex].size
                     };
+
+                    console.log('[areaSlice] finalizeAreaPlacement - Référence remplacée dans le parent:', {
+                        targetIndex,
+                        newRowId
+                    });
                 }
             } else {
+                console.log('[areaSlice] finalizeAreaPlacement - La zone cible est la racine, création d\'une nouvelle rangée');
                 // La zone cible n'a pas de parent (c'est la racine)
                 const newRowId = `row-${Date.now()}`;
                 const newRow: AreaRowLayout = {
@@ -1017,18 +1234,58 @@ export const areaSlice = createSlice({
                         ]
                 };
 
+                console.log('[areaSlice] finalizeAreaPlacement - Nouvelle rangée racine créée:', {
+                    newRowId,
+                    areas: newRow.areas.map(a => a.id)
+                });
+
                 // Ajouter les nouvelles entrées dans le layout
                 state.layout[newRowId] = newRow;
                 if (!sourceAreaId) {
+                    console.log('[areaSlice] finalizeAreaPlacement - Ajout au layout (racine):', { newAreaId });
                     state.layout[newAreaId] = { type: "area", id: newAreaId };
                 }
 
                 // Mettre à jour le root
+                console.log('[areaSlice] finalizeAreaPlacement - Mise à jour du rootId:', {
+                    oldRootId: state.rootId,
+                    newRootId: newRowId
+                });
                 state.rootId = newRowId;
             }
 
             // Nettoyer les zones déconnectées à la fin
-            cleanDisconnectedAreas(state);
+            const disconnectedAreas = findDisconnectedAreas(state);
+            console.log('[areaSlice] finalizeAreaPlacement - Zones déconnectées (fin):', {
+                count: disconnectedAreas.size,
+                ids: Array.from(disconnectedAreas)
+            });
+
+            disconnectedAreas.forEach(id => {
+                console.log('[areaSlice] finalizeAreaPlacement - Suppression de zone déconnectée:', id);
+                delete state.layout[id];
+                delete state.areas[id];
+                if (state.viewports[id]) {
+                    delete state.viewports[id];
+                }
+            });
+            if (state.activeAreaId && disconnectedAreas.has(state.activeAreaId)) {
+                console.log('[areaSlice] finalizeAreaPlacement - Réinitialisation de activeAreaId');
+                state.activeAreaId = null;
+            }
+
+            // Vérification finale de l'état
+            console.log('[areaSlice] finalizeAreaPlacement - État final:', {
+                rootId: state.rootId,
+                areas: Object.keys(state.areas),
+                layout: Object.keys(state.layout)
+            });
+
+            // Nettoyage complet et validation de l'état
+            validateAndCleanLayout(state);
+
+            // Sauvegarder l'état pour assurer la persistance
+            localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
         clearAreaToOpen: (state) => {
             state.areaToOpen = null;
@@ -1139,6 +1396,175 @@ function cleanDisconnectedAreas(state: AreaState): void {
             state.activeAreaId = null;
         }
     }
+}
+
+// Fonction utilitaire pour trouver les zones déconnectées
+function findDisconnectedAreas(state: AreaState): Set<string> {
+    const connectedAreas = new Set<string>();
+    const toVisit = new Set<string>();
+
+    // Commencer par la racine
+    if (state.rootId) {
+        toVisit.add(state.rootId);
+    }
+
+    // Parcourir le layout pour trouver toutes les zones connectées
+    while (toVisit.size > 0) {
+        const currentId = Array.from(toVisit)[0];
+        toVisit.delete(currentId);
+        connectedAreas.add(currentId);
+
+        const layout = state.layout[currentId];
+        if (layout && layout.type === "area_row") {
+            layout.areas.forEach(area => {
+                if (!connectedAreas.has(area.id)) {
+                    toVisit.add(area.id);
+                }
+            });
+        }
+    }
+
+    // Retourner toutes les zones qui ne sont pas connectées
+    const allAreas = new Set(Object.keys(state.areas));
+    const disconnected = new Set<string>();
+    allAreas.forEach(id => {
+        if (!connectedAreas.has(id)) {
+            disconnected.add(id);
+        }
+    });
+
+    return disconnected;
+}
+
+// Ajouter cette fonction après findDisconnectedAreas
+function validateAndCleanLayout(state: AreaState): void {
+    console.log('[areaSlice] validateAndCleanLayout - Début du nettoyage complet du layout');
+
+    // S'assurer que le rootId existe et est valide
+    if (!state.rootId || !state.layout[state.rootId]) {
+        console.error('[areaSlice] validateAndCleanLayout - rootId invalide ou manquant');
+        // Si rootId n'existe pas, on réinitialise tout
+        state.layout = {};
+        state.areas = {};
+        state.viewports = {};
+        state.rootId = null;
+        state.activeAreaId = null;
+        return;
+    }
+
+    // 1. Trouver toutes les zones connectées à partir de la racine
+    const connectedIds = findConnectedIds(state.layout, state.rootId);
+    console.log(`[areaSlice] validateAndCleanLayout - Zones connectées: ${Array.from(connectedIds).join(', ')}`);
+
+    // 2. Supprimer toutes les zones non connectées
+    const idsToRemove: string[] = [];
+
+    // Zones dans le layout mais non connectées
+    Object.keys(state.layout).forEach(id => {
+        if (!connectedIds.has(id)) {
+            idsToRemove.push(id);
+        }
+    });
+
+    // Zones dans areas mais non connectées
+    Object.keys(state.areas).forEach(id => {
+        if (!connectedIds.has(id)) {
+            idsToRemove.push(id);
+        }
+    });
+
+    // Supprimer les doublons
+    const uniqueIdsToRemove = [...new Set(idsToRemove)];
+
+    if (uniqueIdsToRemove.length > 0) {
+        console.log(`[areaSlice] validateAndCleanLayout - Suppression de zones non connectées: ${uniqueIdsToRemove.join(', ')}`);
+
+        // Supprimer les zones non connectées
+        uniqueIdsToRemove.forEach(id => {
+            if (state.layout[id]) delete state.layout[id];
+            if (state.areas[id]) delete state.areas[id];
+            if (state.viewports[id]) delete state.viewports[id];
+        });
+
+        // Réinitialiser activeAreaId si nécessaire
+        if (state.activeAreaId && uniqueIdsToRemove.includes(state.activeAreaId)) {
+            state.activeAreaId = null;
+        }
+    }
+
+    // 3. Vérifier et corriger les références dans les rangées
+    let referencesFixed = false;
+    Object.entries(state.layout).forEach(([id, layoutItem]) => {
+        if (layoutItem.type === 'area_row') {
+            const rowLayout = layoutItem as AreaRowLayout;
+
+            // Filtrer les références invalides
+            const originalLength = rowLayout.areas.length;
+            rowLayout.areas = rowLayout.areas.filter(area => {
+                const isValid = connectedIds.has(area.id);
+                if (!isValid) {
+                    console.log(`[areaSlice] validateAndCleanLayout - Suppression de référence invalide ${area.id} dans la rangée ${id}`);
+                }
+                return isValid;
+            });
+
+            // Si des références ont été supprimées
+            if (rowLayout.areas.length !== originalLength) {
+                referencesFixed = true;
+
+                // S'il ne reste plus de zones dans la rangée, elle sera supprimée au prochain nettoyage
+                if (rowLayout.areas.length === 0) {
+                    console.log(`[areaSlice] validateAndCleanLayout - Rangée ${id} vide, sera supprimée`);
+                } else {
+                    // Normaliser les tailles
+                    const totalSize = rowLayout.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                    if (totalSize > 0) {
+                        const factor = 1.0 / totalSize;
+                        rowLayout.areas.forEach(area => {
+                            area.size = (area.size || 0) * factor;
+                        });
+                        console.log(`[areaSlice] validateAndCleanLayout - Normalisation des tailles dans la rangée ${id}`);
+                    }
+                }
+            }
+        }
+    });
+
+    // 4. Si des références ont été corrigées, relancer la validation pour traiter les cascades
+    if (referencesFixed) {
+        console.log('[areaSlice] validateAndCleanLayout - Références corrigées, second nettoyage');
+        validateAndCleanLayout(state);
+        return;
+    }
+
+    // 5. Supprimer explicitement toutes les rangées vides qui pourraient rester
+    const emptyRowsToRemove: string[] = [];
+    Object.entries(state.layout).forEach(([id, layoutItem]) => {
+        if (layoutItem.type === 'area_row') {
+            const rowLayout = layoutItem as AreaRowLayout;
+            if (!rowLayout.areas || rowLayout.areas.length === 0) {
+                console.log(`[areaSlice] validateAndCleanLayout - Suppression explicite de la rangée vide: ${id}`);
+                emptyRowsToRemove.push(id);
+            }
+        }
+    });
+
+    // Supprimer les rangées vides
+    if (emptyRowsToRemove.length > 0) {
+        emptyRowsToRemove.forEach(id => {
+            delete state.layout[id];
+            if (state.viewports[id]) {
+                delete state.viewports[id];
+            }
+        });
+
+        // Après avoir supprimé des rangées vides, vérifier si d'autres références doivent être nettoyées
+        console.log('[areaSlice] validateAndCleanLayout - Rangées vides supprimées, vérification supplémentaire');
+        validateAndCleanLayout(state);
+        return;
+    }
+
+    console.log('[areaSlice] validateAndCleanLayout - Fin du nettoyage, état propre');
 }
 
 export default areaSlice.reducer; 

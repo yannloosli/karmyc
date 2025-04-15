@@ -182,8 +182,38 @@ export const computeAreaToViewport = (
     }
 
     function computeRow(row: AreaRowLayout, contentArea: { left: number; top: number; width: number; height: number }) {
-        if (!row || !contentArea || !row.areas || row.areas.length === 0) {
+        if (!row || !contentArea) {
             console.error("Invalid row or contentArea in computeRow", { row, contentArea });
+            return;
+        }
+
+        // Vérification supplémentaire pour s'assurer que le row a un ID valide
+        if (!row.id) {
+            console.error("Row without ID in computeRow", row);
+            return;
+        }
+
+        // Vérification supplémentaire pour les areas
+        if (!row.areas || !Array.isArray(row.areas)) {
+            console.error("Row without proper areas array in computeRow", { rowId: row.id, areas: row.areas });
+            row.areas = []; // Initialiser avec un tableau vide pour éviter les erreurs en aval
+        }
+
+        // Vérifier que la taille du contentArea est valide
+        if (contentArea.width <= 0 || contentArea.height <= 0) {
+            console.error("ContentArea with invalid dimensions in computeRow", { rowId: row.id, contentArea });
+            // Utiliser une taille minimale pour éviter les erreurs en aval
+            contentArea = {
+                ...contentArea,
+                width: Math.max(contentArea.width, 200),
+                height: Math.max(contentArea.height, 200)
+            };
+        }
+
+        // Si après les corrections, il n'y a toujours pas d'areas, on arrête ici mais sans erreur
+        if (row.areas.length === 0) {
+            console.warn("Row with empty areas array in computeRow, skipping", { rowId: row.id });
+            areaToViewport[row.id] = { ...contentArea }; // Ajouter quand même le viewport pour la rangée
             return;
         }
 

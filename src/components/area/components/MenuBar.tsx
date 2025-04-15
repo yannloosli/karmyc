@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { TOOLBAR_HEIGHT } from '~/constants';
 import { areaSlice, finalizeAreaPlacement, updateAreaToOpenPosition } from '~/store/slices/areaSlice';
@@ -6,6 +6,8 @@ import { computeAreaToViewport } from '~/utils/areaToViewport';
 import { getHoveredAreaId } from '~/utils/areaUtils';
 import { getAreaRootViewport } from '~/utils/getAreaViewport';
 import { Vec2 } from '~/utils/math/vec2';
+import { requestAction } from '~/utils/requestAction';
+import { getActionState } from '~/utils/stateUtils';
 import { compileStylesheetLabelled } from '~/utils/stylesheets';
 
 // Type pour identifier un composant de manière unique
@@ -110,8 +112,31 @@ export const MenuBar: React.FC<{
     const components = getComponents();
     const dispatch = useDispatch();
     const dragRef = useRef<{ startX: number; startY: number } | null>(null);
-    const lastUpdateRef = useRef<number>(0);
-    const UPDATE_INTERVAL = 16; // ~60fps
+    const rafRef = useRef<number | undefined>(undefined);
+    const isUpdatingRef = useRef<boolean>(false);
+
+    const updatePosition = useCallback((x: number, y: number) => {
+        if (!dragRef.current || isUpdatingRef.current) return;
+        isUpdatingRef.current = true;
+
+        rafRef.current = requestAnimationFrame(() => {
+            if (!dragRef.current) return;
+            const position = {
+                x: x - dragRef.current.startX,
+                y: y - dragRef.current.startY
+            };
+            dispatch(updateAreaToOpenPosition(position));
+            isUpdatingRef.current = false;
+        });
+    }, [dispatch]);
+
+    useEffect(() => {
+        return () => {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+        };
+    }, []);
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -122,15 +147,17 @@ export const MenuBar: React.FC<{
 
         // Créer une image de drag invisible
         const dragImage = document.createElement('div');
-        dragImage.style.width = '1px';
-        dragImage.style.height = '1px';
-        dragImage.style.position = 'fixed';
-        dragImage.style.top = '-1px';
-        dragImage.style.left = '-1px';
-        dragImage.style.opacity = '0.01';
+        dragImage.style.cssText = `
+            width: 1px;
+            height: 1px;
+            position: fixed;
+            top: -1px;
+            left: -1px;
+            opacity: 0.01;
+            pointer-events: none;
+        `;
         document.body.appendChild(dragImage);
 
-        // Configurer l'effet de drag
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', JSON.stringify({
             type: 'menubar',
@@ -139,29 +166,17 @@ export const MenuBar: React.FC<{
         }));
         e.dataTransfer.setDragImage(dragImage, 0, 0);
 
-        // Nettoyer l'image de drag après un court délai
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             document.body.removeChild(dragImage);
-        }, 0);
+        });
     }, [areaType, areaId]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-
-        if (!dragRef.current) return;
-
-        const now = performance.now();
-        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
-            const position = {
-                x: e.clientX - dragRef.current.startX,
-                y: e.clientY - dragRef.current.startY
-            };
-            dispatch(updateAreaToOpenPosition(position));
-            lastUpdateRef.current = now;
-        }
-    }, [dispatch]);
+        updatePosition(e.clientX, e.clientY);
+    }, [updatePosition]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -172,45 +187,68 @@ export const MenuBar: React.FC<{
         const data = JSON.parse(e.dataTransfer.getData('text/plain'));
         if (data.type !== 'menubar') return;
 
-        // Calculer la position finale
-        const position = {
-            x: e.clientX - dragRef.current.startX,
-            y: e.clientY - dragRef.current.startY
-        };
+        requestAction({}, (params) => {
+            try {
+                // Calculer la position finale
+                const position = {
+                    x: e.clientX - dragRef.current!.startX,
+                    y: e.clientY - dragRef.current!.startY
+                };
 
-        // Récupérer l'ID de la zone cible
-        const areaToViewport = computeAreaToViewport(
-            areaState.layout,
-            areaState.rootId || '',
-            getAreaRootViewport()
-        );
-        const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), areaState, areaToViewport);
+                // Récupérer l'ID de la zone cible
+                const currentState = getActionState().area;
+                const areaToViewport = computeAreaToViewport(
+                    currentState.layout,
+                    currentState.rootId || '',
+                    getAreaRootViewport()
+                );
+                const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), currentState, areaToViewport);
 
-        if (targetAreaId && targetAreaId !== areaId) {
-            // Si on a une zone cible différente, on déplace la barre de menu
-            const targetViewport = areaToViewport[targetAreaId];
-            if (targetViewport) {
-                // Calculer les nouvelles tailles pour les zones siblings
-                const parentRow = areaState.layout[targetAreaId];
-                if (parentRow && parentRow.type === 'area_row') {
-                    const totalSize = parentRow.areas.reduce((acc: number, area: any) => acc + area.size, 0);
-                    const newSize = totalSize / (parentRow.areas.length + 1);
+                if (targetAreaId && targetAreaId !== areaId) {
+                    // Si on a une zone cible différente, on déplace la barre de menu
+                    const targetViewport = areaToViewport[targetAreaId];
+                    if (targetViewport) {
+                        // Calculer les nouvelles tailles pour les zones siblings
+                        const parentRow = currentState.layout[targetAreaId];
+                        if (parentRow && parentRow.type === 'area_row') {
+                            const totalSize = parentRow.areas.reduce((acc: number, area: any) => acc + area.size, 0);
+                            const newSize = totalSize / (parentRow.areas.length + 1);
 
-                    // Mettre à jour les tailles des zones existantes
-                    const newSizes = parentRow.areas.map((area: any) => area.size * (1 - newSize / totalSize));
-                    newSizes.push(newSize);
+                            // Mettre à jour les tailles des zones existantes
+                            const newSizes = parentRow.areas.map((area: any) => area.size * (1 - newSize / totalSize));
+                            newSizes.push(newSize);
 
-                    // Mettre à jour le layout
-                    dispatch(areaSlice.actions.setRowSizes({
-                        rowId: parentRow.id,
-                        sizes: newSizes
-                    }));
+                            // Mettre à jour le layout
+                            params.dispatch(areaSlice.actions.setRowSizes({
+                                rowId: parentRow.id,
+                                sizes: newSizes
+                            }));
+                        }
+                    }
                 }
-            }
-        }
 
-        // Finaliser le placement de la zone
-        dispatch(finalizeAreaPlacement());
+                // Finaliser le placement de la zone
+                params.dispatch(finalizeAreaPlacement());
+
+                // Nettoyer les états temporaires
+                params.dispatch(areaSlice.actions.cleanupTemporaryStates());
+
+                // Mettre à jour les viewports
+                const viewports = computeAreaToViewport(
+                    getActionState().area.layout,
+                    getActionState().area.rootId || '',
+                    getAreaRootViewport()
+                );
+                params.dispatch(areaSlice.actions.setViewports({ viewports }));
+
+                params.submitAction("Move menubar");
+            } catch (error) {
+                console.error('Error during menubar drop:', error);
+                params.dispatch(areaSlice.actions.cleanupTemporaryStates());
+                params.cancelAction();
+            }
+        });
+
         dragRef.current = null;
     }, [dispatch, areaId, areaState]);
 

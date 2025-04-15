@@ -12,7 +12,7 @@ const useAreaDragAndDrop = () => {
     const areaState = useSelector((state: RootState) => state.area);
     const dragRef = useRef<{ startX: number; startY: number; sourceId: string | null } | null>(null);
     const lastUpdateRef = useRef<number>(0);
-    const UPDATE_INTERVAL = 16; // ~60fps
+    const UPDATE_INTERVAL = 32; // Réduire à 30fps
 
     // Calculer areaToViewport à partir du layout et des viewports
     const areaToViewport = React.useMemo(() => {
@@ -51,13 +51,10 @@ const useAreaDragAndDrop = () => {
         e.dataTransfer.setData('text/plain', sourceId);
         e.dataTransfer.setDragImage(dragImage, 0, 0);
 
-        // Initialiser areaToOpen
-        const position = {
-            x: e.clientX - dragRef.current.startX,
-            y: e.clientY - dragRef.current.startY
-        };
+        // Initialiser areaToOpen directement avec la position du curseur
+        // pour que l'aperçu soit centré dès le départ sur la souris
         dispatch(setAreaToOpen({
-            position,
+            position: { x: e.clientX, y: e.clientY },
             area: {
                 type: 'image-viewer',
                 state: { sourceId }
@@ -82,8 +79,8 @@ const useAreaDragAndDrop = () => {
         const now = performance.now();
         if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
             const position = {
-                x: e.clientX - dragRef.current.startX,
-                y: e.clientY - dragRef.current.startY
+                x: e.clientX,
+                y: e.clientY
             };
             dispatch(updateAreaToOpenPosition(position));
             lastUpdateRef.current = now;
@@ -111,8 +108,8 @@ const useAreaDragAndDrop = () => {
         if (!dragRef.current) return;
 
         const position = {
-            x: e.clientX - dragRef.current.startX,
-            y: e.clientY - dragRef.current.startY
+            x: e.clientX,
+            y: e.clientY
         };
 
         const positionVec2 = Vec2.new(position.x, position.y);

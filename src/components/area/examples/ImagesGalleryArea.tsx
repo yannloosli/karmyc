@@ -137,7 +137,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
     const dragRef = useRef<{ startX: number; startY: number; image: ImageData | null } | null>(null);
     const lastUpdateRef = useRef<number>(0);
-    const UPDATE_INTERVAL = 16; // ~60fps
+    const UPDATE_INTERVAL = 32; // Réduire à 30fps
 
     // S'assurer que les propriétés existent
     const images = state?.images || [];

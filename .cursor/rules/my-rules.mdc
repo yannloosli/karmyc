@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- always use YARN
+- always ask user for more precision if only log in input

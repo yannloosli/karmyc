@@ -168,10 +168,46 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     );
 };
 
-const mapStateToProps = (state: any, ownProps: OwnProps): StateProps => {
-    const area = state.area.areas[ownProps.id];
+export const Area: React.FC<OwnProps> = (props) => {
+    const areaState = useSelector((state: RootState) => {
+        if (!state?.area) return null;
+        return {
+            areas: state.area.areas || {},
+            layout: state.area.layout || {},
+            rootId: state.area.rootId,
+            activeAreaId: state.area.activeAreaId
+        };
+    }, (prev, next) => {
+        if (!prev || !next) return false;
+        return (
+            prev.rootId === next.rootId &&
+            prev.activeAreaId === next.activeAreaId &&
+            prev.areas === next.areas &&
+            prev.layout === next.layout
+        );
+    });
 
-    // Vérifier si l'area existe
+    if (!areaState) {
+        console.warn('Area state is not available');
+        return null;
+    }
+
+    const stateProps = mapStateToProps(areaState, props);
+    return <AreaComponent {...props} {...stateProps} />;
+};
+
+const mapStateToProps = (state: any, ownProps: OwnProps): StateProps => {
+    if (!state?.areas) {
+        console.warn(`Area state is not available for area ${ownProps.id}`);
+        return {
+            state: {},
+            type: 'unknown',
+            raised: false,
+            Component: () => <div>Area not found</div>
+        };
+    }
+
+    const area = state.areas[ownProps.id];
     if (!area) {
         console.warn(`Area ${ownProps.id} not found in state`);
         return {
@@ -201,10 +237,4 @@ const mapStateToProps = (state: any, ownProps: OwnProps): StateProps => {
         raised: !!area.raised,
         Component,
     };
-};
-
-export const Area: React.FC<OwnProps> = (props) => {
-    const state = useSelector((state: RootState) => state);
-    const stateProps = mapStateToProps(state, props);
-    return <AreaComponent {...props} {...stateProps} />;
 }; 
