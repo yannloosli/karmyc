@@ -1,9 +1,26 @@
 {
+    "name": "@gamesberry/karmyc-core",
     "version": "0.0.1",
+    "description": "Modular React library for creating customizable interfaces with drag-and-drop functionality",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gamesberry/karmyc-core.git"
+    },
+    "homepage": "https://github.com/gamesberry/karmyc-core#readme",
+    "bugs": {
+        "url": "https://github.com/gamesberry/karmyc-core/issues"
+    },
     "scripts": {
         "dev": "vite",
         "build": "vite build",
         "bundle": "rollup -c",
+        "prepublishOnly": "yarn bundle",
         "tscheck": "tsc --noEmit --skipLibCheck",
         "test": "jest",
         "lint": "eslint . --ext .ts,.tsx",
@@ -25,7 +42,6 @@
         "@pixi/unsafe-eval": "^7.0.0",
         "@reduxjs/toolkit": "^2.6.1",
         "@types/svg-parser": "^2.0.1",
-        "@typescript-eslint/parser": "^7.0.0",
         "bezier-easing": "^2.1.0",
         "bezier-js": "^4.0.3",
         "css": "^3.0.0",
@@ -36,8 +52,6 @@
         "mathjs": "^12.0.0",
         "pixi.js": "^7.0.0",
         "prettier": "^3.5.3",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
         "react-error-boundary": "^5.0.0",
         "react-redux": "^9.0.0",
         "redux-persist": "^6.0.0",
@@ -48,7 +62,8 @@
         "svg-parser": "^2.0.4",
         "svg-path-parser": "^1.1.0",
         "svgpath": "^2.3.0",
-        "uuid": "^11.1.0"
+        "uuid": "^11.1.0",
+        "zustand": "^5.0.3"
     },
     "devDependencies": {
         "@testing-library/react-hooks": "^8.0.1",
@@ -59,14 +74,15 @@
         "@types/lodash": "^4.17.16",
         "@types/mathjs": "^9.4.2",
         "@types/node": "^22.13.9",
-        "@types/react": "^19.0.0",
-        "@types/react-dom": "^19.0.0",
+        "@types/react": "^18.2.0",
+        "@types/react-dom": "^18.2.0",
         "@types/react-redux": "^7.1.25",
         "@types/redux-logger": "^3.0.7",
         "@types/shortid": "^0.0.29",
         "@types/svg-path-parser": "^1.1.0",
         "@types/uuid": "^9.0.0",
         "@typescript-eslint/eslint-plugin": "^7.0.0",
+        "@typescript-eslint/parser": "^7.0.0",
         "@vitejs/plugin-react": "^4.3.4",
         "eslint": "^8.0.0",
         "eslint-config-airbnb-typescript": "^17.0.0",
@@ -81,9 +97,9 @@
         "vite": "^5.0.0"
     },
     "peerDependencies": {
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "react-redux": "^7.0.0 || ^8.0.0",
+        "react": "^18.2.0 || ^19.0.0",
+        "react-dom": "^18.2.0 || ^19.0.0",
+        "react-redux": "^9.0.0",
         "redux": "^4.0.0"
     },
     "publishConfig": {
@@ -94,6 +110,8 @@
         "layout",
         "modular",
         "drag-and-drop",
-        "customizable"
+        "customizable",
+        "blender",
+        "karmyc"
     ]
 }

@@ -1,107 +1,65 @@
-# Documentation du Système de Layout Modulaire
+# Karmyc Documentation
 
-Bienvenue dans la documentation du système de layout modulaire, un outil puissant pour créer des interfaces utilisateur flexibles avec des zones redimensionnables et personnalisables.
+Welcome to the Karmyc documentation. This guide will help you understand and use Karmyc to build flexible, modular layouts for your React applications.
 
-## Table des matières
+> **Note:** Documentation updated and verified for code consistency on July 2023.
+
+## Best Practices
+
+- **Imports**: Always import components, hooks and utilities from the main entry point (`import { useKarmyc } from '@gamesberry/karmyc-core'`) rather than from internal implementation files.
+- **Component Structure**: Follow the component patterns shown in examples, registering area types before using them.
+- **State Management**: Use the provided hooks rather than direct store access for best results.
+
+## Table of Contents
 
 ### Guides
 
-- [Guide de démarrage](./guides/getting-started.md) - Configuration initiale du système
-- [Création de zones personnalisées](./guides/custom-areas.md) - Création de zones avancées
-- [Utilisation des menus contextuels](./guides/context-menus.md) - Configuration des menus contextuels
-- [Configuration des raccourcis clavier](./guides/keyboard-shortcuts.md) - Ajout de raccourcis clavier
-- [Optimisation des performances](./guides/optimizations.md) - Amélioration des performances
+- [Getting Started](./guides/getting-started.md) - Initial setup of the system
+- [Creating Custom Areas](./guides/custom-areas.md) - Building advanced custom areas
+- [Optimizations](./guides/optimizations.md) - Performance improvement tips
+- [Context Menus](./guides/context-menus.md) - Working with context menus
+- [Drag and Drop](./guides/drag-and-drop.md) - Implementing drag and drop
+- [Keyboard Shortcuts](./guides/keyboard-shortcuts.md) - Adding keyboard shortcuts
+- [Notifications](./guides/notifications.md) - Using the notification system
+- [Plugins](./guides/plugins.md) - Extending functionality with plugins
+- [Performance Monitoring](./guides/performance.md) - Tracking and optimizing performance
 
 ### API
 
-- [Composants](./api/components.md) - Documentation des composants principaux
-- [Hooks](./api/hooks.md) - Documentation des hooks React
-- [Intégration React](./api/integration.md) - Guide d'intégration avec React
+- [Components](./api/components.md) - Core components documentation
+- [Hooks](./api/hooks.md) - React hooks documentation
+- [Integration](./api/integration.md) - Guide for React integration
 
 ### Architecture
 
-- [Store Redux](./architecture/store.md) - Structure du store global
-- [Système d'actions](./architecture/actions.md) - Architecture du système d'actions
-- [Transitions d'état](./architecture/state-transitions.md) - Gestion des transitions d'état
+- [Redux Store](./architecture/store.md) - Global store structure
+- [Action System](./architecture/actions.md) - Action system architecture
+- [State Transitions](./architecture/state-transitions.md) - State transition management
+- [Project Structure](./architecture/project-structure.md) - Organization of files and directories
 
-## Vue d'ensemble
+## Overview
 
-Le système de layout modulaire permet de créer des interfaces divisées en zones redimensionnables et personnalisables. Il a été conçu pour être :
+Karmyc is a modular layout system that allows you to create interfaces divided into resizable and customizable areas. It was designed to be:
 
-- **Flexible** : Créez n'importe quel type de zone avec votre propre logique de rendu
-- **Performant** : Rendu optimisé et état géré efficacement
-- **Maintenable** : Architecture modulaire et extensible
-- **Robuste** : Système d'historique (undo/redo) intégré
+- **Flexible**: Create any type of area with your own rendering logic
+- **Performant**: Optimized rendering and efficient state management
+- **Maintainable**: Modular and extensible architecture
+- **Robust**: Built-in history system (undo/redo)
 
-## Principales fonctionnalités
+## Main Features
 
-- **Zones redimensionnables** : Créez des zones que l'utilisateur peut redimensionner
-- **Menus contextuels** : Configurez des menus contextuels pour les zones
-- **Raccourcis clavier** : Définissez des raccourcis clavier spécifiques à chaque type de zone
-- **Gestion d'état** : Stockez l'état de chaque zone et synchronisez-le
-- **Historique** : Annulez et rétablissez les modifications
-- **Événements** : Communication entre les zones via un système d'événements
+- **Resizable Areas**: Create areas that users can resize
+- **Context Menus**: Configure context menus for areas
+- **Keyboard Shortcuts**: Define keyboard shortcuts specific to each area type
+- **State Management**: Store each area's state and synchronize it
+- **History**: Undo and redo changes
+- **Events**: Communication between areas via an event system
+- **Notifications**: Display feedback to users with a notification system
+- **Plugins**: Extend functionality with the plugin system
+- **Performance Monitoring**: Track and optimize application performance
 
-## Installation
+## Next Steps
 
-```bash
-npm install @karmyc
-# ou
-yarn add @karmyc
-```
-
-## Exemple simple
-
-```tsx
-import React from 'react';
-import { 
-  KarmycProvider, 
-  AreaRoot, 
-  useRegisterAreaType, 
-  useArea,
-  AreaComponentProps 
-} from '@karmyc';
-
-// Définir un composant pour une zone
-const MyCustomArea: React.FC<AreaComponentProps<{ content: string }>> = ({
-  width, height, left, top, areaState
-}) => (
-  <div style={{ position: 'absolute', left, top, width, height, background: '#f0f0f0', padding: '16px' }}>
-    <h2>Zone personnalisée</h2>
-    <p>{areaState.content}</p>
-  </div>
-);
-
-// Composant d'application
-function App() {
-  // Enregistrer le type de zone
-  useRegisterAreaType('custom', MyCustomArea, { content: 'Contenu initial' });
-  
-  // Utiliser le hook pour créer des zones
-  const { createArea } = useArea();
-  
-  return (
-    <div>
-      <button onClick={() => createArea('custom', { content: 'Nouvelle zone' })}>
-        Créer une zone
-      </button>
-      <AreaRoot />
-    </div>
-  );
-}
-
-// Point d'entrée principal
-export default function Root() {
-  return (
-    <KarmycProvider>
-      <App />
-    </KarmycProvider>
-  );
-}
-```
-
-## Prochaines étapes
-
-1. Consultez le [guide de démarrage](./guides/getting-started.md) pour configurer le système
-2. Explorez les [hooks d'API](./api/hooks.md) pour comprendre les fonctionnalités disponibles
-3. Apprenez à [créer des zones personnalisées](./guides/custom-areas.md) avancées 
+1. Check the [Getting Started](./guides/getting-started.md) guide to set up the system
+2. Explore the [API Hooks](./api/hooks.md) to understand available functionality
+3. Learn how to [Create Custom Areas](./guides/custom-areas.md) 

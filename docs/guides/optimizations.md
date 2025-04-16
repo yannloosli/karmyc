@@ -1,21 +1,21 @@
-# Optimisations et Gestion des Erreurs
+# Optimizations and Error Handling
 
-## Sélecteurs Mémorisés
+## Memoized Selectors
 
-### Vue d'ensemble
+### Overview
 
-Les sélecteurs mémorisés sont utilisés pour optimiser les performances en évitant les calculs inutiles. Ils ne sont recalculés que lorsque leurs dépendances changent.
+Memoized selectors are used to optimize performance by avoiding unnecessary calculations. They are only recalculated when their dependencies change.
 
-### Types de Sélecteurs
+### Types of Selectors
 
-1. **Sélecteurs de Base**
+1. **Basic Selectors**
    ```typescript
    const selectState = (state: RootState) => state.state;
    const selectDiff = (state: RootState) => state.diff;
    const selectToolbar = (state: RootState) => state.toolbar;
    ```
 
-2. **Sélecteurs d'État**
+2. **State Selectors**
    ```typescript
    export const selectStates = createSelector(
      selectState,
@@ -28,7 +28,7 @@ Les sélecteurs mémorisés sont utilisés pour optimiser les performances en é
    );
    ```
 
-3. **Sélecteurs de Diff**
+3. **Diff Selectors**
    ```typescript
    export const selectDiffs = createSelector(
      selectDiff,
@@ -41,7 +41,7 @@ Les sélecteurs mémorisés sont utilisés pour optimiser les performances en é
    );
    ```
 
-4. **Sélecteurs Composites**
+4. **Composite Selectors**
    ```typescript
    export const selectStateWithDiffs = createSelector(
      [selectStateById, selectDiffs],
@@ -52,26 +52,26 @@ Les sélecteurs mémorisés sont utilisés pour optimiser les performances en é
    );
    ```
 
-### Bonnes Pratiques
+### Best Practices
 
 1. **Composition**
-   - Utiliser des sélecteurs de base pour les données simples
-   - Composer des sélecteurs complexes à partir des sélecteurs de base
-   - Éviter les calculs redondants
+   - Use basic selectors for simple data
+   - Compose complex selectors from basic selectors
+   - Avoid redundant calculations
 
 2. **Performance**
-   - Minimiser le nombre de dépendances
-   - Éviter les transformations de données complexes
-   - Utiliser des sélecteurs spécifiques plutôt que génériques
+   - Minimize the number of dependencies
+   - Avoid complex data transformations
+   - Use specific selectors rather than generic ones
 
 3. **Maintenance**
-   - Nommer les sélecteurs de manière descriptive
-   - Documenter les dépendances
-   - Tester les sélecteurs individuellement
+   - Name selectors descriptively
+   - Document dependencies
+   - Test selectors individually
 
-## Gestion des Erreurs
+## Error Handling
 
-### Types d'Erreurs
+### Error Types
 
 ```typescript
 export enum ErrorType {
@@ -83,7 +83,7 @@ export enum ErrorType {
 }
 ```
 
-### Structure des Erreurs
+### Error Structure
 
 ```typescript
 interface IError {
@@ -96,70 +96,70 @@ interface IError {
 }
 ```
 
-### Utilisation
+### Usage
 
-1. **Création d'Erreurs**
+1. **Creating Errors**
    ```typescript
-   // Erreur de validation
+   // Validation error
    errorUtils.createValidationError(
-     'Données invalides',
+     'Invalid data',
      { field: 'name', value: '' }
    );
 
-   // Erreur de transition
+   // Transition error
    errorUtils.createTransitionError(
-     'Transition impossible',
+     'Transition not possible',
      action,
      { from: 'draft', to: 'review' }
    );
    ```
 
-2. **Gestion des Erreurs**
+2. **Error Management**
    ```typescript
    const errorHandler = ErrorHandler.getInstance();
 
-   // Ajouter un écouteur
+   // Add a listener
    const unsubscribe = errorHandler.addListener(error => {
      console.error(error);
    });
 
-   // Obtenir les erreurs récentes
+   // Get recent errors
    const recentErrors = errorHandler.getRecentErrors(5);
    ```
 
-3. **Middleware d'Erreurs**
+3. **Error Middleware**
    ```typescript
    export const errorMiddleware = () => (next: any) => (action: AnyAction) => {
      try {
        return next(action);
      } catch (error) {
        const errorHandler = ErrorHandler.getInstance();
-       // Gérer l'erreur...
+       // Handle error...
        throw error;
      }
    };
    ```
 
-### Bonnes Pratiques
+### Best Practices
 
-1. **Création d'Erreurs**
-   - Utiliser des messages d'erreur descriptifs
-   - Inclure des détails pertinents
-   - Associer les erreurs aux actions
+1. **Error Creation**
+   - Use descriptive error messages
+   - Include relevant details
+   - Associate errors with actions
 
-2. **Gestion**
-   - Centraliser la gestion des erreurs
-   - Implémenter des écouteurs pour le logging
-   - Nettoyer les erreurs obsolètes
+2. **Management**
+   - Centralize error handling
+   - Implement listeners for logging
+   - Clean up obsolete errors
 
-3. **Récupération**
-   - Fournir des informations de débogage
-   - Permettre la récupération des erreurs
-   - Maintenir un historique des erreurs
+3. **Recovery**
+   - Provide debugging information
+   - Enable error recovery
+   - Maintain an error history
 
-## Exemples d'Utilisation
+## Usage Examples
 
-### Composant avec Sélecteurs
+### Component with Selectors
 
 ```typescript
 function StateViewer({ id }: { id: string }) {
@@ -167,7 +167,7 @@ function StateViewer({ id }: { id: string }) {
   const validation = useSelector(selectStateValidation(id));
   const metrics = useSelector(selectStateMetrics(id));
 
-  if (!state) return <div>État non trouvé</div>;
+  if (!state) return <div>State not found</div>;
 
   return (
     <div>
@@ -180,15 +180,15 @@ function StateViewer({ id }: { id: string }) {
         </div>
       )}
       <div className="metrics">
-        <div>Âge: {metrics.age}ms</div>
-        <div>Mises à jour: {metrics.updateCount}</div>
+        <div>Age: {metrics.age}ms</div>
+        <div>Updates: {metrics.updateCount}</div>
       </div>
     </div>
   );
 }
 ```
 
-### Gestion des Erreurs dans un Composant
+### Error Handling in a Component
 
 ```typescript
 function StateTransition({ id, transition }: { id: string; transition: string }) {
@@ -198,7 +198,7 @@ function StateTransition({ id, transition }: { id: string; transition: string })
   useEffect(() => {
     const unsubscribe = errorHandler.addListener(error => {
       if (error.type === ErrorType.TRANSITION) {
-        // Afficher une notification
+        // Show notification
         showNotification(error.message, 'error');
       }
     });
@@ -210,7 +210,7 @@ function StateTransition({ id, transition }: { id: string; transition: string })
     try {
       dispatch(transitionState({ id, transition }));
     } catch (error) {
-      // L'erreur sera gérée par le middleware
+      // Error will be handled by middleware
     }
   };
 
@@ -218,28 +218,28 @@ function StateTransition({ id, transition }: { id: string; transition: string })
 }
 ```
 
-## Performance et Monitoring
+## Performance and Monitoring
 
-### Mesures de Performance
+### Performance Metrics
 
-1. **Sélecteurs**
-   - Temps d'exécution
-   - Nombre de recalculs
-   - Taille des résultats
+1. **Selectors**
+   - Execution time
+   - Number of recalculations
+   - Result size
 
-2. **Erreurs**
-   - Taux d'erreurs par type
-   - Temps de résolution
-   - Impact sur l'interface
+2. **Errors**
+   - Error rate by type
+   - Resolution time
+   - Interface impact
 
-### Outils de Monitoring
+### Monitoring Tools
 
 1. **Redux DevTools**
-   - Suivi des actions
-   - Inspection de l'état
-   - Profilage des sélecteurs
+   - Action tracking
+   - State inspection
+   - Selector profiling
 
 2. **Logging**
-   - Erreurs système
-   - Performance des sélecteurs
-   - Utilisation mémoire 
+   - System errors
+   - Selector performance
+   - Memory usage 

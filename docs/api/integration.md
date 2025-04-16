@@ -1,8 +1,8 @@
-# Intégration avec React
+# React Integration
 
-## Utilisation des Sélecteurs
+## Using Selectors
 
-### Hooks Personnalisés
+### Custom Hooks
 
 ```typescript
 // hooks/useState.ts
@@ -60,7 +60,7 @@ export function useDiffs(stateId: string) {
 }
 ```
 
-### Composants avec Sélecteurs
+### Components with Selectors
 
 ```typescript
 // components/StateViewer.tsx
@@ -75,7 +75,7 @@ export function StateViewer({ id }: StateViewerProps) {
   const { state, validation, metrics, isLoading, hasErrors } = useState(id);
 
   if (isLoading) {
-    return <div>Chargement...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -93,8 +93,8 @@ export function StateViewer({ id }: StateViewerProps) {
       )}
 
       <div className="metrics">
-        <div>Âge: {metrics.age}ms</div>
-        <div>Mises à jour: {metrics.updateCount}</div>
+        <div>Age: {metrics.age}ms</div>
+        <div>Updates: {metrics.updateCount}</div>
       </div>
     </div>
   );
@@ -113,7 +113,7 @@ export function DiffViewer({ stateId }: DiffViewerProps) {
 
   return (
     <div className="diff-viewer">
-      <h3>Diff Active</h3>
+      <h3>Active Diff</h3>
       {activeDiff && (
         <div className="active-diff">
           {activeDiff.changes.map(change => (
@@ -124,11 +124,11 @@ export function DiffViewer({ stateId }: DiffViewerProps) {
         </div>
       )}
 
-      <h3>Historique des Diffs</h3>
+      <h3>Diff History</h3>
       <div className="diff-history">
         {diffs.map(diff => (
           <div key={diff.id} className="diff-item">
-            {diff.timestamp}: {diff.changes.length} changements
+            {diff.timestamp}: {diff.changes.length} changes
           </div>
         ))}
       </div>
@@ -137,9 +137,9 @@ export function DiffViewer({ stateId }: DiffViewerProps) {
 }
 ```
 
-## Gestion des Erreurs
+## Error Handling
 
-### Hook Personnalisé pour les Erreurs
+### Custom Error Hook
 
 ```typescript
 // hooks/useErrors.ts
@@ -151,10 +151,10 @@ export function useErrors() {
 
   useEffect(() => {
     const handleError = (error: any) => {
-      // Log l'erreur
+      // Log the error
       console.error(error);
       
-      // Affiche une notification
+      // Show a notification
       if (error.type === ErrorType.VALIDATION) {
         showNotification(error.message, 'warning');
       } else if (error.type === ErrorType.SYSTEM) {
@@ -171,7 +171,7 @@ export function useErrors() {
 }
 ```
 
-### Composants avec Gestion d'Erreurs
+### Components with Error Handling
 
 ```typescript
 // components/StateTransition.tsx
@@ -192,10 +192,10 @@ export function StateTransition({ id, transition }: StateTransitionProps) {
     try {
       await dispatch(transitionState({ id, transition }));
     } catch (error) {
-      // L'erreur sera gérée par le middleware
-      // Mais on peut ajouter une gestion locale si nécessaire
+      // The error will be handled by the middleware
+      // But we can add local handling if needed
       errorUtils.createTransitionError(
-        'Échec de la transition',
+        'Transition failed',
         { type: transition },
         { id, transition }
       );
@@ -204,7 +204,7 @@ export function StateTransition({ id, transition }: StateTransitionProps) {
 
   return (
     <button onClick={handleTransition}>
-      Passer à {transition}
+      Transition to {transition}
     </button>
   );
 }
@@ -236,7 +236,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
     
     errorHandler.addError(
       errorUtils.createSystemError(
-        'Erreur dans le composant',
+        'Error in component',
         {
           component: errorInfo.componentStack,
           error: error.message,
@@ -248,14 +248,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="error-boundary">
-          <h2>Une erreur est survenue</h2>
-          <button onClick={() => this.setState({ hasError: false })}>
-            Réessayer
-          </button>
-        </div>
-      );
+      return <div className="error-fallback">Something went wrong</div>;
     }
 
     return this.props.children;
@@ -263,123 +256,219 @@ export class ErrorBoundary extends React.Component<Props, State> {
 }
 ```
 
-## Exemples d'Utilisation
-
-### Application Complète
+## Error Middleware
 
 ```typescript
+// store/middleware/errorMiddleware.ts
+import { AnyAction, Middleware } from 'redux';
+import { ErrorHandler, errorUtils } from '../errorHandling';
+
+export const errorMiddleware: Middleware = ({ dispatch, getState }) => (next) => (action: AnyAction) => {
+  try {
+    return next(action);
+  } catch (error) {
+    const errorHandler = ErrorHandler.getInstance();
+    
+    // Create a system error and add it to the handler
+    const systemError = errorUtils.createSystemError(
+      'Error during action dispatch',
+      {
+        action: action.type,
+        payload: action.payload,
+        error: error.message,
+        stack: error.stack
+      }
+    );
+    
+    errorHandler.addError(systemError);
+    
+    // Log the error
+    console.error('Action error:', error);
+    
+    // Re-throw the error so it can be caught by components
+    throw error;
+  }
+};
+```
+
+## Error Types
+
+```typescript
+// store/errorHandling/types.ts
+export enum ErrorType {
+  VALIDATION = 'VALIDATION',
+  TRANSITION = 'TRANSITION',
+  DIFF = 'DIFF',
+  SYSTEM = 'SYSTEM'
+}
+
+export interface IError {
+  type: ErrorType;
+  message: string;
+  code: string;
+  details?: Record<string, any>;
+  timestamp: number;
+  action?: AnyAction;
+}
+```
+
+## Error Utils
+
+```typescript
+// store/errorHandling/utils.ts
+import { AnyAction } from 'redux';
+import { ErrorType, IError } from './types';
+
+export const errorUtils = {
+  createValidationError: (
+    message: string,
+    details?: Record<string, any>,
+    action?: AnyAction
+  ): IError => ({
+    type: ErrorType.VALIDATION,
+    message,
+    code: 'VALIDATION_ERROR',
+    details,
+    timestamp: Date.now(),
+    action
+  }),
+  
+  createTransitionError: (
+    message: string,
+    details?: Record<string, any>,
+    action?: AnyAction
+  ): IError => ({
+    type: ErrorType.TRANSITION,
+    message,
+    code: 'TRANSITION_ERROR',
+    details,
+    timestamp: Date.now(),
+    action
+  }),
+  
+  createSystemError: (
+    message: string,
+    details?: Record<string, any>,
+    action?: AnyAction
+  ): IError => ({
+    type: ErrorType.SYSTEM,
+    message,
+    code: 'SYSTEM_ERROR',
+    details,
+    timestamp: Date.now(),
+    action
+  })
+};
+```
+
+## Central Error Handler
+
+```typescript
+// store/errorHandling/ErrorHandler.ts
+import { IError } from './types';
+
+type ErrorListener = (error: IError) => void;
+
+export class ErrorHandler {
+  private static instance: ErrorHandler;
+  private errors: IError[] = [];
+  private listeners: ErrorListener[] = [];
+  
+  private constructor() {}
+  
+  static getInstance(): ErrorHandler {
+    if (!ErrorHandler.instance) {
+      ErrorHandler.instance = new ErrorHandler();
+    }
+    return ErrorHandler.instance;
+  }
+  
+  addError(error: IError): void {
+    this.errors.push(error);
+    this.notifyListeners(error);
+  }
+  
+  getErrors(): IError[] {
+    return [...this.errors];
+  }
+  
+  getRecentErrors(count: number): IError[] {
+    return this.errors.slice(-count);
+  }
+  
+  clearErrors(): void {
+    this.errors = [];
+  }
+  
+  addListener(listener: ErrorListener): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+  
+  private notifyListeners(error: IError): void {
+    this.listeners.forEach(listener => {
+      try {
+        listener(error);
+      } catch (e) {
+        console.error('Error in error listener:', e);
+      }
+    });
+  }
+}
+```
+
+## Usage Examples
+
+```tsx
 // App.tsx
 import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { StateViewer } from './components/StateViewer';
-import { DiffViewer } from './components/DiffViewer';
-import { StateTransition } from './components/StateTransition';
 import { useErrors } from './hooks/useErrors';
+import MainComponent from './components/MainComponent';
 
-export function App() {
+// Hook to set up global error handling
+function ErrorHandler() {
   useErrors();
+  return null;
+}
 
+function App() {
   return (
-    <ErrorBoundary>
-      <div className="app">
-        <h1>Système de Layout Karmyc</h1>
-        
-        <div className="state-section">
-          <h2>État Actuel</h2>
-          <StateViewer id="current-state" />
-          
-          <div className="actions">
-            <StateTransition
-              id="current-state"
-              transition="review"
-            />
-          </div>
-        </div>
-
-        <div className="diff-section">
-          <h2>Modifications</h2>
-          <DiffViewer stateId="current-state" />
-        </div>
-      </div>
-    </ErrorBoundary>
+    <Provider store={store}>
+      <ErrorBoundary>
+        <ErrorHandler />
+        <MainComponent />
+      </ErrorBoundary>
+    </Provider>
   );
 }
+
+export default App;
 ```
 
-### Styles CSS
+## Best Practices
 
-```css
-/* styles/components.css */
-.state-viewer {
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-}
+1. **Use Custom Hooks**
+   - Create reusable hooks for common data access patterns
+   - Keep component code clean by moving selector logic to hooks
+   - Combine multiple selectors in a single hook for related data
 
-.errors {
-  margin: 1rem 0;
-  padding: 0.5rem;
-  background-color: #fff3f3;
-  border: 1px solid #ffcdd2;
-  border-radius: 4px;
-}
+2. **Error Handling**
+   - Use a central error handler for consistency
+   - Categorize errors by type
+   - Provide detailed error information for debugging
+   - Create appropriate UI feedback based on error type
 
-.error {
-  color: #d32f2f;
-  margin: 0.25rem 0;
-}
+3. **Performance**
+   - Use memoized selectors with createSelector
+   - Minimize the use of useSelector with inline selectors
+   - Split complex components into smaller ones with focused selectors
 
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.diff-viewer {
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.active-diff {
-  margin: 1rem 0;
-  padding: 0.5rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.change {
-  margin: 0.25rem 0;
-  padding: 0.25rem;
-  background-color: #fff;
-  border-radius: 2px;
-}
-
-.error-boundary {
-  padding: 2rem;
-  text-align: center;
-  background-color: #fff3f3;
-  border: 1px solid #ffcdd2;
-  border-radius: 4px;
-  margin: 1rem;
-}
-```
-
-## Bonnes Pratiques
-
-1. **Performance**
-   - Utiliser des sélecteurs mémorisés pour les calculs complexes
-   - Éviter les re-rendus inutiles avec `useMemo` et `useCallback`
-   - Implémenter la pagination pour les listes longues
-
-2. **Gestion des Erreurs**
-   - Utiliser des boundaries d'erreur pour isoler les problèmes
-   - Fournir des messages d'erreur clairs aux utilisateurs
-   - Implémenter des mécanismes de récupération
-
-3. **Maintenance**
-   - Extraire la logique commune dans des hooks personnalisés
-   - Documenter les props et les types
-   - Tester les composants avec différents états 
+4. **Testing**
+   - Test custom hooks with renderHook
+   - Mock the Redux store for component tests
+   - Test error handling separately from normal operation 

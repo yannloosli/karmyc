@@ -1,0 +1,138 @@
+/* Styles for the menu bar */
+.area__content .area-menu-bar,
+.area-menu-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    height: 30px !important;
+    min-height: 30px !important;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0 8px;
+    background-color: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 100 !important;
+}
+
+.area__content .area-menu-bar-item {
+    margin-right: 8px;
+}
+
+/* Styles for the status bar */
+.area__content .area-status-bar,
+.area-status-bar {
+    display: flex !important;
+    flex-direction: row;
+    align-items: center;
+    height: 30px !important;
+    min-height: 30px !important;
+    border-top: 1px solid #e2e8f0;
+    padding: 0 8px;
+    background-color: #f8fafc;
+    font-size: 12px;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+    z-index: 100 !important;
+}
+
+.area__content .area-status-bar-section {
+    display: flex;
+    align-items: center;
+}
+
+.area__content .area-status-bar-section.left {
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.area__content .area-status-bar-section.center {
+    flex: 1;
+    justify-content: center;
+}
+
+.area__content .area-status-bar-section.right {
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.area__content .area-status-bar-item {
+    margin: 0 4px;
+}
+
+/* Styles for the content area */
+.area-content {
+    flex: 1 !important;
+    position: relative !important;
+    overflow: auto !important;
+    border: 1px dashed blue !important;
+}
+
+/* Styles for the toolbar and slots */
+.area__content .area-toolbar-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    /* Important for click-through behavior */
+    border: 1px dashed purple !important;
+    z-index: 200 !important;
+}
+
+.area__content .area-toolbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Styles for tool slots */
+.area__content .area-toolbar-north-slots,
+.area__content .area-toolbar-south-slots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    z-index: 10;
+}
+
+.area__content .area-toolbar-north-slots {
+    top: 0;
+}
+
+.area__content .area-toolbar-south-slots {
+    bottom: 0;
+}
+
+.area__content .area-toolbar-slot {
+    pointer-events: auto;
+}
+
+
+.area__content .area-toolbar-slot.nw {
+    margin-right: auto;
+}
+
+.area__content .area-toolbar-slot.n {
+    margin: 0 auto;
+}
+
+.area__content .area-toolbar-slot.ne {
+    margin-left: auto;
+}
+
+.area__content .area-toolbar-slot.sw {
+    margin-right: auto;
+}
+
+.area__content .area-toolbar-slot.s {
+    margin: 0 auto;
+}
+
+.area__content .area-toolbar-slot.se {
+    margin-left: auto;
+}

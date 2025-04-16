@@ -1,46 +1,48 @@
-# API des Composants
+# Component API
 
-Cette documentation détaille les composants React disponibles dans l'API publique de Karmyc.
+This documentation details the React components available in Karmyc's public API.
 
 ## KarmycProvider
 
-`KarmycProvider` est le composant principal qui doit envelopper toute application utilisant le système de layout.
+`KarmycProvider` is the main component that must wrap any application using the layout system.
 
 ### Interface
 
 ```typescript
-interface KarmycProviderProps {
+interface IKarmycProviderProps {
   /**
-   * Contenu de l'application
+   * Application content
    */
   children: React.ReactNode;
   
   /**
-   * Configuration optionnelle du système de layout
+   * Optional configuration for the layout system
    */
-  config?: {
-    theme?: 'light' | 'dark' | 'system';
-    plugins?: string[];
-    defaultAreas?: string[];
-    initialState?: any;
-  };
+  options?: IKarmycOptions;
+  
+  /**
+   * Optional custom Redux store
+   */
+  customStore?: any;
 }
 ```
 
-### Exemple
+### Example
 
 ```tsx
-import { KarmycProvider } from '@karmyc';
+import { KarmycProvider, useKarmyc } from '@gamesberry/karmyc-core';
 
 function App() {
+  // Initialize Karmyc with configuration
+  const config = useKarmyc({
+    enableLogging: true,
+    plugins: [],
+    initialAreas: [],
+    keyboardShortcutsEnabled: true
+  });
+
   return (
-    <KarmycProvider
-      config={{
-        theme: 'dark',
-        plugins: ['timeline', 'properties'],
-        defaultAreas: ['timeline', 'workspace']
-      }}
-    >
+    <KarmycProvider options={config}>
       <MyEditor />
     </KarmycProvider>
   );
@@ -49,81 +51,156 @@ function App() {
 
 ## Area
 
-Le composant `Area` permet d'afficher et de gérer une zone interactive dans l'éditeur.
+The `Area` component allows you to display and manage an interactive area in the editor.
 
 ### Interface
 
 ```typescript
 interface AreaProps {
   /**
-   * Identifiant unique de la zone
+   * The area object to display
+   */
+  area: IArea;
+  
+  /**
+   * Indicates if the area is currently selected
+   */
+  isActive?: boolean;
+  
+  /**
+   * Callback called when the area is selected
+   */
+  onSelect?: (area: IArea) => void;
+  
+  /**
+   * Child content to display in the area
+   */
+  children?: React.ReactNode;
+}
+
+interface IArea {
+  /**
+   * Unique identifier for the area
    */
   id: string;
   
   /**
-   * Type de zone (utilisé pour déterminer le composant à rendre)
+   * Area type (used to determine which component to render)
    */
   type: string;
   
   /**
-   * Propriétés spécifiques passées au composant de zone
+   * Area state
    */
-  props?: Record<string, any>;
+  state: any;
   
   /**
-   * Disposition de la zone (position, taille)
+   * Area position
    */
-  layout?: {
-    x?: number;
-    y?: number;
-    width?: number;
-    height?: number;
-  };
+  position: { x: number; y: number };
   
   /**
-   * Indique si la zone est draggable
+   * Area size
    */
-  draggable?: boolean;
-  
-  /**
-   * Indique si la zone est resizable
-   */
-  resizable?: boolean;
-  
-  /**
-   * Fonction appelée lorsque la zone est sélectionnée
-   */
-  onSelect?: () => void;
+  size: { width: number; height: number };
 }
 ```
 
-### Exemple
+### Example
 
 ```tsx
-import { Area } from '@karmyc';
+import { Area, useArea } from '@gamesberry/karmyc-core';
 
 function MyLayout() {
+  const { areas, setActive, activeArea } = useArea();
+  
   return (
     <div className="layout">
-      <Area
-        id="timeline-1"
-        type="timeline"
-        props={{ data: timelineData }}
-        layout={{ x: 0, y: 0, width: 800, height: 200 }}
-        draggable
-        resizable
-      />
-      <Area
-        id="properties-1"
-        type="properties"
-        layout={{ x: 800, y: 0, width: 400, height: 600 }}
-      />
+      {areas.map(area => (
+        <Area
+          key={area.id}
+          area={area}
+          isActive={activeArea?.id === area.id}
+          onSelect={setActive}
+        />
+      ))}
     </div>
   );
 }
 ```
 
-## Composants Exportés
+## AreaComponent
+
+For creating custom area components, use the `AreaComponentProps` interface.
+
+### Interface
+
+```typescript
+interface AreaComponentProps<T = any> {
+  /**
+   * Unique identifier for the area
+   */
+  id: string;
+  
+  /**
+   * Area state
+   */
+  state: T;
+  
+  /**
+   * Area type
+   */
+  type: string;
+  
+  /**
+   * Area viewport (position and dimensions)
+   */
+  viewport: {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
+  };
+}
+```
+
+### Example
+
+```tsx
+import React from 'react';
+import { useArea } from '@gamesberry/karmyc-core';
+import { AreaComponentProps } from '@gamesberry/karmyc-core';
+
+interface TextNoteState {
+  content: string;
+}
+
+export const TextNoteArea: React.FC<AreaComponentProps<TextNoteState>> = ({
+  id,
+  state,
+  viewport
+}) => {
+  const { updateAreaState } = useArea();
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateAreaState(id, {
+      content: e.target.value
+    });
+  };
+
+  return (
+    <div style={{ width: viewport.width, height: viewport.height }}>
+      <textarea
+        value={state.content || ''}
+        onChange={handleChange}
+        style={{ width: '100%', height: '100%' }}
+      />
+    </div>
+  );
+};
+```
+
+## Exported Components
 
 ```typescript
 import {
@@ -135,13 +212,13 @@ import {
   Resizable,
   Draggable,
   // ...
-} from '@karmyc';
+} from '@gamesberry/karmyc-core';
 ```
 
-## Exemple Complet
+## Complete Example
 
 ```tsx
-import { KarmycProvider, AreaRoot, useArea } from '@karmyc';
+import { KarmycProvider, AreaRoot, useArea } from '@gamesberry/karmyc-core';
 
 function App() {
   return (
@@ -157,7 +234,7 @@ function EditorLayout() {
   return (
     <div className="editor">
       <button onClick={() => addArea({ type: 'timeline' })}>
-        Ajouter Timeline
+        Add Timeline
       </button>
       
       <AreaRoot>

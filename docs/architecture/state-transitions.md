@@ -1,37 +1,37 @@
-# Système de Transitions d'État
+# State Transition System
 
-## Vue d'ensemble
+## Overview
 
-Le système de transitions d'état permet de gérer les changements d'état de manière contrôlée et prévisible. Il est basé sur un système de transitions prédéfinies avec conditions et actions associées.
+The state transition system allows for controlled and predictable state changes. It is based on a system of predefined transitions with associated conditions and actions.
 
-## États Prédéfinis
+## Predefined States
 
-1. **Draft (Brouillon)**
-   - État initial d'un élément
+1. **Draft**
+   - Initial state of an element
    - Modifiable
-   - En cours de création
+   - In creation
 
-2. **Review (Revue)**
-   - En cours de révision
-   - Nécessite une validation
-   - Peut être approuvé ou rejeté
+2. **Review**
+   - Under review
+   - Requires validation
+   - Can be approved or rejected
 
-3. **Approved (Approuvé)**
-   - Validé par les relecteurs
-   - Prêt pour la publication
-   - Peut être publié
+3. **Approved**
+   - Validated by reviewers
+   - Ready for publication
+   - Can be published
 
-4. **Published (Publié)**
-   - Disponible publiquement
-   - Version finale
-   - Peut être archivé
+4. **Published**
+   - Publicly available
+   - Final version
+   - Can be archived
 
-5. **Archived (Archivé)**
-   - Plus actif
-   - Conservé pour référence
-   - État final
+5. **Archived**
+   - No longer active
+   - Kept for reference
+   - Final state
 
-## Transitions Disponibles
+## Available Transitions
 
 ### Draft → Review
 ```typescript
@@ -107,7 +107,7 @@ Le système de transitions d'état permet de gérer les changements d'état de m
 
 ## API
 
-### Enregistrement d'une Transition
+### Registering a Transition
 
 ```typescript
 registerTransition({
@@ -118,19 +118,19 @@ registerTransition({
 });
 ```
 
-### Suppression d'une Transition
+### Removing a Transition
 
 ```typescript
 unregisterTransition('currentState', 'newState');
 ```
 
-### Liste des Transitions Disponibles
+### Listing Available Transitions
 
 ```typescript
 const availableTransitions = getAvailableTransitions('currentState');
 ```
 
-### Utilisation dans un Composant
+### Using in a Component
 
 ```typescript
 import { useAppDispatch } from '../hooks';
@@ -147,33 +147,33 @@ function MyComponent() {
     }));
   };
 
-  return <button onClick={handleTransition}>Passer en revue</button>;
+  return <button onClick={handleTransition}>Review</button>;
 }
 ```
 
-## Bonnes Pratiques
+## Best Practices
 
 1. **Conditions**
-   - Toujours vérifier la validité des données
-   - Inclure des messages d'erreur explicites
-   - Éviter les conditions complexes
+   - Always check data validity
+   - Include explicit error messages
+   - Avoid complex conditions
 
 2. **Actions**
-   - Mettre à jour les timestamps
-   - Enregistrer les métadonnées pertinentes
-   - Éviter les effets de bord
+   - Update timestamps
+   - Record relevant metadata
+   - Avoid side effects
 
-3. **Gestion des Erreurs**
-   - Valider les données avant la transition
-   - Gérer les cas d'erreur
-   - Fournir des retours utilisateur
+3. **Error Handling**
+   - Validate data before transition
+   - Handle error cases
+   - Provide user feedback
 
-## Exemples d'Utilisation
+## Usage Examples
 
-### Transition Simple
+### Simple Transition
 
 ```typescript
-// Transition d'un brouillon vers la revue
+// Transition from draft to review
 dispatch(transitionState({
   id: 'document-1',
   transition: 'review',
@@ -181,10 +181,10 @@ dispatch(transitionState({
 }));
 ```
 
-### Transition avec Validation
+### Transition with Validation
 
 ```typescript
-// Transition vers l'approbation avec vérification
+// Transition to approval with verification
 const state = store.getState().state.states['document-1'];
 if (state.data.reviewStatus === 'completed') {
   dispatch(transitionState({
@@ -195,33 +195,33 @@ if (state.data.reviewStatus === 'completed') {
 }
 ```
 
-### Transition avec Données Additionnelles
+### Transition with Additional Data
 
 ```typescript
-// Transition vers le rejet avec raison
+// Transition to rejected with reason
 dispatch(transitionState({
   id: 'document-1',
   transition: 'rejected',
   data: {
     rejector: 'Charlie',
-    reason: 'Contenu inapproprié'
+    reason: 'Inappropriate content'
   }
 }));
 ```
 
-## Sécurité et Validation
+## Security and Validation
 
-1. **Vérifications**
-   - Existence de l'état
-   - Validité de la transition
-   - Droits d'accès
+1. **Checks**
+   - State existence
+   - Transition validity
+   - Access rights
 
-2. **Validation des Données**
-   - Format des données
-   - Champs requis
-   - Types de données
+2. **Data Validation**
+   - Data format
+   - Required fields
+   - Data types
 
-3. **Gestion des Erreurs**
-   - Messages d'erreur
+3. **Error Handling**
+   - Error messages
    - Logs
    - Notifications 
