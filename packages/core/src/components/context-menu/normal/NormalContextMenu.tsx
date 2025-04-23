@@ -1,20 +1,12 @@
 import { CONTEXT_MENU_OPTION_HEIGHT, DEFAULT_CONTEXT_MENU_WIDTH } from "@gamesberry/karmyc-core/constants";
 import { actionRegistry } from "@gamesberry/karmyc-core/store/registries/actionRegistry";
-import {
-    closeContextMenu,
-    selectContextMenuItems,
-    selectContextMenuMetadata,
-    selectContextMenuPosition,
-    selectContextMenuTargetId,
-    selectContextMenuVisible
-} from "@gamesberry/karmyc-core/store/slices/contextMenuSlice";
+import { useContextMenuStore } from "@gamesberry/karmyc-core/stores/contextMenuStore";
 import styles from "@gamesberry/karmyc-core/styles/NormalContextMenu.styles";
 import { ContextMenuItem } from "@gamesberry/karmyc-core/types/contextMenu";
 import { Point, Rect } from "@gamesberry/karmyc-core/types/geometry";
 import { boundingRectOfRects, isVecInRect } from "@gamesberry/karmyc-core/utils/geometry";
 import { compileStylesheet } from "@gamesberry/karmyc-core/utils/stylesheets";
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
 
 const s = compileStylesheet(styles);
 
@@ -22,19 +14,17 @@ const CLOSE_MENU_BUFFER = 100;
 const REDUCE_STACK_BUFFER = 64;
 
 export const NormalContextMenu: React.FC = () => {
-    const dispatch = useDispatch();
-    const isVisible = useSelector(selectContextMenuVisible);
-    const items = useSelector(selectContextMenuItems);
-    const position = useSelector(selectContextMenuPosition);
-    const name = useSelector(selectContextMenuTargetId);
-    const metadata = useSelector(selectContextMenuMetadata);
+    const isVisible = useContextMenuStore((state) => state.isVisible);
+    const items = useContextMenuStore((state) => state.items);
+    const position = useContextMenuStore((state) => state.position);
+    const metadata = useContextMenuStore((state) => state.metadata);
+    const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
 
     const [rect, setRect] = useState<Rect | null>(null);
     const [reduceStackRect, setReduceStackRect] = useState<Rect | null>(null);
     const [stack, setStack] = useState<
         Array<{ position: Point; options: ContextMenuItem[]; fromIndex: number }>
     >([]);
-
     const mouseOverOptionListener = useRef<number | null>(null);
 
     useEffect(() => {
@@ -42,11 +32,9 @@ export const NormalContextMenu: React.FC = () => {
             setStack([]);
             return;
         }
-
         let pos = { ...position };
-
         for (let i = 0; i < items.length; i += 1) {
-            if (items[i].default) {
+            if (items[i]?.default) {
                 pos = {
                     x: pos.x - (DEFAULT_CONTEXT_MENU_WIDTH - 40),
                     y: pos.y - 40 + CONTEXT_MENU_OPTION_HEIGHT * i,
@@ -54,42 +42,49 @@ export const NormalContextMenu: React.FC = () => {
                 break;
             }
         }
-
         setStack([{ position: pos, options: items, fromIndex: -1 }]);
     }, [isVisible, items, position]);
 
     useEffect(() => {
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
             const els = document.querySelectorAll("[data-option-list]");
             const rects: Rect[] = [];
             els.forEach((el) => {
                 const domRect = el.getBoundingClientRect();
-                rects.push({
-                    left: domRect.left,
-                    top: domRect.top,
-                    width: domRect.width,
-                    height: domRect.height,
-                    right: domRect.right,
-                    bottom: domRect.bottom,
-                });
+                if (domRect) {
+                    rects.push({
+                        left: domRect.left,
+                        top: domRect.top,
+                        width: domRect.width,
+                        height: domRect.height,
+                        right: domRect.right,
+                        bottom: domRect.bottom,
+                    });
+                }
             });
             const boundingRect = boundingRectOfRects(rects);
             setRect(boundingRect);
 
             if (rects.length > 1) {
-                let rect = rects[rects.length - 1];
-                setReduceStackRect({
-                    top: rect.top - REDUCE_STACK_BUFFER,
-                    height: rect.height + REDUCE_STACK_BUFFER * 2,
-                    left: rect.left - 16,
-                    width: rect.width + REDUCE_STACK_BUFFER + 16,
-                    right: rect.right + REDUCE_STACK_BUFFER + 16,
-                    bottom: rect.bottom + REDUCE_STACK_BUFFER * 2,
-                });
+                const currentRect = rects[rects.length - 1];
+                if (currentRect) {
+                    setReduceStackRect({
+                        top: currentRect.top - REDUCE_STACK_BUFFER,
+                        height: currentRect.height + REDUCE_STACK_BUFFER * 2,
+                        left: currentRect.left - 16,
+                        width: currentRect.width + REDUCE_STACK_BUFFER + 16,
+                        right: (currentRect.right ?? (currentRect.left + currentRect.width)) + REDUCE_STACK_BUFFER + 16,
+                        bottom: (currentRect.bottom ?? (currentRect.top + currentRect.height)) + REDUCE_STACK_BUFFER * 2,
+                    });
+                } else {
+                    setReduceStackRect(null);
+                }
             } else {
                 setReduceStackRect(null);
             }
-        });
+        }, 0);
+
+        return () => clearTimeout(timerId);
     }, [stack]);
 
     if (!isVisible) {
@@ -98,68 +93,58 @@ export const NormalContextMenu: React.FC = () => {
 
     const onMouseMove = (e: React.MouseEvent) => {
         const { clientX: x, clientY: y } = e;
-
-        if (!rect) {
-            return;
-        }
-
+        if (!rect) return;
         if (stack.length > 1 && reduceStackRect && !isVecInRect({ x, y }, reduceStackRect)) {
-            setStack(stack.slice(0, stack.length - 1));
+            setStack((prevStack) => prevStack.slice(0, prevStack.length - 1));
             return;
         }
-
         const shouldClose =
             x < rect.left - CLOSE_MENU_BUFFER ||
             x > rect.left + rect.width + CLOSE_MENU_BUFFER ||
             y < rect.top - CLOSE_MENU_BUFFER ||
             y > rect.top + rect.height + CLOSE_MENU_BUFFER;
-
         if (shouldClose) {
-            dispatch(closeContextMenu());
+            closeContextMenu();
         }
     };
 
     const onListMouseOver = (options: ContextMenuItem[], i: number, j: number) => {
-        if (i !== stack.length - 1) {
-            return;
+        if (i !== stack.length - 1) return;
+        const itemEl = document.querySelector(`[data-option="${i}-${j}"]`);
+        if (!itemEl) return;
+        const itemRect = itemEl.getBoundingClientRect();
+        if (!itemRect) return;
+        if (mouseOverOptionListener.current) {
+            window.clearTimeout(mouseOverOptionListener.current);
         }
-
-        const item = document.querySelector(`[data-option="${i}-${j}"]`);
-
-        if (!item) {
-            return;
-        }
-
-        const rect = item.getBoundingClientRect();
-
         mouseOverOptionListener.current = window.setTimeout(() => {
-            setStack([
-                ...stack.slice(0, stack.length),
+            setStack((prevStack) => [
+                ...prevStack.slice(0, i + 1),
                 {
                     fromIndex: j,
                     options,
                     position: {
-                        x: rect.left + rect.width + 2,
-                        y: rect.top - 3,
+                        x: itemRect.left + itemRect.width + 2,
+                        y: itemRect.top - 3,
                     },
                 },
             ]);
+            mouseOverOptionListener.current = null;
         }, 150);
     };
 
     const onListMouseOut = (i: number) => {
-        if (i !== stack.length - 1) {
-            return;
+        if (i !== stack.length - 1) return;
+        if (mouseOverOptionListener.current) {
+            window.clearTimeout(mouseOverOptionListener.current);
+            mouseOverOptionListener.current = null;
         }
-        window.clearTimeout(mouseOverOptionListener.current!);
     };
 
     const handleAction = (actionId: string, itemMetadata?: Record<string, any>) => {
-        dispatch(closeContextMenu());
-
-        // Attempt to execute via the action registry
+        closeContextMenu();
         if (actionRegistry.executeAction(actionId, { ...metadata, ...itemMetadata })) {
-            return; // Action executed successfully
+            return;
         }
     };
 
@@ -168,7 +153,7 @@ export const NormalContextMenu: React.FC = () => {
             <div
                 className={s("background")}
                 onMouseMove={onMouseMove}
-                onMouseDown={() => dispatch(closeContextMenu())}
+                onMouseDown={closeContextMenu}
             />
             {stack.map(({ options, position }, i) => {
                 return (

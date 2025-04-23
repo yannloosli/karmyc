@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { selectCustomContextMenu } from "../../store/slices/contextMenuSlice";
+import { useContextMenuStore } from "../../stores/contextMenuStore";
 import { cssZIndex } from "../../styles/cssVariables";
 import { Rect } from "../../types/geometry";
 import { compileStylesheetLabelled } from "../../utils/stylesheets";
@@ -35,7 +34,7 @@ const s = compileStylesheetLabelled(({ css }) => ({
 }));
 
 export const CustomContextMenu: React.FC = () => {
-    const options = useSelector(selectCustomContextMenu);
+    const options = useContextMenuStore((state) => state.customContextMenu);
     const [rect, setRect] = useState<Rect | null>(null);
 
     if (!options) {

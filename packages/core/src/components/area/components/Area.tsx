@@ -2,7 +2,7 @@ import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
 import { AreaTypeValue } from "@gamesberry/karmyc-core/constants";
 import { RootState } from "@gamesberry/karmyc-core/store";
 import { setActiveArea } from "@gamesberry/karmyc-core/store/slices/areaSlice";
-import { openContextMenu } from "@gamesberry/karmyc-core/store/slices/contextMenuSlice";
+import { useContextMenuStore } from "@gamesberry/karmyc-core/stores/contextMenuStore";
 import styles from "@gamesberry/karmyc-core/styles/Area.styles";
 import { AreaComponentProps } from "@gamesberry/karmyc-core/types/areaTypes";
 import { Rect } from "@gamesberry/karmyc-core/types/geometry";
@@ -56,6 +56,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     const dispatch = useDispatch();
     const active = useSelector((state: RootState) => state.area.activeAreaId === id);
     const contextMenuItems = useAreaContextMenu(id);
+    const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
     // Check if this is a custom or standard type
     let IconComponent: React.ComponentType = PenIcon; // Use PenIcon as default
@@ -72,13 +73,11 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
         const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
 
         requestAction({}, () => {
-            dispatch(
-                openContextMenu({
-                    position: { x: pos.x, y: pos.y },
-                    items: contextMenuItems,
-                    metadata: { areaId: id }
-                })
-            );
+            openContextMenuAction({
+                position: { x: pos.x, y: pos.y },
+                items: contextMenuItems,
+                metadata: { areaId: id }
+            });
         });
     };
 

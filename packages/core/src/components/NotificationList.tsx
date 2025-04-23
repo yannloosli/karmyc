@@ -1,28 +1,33 @@
 import CloseIcon from '@mui/icons-material/Close';
 import { Alert, Box, IconButton, Snackbar } from '@mui/material';
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { removeNotification, selectNotifications } from '../store/slices/notificationSlice';
+// import { useDispatch, useSelector } from 'react-redux'; // Supprimé
+// import { removeNotification, selectNotifications } from '../store/slices/notificationSlice'; // Supprimé
+import { useNotificationStore } from '../stores/notificationStore'; // Ajouté
 import { INotification } from '../types';
 
 export const NotificationList: React.FC = () => {
-    const dispatch = useDispatch();
-    const notifications = useSelector(selectNotifications);
+    // const dispatch = useDispatch(); // Supprimé
+    // const notifications = useSelector(selectNotifications); // Supprimé
+    const notifications = useNotificationStore((state) => state.notifications); // Remplacé
+    const removeNotification = useNotificationStore((state) => state.removeNotification); // Remplacé
 
     useEffect(() => {
         notifications.forEach((notification: INotification) => {
             if (notification.duration) {
                 const timer = setTimeout(() => {
-                    dispatch(removeNotification(notification.id));
+                    // dispatch(removeNotification(notification.id)); // Supprimé
+                    removeNotification(notification.id); // Remplacé
                 }, notification.duration);
 
                 return () => clearTimeout(timer);
             }
         });
-    }, [notifications, dispatch]);
+    }, [notifications, removeNotification]); // Mis à jour les dépendances
 
     const handleClose = (id: string) => {
-        dispatch(removeNotification(id));
+        // dispatch(removeNotification(id)); // Supprimé
+        removeNotification(id); // Remplacé
     };
 
     const getSeverity = (type: INotification['type']) => {
@@ -46,7 +51,7 @@ export const NotificationList: React.FC = () => {
                     open={true}
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                     autoHideDuration={notification.duration}
-                    onClose={() => handleClose(notification.id)}
+                    onClose={() => handleClose(notification.id)} // Utilise la nouvelle fonction handleClose
                 >
                     <Alert
                         severity={getSeverity(notification.type)}
@@ -55,7 +60,7 @@ export const NotificationList: React.FC = () => {
                                 aria-label="close"
                                 color="inherit"
                                 size="small"
-                                onClick={() => handleClose(notification.id)}
+                                onClick={() => handleClose(notification.id)} // Utilise la nouvelle fonction handleClose
                             >
                                 <CloseIcon fontSize="inherit" />
                             </IconButton>

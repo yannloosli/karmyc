@@ -1,15 +1,15 @@
 import { useNotifications } from '@gamesberry/karmyc-core/hooks/useNotifications';
-import { addNotification, setMaxNotifications } from '@gamesberry/karmyc-core/store/slices/notificationSlice';
+import { useNotificationStore } from '@gamesberry/karmyc-core/stores/notificationStore';
 import { createNotification } from '@gamesberry/karmyc-core/utils/notifications';
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 /**
  * Example component demonstrating the notification system
  */
 export const NotificationExample: React.FC<{ areaState: any }> = ({ areaState }) => {
     const { showSuccess, showError, showWarning, showInfo } = useNotifications();
-    const dispatch = useDispatch();
+    const addNotification = useNotificationStore((state) => state.addNotification);
+    const setMaxNotifications = useNotificationStore((state) => state.setMaxNotifications);
     const [message, setMessage] = useState('This is a notification message');
     const [duration, setDuration] = useState('3000');
     const [maxCount, setMaxCount] = useState('5');
@@ -60,7 +60,7 @@ export const NotificationExample: React.FC<{ areaState: any }> = ({ areaState })
             }
         );
 
-        dispatch(addNotification(notification));
+        addNotification(notification);
     };
 
     // Example of setting maximum notifications
@@ -71,7 +71,7 @@ export const NotificationExample: React.FC<{ areaState: any }> = ({ areaState })
             return;
         }
 
-        dispatch(setMaxNotifications(max));
+        setMaxNotifications(max);
         showSuccess(`Maximum notifications set to ${max}`);
     };
 
