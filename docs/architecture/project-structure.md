@@ -1,67 +1,99 @@
 # Project Structure
 
-This document outlines the current structure of the Karmyc Core project, explaining the organization of files and directories.
+This document outlines the current structure of the Karmyc project, explaining the organization of files and directories.
 
 ## Overview
 
-Karmyc Core is organized into two main parts:
-
-1. **Core Library** (`lib/`): Contains the main reusable component code
-2. **Examples** (`examples/`): Contains example applications that demonstrate usage
+Karmyc is organized as a monorepo with multiple packages:
 
 ```
 karmyc/
-├── lib/                    # Core library code
-├── examples/               # Example applications
+├── packages/               # Monorepo packages
+│   ├── core/               # Core library code
+│   ├── shared/             # Shared utilities
+│   ├── area-projects/      # Project management plugin
+│   └── examples/           # Example applications
 ├── docs/                   # Documentation
 ├── assets/                 # Static assets (images, etc.)
-├── dist/                   # Built distribution files
 └── node_modules/           # Dependencies
 ```
 
-## Core Library Structure
+## Package Structure
 
-The `lib/` directory contains the main reusable code of Karmyc Core:
+### Core Package
 
-```
-lib/
-├── actions/                # Action system implementation
-├── area/                   # Area-related functionality
-├── components/             # React components
-├── constants/              # Constants and configuration
-├── history/                # History (undo/redo) system
-├── hooks/                  # React hooks
-├── providers/              # React context providers
-├── store/                  # Redux store implementation
-│   ├── slices/             # Redux Toolkit slices
-│   └── middleware/         # Redux middleware
-├── styles/                 # Styling utilities
-├── types/                  # TypeScript type definitions
-├── utils/                  # Utility functions
-└── index.ts                # Main entry point
-```
-
-### Key Components
-
-- **Store**: Redux-based state management system
-- **Actions**: Modular action system with plugins
-- **Components**: Core React components
-- **Hooks**: Custom React hooks for accessing functionality
-
-## Examples Structure
-
-The `examples/` directory contains sample applications that demonstrate how to use Karmyc Core:
+The `packages/core/` directory contains the main functionality of Karmyc:
 
 ```
-examples/
-├── components/             # Example-specific components
-├── styles/                 # Example-specific styles
-├── static/                 # Static assets for examples
+packages/core/
+├── src/                    # Source code
+│   ├── actions/            # Action system implementation
+│   ├── area/               # Area-related functionality
+│   ├── components/         # React components
+│   │   ├── area/           # Area-specific components
+│   │   └── ...             # Other UI components
+│   ├── constants/          # Constants and configuration
+│   ├── history/            # History (undo/redo) system
+│   ├── hooks/              # React hooks
+│   ├── providers/          # React context providers
+│   ├── store/              # Redux store implementation
+│   │   ├── slices/         # Redux Toolkit slices
+│   │   └── middleware/     # Redux middleware
+│   ├── types/              # TypeScript type definitions
+│   ├── utils/              # Utility functions
+│   └── index.ts            # Main entry point
+├── dist/                   # Built distribution files
+├── package.json            # Package configuration
+└── tsconfig.json           # TypeScript configuration
+```
+
+### Shared Package
+
+The `packages/shared/` directory contains utilities shared across packages:
+
+```
+packages/shared/
+├── src/                    # Source code
+│   ├── utils/              # Shared utility functions
+│   ├── types/              # Shared TypeScript types
+│   └── index.ts            # Main entry point
+├── dist/                   # Built distribution files
+├── package.json            # Package configuration
+└── tsconfig.json           # TypeScript configuration
+```
+
+### Area Projects Plugin
+
+The `packages/area-projects/` directory contains the project management plugin:
+
+```
+packages/area-projects/
+├── src/                    # Source code
+│   ├── components/         # Project-related components
+│   ├── hooks/              # Project-related hooks
+│   └── index.ts            # Main entry point
+├── dist/                   # Built distribution files
+├── package.json            # Package configuration
+└── tsconfig.json           # TypeScript configuration
+```
+
+### Examples Package
+
+The `packages/examples/` directory contains sample applications:
+
+```
+packages/examples/
+├── src/                    # Source code
+│   ├── components/         # Example-specific components
+│   ├── styles/             # Example-specific styles
+│   ├── static/             # Static assets for examples
+│   ├── App.tsx             # Main example app component
+│   ├── AreaInitializer.tsx # Example area initialization
+│   └── main.tsx            # Entry point
 ├── public/                 # Public assets
-├── App.tsx                 # Main example app component
-├── AreaInitializer.tsx     # Example area initialization
-├── main.tsx                # Entry point
-└── index.html              # HTML template
+├── index.html              # HTML template
+├── package.json            # Package configuration
+└── tsconfig.json           # TypeScript configuration
 ```
 
 ## Documentation Structure
@@ -81,14 +113,23 @@ docs/
 
 For development:
 
-1. Work on the core library in the `lib/` directory
-2. Test changes using the examples in the `examples/` directory
-3. Build the library for distribution using `yarn bundle`
+1. Install dependencies at the root: `yarn install`
+2. Build all packages: `yarn build`
+3. Run the examples application: `yarn dev:examples`
+4. Develop specific packages with watch mode:
+   - Core: `yarn watch:core`
+   - Shared: `yarn watch:shared`
+   - Area Projects: `yarn watch:area-projects`
+5. Develop all packages simultaneously: `yarn dev:all`
 
 ## Distribution
 
-The built library is output to the `dist/` directory, which contains:
+Each package is built and published independently:
 
-- CommonJS module (`index.js`)
-- ES Module (`index.esm.js`)
-- TypeScript definitions (`index.d.ts`) 
+```bash
+# Build a specific package
+yarn workspace @gamesberry/karmyc-core build
+
+# Publish all packages
+yarn publish-all
+``` 

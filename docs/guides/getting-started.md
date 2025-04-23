@@ -1,259 +1,180 @@
 # Getting Started with Karmyc
 
-This guide will help you set up and start using Karmyc in your React application.
+This guide will help you set up a basic project using Karmyc.
 
 ## Installation
 
-First, install Karmyc using yarn:
+Karmyc is distributed as a set of packages in a monorepo structure. You'll typically need at least the core package:
 
 ```bash
-# Using yarn (recommended)
-yarn add @gamesberry/karmyc-core
+npm install @gamesberry/karmyc-core
+```
+
+You may also want to install additional packages depending on your needs:
+
+```bash
+# For shared utilities
+npm install @gamesberry/karmyc-shared
+
+# For area projects (specific implementations)
+npm install @gamesberry/karmyc-area-projects
 ```
 
 ## Basic Setup
 
-### 1. Add the KarmycProvider with useKarmyc
-
-The first step is to set up the Karmyc system using the `useKarmyc` hook and wrap your application with the `KarmycProvider` component:
+Here's a minimal setup to get Karmyc running in your React application:
 
 ```tsx
-// src/index.tsx or src/App.tsx
 import React from 'react';
-import { KarmycProvider, useKarmyc } from '@gamesberry/karmyc-core';
+import ReactDOM from 'react-dom';
+import { KarmycProvider, AreaRoot, useKarmyc } from '@gamesberry/karmyc-core';
 
 function App() {
-  // Initialize and configure Karmyc
+  // Initialize Karmyc with basic configuration
   const config = useKarmyc({
-    enableLogging: process.env.NODE_ENV === 'development',
+    enableLogging: true,
+    initialAreas: [],
     keyboardShortcutsEnabled: true
   });
 
   return (
     <KarmycProvider options={config}>
-      <YourApplication />
+      <div style={{ width: '100vw', height: '100vh' }}>
+        <AreaRoot />
+      </div>
     </KarmycProvider>
   );
 }
 
-export default App;
+ReactDOM.render(<App />, document.getElementById('root'));
 ```
 
-### 2. Register Area Types
+## Adding Areas
 
-Before using areas, you need to register the area types your application will use. This can be done with the `useRegisterAreaType` hook:
-
-```tsx
-// src/components/Layout.tsx
-import React from 'react';
-import { useRegisterAreaType } from '@gamesberry/karmyc-core';
-import TextArea from './areas/TextArea';
-import ImageArea from './areas/ImageArea';
-
-function Layout() {
-  // Register a text area type
-  useRegisterAreaType(
-    'text-area',
-    TextArea,
-    { content: '' },  // Initial state
-    {
-      displayName: 'Text',
-      defaultSize: { width: 300, height: 200 }
-    }
-  );
-  
-  // Register an image area type
-  useRegisterAreaType(
-    'image-area',
-    ImageArea,
-    { url: '', caption: '' },  // Initial state
-    {
-      displayName: 'Image',
-      defaultSize: { width: 400, height: 300 }
-    }
-  );
-  
-  return (
-    <div className="layout-container">
-      {/* Your layout components */}
-    </div>
-  );
-}
-
-export default Layout;
-```
-
-### 3. Create Area Components
-
-Create the components for each area type using the `AreaComponentProps` interface:
+Areas are the core building blocks in Karmyc. Here's how to create and add areas:
 
 ```tsx
-// src/components/areas/TextArea.tsx
-import React from 'react';
 import { useArea } from '@gamesberry/karmyc-core';
-import { AreaComponentProps } from '@gamesberry/karmyc-core';
 
-interface TextAreaState {
-  content: string;
-}
+function MyEditor() {
+  const { addArea } = useArea();
 
-const TextArea: React.FC<AreaComponentProps<TextAreaState>> = ({ 
-  id, 
-  state, 
-  viewport 
-}) => {
-  const { updateAreaState } = useArea();
-  
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateAreaState(id, {
-      content: e.target.value
-    });
-  };
-
-  return (
-    <div style={{ width: viewport.width, height: viewport.height }}>
-      <textarea
-        value={state.content || ''}
-        onChange={handleChange}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          resize: 'none'
-        }}
-        placeholder="Enter text here..."
-      />
-    </div>
-  );
-};
-
-export default TextArea;
-```
-
-```tsx
-// src/components/areas/ImageArea.tsx
-import React from 'react';
-import { useArea } from '@gamesberry/karmyc-core';
-import { AreaComponentProps } from '@gamesberry/karmyc-core';
-
-interface ImageAreaState {
-  url: string;
-  caption: string;
-}
-
-const ImageArea: React.FC<AreaComponentProps<ImageAreaState>> = ({ 
-  id, 
-  state, 
-  viewport 
-}) => {
-  const { updateAreaState } = useArea();
-  
-  const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateAreaState(id, {
-      caption: e.target.value
-    });
-  };
-
-  return (
-    <div style={{ width: viewport.width, height: viewport.height, padding: '8px' }}>
-      {state.url ? (
-        <img 
-          src={state.url} 
-          alt={state.caption || 'Image'} 
-          style={{ maxWidth: '100%', maxHeight: 'calc(100% - 40px)' }}
-        />
-      ) : (
-        <div className="placeholder">No image selected</div>
-      )}
-      <input
-        type="text"
-        value={state.caption || ''}
-        onChange={handleCaptionChange}
-        placeholder="Image caption"
-        style={{ width: '100%', marginTop: '8px' }}
-      />
-    </div>
-  );
-};
-
-export default ImageArea;
-```
-
-### 4. Create and Display Areas
-
-Use the `useArea` hook to create and manage areas, and the `AreaRoot` component to display them:
-
-```tsx
-// src/components/Workspace.tsx
-import React from 'react';
-import { AreaRoot, useArea } from '@gamesberry/karmyc-core';
-
-function Workspace() {
-  const { createArea } = useArea();
-  
   const handleAddTextArea = () => {
-    createArea('text-area', { content: 'New text area content' });
-  };
-  
-  const handleAddImageArea = () => {
-    createArea('image-area', { 
-      url: 'https://example.com/image.jpg',
-      caption: 'Sample image'
+    addArea({
+      type: 'text-editor',
+      state: {
+        content: 'Hello, world!'
+      },
+      position: { x: 100, y: 100 },
+      size: { width: 400, height: 300 }
     });
   };
-  
+
   return (
-    <div className="workspace">
-      <div className="toolbar">
-        <button onClick={handleAddTextArea}>Add Text Area</button>
-        <button onClick={handleAddImageArea}>Add Image Area</button>
-      </div>
-      
+    <div>
+      <button onClick={handleAddTextArea}>Add Text Editor</button>
       <AreaRoot />
     </div>
   );
 }
-
-export default Workspace;
 ```
 
-### 5. Putting it All Together
+## Creating Custom Area Types
 
-Now, integrate all components into your main app:
+To create custom area types, you need to:
+
+1. Define a component for your area type
+2. Register it with Karmyc
 
 ```tsx
-// src/App.tsx
 import React from 'react';
-import { KarmycProvider, useKarmyc } from '@gamesberry/karmyc-core';
-import Layout from './components/Layout';
-import Workspace from './components/Workspace';
+import { registerAreaType, AreaComponentProps } from '@gamesberry/karmyc-core';
 
-function App() {
-  // Initialize Karmyc
-  const config = useKarmyc({
-    enableLogging: process.env.NODE_ENV === 'development',
-    keyboardShortcutsEnabled: true
-  });
-
-  return (
-    <KarmycProvider options={config}>
-      <Layout />
-      <Workspace />
-    </KarmycProvider>
-  );
+// Define the state shape for your area
+interface MyAreaState {
+  text: string;
 }
 
-export default App;
+// Create the area component
+const MyCustomArea: React.FC<AreaComponentProps<MyAreaState>> = ({ 
+  id, 
+  state, 
+  viewport 
+}) => {
+  return (
+    <div 
+      style={{ 
+        width: viewport.width, 
+        height: viewport.height,
+        backgroundColor: '#f0f0f0',
+        padding: '1em'
+      }}
+    >
+      <h3>Custom Area</h3>
+      <p>{state.text}</p>
+    </div>
+  );
+};
+
+// Register the area type
+registerAreaType('my-custom-area', MyCustomArea);
+
+// Then you can use it with:
+// addArea({ type: 'my-custom-area', state: { text: 'Hello!' } });
+```
+
+## Working with the Menu Bar
+
+Karmyc provides a MenuBar component for creating application menus:
+
+```tsx
+import { MenuBar } from '@gamesberry/karmyc-core';
+
+function MyApp() {
+  return (
+    <div className="app">
+      <MenuBar 
+        areaId="root" 
+        areaState={{}} 
+        areaType="app" 
+      />
+      <AreaRoot />
+    </div>
+  );
+}
+```
+
+## Adding Status Bar Information
+
+For displaying status information, use the StatusBar component:
+
+```tsx
+import { StatusBar } from '@gamesberry/karmyc-core';
+
+function MyApp() {
+  return (
+    <div className="app" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      <div style={{ flex: 1 }}>
+        <AreaRoot />
+      </div>
+      <StatusBar 
+        areaId="root" 
+        areaState={{}} 
+        areaType="app" 
+      />
+    </div>
+  );
+}
 ```
 
 ## Next Steps
 
-Once you have set up the basic structure, you can explore more advanced features:
+Check out the following resources to learn more:
 
-1. Configure [Context Menus](./context-menus.md) for your areas
-2. Set up [Keyboard Shortcuts](./keyboard-shortcuts.md) 
-3. Implement [Drag and Drop](./drag-and-drop.md) functionality
-4. Learn about [Performance Optimizations](./optimizations.md)
+- [Component API Reference](../api/components.md)
+- [Area System Overview](../architecture/area-system.md)
+- [Project Structure](../architecture/project-structure.md)
+- [Examples](https://github.com/yourusername/karmyc/tree/main/packages/examples)
 
 ## Importing from Karmyc
 

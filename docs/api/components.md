@@ -2,6 +2,29 @@
 
 This documentation details the React components available in Karmyc's public API.
 
+## Import Structure
+
+Karmyc Core exports all its components from the root package, allowing you to import them directly:
+
+```typescript
+import {
+  KarmycProvider,
+  AreaRoot,
+  MenuBar,
+  StatusBar,
+  NotificationList,
+  Area,
+  ContextMenu,
+  // ...
+} from '@gamesberry/karmyc-core';
+```
+
+You can also import from specific sub-modules if needed (advanced usage):
+
+```typescript
+import { AreaRoot } from '@gamesberry/karmyc-core/components/area/components/AreaRoot';
+```
+
 ## KarmycProvider
 
 `KarmycProvider` is the main component that must wrap any application using the layout system.
@@ -129,6 +152,26 @@ function MyLayout() {
 }
 ```
 
+## AreaRoot
+
+The `AreaRoot` component is the main container for rendering areas in your application.
+
+### Example
+
+```tsx
+import { AreaRoot, MenuBar, StatusBar } from '@gamesberry/karmyc-core';
+
+function EditorLayout() {
+  return (
+    <div className="editor">
+      <MenuBar areaId="root" areaState={{}} areaType="app" />
+      <AreaRoot />
+      <StatusBar areaId="root" areaState={{}} areaType="app" />
+    </div>
+  );
+}
+```
+
 ## AreaComponent
 
 For creating custom area components, use the `AreaComponentProps` interface.
@@ -200,25 +243,17 @@ export const TextNoteArea: React.FC<AreaComponentProps<TextNoteState>> = ({
 };
 ```
 
-## Exported Components
-
-```typescript
-import {
-  KarmycProvider,
-  Area,
-  AreaRoot,
-  ContextMenu,
-  Toolbar,
-  Resizable,
-  Draggable,
-  // ...
-} from '@gamesberry/karmyc-core';
-```
-
 ## Complete Example
 
 ```tsx
-import { KarmycProvider, AreaRoot, useArea } from '@gamesberry/karmyc-core';
+import { 
+  KarmycProvider, 
+  AreaRoot, 
+  useArea, 
+  MenuBar, 
+  StatusBar,
+  NotificationList
+} from '@gamesberry/karmyc-core';
 
 function App() {
   return (
@@ -232,16 +267,20 @@ function EditorLayout() {
   const { areas, addArea } = useArea();
   
   return (
-    <div className="editor">
+    <div className="editor" style={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      height: '100vh' 
+    }}>
+      <MenuBar areaId="root" areaState={{}} areaType="app" />
+      
       <button onClick={() => addArea({ type: 'timeline' })}>
         Add Timeline
       </button>
       
-      <AreaRoot>
-        {areas.map(area => (
-          <Area key={area.id} {...area} />
-        ))}
-      </AreaRoot>
+      <AreaRoot />
+      <StatusBar areaId="root" areaState={{}} areaType="app" />
+      <NotificationList />
     </div>
   );
 }

@@ -249,82 +249,162 @@ const DraggableWithCustomPreview = ({ id, data }) => {
 };
 ```
 
-## 7. Integration with Karmyc Core Areas
+## 7. Opening Areas with Drag and Drop
 
-Integrate drag and drop with Karmyc Core's area system:
+Karmyc Core provides a specialized drag and drop system for opening new areas or content in existing areas. This feature is particularly useful for implementing image galleries, file browsers, or any component that needs to open content in a dedicated area via drag and drop.
+
+### Using useAreaDragAndDrop
+
+The `useAreaDragAndDrop` hook provides all the necessary handlers for implementing this functionality:
 
 ```tsx
-import { useArea, useDrag, useDrop } from '@gamesberry/karmyc-core';
+import React from 'react';
+import { useAreaDragAndDrop } from '@gamesberry/karmyc-core';
 
-const AreaDragDropIntegration = () => {
-  const { areas, createArea, moveArea } = useArea();
-  
-  const handleDropOnCanvas = (item, position) => {
-    if (item.type === 'area-template') {
-      // Create a new area based on the dropped template
-      createArea({
-        type: item.areaType,
-        position: {
-          x: position.x,
-          y: position.y
-        },
-        data: item.defaultData || {}
-      });
-    } else if (item.type === 'existing-area') {
-      // Move an existing area
-      moveArea(item.areaId, {
-        x: position.x,
-        y: position.y
-      });
-    }
-  };
+const ImageGallery = ({ images }) => {
+  const {
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDrop
+  } = useAreaDragAndDrop();
 
-  return (
-    <div className="karmyc-workspace">
-      <AreaTemplatePanel /> {/* Panel with area templates */}
-      
-      <DropCanvas 
-        onDrop={handleDropOnCanvas}
-        accept={['area-template', 'existing-area']}
-      >
-        {/* Existing areas rendered here */}
-        {areas.map(area => (
-          <DraggableArea 
-            key={area.id} 
-            area={area} 
-          />
-        ))}
-      </DropCanvas>
-    </div>
-  );
-};
-
-// Component for a draggable area
-const DraggableArea = ({ area }) => {
-  const { dragRef, isDragging } = useDrag({
-    id: area.id,
-    type: 'existing-area',
-    data: { areaId: area.id, type: area.type }
-  });
-  
-  // Use the useArea hook for area management
-  const { renderArea } = useArea();
-  
   return (
     <div 
-      ref={dragRef}
-      style={{
-        position: 'absolute',
-        left: area.position.x,
-        top: area.position.y,
-        opacity: isDragging ? 0.5 : 1
-      }}
+      className="gallery-container"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
-      {renderArea(area.id)}
+      {images.map(image => (
+        <div
+          key={image.id}
+          className="gallery-item"
+          draggable
+          data-source-id={image.id}  // Important: this attribute identifies the dragged item
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <img src={image.thumbnail} alt={image.title} />
+          <div className="image-title">{image.title}</div>
+        </div>
+      ))}
     </div>
   );
 };
 ```
+
+### How It Works
+
+1. When a user starts dragging an item:
+   - The `handleDragStart` handler identifies the item via its `data-source-id` attribute
+   - It creates a preview of the area to open, centered at the mouse position
+   - The drag preview is customized to be invisible (the area preview is shown instead)
+
+2. While dragging:
+   - The `handleDragOver` handler updates the position of the area preview
+   - The preview follows the mouse cursor, showing where the area will be opened
+
+3. When the user drops:
+   - The system detects which existing area (if any) is under the mouse cursor
+   - If dropping over a valid area, the new area is created within that target area
+   - The dropped area receives the source ID and can load the appropriate content
+
+### Configuration and Customization
+
+The area opening system integrates with Karmyc's area management:
+
+```tsx
+// In your area component (e.g., ImageViewerArea.tsx)
+import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@gamesberry/karmyc-core/store';
+
+export const ImageViewerArea = ({ id }) => {
+  const spaceState = useSelector((state: RootState) => state.space);
+  const area = useSelector((state: RootState) => state.area.areas[id]);
+  const sourceId = area?.state?.sourceId;
+  
+  // Find the image using the sourceId
+  const image = sourceId ? spaceState.images[sourceId] : null;
+  
+  if (!image) {
+    return <div className="empty-state">Select an image to view</div>;
+  }
+  
+  return (
+    <div className="image-viewer">
+      <img src={image.url} alt={image.title} />
+      <div className="image-info">
+        <h3>{image.title}</h3>
+        <p>{image.description}</p>
+      </div>
+    </div>
+  );
+};
+```
+
+### Performance Considerations
+
+The drag and drop system includes performance optimizations:
+
+- Throttled updates (30fps) to reduce excessive state changes during drag
+- Minimal re-renders using React's memoization
+- Efficient area placement calculation
+
+### Example: Image Gallery with Drag to Open
+
+Here's a complete example of an image gallery that allows dragging images to open them in new areas:
+
+```tsx
+import React from 'react';
+import { useAreaDragAndDrop } from '@gamesberry/karmyc-core';
+import { useDispatch } from 'react-redux';
+import './ImagesGallery.css';
+
+export const ImagesGalleryArea = ({ id }) => {
+  const dispatch = useDispatch();
+  const { images } = useImages(); // Your custom hook to fetch images
+  
+  const {
+    handleDragStart,
+    handleDragOver,
+    handleDragEnd,
+    handleDrop
+  } = useAreaDragAndDrop();
+  
+  return (
+    <div 
+      className="images-gallery"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <h2>Image Gallery</h2>
+      <p>Drag any image into the workspace to open it in a new area</p>
+      
+      <div className="gallery-grid">
+        {images.map(image => (
+          <div
+            key={image.id}
+            className="gallery-item"
+            draggable
+            data-source-id={image.id}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <img 
+              src={image.thumbnail} 
+              alt={image.title}
+            />
+            <div className="image-caption">{image.title}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+This implementation allows users to drag images from the gallery and drop them anywhere in the Karmyc workspace to open them in new areas, providing an intuitive and flexible user experience.
 
 ## 8. Event Handling and Feedback
 

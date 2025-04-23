@@ -31,5 +31,8 @@
         "Modules",
         "Workspace",
     ],
-    "typescriptHero.imports.organizeSortsByFirstSpecifier": false
+    "typescriptHero.imports.organizeSortsByFirstSpecifier": false,
+    "terminal.integrated.env.linux": {
+        "EDITOR": "code"
+    }
 }

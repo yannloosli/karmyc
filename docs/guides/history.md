@@ -1,41 +1,41 @@
-# Système d'Historique (Undo/Redo)
+# History System (Undo/Redo)
 
-Ce guide explique le fonctionnement du système d'historique dans Karmyc, qui permet d'annuler (undo) et de rétablir (redo) des actions.
+This guide explains how the history system works in Karmyc, allowing users to undo and redo actions.
 
-## Vue d'ensemble
+## Overview
 
-Le système d'historique de Karmyc utilise une architecture basée sur des plugins pour enregistrer les actions importantes et permettre leur annulation ou leur rétablissement. Il est composé de plusieurs composants :
+Karmyc's history system uses a plugin-based architecture to record important actions and allow them to be undone or redone. It consists of several components:
 
-1. **Plugin d'historique** : Capture les actions spécifiées pour l'historique
-2. **Middleware d'historique** : Intercepte les actions et génère des différences (diffs)
-3. **Slice d'historique** : Gère l'état de l'historique (passé, futur, actions en cours)
-4. **Hooks React** : Fournit une API simple pour utiliser l'historique dans les composants
+1.  **History Plugin**: Captures specified actions for the history.
+2.  **History Middleware**: Intercepts actions and generates differences (diffs).
+3.  **History Slice**: Manages the history state (past, future, ongoing actions).
+4.  **React Hooks**: Provides a simple API for using history in components.
 
-## Configuration rapide
+## Quick Setup
 
 ```tsx
 import React from 'react';
 import { useKarmyc, KarmycProvider, historyPlugin } from '@gamesberry/karmyc-core';
 
 function App() {
-  // Activer l'historique via le système de plugins
+  // Enable history via the plugin system
   const config = useKarmyc({
     plugins: [historyPlugin],
     enableLogging: process.env.NODE_ENV === 'development'
   });
-  
+
   return (
     <KarmycProvider options={config}>
       <YourApplication />
-      <HistoryControls /> {/* Composant optionnel de contrôle de l'historique */}
+      <HistoryControls /> {/* Optional history control component */}
     </KarmycProvider>
   );
 }
 ```
 
-## Utilisation du hook useHistory
+## Using the `useHistory` Hook
 
-Karmyc fournit un hook `useHistory` pour interagir facilement avec le système d'historique dans vos composants :
+Karmyc provides a `useHistory` hook to easily interact with the history system in your components:
 
 ```tsx
 import React from 'react';
@@ -43,99 +43,154 @@ import { useHistory } from '@gamesberry/karmyc-core';
 
 function HistoryControls() {
   const { canUndo, canRedo, undo, redo, historyLength } = useHistory();
-  
+
   return (
     <div className="history-controls">
-      <button 
-        onClick={undo} 
+      <button
+        onClick={undo}
         disabled={!canUndo}
       >
-        Annuler
+        Undo
       </button>
-      
-      <button 
-        onClick={redo} 
+
+      <button
+        onClick={redo}
         disabled={!canRedo}
       >
-        Rétablir
+        Redo
       </button>
-      
+
       <div className="history-info">
-        Actions dans l'historique : {historyLength}
+        Actions in history: {historyLength}
       </div>
     </div>
   );
 }
 ```
 
-## Actions enregistrées dans l'historique
+## History per Space
 
-Par défaut, le plugin d'historique enregistre les actions suivantes :
+An important feature of Karmyc's history system is managing independent histories per Space. Each space has its own action history, allowing for finer, more contextualized undo and redo management.
 
-- `area/addArea` : Ajout d'une zone
-- `area/removeArea` : Suppression d'une zone
-- `area/updateArea` : Mise à jour d'une zone
-- `area/moveArea` : Déplacement d'une zone
-- `area/resizeArea` : Redimensionnement d'une zone
-- `composition/update` : Mise à jour d'une composition
-- `composition/addElement` : Ajout d'un élément
-- `composition/removeElement` : Suppression d'un élément
-- `composition/updateElement` : Mise à jour d'un élément
-- `project/update` : Mise à jour d'un projet
+To use space-specific history, the `useHistory` hook provides specialized methods:
 
-## Personnalisation du système d'historique
+```tsx
+import React from 'react';
+import { useHistory } from '@gamesberry/karmyc-core';
 
-### Ignorer certaines actions
+function SpaceHistoryControls({ spaceId }) {
+  const {
+    canUndoForSpace,
+    canRedoForSpace,
+    undo,
+    redo,
+    getHistoryForSpace
+  } = useHistory();
 
-Vous pouvez modifier la liste des actions à enregistrer dans l'historique en créant votre propre plugin :
+  // Check if undo/redo is possible for this space
+  const canUndoSpace = canUndoForSpace(spaceId);
+  const canRedoSpace = canRedoForSpace(spaceId);
+
+  // Get the complete history for this space
+  const spaceHistory = getHistoryForSpace(spaceId);
+
+  return (
+    <div className="space-history-controls">
+      <button
+        onClick={() => undo(spaceId)}
+        disabled={!canUndoSpace}
+      >
+        Undo
+      </button>
+
+      <button
+        onClick={() => redo(spaceId)}
+        disabled={!canRedoSpace}
+      >
+        Redo
+      </button>
+
+      <div className="history-info">
+        Actions in history: {spaceHistory.actions.length}
+      </div>
+    </div>
+  );
+}
+```
+
+## Actions Recorded in History
+
+By default, the history plugin records the following actions:
+
+-   `area/addArea`: Adding an area
+-   `area/removeArea`: Removing an area
+-   `area/updateArea`: Updating an area
+-   `area/moveArea`: Moving an area
+-   `area/resizeArea`: Resizing an area
+-   `composition/update`: Updating a composition
+-   `composition/addElement`: Adding an element
+-   `composition/removeElement`: Removing an element
+-   `composition/updateElement`: Updating an element
+-   `project/update`: Updating a project
+-   `drawing/addLine`: Adding a drawing line
+-   `drawing/changeStrokeWidth`: Changing stroke width
+-   `drawing/clearCanvas`: Clearing the canvas
+
+## Customizing the History System
+
+### Ignoring Certain Actions
+
+You can modify the list of actions to record in the history by creating your own plugin:
 
 ```typescript
 import { historyPlugin } from '@gamesberry/karmyc-core';
 
-// Créer un plugin d'historique personnalisé
+// Create a custom history plugin
 const customHistoryPlugin = {
   ...historyPlugin,
   actionTypes: [
     'area/addArea',
     'area/removeArea',
-    // Votre liste personnalisée d'actions
+    // Your custom list of actions
   ]
 };
 
-// Utiliser ce plugin personnalisé
+// Use this custom plugin
 const config = useKarmyc({
   plugins: [customHistoryPlugin]
 });
 ```
 
-### Limiter la taille de l'historique
+### Limiting History Size
 
-Vous pouvez configurer la limite de l'historique :
+You can configure the history limit:
 
 ```typescript
 const config = useKarmyc({
   plugins: [historyPlugin],
   historyOptions: {
-    limit: 50 // Maximum 50 actions dans l'historique
+    limit: 50 // Maximum 50 actions in history
   }
 });
 ```
 
-### Accès aux métadonnées des actions
+### Accessing Action Metadata
 
-Vous pouvez accéder aux métadonnées des actions enregistrées dans l'historique :
+You can access the metadata of actions recorded in the history:
 
 ```typescript
 function HistoryList() {
-  const { actions } = useHistory();
-  
+  const { getHistoryForSpace } = useHistory();
+  const spaceId = 'your-space-id';
+  const { actions } = getHistoryForSpace(spaceId);
+
   return (
     <div className="history-list">
-      <h3>Historique des actions</h3>
+      <h3>Action History</h3>
       <ul>
         {actions.map(action => (
           <li key={action.id}>
-            {action.type} - {new Date(action.timestamp).toLocaleTimeString()}
+            {action.name} - {new Date(action.timestamp).toLocaleTimeString()}
           </li>
         ))}
       </ul>
@@ -144,81 +199,116 @@ function HistoryList() {
 }
 ```
 
-## Détails techniques
+## Technical Details
 
-### Structure des entrées d'historique
+### History Entry Structure
 
-Chaque entrée dans l'historique contient les informations suivantes :
+Each entry in the history contains the following information:
 
 ```typescript
 interface HistoryEntry {
-  id: string;        // Identifiant unique
-  type: string;      // Type d'action
-  timestamp: number; // Horodatage
-  payload: any;      // Données de l'action
-  prevState: any;    // État avant l'action
-  nextState: any;    // État après l'action
-  description: string; // Description lisible
+  name: string;         // Action name
+  timestamp?: number;   // Timestamp
+  prevState: any;       // State before the action
+  nextState: any;       // State after the action
+  metadata?: {
+    spaceId?: string;    // ID of the affected space
+    projectId?: string;  // ID of the affected project
+    userId?: string;     // User ID
+    duration?: number;   // Action duration
+  };
 }
 ```
 
-### Architecture interne
+### Internal Architecture
 
-Le système d'historique utilise le modèle Redux pour gérer l'état de l'historique :
+The history system uses the Redux pattern to manage history state:
 
-1. Le **middleware d'historique** intercepte toutes les actions
-2. Pour les actions d'historique, il génère des différences (diffs) entre l'état avant et après
-3. Le **slice d'historique** stocke les entrées d'historique avec l'état précédent et suivant
-4. Le **hook useHistory** fournit une API pour interagir avec l'historique
+1.  The **History Middleware** intercepts all actions.
+2.  For history actions, it generates differences (diffs) between the state before and after.
+3.  The **History Slice** stores history entries with the previous and next states.
+4.  The **`useHistory` hook** provides an API to interact with the history.
 
-## Bonnes pratiques
+## Complete Example: HistoryDrawingArea
 
-1. **Actions atomiques** : Concevez vos actions pour être atomiques et réversibles
-2. **Descriptions claires** : Utilisez des descriptions claires pour les actions
-3. **Limiter la taille** : Limitez la taille de l'historique pour éviter les problèmes de performance
-4. **Optimisation des diffs** : Utilisez des outils comme Immer pour générer des diffs efficaces
+Karmyc includes a complete example of using the history system with the `HistoryDrawingArea` component. This component allows drawing on a canvas and uses history to enable undoing and redoing drawing actions.
 
-## Exemple complet
-
-Voici un exemple complet d'utilisation du système d'historique :
+Here's how the history system is used in this component:
 
 ```tsx
-import React, { useState } from 'react';
-import { useHistory, useDispatch } from '@gamesberry/karmyc-core';
+// Import history functions
+import {
+  addHistoryEntry,
+  hasFutureEntriesForSpace,
+  hasPastEntriesForSpace,
+  redo,
+  undo
+} from '@gamesberry/karmyc-core/store/slices/historySlice';
 
-// Composant de contrôle de l'historique
-function HistoryControls() {
-  const { canUndo, canRedo, undo, redo, actions } = useHistory();
-  const [showHistory, setShowHistory] = useState(false);
-  
-  return (
-    <div className="history-panel">
-      <div className="history-buttons">
-        <button onClick={undo} disabled={!canUndo}>Annuler</button>
-        <button onClick={redo} disabled={!canRedo}>Rétablir</button>
-        <button onClick={() => setShowHistory(!showHistory)}>
-          {showHistory ? 'Masquer l\'historique' : 'Afficher l\'historique'}
-        </button>
-      </div>
-      
-      {showHistory && (
-        <div className="history-list">
-          <h4>Historique des actions</h4>
-          <ul>
-            {actions.map(action => (
-              <li key={action.id} className="history-item">
-                <span className="history-type">{action.type}</span>
-                <span className="history-time">
-                  {new Date(action.timestamp).toLocaleTimeString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+export const HistoryDrawingArea = ({ id, viewport }) => {
+  // ...
+
+  // Check if undo/redo is possible for the current space
+  const canUndo = useSelector((state) =>
+    hasPastEntriesForSpace(state, currentSpaceId ?? null)
   );
-}
+  const canRedo = useSelector((state) =>
+    hasFutureEntriesForSpace(state, currentSpaceId ?? null)
+  );
 
-export default HistoryControls;
-``` 
+  // Record an action in history (e.g., adding a line)
+  const handleMouseUp = () => {
+    // ...
+    const newLine = { /* ... */ };
+
+    // Store the state before and after the action
+    const prevSharedState = currentSpaceSharedState ?? { /* ... */ };
+    const nextSharedState = {
+      ...prevSharedState,
+      drawingLines: [...(prevSharedState.drawingLines ?? []), newLine]
+    };
+
+    // Apply the action
+    dispatch(addDrawingLineToSpace({ spaceId: currentSpaceId, line: newLine }));
+
+    // Record in history
+    dispatch(addHistoryEntry({
+      name: 'drawing/addLine',
+      prevState: prevSharedState,
+      nextState: nextSharedState,
+      metadata: { spaceId: currentSpaceId }
+    }));
+  };
+
+  // Handle undo for the current space
+  const handleUndo = () => {
+    if (currentSpaceId) {
+      dispatch(undo({ spaceId: currentSpaceId }));
+    }
+  };
+
+  // Handle redo for the current space
+  const handleRedo = () => {
+    if (currentSpaceId) {
+      dispatch(redo({ spaceId: currentSpaceId }));
+    }
+  };
+
+  // ...
+};
+```
+
+This component illustrates several key concepts:
+- Separate history per space (spaceId)
+- Recording before/after states for each action
+- Checking the availability of undo/redo actions
+- Handling different types of actions (drawing, changing thickness, clearing)
+
+## Best Practices
+
+1.  **Atomic Actions**: Design your actions to be atomic and reversible.
+2.  **Clear Descriptions**: Use clear descriptions for actions.
+3.  **Limit Size**: Limit the history size to avoid performance issues.
+4.  **Diff Optimization**: Use tools like Immer to generate efficient diffs.
+5.  **Contextual History**: Use the history-per-space system for finer management.
+6.  **Useful Metadata**: Include relevant metadata in history entries.
