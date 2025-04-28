@@ -1,23 +1,31 @@
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useRef } from 'react';
 import { historyPlugin } from '../actions/plugins/history';
 import { actionRegistry } from '../actions/registry';
 import { useArea } from '../hooks/useArea';
-import { RootState } from '../store';
+import { useAreaStore } from '../stores/areaStore';
 import { IKarmycOptions } from '../types/karmyc';
 
 interface IKarmycInitializerProps {
     options?: IKarmycOptions;
 }
 
+// Zones par défaut
+const DEFAULT_AREAS = [
+    {
+        type: 'text-note',
+        state: { content: '' },
+        position: { x: 0, y: 0 }
+    }
+];
+
 export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {} }) => {
-    // Use the useArea hook to create zones
+    const initialized = useRef(false);
     const { createArea } = useArea();
 
-    // Get the current areas from the store
-    const existingAreas = useSelector((state: RootState) => state.area.areas);
-
     useEffect(() => {
+        if (initialized.current) return;
+        initialized.current = true;
+
         // Register default plugins
         const defaultPlugins = [historyPlugin];
         const customPlugins = options.plugins || [];
@@ -36,47 +44,37 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
             });
         }
 
-        // Initialize custom areas if specified
-        if (options.initialAreas && options.initialAreas.length > 0) {
-            // Vérifier si des areas existent déjà pour éviter la duplication
-            const hasExistingAreas = existingAreas && Object.keys(existingAreas).length > 0;
+        // Vérifier si le store est déjà initialisé (par ex. depuis localStorage)
+        const storeState = useAreaStore.getState();
+        const isAlreadyInitialized = storeState.rootId || Object.keys(storeState.layout || {}).length > 0;
 
-            if (!hasExistingAreas) {
-                options.initialAreas.forEach(area => {
-                    createArea(
-                        area.type,
-                        area.state,
-                        area.position
-                    );
-                });
+        if (!isAlreadyInitialized) {
+            console.log("[KarmycInitializer] Store is empty, initializing default/initial areas.");
+            // Initialize areas only if the store is not already initialized
+            const areasToInitialize = options.initialAreas || DEFAULT_AREAS;
 
-                if (options.enableLogging) {
-                    console.log(`${options.initialAreas.length} zones initialized`);
-                }
-            } else if (options.enableLogging) {
-                console.log(`Skipped initializing ${options.initialAreas.length} zones - ${Object.keys(existingAreas).length} areas already exist`);
-            }
-        }
-
-        // Register custom reducers
-        if (options.customReducers) {
-            // NOTE: Direct integration of custom reducers in an existing store
-            // is not possible after its creation. In a future iteration, we will
-            // implement a solution based on async reducers or a configurable store.
-            // For now, we only register the intentions.
+            // Créer les zones
+            areasToInitialize.forEach(area => {
+                createArea(
+                    area.type,
+                    area.state,
+                    area.position
+                );
+            });
 
             if (options.enableLogging) {
-                console.log(`${Object.keys(options.customReducers).length} custom reducers to register`);
-                console.log('Note: Integration of custom reducers will be available in a future version');
+                console.log(`${areasToInitialize.length} zones initialized`);
             }
+        } else {
+            console.log("[KarmycInitializer] Store already initialized, skipping default/initial areas.");
         }
 
-        // Logging if activated
         if (options.enableLogging) {
+            // Utiliser pluginIds qui est déjà disponible dans cette portée
             console.log('Karmyc initialized with:', {
                 plugins: pluginIds,
                 validators: options.validators?.length || 0,
-                initialAreas: options.initialAreas?.length || 0,
+                initialAreas: isAlreadyInitialized ? 'skipped (loaded from storage)' : (options.initialAreas?.length || DEFAULT_AREAS.length),
                 customReducers: options.customReducers ? Object.keys(options.customReducers).length : 0,
                 keyboardShortcutsEnabled: options.keyboardShortcutsEnabled || false
             });
@@ -88,7 +86,7 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                 actionRegistry.unregisterPlugin(id);
             });
         };
-    }, [options, createArea, existingAreas]);
+    }, []); // Toujours exécuter une seule fois
 
     return null;
 }; 

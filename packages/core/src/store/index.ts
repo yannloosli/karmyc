@@ -15,8 +15,6 @@
 
 import { configureStore, Middleware } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux';
-import { persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 
 import { actionRegistry } from '../actions';
 import { historyPlugin } from '../actions/plugins/history';
@@ -37,13 +35,15 @@ import spaceReducer from './slices/spaceSlice';
 import stateReducer from './slices/stateSlice';
 import toolbarReducer from './slices/toolbarSlice';
 
-// Persistence configuration
+// Persistence configuration (COMMENTÉE POUR DÉSACTIVER)
+/*
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['toolbar', 'state', 'area', 'space'], // Ajouter 'space' pour persister les espaces
-    blacklist: ['undoable', 'diff'], // Don't persist undo/redo history and diffs
+    whitelist: ['toolbar', 'state', 'area', 'space'], 
+    blacklist: ['undoable', 'diff'], 
 };
+*/
 
 // Combine reducers
 const rootReducer = combineReducers({
@@ -57,7 +57,7 @@ const rootReducer = combineReducers({
     space: spaceReducer
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+// COMMENTÉE : const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 // Define the RootState type based on the rootReducer
 export type RootState = ReturnType<typeof rootReducer>;
@@ -108,7 +108,8 @@ const areaCleanupMiddleware: Middleware = api => {
 
 // Create store with all middlewares
 export const store = configureStore({
-    reducer: persistedReducer,
+    // Utiliser rootReducer directement au lieu de persistedReducer
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) => {
         const middleware = getDefaultMiddleware({
             serializableCheck: false,

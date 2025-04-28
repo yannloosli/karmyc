@@ -1,97 +1,76 @@
-import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-    addSpace,
-    removeSpace,
-    selectActiveSpace,
-    selectActiveSpaceId,
-    selectAllSpaces,
-    selectSpaceById,
-    setActiveSpace,
-    Space,
-    updateSpace,
-    updateSpaceGenericSharedState
-} from '../store/slices/spaceSlice';
+import { useCallback, useMemo } from 'react';
+// Remove Redux imports
+// import { useDispatch, useSelector } from 'react-redux';
+// import {
+//     addSpace,
+//     removeSpace,
+//     selectActiveSpace,
+//     selectActiveSpaceId,
+//     selectAllSpaces,
+//     selectSpaceById,
+//     setActiveSpace,
+//     Space,
+//     updateSpace,
+//     updateSpaceGenericSharedState
+// } from '../store/slices/spaceSlice';
+
+// Import the Zustand store and its types
+import { Space, useSpaceStore } from '../stores/spaceStore';
+// Import the shallow comparator
+import { shallow } from 'zustand/shallow';
 
 /**
- * Hook for managing spaces
+ * Hook for managing spaces using Zustand
  * Provides functions to manipulate spaces and access their state
  */
 export function useSpace() {
-    const dispatch = useDispatch();
+    // Select state slices
+    const spaces = useSpaceStore(state => state.spaces, shallow) as Record<string, Space>;
+    const activeSpaceId = useSpaceStore(state => state.activeSpaceId);
 
-    // Selectors
-    const spaces = useSelector(selectAllSpaces);
-    const activeSpace = useSelector(selectActiveSpace);
-    const activeSpaceId = useSelector(selectActiveSpaceId);
+    // Select actions individually (references should be stable)
+    const addSpaceAction = useSpaceStore(state => state.addSpace);
+    const removeSpaceAction = useSpaceStore(state => state.removeSpace);
+    const setActiveSpaceAction = useSpaceStore(state => state.setActiveSpace);
+    const updateSpaceAction = useSpaceStore(state => state.updateSpace);
+    const updateSpaceGenericSharedStateAction = useSpaceStore(state => state.updateSpaceGenericSharedState);
 
-    /**
-     * Create a new space
-     * @param name The name of the space
-     * @param initialSharedState Initial shared state for the space
-     * @returns The ID of the created space
-     */
+    // Memoize the derived space list
+    const spaceList = useMemo(() => {
+        return Object.entries(spaces).map(([id, space]) => ({ id, name: space.name }));
+    }, [spaces]);
+
+    // Define actions using useCallback with stable action references
     const createSpace = useCallback((name: string, initialSharedState = {}) => {
-        const spaceData = {
-            name,
-            sharedState: initialSharedState
-        };
+        return addSpaceAction({ name, sharedState: initialSharedState });
+    }, [addSpaceAction]);
 
-        dispatch(addSpace(spaceData));
-        // Note: The actual ID is generated in the reducer
-        // We could implement a way to return the generated ID if needed
-    }, [dispatch]);
-
-    /**
-     * Delete a space
-     * @param id ID of the space to delete
-     */
     const deleteSpace = useCallback((id: string) => {
-        dispatch(removeSpace(id));
-    }, [dispatch]);
+        removeSpaceAction(id);
+    }, [removeSpaceAction]);
 
-    /**
-     * Set the active space
-     * @param id ID of the space to set as active, or null for no active space
-     */
     const setActive = useCallback((id: string | null) => {
-        dispatch(setActiveSpace(id));
-    }, [dispatch]);
+        setActiveSpaceAction(id);
+    }, [setActiveSpaceAction]);
 
-    /**
-     * Update the shared state of a space
-     * @param spaceId ID of the space to update
-     * @param changes Changes to apply to the space's shared state
-     */
     const updateSharedState = useCallback((spaceId: string, changes: Partial<Record<string, any>>) => {
-        dispatch(updateSpaceGenericSharedState({ spaceId, changes }));
-    }, [dispatch]);
+        updateSpaceGenericSharedStateAction({ spaceId, changes });
+    }, [updateSpaceGenericSharedStateAction]);
 
-    /**
-     * Update a space's properties
-     * @param id ID of the space to update
-     * @param changes Changes to apply to the space
-     */
     const updateSpaceProperties = useCallback((id: string, changes: Partial<Omit<Space, 'id'>>) => {
-        dispatch(updateSpace({ id, changes }));
-    }, [dispatch]);
+        updateSpaceAction({ id, ...changes });
+    }, [updateSpaceAction]);
 
-    /**
-     * Get a space by its ID
-     * @param id The space ID
-     * @returns The space object, or undefined if not found
-     */
     const getSpaceById = useCallback((id: string) => {
-        return useSelector(selectSpaceById(id));
+        return useSpaceStore.getState().spaces[id];
     }, []);
 
     return {
         // State
-        spaces,
-        activeSpace,
+        spaceList,
         activeSpaceId,
 
-        // Actions
+        // Actions (return the useCallback-wrapped functions)
         createSpace,
         deleteSpace,
         setActive,

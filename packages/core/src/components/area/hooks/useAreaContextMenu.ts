@@ -1,6 +1,6 @@
 import { areaRegistry } from '@gamesberry/karmyc-core/area/registry';
-import { RootState } from '@gamesberry/karmyc-core/store';
-import { useSelector } from 'react-redux';
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
+import { useContextMenuStore } from '@gamesberry/karmyc-core/stores/contextMenuStore';
 
 interface ContextMenuItem {
     id: string;
@@ -10,8 +10,9 @@ interface ContextMenuItem {
 }
 
 export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
-    const area = useSelector((state: RootState) => state.area.areas[areaId]);
-    const areaToOpen = useSelector((state: RootState) => state.area.areaToOpen);
+    const area = useAreaStore((state) => state.areas[areaId]);
+    const areaToOpen = useAreaStore((state) => state.areaToOpen);
+    const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
     // Special case for area preview (ID -1)
     if (areaId === "-1" && areaToOpen) {
@@ -47,7 +48,7 @@ export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
 
     // If area doesn't exist, return empty menu
     if (!area) {
-        console.warn(`Area ${areaId} not found in state`);
+        console.warn(`Area ${areaId} not found in Zustand state`);
         return [];
     }
 

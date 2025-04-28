@@ -9,6 +9,13 @@ export default ({ css, keyframes }: StyleParams) => {
 		100% { transform: scale(0.5); }
 	`;
     return {
+        root: css`
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        `,
+
         cursorCapture: css`
 			display: none;
 

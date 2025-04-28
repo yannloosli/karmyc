@@ -113,6 +113,7 @@ export const validateDimensions = (dimensions: { width: number; height: number }
 export const validateArea = (area: Area<string>): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
 
+    if (!area.id) errors.push('Missing ID');
     if (!area.type) errors.push('Missing type');
     if (!area.state) errors.push('Missing state');
 

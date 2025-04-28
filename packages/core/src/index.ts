@@ -54,7 +54,7 @@ export { areaRegistry } from './area/registry';
 export { actionRegistry as actionRegistryWithHandlers } from './store/registries/actionRegistry';
 
 // Export area slice
-export { areaSlice, setAreaType } from './store/slices/areaSlice';
+export { areaSlice, setAreaType, setFields } from './store/slices/areaSlice';
 
 // Export context menu hooks
 export { useSyncContextMenuActions } from './hooks/useSyncContextMenuActions';

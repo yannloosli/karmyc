@@ -1,19 +1,23 @@
 import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { clearLoading, selectStateLoading, setLoading } from '../store/slices/stateSlice';
+// Supprimer imports Redux
+// import { useDispatch, useSelector } from 'react-redux';
+// import { RootState } from '../store';
+// import { clearLoading, selectStateLoading, setLoading } from '../store/slices/stateSlice';
+import { useLoadingStore } from '../stores/loadingStore'; // Importer le store Zustand
 
 export const useLoadingState = (id: string) => {
-    const dispatch = useDispatch();
-    const isLoading = useSelector((state: RootState) => selectStateLoading(id)(state));
+    // Lire l'état et les actions depuis Zustand
+    const isLoading = useLoadingStore((state) => !!state.loadingStates[id]);
+    const setLoadingAction = useLoadingStore((state) => state.setLoading);
+    const clearLoadingAction = useLoadingStore((state) => state.clearLoading);
 
     const startLoading = useCallback(() => {
-        dispatch(setLoading({ id, loading: true }));
-    }, [dispatch, id]);
+        setLoadingAction(id, true);
+    }, [setLoadingAction, id]);
 
     const stopLoading = useCallback(() => {
-        dispatch(clearLoading(id));
-    }, [dispatch, id]);
+        clearLoadingAction(id);
+    }, [clearLoadingAction, id]);
 
     const withLoading = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
         try {

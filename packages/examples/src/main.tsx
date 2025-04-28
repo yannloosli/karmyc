@@ -1,27 +1,24 @@
 import {
     KarmycProvider,
-    store,
-    updateArea,
     useKarmyc
 } from '@gamesberry/karmyc-core';
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
 import { debounce } from 'lodash';
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Provider } from 'react-redux';
-import { persistStore } from 'redux-persist';
-import { PersistGate } from 'redux-persist/integration/react';
 import { App } from "./App";
 
-// Utilitaires importés depuis le core
-const getActionState = () => store.getState().action;
+// Remplacer l'accès au store Redux par Zustand
+const getAreaState = () => useAreaStore.getState();
 const sendDiffsToSubscribers = (actionState: any, actions: any[]) => {
     // Implémentation simplifiée
     console.log('Diffusion des changements:', actions);
 };
 
 // Make the store globally accessible from the start for keyboard shortcuts
+// Note: L'accès global direct au store Zustand n'est pas idéal, mais gardé pour compatibilité temporaire
 if (typeof window !== 'undefined') {
-    (window as any).store = store;
+    (window as any).areaStore = useAreaStore;
 
     // Intercept Ctrl+R and Ctrl+S globally to ensure our shortcuts work
     window.addEventListener('keydown', (e) => {
@@ -44,34 +41,35 @@ if (typeof window !== 'undefined') {
     function executeShortcutAction(key: string) {
         try {
             // Get the store
-            const store = (window as any).store;
-            if (!store || !store.getState) {
-                console.error("Store not available to execute shortcut action");
+            const areaStore = useAreaStore.getState();
+            if (!areaStore) {
+                console.error("Store Zustand non disponible pour exécuter l'action de raccourci");
                 return;
             }
 
             // Get the current state
-            const state = store.getState();
-            if (!state.area) {
-                console.error("Area state not available");
+            const state = areaStore;
+            if (!state.areas) {
+                console.error("Area state (Zustand) non disponible");
                 return;
             }
 
             // Get the active area
-            const activeAreaId = state.area.activeAreaId;
+            const activeAreaId = state.activeAreaId;
             if (!activeAreaId) {
                 console.warn("No active area to execute shortcut");
                 return;
             }
 
             // Get the type of the active area
-            const area = state.area.areas[activeAreaId];
+            const area = state.areas[activeAreaId];
             if (!area) {
                 console.warn(`Active area ${activeAreaId} not found`);
                 return;
             }
 
             const areaType = area.type;
+            const updateAreaAction = areaStore.updateArea;
 
             // Execute the action based on the area type and key
             switch (areaType) {
@@ -83,48 +81,33 @@ if (typeof window !== 'undefined') {
 
             case 'color-picker':
                 if (key === 'R') {
-                    // Reset the color directly
-                    if (store.dispatch) {
-                        const defaultColor = '#1890ff';
-                        store.dispatch(updateArea({
-                            id: activeAreaId,
-                            changes: {
-                                state: { ...area.state, color: defaultColor }
-                            }
-                        }));
-                    }
+                    // Reset the color directly using Zustand action
+                    const defaultColor = '#1890ff';
+                    updateAreaAction({
+                        id: activeAreaId,
+                        state: { ...area.state, color: defaultColor }
+                    });
                 }
                 break;
 
             case 'image-viewer':
                 if (key === 'R') {
-                    // Image reload action
-                    if (store.dispatch) {
-                        // Simulate reload by adding a timestamp to the URL
-                        const newUrl = `https://picsum.photos//300/400?t=${Date.now()}`;
-
-                        // Update the image URL
-                        store.dispatch(updateArea({
-                            id: activeAreaId,
-                            changes: {
-                                state: { ...area.state, imageUrl: newUrl }
-                            }
-                        }));
-                    }
+                    // Image reload action using Zustand action
+                    const newUrl = `https://picsum.photos//300/400?t=${Date.now()}`;
+                    updateAreaAction({
+                        id: activeAreaId,
+                        state: { ...area.state, imageUrl: newUrl }
+                    });
                 }
                 break;
 
             case 'history-drawing':
                 if (key === 'R') {
-                    // Clear the drawing
-                    if (store.dispatch) {
-                        store.dispatch(updateArea({
-                            id: activeAreaId,
-                            changes: {
-                                state: { ...area.state, lines: [] }
-                            }
-                        }));
-                    }
+                    // Clear the drawing using Zustand action
+                    updateAreaAction({
+                        id: activeAreaId,
+                        state: { ...area.state, lines: [] }
+                    });
                 } else if (key === 'S') {
                     // Simulate drawing save
                     alert('Drawing saved');
@@ -139,9 +122,6 @@ if (typeof window !== 'undefined') {
         }
     }
 }
-
-// Create persistor
-const persistor = persistStore(store);
 
 const Root: React.FC = () => {
     // Initialiser Karmyc avec la configuration
@@ -168,11 +148,7 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
     const root = createRoot(rootElement);
     root.render(
-        <Provider store={store}>
-            <PersistGate loading={null} persistor={persistor}>
-                <Root />
-            </PersistGate>
-        </Provider>
+        <Root />
     );
 }
 
@@ -181,7 +157,7 @@ document.addEventListener("contextmenu", (e) => e.preventDefault(), false);
 
 const handleResize = debounce(() => {
     requestAnimationFrame(() => {
-        sendDiffsToSubscribers(getActionState(), [{
+        sendDiffsToSubscribers(getAreaState(), [{
             id: `resize-${Date.now()}`,
             timestamp: Date.now(),
             type: 'ResizeAreas',

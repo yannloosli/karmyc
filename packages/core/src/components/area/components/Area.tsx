@@ -1,17 +1,15 @@
 import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
 import { AreaTypeValue } from "@gamesberry/karmyc-core/constants";
-import { RootState } from "@gamesberry/karmyc-core/store";
-import { setActiveArea } from "@gamesberry/karmyc-core/store/slices/areaSlice";
+import { AreaState, useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
 import { useContextMenuStore } from "@gamesberry/karmyc-core/stores/contextMenuStore";
 import styles from "@gamesberry/karmyc-core/styles/Area.styles";
-import { AreaComponentProps } from "@gamesberry/karmyc-core/types/areaTypes";
+import { AreaComponentProps, ResizePreviewState } from "@gamesberry/karmyc-core/types/areaTypes";
 import { Rect } from "@gamesberry/karmyc-core/types/geometry";
 import { AreaIdContext } from "@gamesberry/karmyc-core/utils/AreaIdContext";
 import { requestAction } from "@gamesberry/karmyc-core/utils/requestAction";
 import { compileStylesheetLabelled } from "@gamesberry/karmyc-core/utils/stylesheets";
 import { Vec2 } from "@gamesberry/karmyc-shared";
-import React, { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { PenIcon } from "../../icons/PenIcon";
 import { handleAreaDragFromCorner } from "../handlers/areaDragFromCorner";
 import { useAreaContextMenu } from '../hooks/useAreaContextMenu';
@@ -34,13 +32,18 @@ interface StateProps {
     Component: React.ComponentType<AreaComponentProps<any>>;
 }
 
-export const AreaComponent: React.FC<AreaComponentProps> = ({
+interface AreaComponentOwnProps extends AreaComponentProps {
+    setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
+}
+
+export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     id,
     Component,
     state,
     type,
     viewport,
     raised,
+    setResizePreview,
 }) => {
     if (!viewport) {
         console.warn(`No viewport found for area ${id}, using default viewport`);
@@ -53,8 +56,8 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
         };
     }
 
-    const dispatch = useDispatch();
-    const active = useSelector((state: RootState) => state.area.activeAreaId === id);
+    const active = useAreaStore((state: AreaState) => state.activeAreaId === id);
+    const setActiveArea = useAreaStore((state: AreaState) => state.setActiveArea);
     const contextMenuItems = useAreaContextMenu(id);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
@@ -116,7 +119,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     // Activate the area when clicked
     const onActivate = () => {
         if (!active) {
-            dispatch(setActiveArea(id));
+            setActiveArea(id);
         }
     };
 
@@ -132,7 +135,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
         <div
             ref={viewportRef}
             data-areaid={id}
-            className={s("area", { raised: !!raised })}
+            className={s("area", { raised: !!raised, active })}
             style={viewport}
             onClick={onActivate}
         >
@@ -140,7 +143,7 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
                 <div
                     key={dir}
                     className={s("area__corner", { [dir]: true })}
-                    onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as "ne", id, viewport)}
+                    onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as "ne", id, viewport, setResizePreview)}
                 />
             ))}
             <button className={s("selectAreaButton")} onMouseDown={openSelectArea}>
@@ -167,73 +170,41 @@ export const AreaComponent: React.FC<AreaComponentProps> = ({
     );
 };
 
-export const Area: React.FC<OwnProps> = (props) => {
-    const areaState = useSelector((state: RootState) => {
-        if (!state?.area) return null;
-        return {
-            areas: state.area.areas || {},
-            layout: state.area.layout || {},
-            rootId: state.area.rootId,
-            activeAreaId: state.area.activeAreaId
-        };
-    }, (prev, next) => {
-        if (!prev || !next) return false;
-        return (
-            prev.rootId === next.rootId &&
-            prev.activeAreaId === next.activeAreaId &&
-            prev.areas === next.areas &&
-            prev.layout === next.layout
-        );
-    });
+interface AreaContainerProps extends OwnProps {
+    setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
+}
 
-    if (!areaState) {
-        console.warn('Area state is not available');
+export const Area: React.FC<AreaContainerProps> = (props) => {
+    const { id, setResizePreview } = props;
+    const areas = useAreaStore((state: AreaState) => state.areas);
+    const layout = useAreaStore((state: AreaState) => state.layout);
+    const rootId = useAreaStore((state: AreaState) => state.rootId);
+    const activeAreaId = useAreaStore((state: AreaState) => state.activeAreaId);
+
+    if (!areas || !layout) {
         return null;
     }
 
-    const stateProps = mapStateToProps(areaState, props);
-    return <AreaComponent {...props} {...stateProps} />;
-};
-
-const mapStateToProps = (state: any, ownProps: OwnProps): StateProps => {
-    if (!state?.areas) {
-        console.warn(`Area state is not available for area ${ownProps.id}`);
-        return {
-            state: {},
-            type: 'unknown',
-            raised: false,
-            Component: () => <div>Area not found</div>
-        };
-    }
-
-    const area = state.areas[ownProps.id];
+    const area = areas[id];
     if (!area) {
-        console.warn(`Area ${ownProps.id} not found in state`);
-        return {
-            state: {},
-            type: 'unknown',
-            raised: false,
-            Component: () => <div>Area not found</div>
-        };
+        return null;
     }
 
     const Component = areaRegistry.getComponent(area.type);
     const initialState = areaRegistry.getInitialState(area.type);
 
     if (!Component) {
-        console.warn(`Component for area type ${area.type} not found in registry`);
-        return {
-            state: area.state || initialState || {},
-            type: area.type,
-            raised: !!area.raised,
-            Component: (() => <div>Unsupported type: {area.type}</div>) as any,
-        };
+        return <div>Unsupported type: {area.type}</div>;
     }
 
-    return {
-        state: area.state || initialState || {},
-        type: area.type,
-        raised: !!area.raised,
-        Component,
-    };
+    return (
+        <AreaComponent
+            {...props}
+            state={area.state || initialState || {}}
+            type={area.type}
+            raised={!!area.raised}
+            Component={Component}
+            setResizePreview={setResizePreview}
+        />
+    );
 }; 

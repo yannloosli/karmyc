@@ -1,4 +1,5 @@
 import { ComponentType } from "react";
+import { AreaTypeValue } from "../constants";
 import { Point } from "./geometry";
 import { Rect } from "./math";
 
@@ -11,7 +12,7 @@ export interface AreaComponentProps<T = any> {
     Component: ComponentType<any>;
 }
 
-export interface Area<T extends string> {
+export interface Area<T extends AreaTypeValue = AreaTypeValue> {
     id: string;
     type: T;
     state: any;
@@ -19,6 +20,7 @@ export interface Area<T extends string> {
     viewport?: Rect;
     position?: Point;
     size?: { width: number; height: number };
+    raised?: boolean;
 }
 
 export interface AreaLayout {
@@ -59,4 +61,11 @@ export interface AreaReducerState {
         };
     };
     areaToOpen: AreaToOpen | null;
+    rootId: string | null;
+}
+
+export interface ResizePreviewState {
+    rowId: string;
+    separatorIndex: number;
+    t: number;
 } 

@@ -411,11 +411,7 @@ const reduxComponents = [
    ```
    src/
      stores/           # Nouveau dossier pour les stores Zustand
-       area/           # Sous-dossier pour les stores liés aux 'Areas' (suite à la refactorisation)
-         useAreaCoreStore.ts
-         useAreaLayoutStore.ts
-         useAreaInteractionStore.ts
-         # ... autres stores potentiels issus de areaSlice ...
+       areaStore.ts
        contextMenuStore.ts
        historyStore.ts
        notificationStore.ts
@@ -423,44 +419,13 @@ const reduxComponents = [
        index.ts        # Export centralisé
    ```
 
-2. **Recommandation : Refactorisation de `areaSlice` lors de la migration**
-
-   Bien que le plan initial puisse suggérer une traduction 1:1 des slices Redux, la complexité et la taille importantes du slice `areaSlice` (identifié à 58KB et 1457 lignes) représentent une **opportunité majeure d'amélioration** à saisir lors de cette migration.
-
-   **Nous recommandons fortement d'intégrer une étape de refactorisation de `areaSlice` durant cette Phase 2**, au lieu de créer un unique et volumineux store Zustand monolithique qui hériterait de cette complexité.
-
-   *   **Bénéfices Attendus :**
-       *   **Maintenabilité accrue :** Des stores plus petits et ciblés sont plus faciles à comprendre, modifier et maintenir.
-       *   **Meilleure Séparation des Préoccupations :** Distinction claire entre l'état de base des zones, la logique de layout/structure, et la logique d'interaction utilisateur (drag & drop, placement).
-       *   **Stores Zustand Cohérents :** Évite d'avoir un store Zustand disproportionné par rapport aux autres.
-       *   **Tests Simplifiés :** Les tests unitaires peuvent cibler plus précisément des fonctionnalités spécifiques.
-       *   **Optimisation Potentielle des Re-renders :** Les composants ne s'abonneraient qu'aux stores Zustand dont ils ont réellement besoin.
-
-   *   **Approche Suggérée :**
-       1.  **Analyse Approfondie :** Au début de la Phase 2, analyser en détail les actions, l'état et les dépendances internes de `areaSlice.ts` pour identifier des sous-domaines logiques distincts.
-       2.  **Définition des Périmètres :** Définir les périmètres de plusieurs nouveaux stores Zustand. Basé sur l'inventaire des actions, des axes de découpage potentiels pourraient être :
-           *   `useAreaCoreStore`: Gestion de base des zones (CRUD, état actif, types, viewports).
-           *   `useAreaLayoutStore`: Gestion de la structure et des relations spatiales (lignes, fusion, conversion, insertion, tailles).
-           *   `useAreaInteractionStore`: Gestion des états transitoires liés aux interactions utilisateur (prévisualisation de fusion, prévisualisation de placement/ouverture, drag & drop).
-       3.  **Implémentation Séparée :** Implémenter ces stores Zustand distincts dans le sous-dossier `src/stores/area/`.
-       4.  **Gestion des Dépendances :** Gérer les éventuelles dépendances entre ces nouveaux stores (par exemple, une action dans `useAreaInteractionStore` pourrait avoir besoin de lire/modifier l'état dans `useAreaCoreStore` via `useAreaCoreStore.getState()`).
-
-   *   **Rôle de l'IA :** L'assistance par IA peut être précieuse pour cette étape :
-       *   Aider à analyser les couplages et les dépendances au sein de `areaSlice`.
-       *   Suggérer des découpages logiques basés sur l'analyse du code.
-       *   Assister à la génération du code pour les multiples stores Zustand.
-       *   Cependant, **la décision finale sur la structure de découpage et la validation de la logique doivent impérativement rester humaines** en raison de la complexité et de l'importance de ce module.
-
-   *   **Impact :** Cette refactorisation ajoutera un temps d'analyse et d'implémentation supplémentaire spécifique à `areaSlice` au début de la Phase 2, mais les bénéfices à long terme en termes de maintenabilité et de clarté justifient cet investissement.
-
-3. **Implémenter les stores Zustand équivalents pour les *autres* slices Redux**
+2. **Implémenter les stores Zustand équivalents aux slices Redux**
    - Convertir chaque autre slice Redux en store Zustand distinct (en suivant une approche 1:1 pour ceux-ci, sauf si une autre refactorisation évidente apparaît).
    - Reproduire les actions et sélecteurs.
    - Ajouter les middlewares nécessaires (persist, devtools, immer) en se basant sur l'inventaire et les besoins spécifiques (ex: `persist` pour les stores issus de `areaSlice`, `stateSlice`, `toolbarSlice`, `spaceSlice`).
 
-4. **Créer des hooks personnalisés pour abstraire l'accès aux stores**
+3. **Créer des hooks personnalisés pour abstraire l'accès aux stores**
    - Simplifier la migration des composants.
-   - Maintenir une API cohérente (par exemple, `useArea()` pourrait maintenant agréger les fonctions issues de `useAreaCoreStore`, `useAreaLayoutStore`, etc.).
 
 ### Phase 3 : Migration des fonctionnalités spéciales
 

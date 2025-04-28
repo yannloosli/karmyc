@@ -1,5 +1,5 @@
 import { useArea, useSpace } from '@gamesberry/karmyc-core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 // Type pour l'état du composant
 interface ColorPickerAreaState {
@@ -48,8 +48,8 @@ export const ColorPickerArea: React.FC<ColorPickerAreaProps> = ({
     viewport,
     targetSpace,
 }) => {
-    const { activeSpaceId, updateSharedState, spaces } = useSpace();
-    const { deleteArea, updateAreaState } = useArea();
+    const { activeSpaceId, updateSharedState, spaceList } = useSpace();
+    const { removeArea, update: updateArea } = useArea();
 
     const [selectedSpace, setSelectedSpace] = useState<string>(targetSpace || activeSpaceId || '');
 
@@ -63,23 +63,22 @@ export const ColorPickerArea: React.FC<ColorPickerAreaProps> = ({
     };
 
     const updateColor = (color: string) => {
-        // console.log("updateColor called. updateState prop is:", updateState); // Log inutile
+        // Use updateArea and pass the state change correctly
+        updateArea(id, { state: { color: color } });
 
-        // 1. Mettre à jour l'état interne en utilisant la fonction du hook useArea
-        updateAreaState(id, { color: color });
-
-        // 2. Mettre à jour l'état partagé de l'espace sélectionné
         if (selectedSpace) {
             updateSharedState(selectedSpace, { color });
         }
     };
 
-    // Construire les options de façon type-safe
-    const spaceOptions = Object.entries<Space>(spaces || {}).map(([spaceId, space]) => (
-        <option key={spaceId} value={spaceId}>
-            {space.name}
-        </option>
-    ));
+    // Build options using the spaceList
+    const spaceOptions = useMemo(() => {
+        return spaceList.map((space) => (
+            <option key={space.id} value={space.id}>
+                {space.name}
+            </option>
+        ));
+    }, [spaceList]); // Recompute only when spaceList changes
 
     return (
         <div style={{
@@ -150,7 +149,7 @@ export const ColorPickerArea: React.FC<ColorPickerAreaProps> = ({
 
                 {/* Bouton pour fermer/supprimer */}
                 <button
-                    onClick={() => deleteArea(id)}
+                    onClick={() => removeArea(id)}
                     style={{
                         padding: '0.5rem',
                         marginTop: '1rem',

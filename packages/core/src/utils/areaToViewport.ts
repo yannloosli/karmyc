@@ -1,4 +1,5 @@
 import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
+import { Rect } from "../types/geometry";
 
 // Record viewport calculation history to help with debugging
 const viewportCalculationHistory = {
@@ -82,13 +83,8 @@ export const computeAreaToViewport = (
 
     const result: { [key: string]: { left: number; top: number; width: number; height: number } } = {};
 
-    // Create a mutable copy of the layout to avoid modifying the original
-    const mutableLayout: { [key: string]: AreaLayout | AreaRowLayout } = {};
-
-    // Clone all layout elements to avoid modifying non-extensible objects
-    Object.entries(layout).forEach(([id, item]) => {
-        mutableLayout[id] = safeCloneLayout(item);
-    });
+    // Create a deep mutable copy of the layout with type assertion
+    const mutableLayout = JSON.parse(JSON.stringify(layout)) as { [key: string]: AreaLayout | AreaRowLayout };
 
     // Mark the beginning of the calculation
     viewportCalculationHistory.lastCalculation = Date.now();
@@ -134,7 +130,7 @@ export const computeAreaToViewport = (
     const reportedProblems = viewportCalculationHistory.reportedProblems;
 
     // Debug log for the current calculation
-    console.debug(`Viewport calculation: rootId=${rootId}, viewportSize=${viewport.width}x${viewport.height}, layoutSize=${Object.keys(mutableLayout).length}`);
+    console.log(`Viewport calculation: rootId=${rootId}, viewportSize=${viewport.width}x${viewport.height}, layoutSize=${Object.keys(mutableLayout).length}`);
 
     // Check the structure of areas
     Object.entries(mutableLayout).forEach(([id, area]) => {
@@ -153,7 +149,7 @@ export const computeAreaToViewport = (
 
         // Avoid recalculating a viewport already visited
         if (visitedIds.has(area.id)) {
-            console.debug(`Skipping already visited area ${area.id}`);
+            console.log(`Skipping already visited area ${area.id}`);
             return;
         }
 
@@ -166,72 +162,56 @@ export const computeAreaToViewport = (
         // Check if the area has a valid size
         if (contentArea.width <= 0 || contentArea.height <= 0) {
             console.warn(`Area ${area.id} has invalid content area size: ${contentArea.width}x${contentArea.height}`);
+            // Ne pas assigner de viewport si la taille reçue est invalide
             return;
         }
 
         visitedIds.add(area.id);
 
-        // Ensure dimensions are valid
-        const validContentArea = {
-            ...contentArea,
-            width: Math.max(contentArea.width, 200),
-            height: Math.max(contentArea.height, 200)
-        };
-
-        areaToViewport[area.id] = { ...validContentArea };
+        // Correction: Assigner directement contentArea sans forcer de minimum
+        console.log(`[computeArea LOG] Assigning viewport for ${area.id}:`, contentArea);
+        areaToViewport[area.id] = { ...contentArea };
     }
 
     function computeRow(row: AreaRowLayout, contentArea: { left: number; top: number; width: number; height: number }) {
-        if (!row || !contentArea) {
-            console.error("Invalid row or contentArea in computeRow", { row, contentArea });
-            return;
-        }
-
-        // Additional check to ensure the row has a valid ID
-        if (!row.id) {
-            console.error("Row without ID in computeRow", row);
-            return;
-        }
-
-        // Additional check for areas
-        if (!row.areas || !Array.isArray(row.areas)) {
-            console.error("Row without proper areas array in computeRow", { rowId: row.id, areas: row.areas });
-            row.areas = []; // Initialize with an empty array to avoid downstream errors
-        }
-
-        // Check that the contentArea size is valid
-        if (contentArea.width <= 0 || contentArea.height <= 0) {
-            console.error("ContentArea with invalid dimensions in computeRow", { rowId: row.id, contentArea });
-            // Use a minimum size to avoid downstream errors
-            contentArea = {
-                ...contentArea,
-                width: Math.max(contentArea.width, 200),
-                height: Math.max(contentArea.height, 200)
-            };
-        }
-
-        // If after corrections, there are still no areas, stop here but without error
-        if (row.areas.length === 0) {
-            console.warn("Row with empty areas array in computeRow, skipping", { rowId: row.id });
-            areaToViewport[row.id] = { ...contentArea }; // Still add the viewport for the row
-            return;
-        }
-
-        // Avoid recalculating a viewport already visited
-        if (visitedIds.has(row.id)) {
-            return;
+        if (!row || !contentArea || visitedIds.has(row.id)) {
+            // Simplified initial checks
+            if (row && visitedIds.has(row.id)) return; // Already processed
+            if (!row) { console.error("computeRow: Invalid row"); return; }
+            if (!contentArea) { console.error("computeRow: Invalid contentArea for row", row.id); return; }
+            // Continue validation...
         }
         visitedIds.add(row.id);
 
-        // Ensure dimensions are valid and stable
-        const validContentArea = {
-            ...contentArea,
-            width: Math.max(contentArea.width, 200),
-            height: Math.max(contentArea.height, 200)
-        };
+        console.log(`[computeRow START] Processing row ${row.id}, Orientation: ${row.orientation}, Input ContentArea:`, contentArea);
 
-        // Assign the full viewport to the parent row before calculating children
-        areaToViewport[row.id] = { ...validContentArea };
+        // Additional check for areas array
+        if (!row.areas || !Array.isArray(row.areas)) {
+            console.error("Row without proper areas array in computeRow", { rowId: row.id, areas: row.areas });
+            row.areas = [];
+        }
+
+        // Check contentArea size validity
+        if (contentArea.width <= 0 || contentArea.height <= 0) {
+            console.error("ContentArea with invalid dimensions in computeRow", { rowId: row.id, contentArea });
+            // Attempt recovery or return
+            contentArea = {
+                ...contentArea,
+                width: Math.max(contentArea.width, 10), // Min width 10
+                height: Math.max(contentArea.height, 10) // Min height 10
+            };
+            console.warn("Corrected contentArea to minimum size for row", row.id, contentArea);
+        }
+
+        if (row.areas.length === 0) {
+            console.warn("Row with empty areas array in computeRow, skipping children but assigning viewport", { rowId: row.id });
+            areaToViewport[row.id] = { ...contentArea };
+            return;
+        }
+
+        // Assign the full viewport to the parent row itself *before* calculating children
+        areaToViewport[row.id] = { ...contentArea };
+        console.log(`[computeRow ASSIGNED_PARENT] Assigned viewport for parent row ${row.id}:`, areaToViewport[row.id]);
 
         // Check in advance for missing IDs in the layout to avoid problems
         const missingAreaIds = row.areas
@@ -239,7 +219,7 @@ export const computeAreaToViewport = (
             .filter(id => !mutableLayout[id]);
 
         if (missingAreaIds.length > 0) {
-            console.debug(`Areas referenced in row ${row.id} but not in layout: ${missingAreaIds.join(', ')}`);
+            console.log(`Areas referenced in row ${row.id} but not in layout: ${missingAreaIds.join(', ')}`);
 
             // Auto-create entries for these missing areas
             missingAreaIds.forEach(id => {
@@ -301,7 +281,7 @@ export const computeAreaToViewport = (
         }
         // If the total is too far from 1.0, normalize the values
         else if (Math.abs(totalArea - 1.0) > 0.001) {
-            console.debug(`Normalizing sizes in row ${row.id}: total=${totalArea}, expected=1.0`);
+            console.log(`Normalizing sizes in row ${row.id}: total=${totalArea}, expected=1.0`);
             const normalizationFactor = 1.0 / totalArea;
             row.areas.forEach(area => {
                 area.size = area.size * normalizationFactor;
@@ -319,82 +299,99 @@ export const computeAreaToViewport = (
             });
         }
 
-        let left = validContentArea.left;
-        let top = validContentArea.top;
-        let remainingWidth = validContentArea.width;
-        let remainingHeight = validContentArea.height;
+        let currentLeft = contentArea.left;
+        let currentTop = contentArea.top;
+        let totalAllocatedWidth = 0;
+        let totalAllocatedHeight = 0;
 
-        // Calculate exact positions and dimensions for each area
+        console.log(`[computeRow LOOP_START] Iterating ${row.areas.length} areas for row ${row.id}. Orientation: ${row.orientation}`);
+
         for (let i = 0; i < row.areas.length; i++) {
-            const area = row.areas[i];
-            const layoutItem = mutableLayout[area.id];
+            const areaInfo = row.areas[i];
+            // Check if areaInfo and its id are valid
+            if (!areaInfo || !areaInfo.id) {
+                console.error(`[computeRow LOOP_ITER ${i}] Invalid areaInfo or missing ID in row ${row.id}`, areaInfo);
+                continue; // Skip this iteration
+            }
+            const areaId = areaInfo.id;
+            const layoutItem = mutableLayout[areaId];
+            const isLastArea = i === row.areas.length - 1;
+
+            console.log(`[computeRow LOOP_ITER ${i}] Processing child ${areaId} (size: ${areaInfo.size}). IsLast: ${isLastArea}`);
 
             if (!layoutItem) {
-                console.warn(`Area ${area.id} not found in layout, skipping`);
+                console.warn(`[computeRow LOOP_ITER ${i}] Area ${areaId} not found in layout, skipping calculation.`);
                 continue;
             }
 
-            // Calculate dimensions based on orientation
-            let areaWidth, areaHeight;
+            let areaWidth: number;
+            let areaHeight: number;
 
             if (row.orientation === "horizontal") {
-                areaWidth = Math.max(0, Math.floor(area.size * validContentArea.width));
-                areaHeight = validContentArea.height;
-            } else {
-                areaWidth = validContentArea.width;
-                areaHeight = Math.max(0, Math.floor(area.size * validContentArea.height));
+                areaHeight = contentArea.height;
+                if (isLastArea) {
+                    areaWidth = Math.max(0, contentArea.width - totalAllocatedWidth);
+                    console.log(`[computeRow CALC H_LAST ${i}] ${areaId}: width = ${contentArea.width} - ${totalAllocatedWidth} = ${areaWidth}`);
+                } else {
+                    areaWidth = Math.max(0, Math.floor(areaInfo.size * contentArea.width));
+                    totalAllocatedWidth += areaWidth;
+                    console.log(`[computeRow CALC H ${i}] ${areaId}: width = floor(${areaInfo.size} * ${contentArea.width}) = ${areaWidth}. TotalAllocated: ${totalAllocatedWidth}`);
+                }
+            } else { // Vertical
+                areaWidth = contentArea.width;
+                if (isLastArea) {
+                    areaHeight = Math.max(0, contentArea.height - totalAllocatedHeight);
+                    console.log(`[computeRow CALC V_LAST ${i}] ${areaId}: height = ${contentArea.height} - ${totalAllocatedHeight} = ${areaHeight}`);
+                } else {
+                    areaHeight = Math.max(0, Math.floor(areaInfo.size * contentArea.height));
+                    totalAllocatedHeight += areaHeight;
+                    console.log(`[computeRow CALC V ${i}] ${areaId}: height = floor(${areaInfo.size} * ${contentArea.height}) = ${areaHeight}. TotalAllocated: ${totalAllocatedHeight}`);
+                }
             }
 
-            // Ensure we don't exceed the remaining space
-            areaWidth = Math.min(areaWidth, remainingWidth);
-            areaHeight = Math.min(areaHeight, remainingHeight);
-
-            // Ensure we have minimum dimensions
-            areaWidth = Math.max(areaWidth, 10);
-            areaHeight = Math.max(areaHeight, 10);
-
-            // If dimensions are invalid, use a default size
-            if (areaWidth <= 0 || areaHeight <= 0) {
-                console.warn(`Invalid dimensions for area ${area.id}: ${areaWidth}x${areaHeight}, using default size`);
-                areaWidth = Math.max(10, Math.floor(validContentArea.width / row.areas.length));
-                areaHeight = Math.max(10, validContentArea.height);
-            }
-
-            const nextArea = {
-                left,
-                top,
+            const nextAreaViewport: Rect = {
+                left: currentLeft,
+                top: currentTop,
                 width: areaWidth,
                 height: areaHeight
             };
 
-            // Update position for the next area
-            if (row.orientation === "horizontal") {
-                left += areaWidth;
-                remainingWidth -= areaWidth;
-            } else {
-                top += areaHeight;
-                remainingHeight -= areaHeight;
-            }
+            // Log BEFORE recursive call
+            console.log(`[computeRow PRE_RECURSE ${i}] Calculated viewport for ${areaId}:`, nextAreaViewport, `Type: ${layoutItem.type}`);
 
-            // Recursively calculate viewports for children
+            // Recursive call
             try {
                 if (layoutItem.type === "area") {
-                    computeArea(layoutItem, nextArea);
+                    computeArea(layoutItem, nextAreaViewport);
                 } else if (layoutItem.type === "area_row") {
-                    computeRow(layoutItem, nextArea);
+                    computeRow(layoutItem, nextAreaViewport);
                 }
             } catch (error) {
-                console.error(`Error computing viewport for area ${area.id}:`, error);
+                console.error(`[computeRow RECURSE_ERROR ${i}] Error computing viewport for area ${areaId}:`, error);
+            }
+            // Log AFTER recursive call to see if areaToViewport[areaId] was set
+            if (areaToViewport[areaId]) {
+                console.log(`[computeRow POST_RECURSE ${i}] Viewport for ${areaId} IS set:`, areaToViewport[areaId]);
+            } else {
+                console.warn(`[computeRow POST_RECURSE ${i}] Viewport for ${areaId} IS NOT set after recursion.`);
+            }
+
+            // Update position for the next iteration
+            if (row.orientation === "horizontal") {
+                currentLeft += areaWidth;
+            } else { // Vertical
+                currentTop += areaHeight;
             }
         }
+        console.log(`[computeRow LOOP_END] Finished iterating areas for row ${row.id}.`);
     }
 
     // Calculate the initial viewport for the root
-    const rootLayout = mutableLayout[rootId];
-    if (rootLayout.type === "area") {
-        computeArea(rootLayout, viewport);
-    } else if (rootLayout.type === "area_row") {
-        computeRow(rootLayout, viewport);
+    const rootLayoutItem = mutableLayout[rootId];
+    if (rootLayoutItem.type === "area") {
+        computeArea(rootLayoutItem, viewport);
+    } else if (rootLayoutItem.type === "area_row") {
+        computeRow(rootLayoutItem, viewport);
     }
 
     // Get all missing IDs
@@ -402,7 +399,7 @@ export const computeAreaToViewport = (
 
     // If IDs are missing in viewports, we can try one last calculation pass
     if (idsWithoutViewport.length > 0) {
-        console.debug(`Missing viewports for ${idsWithoutViewport.length} areas, checking for parent relationship`);
+        console.log(`Missing viewports for ${idsWithoutViewport.length} areas, checking for parent relationship`);
 
         // Try to calculate again using alternative parent-child relationships
         idsWithoutViewport.forEach(id => {
@@ -413,7 +410,7 @@ export const computeAreaToViewport = (
             // Note: parentId was removed to avoid linter errors
             /* 
             if (layoutItem && layoutItem.parentId && areaToViewport[layoutItem.parentId]) {
-                console.debug(`Using parent viewport for ${id} from ${layoutItem.parentId}`);
+                console.log(`Using parent viewport for ${id} from ${layoutItem.parentId}`);
                 areaToViewport[id] = { ...areaToViewport[layoutItem.parentId] };
             }
             */
@@ -427,10 +424,11 @@ export const computeAreaToViewport = (
                     width: 100,
                     height: 100
                 };
-                console.debug(`Using default viewport for ${id}`);
+                console.log(`Using default viewport for ${id}`);
             }
         });
     }
 
+    console.log("[computeAreaToViewport LOG] Returning viewport map:", areaToViewport);
     return areaToViewport;
 }; 

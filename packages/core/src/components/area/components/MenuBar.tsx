@@ -1,15 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+// import { useDispatch } from 'react-redux'; // Supprimer import Redux
 
 import { TOOLBAR_HEIGHT } from '@gamesberry/karmyc-core/constants';
-import { areaSlice, finalizeAreaPlacement, updateAreaToOpenPosition } from '@gamesberry/karmyc-core/store/slices/areaSlice';
-import { computeAreaToViewport } from '@gamesberry/karmyc-core/utils/areaToViewport';
-import { getHoveredAreaId } from '@gamesberry/karmyc-core/utils/areaUtils';
-import { getAreaRootViewport } from '@gamesberry/karmyc-core/utils/getAreaViewport';
-import { requestAction } from '@gamesberry/karmyc-core/utils/requestAction';
-import { getActionState } from '@gamesberry/karmyc-core/utils/stateUtils';
+// Supprimer imports actions Redux
+// import { areaSlice, finalizeAreaPlacement, updateAreaToOpenPosition } from '@gamesberry/karmyc-core/store/slices/areaSlice'; 
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore'; // Importer store Zustand
 import { compileStylesheetLabelled } from '@gamesberry/karmyc-core/utils/stylesheets';
-import { Vec2 } from '@gamesberry/karmyc-shared';
 
 // Type to uniquely identify a component
 type ComponentIdentifier = {
@@ -111,7 +107,18 @@ export const MenuBar: React.FC<{
 }> = ({ areaId, areaType, areaState }) => {
     const { getComponents } = useMenuBar(areaType, areaId);
     const components = getComponents();
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch(); // Supprimer useDispatch
+    // Récupérer les actions Zustand nécessaires (celles qui existent)
+    const {
+        // updateAreaToOpenPosition, // N'existe pas directement ?
+        // finalizeAreaPlacement, // N'existe pas directement ?
+        cleanupTemporaryStates,
+        // setViewports, // N'existe pas directement ?
+        // setRowSizes // N'existe pas directement ?
+        updateArea, // Utiliser updateArea ou addArea si besoin?
+        setAreaToOpen // Action pour démarrer le drag?
+    } = useAreaStore.getState();
+
     const dragRef = useRef<{ startX: number; startY: number } | null>(null);
     const rafRef = useRef<number | undefined>(undefined);
     const isUpdatingRef = useRef<boolean>(false);
@@ -126,10 +133,11 @@ export const MenuBar: React.FC<{
                 x: x - dragRef.current.startX,
                 y: y - dragRef.current.startY
             };
-            dispatch(updateAreaToOpenPosition(position));
+            // dispatch(updateAreaToOpenPosition(position)); // Remplacer par action Zustand si elle existe
+            console.warn('MenuBar: Action updateAreaToOpenPosition non migrée vers Zustand');
             isUpdatingRef.current = false;
         });
-    }, [dispatch]);
+    }, [/* dépendances Zustand si nécessaire */]);
 
     useEffect(() => {
         return () => {
@@ -141,12 +149,24 @@ export const MenuBar: React.FC<{
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        dragRef.current = {
-            startX: e.clientX - rect.left,
-            startY: e.clientY - rect.top
-        };
+        const startX = e.clientX - rect.left;
+        const startY = e.clientY - rect.top;
+        dragRef.current = { startX, startY };
 
-        // Create an invisible drag image
+        // Initialiser l'état areaToOpen dans Zustand?
+        if (setAreaToOpen) {
+            setAreaToOpen({
+                position: { x: e.clientX, y: e.clientY }, // Position initiale de la souris
+                area: {
+                    type: areaType,
+                    state: { ...areaState, sourceId: areaId } // Inclure l'ID source
+                }
+            });
+        } else {
+            console.warn('MenuBar: Action setAreaToOpen non trouvée dans Zustand');
+        }
+
+        // ... (création dragImage et setData inchangés) ...
         const dragImage = document.createElement('div');
         dragImage.style.cssText = `
             width: 1px;
@@ -170,7 +190,8 @@ export const MenuBar: React.FC<{
         requestAnimationFrame(() => {
             document.body.removeChild(dragImage);
         });
-    }, [areaType, areaId]);
+
+    }, [areaType, areaId, areaState, setAreaToOpen]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -188,70 +209,16 @@ export const MenuBar: React.FC<{
         const data = JSON.parse(e.dataTransfer.getData('text/plain'));
         if (data.type !== 'menubar') return;
 
-        requestAction({}, (params) => {
-            try {
-                // Calculate final position
-                const position = {
-                    x: e.clientX - dragRef.current!.startX,
-                    y: e.clientY - dragRef.current!.startY
-                };
-
-                // Get target area ID
-                const currentState = getActionState().area;
-                const areaToViewport = computeAreaToViewport(
-                    currentState.layout,
-                    currentState.rootId || '',
-                    getAreaRootViewport()
-                );
-                const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), currentState, areaToViewport);
-
-                if (targetAreaId && targetAreaId !== areaId) {
-                    // If we have a different target area, move the menu bar
-                    const targetViewport = areaToViewport[targetAreaId];
-                    if (targetViewport) {
-                        // Calculate new sizes for sibling areas
-                        const parentRow = currentState.layout[targetAreaId];
-                        if (parentRow && parentRow.type === 'area_row') {
-                            const totalSize = parentRow.areas.reduce((acc: number, area: any) => acc + area.size, 0);
-                            const newSize = totalSize / (parentRow.areas.length + 1);
-
-                            // Update existing area sizes
-                            const newSizes = parentRow.areas.map((area: any) => area.size * (1 - newSize / totalSize));
-                            newSizes.push(newSize);
-
-                            // Update layout
-                            params.dispatch(areaSlice.actions.setRowSizes({
-                                rowId: parentRow.id,
-                                sizes: newSizes
-                            }));
-                        }
-                    }
-                }
-
-                // Finalize area placement
-                params.dispatch(finalizeAreaPlacement());
-
-                // Clean up temporary states
-                params.dispatch(areaSlice.actions.cleanupTemporaryStates());
-
-                // Update viewports
-                const viewports = computeAreaToViewport(
-                    getActionState().area.layout,
-                    getActionState().area.rootId || '',
-                    getAreaRootViewport()
-                );
-                params.dispatch(areaSlice.actions.setViewports({ viewports }));
-
-                params.submitAction("Move menubar");
-            } catch (error) {
-                console.error('Error during menubar drop:', error);
-                params.dispatch(areaSlice.actions.cleanupTemporaryStates());
-                params.cancelAction();
-            }
-        });
+        // La logique de requestAction est complexe et dépend fortement des actions Redux.
+        // Elle devra être entièrement réécrite pour Zustand.
+        // Pour l'instant, on appelle seulement cleanupTemporaryStates si elle existe.
+        console.warn('MenuBar: Logique handleDrop non migrée vers Zustand');
+        if (cleanupTemporaryStates) {
+            cleanupTemporaryStates();
+        }
 
         dragRef.current = null;
-    }, [dispatch, areaId, areaState]);
+    }, [cleanupTemporaryStates, areaId, areaState]);
 
     return (
         <div

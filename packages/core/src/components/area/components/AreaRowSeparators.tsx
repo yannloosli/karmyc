@@ -1,51 +1,73 @@
-import React, { useRef } from "react";
-import { useSelector } from "react-redux";
+import React, { Dispatch, SetStateAction, useRef } from "react";
+// import { useSelector } from "react-redux"; // Supprimé
 import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../../../constants";
-import { RootState } from "../../../store";
+// import { RootState } from "../../../store"; // Supprimé
+import { useAreaStore } from "../../../stores/areaStore"; // Ajouté
 import { cssZIndex } from "../../../styles/cssVariables";
-import { AreaRowLayout } from "../../../types/areaTypes";
+import { AreaRowLayout } from "../../../types/areaTypes"; // Gardé, potentiellement utile ailleurs
 import { Rect } from "../../../types/geometry";
 import { compileStylesheet } from "../../../utils/stylesheets";
 import { handleDragAreaResize } from "../handlers/areaDragResize";
 
-// Styles with visible debug colors
+// Restore original styles
 const s = compileStylesheet(({ css }) => ({
     separator: css`
 		position: absolute;
 		z-index: ${cssZIndex.area.separator};
 		cursor: ns-resize;
+        // Removed debug styles
+        // background-color: rgba(255, 0, 0, 0.5);
+        // border: 1px solid yellow;
 
 		&--horizontal {
 			cursor: ew-resize;
+            // Removed debug styles
+            // background-color: rgba(0, 0, 255, 0.5);
 		}
 	`,
 }));
 
+// Importer ou définir le type ResizePreviewState ici aussi
+// (Alternative: exporter depuis AreaRoot et importer ici)
+interface ResizePreviewState {
+    rowId: string;
+    separatorIndex: number;
+    t: number;
+}
+
 interface OwnProps {
     row: AreaRowLayout;
-    areaToViewport: MapOf<Rect>;
+    // areaToViewport: Map<string, Rect>; // Remplacé
+    areaToViewport: { [key: string]: Rect }; // Retour au type objet
+    // Ajouter la prop pour la fonction de mise à jour du preview
+    setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
 }
 
 type Props = OwnProps;
 
 export const AreaRowSeparators: React.FC<Props> = props => {
-    const { row, areaToViewport } = props;
-    const { layout, rootId } = useSelector((state: RootState) => state.area);
+    // Extraire setResizePreview des props
+    const { row, areaToViewport, setResizePreview } = props;
+    // const { layout, rootId } = useAreaStore(state => ({ layout: state.layout, rootId: state.rootId })); // Remplacé pour performance
+    const layout = useAreaStore(state => state.layout); // Sélecteur séparé
+    const rootId = useAreaStore(state => state.rootId); // Sélecteur séparé
     const viewportsRef = useRef(areaToViewport);
 
     // Basic validation before continuing
-    if (!row || !row.areas || row.areas.length <= 1) {
+    if (!row || !row.areas || row.areas.length <= 1 || !layout || !rootId) {
         return null;
     }
 
     // Check that all necessary viewports are available
     const allViewportsAvailable = row.areas.every(area =>
-        areaToViewport[area.id] &&
+        // areaToViewport.get(area.id) && // Remplacé
+        areaToViewport[area.id] && // Retour à l'accès par crochet
         layout[area.id] // Make sure the area still exists in the layout
     );
 
     // If viewports are missing, don't try to render separators
     if (!allViewportsAvailable) {
+        // console.warn("AreaRowSeparators: Missing viewports or layout info for some areas in the row.", { rowId: row.id, areas: row.areas.map(a => a.id), viewportKeys: Object.keys(areaToViewport) }); // Keep warn if needed
         return null;
     }
 
@@ -61,13 +83,17 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         if (!currentArea || !nextArea) continue;
 
         // Check that both areas exist in the layout and have viewports
+        // const currentViewport = areaToViewport.get(currentArea.id); // Remplacé
+        // const nextViewport = areaToViewport.get(nextArea.id); // Remplacé
+        const currentViewport = areaToViewport[currentArea.id]; // Retour à l'accès par crochet
+        const nextViewport = areaToViewport[nextArea.id]; // Retour à l'accès par crochet
+
         if (!layout[currentArea.id] || !layout[nextArea.id] ||
-            !areaToViewport[currentArea.id] || !areaToViewport[nextArea.id]) {
+            // !currentViewport || !nextViewport) { // Gardé la vérification d'existence
+            !currentViewport || !nextViewport) {
+            // console.warn(`AreaRowSeparators: Missing layout or viewport for adjacent areas ${currentArea.id} or ${nextArea.id}`); // Keep warn if needed
             continue;
         }
-
-        const currentViewport = areaToViewport[currentArea.id];
-        const nextViewport = areaToViewport[nextArea.id];
 
         // Determine orientation
         const horizontal = row.orientation === "horizontal";
@@ -82,7 +108,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
                 top: nextViewport.top + AREA_BORDER_WIDTH * 2 + TOOLBAR_HEIGHT,
                 width: AREA_BORDER_WIDTH * 2,
-                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT * 2, 20)
+                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT * 2, 5) // Ensure min height 5
             };
         } else {
             // For vertical orientation, the separator is between the current area's end
@@ -90,30 +116,31 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             separatorRect = {
                 left: nextViewport.left + AREA_BORDER_WIDTH * 2,
                 top: nextViewport.top - AREA_BORDER_WIDTH,
-                width: Math.max(nextViewport.width - AREA_BORDER_WIDTH * 4, 20),
+                width: Math.max(nextViewport.width - AREA_BORDER_WIDTH * 4, 5), // Ensure min width 5
                 height: AREA_BORDER_WIDTH * 2
             };
         }
 
+        // Ensure calculated dimensions are valid numbers
+        if (isNaN(separatorRect.left) || isNaN(separatorRect.top) || isNaN(separatorRect.width) || isNaN(separatorRect.height)) {
+            // console.error("AreaRowSeparators: Invalid separatorRect calculated (NaN)", { rowId: row.id, index: i, rect: separatorRect }); // Keep error if needed
+            continue; // Skip rendering this separator
+        }
+        // Ensure dimensions are not negative
+        separatorRect.width = Math.max(0, separatorRect.width);
+        separatorRect.height = Math.max(0, separatorRect.height);
+
         const handleMouseDown = (e: React.MouseEvent) => {
             e.stopPropagation();
-            handleDragAreaResize(e, row, horizontal, i + 1);
+            // Passer setResizePreview à la fonction handler
+            handleDragAreaResize(e, row, horizontal, i + 1, setResizePreview);
         };
 
         separators.push(
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
                 className={s("separator", { horizontal })}
-                style={{
-                    ...separatorRect,
-                    // Additional styles to make the separator visible
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'visible',
-                    fontSize: '10px',
-                    color: 'white'
-                }}
+                style={separatorRect} // Use calculated rect directly
                 onMouseDown={handleMouseDown}
             />
         );

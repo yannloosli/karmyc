@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+// import { useDispatch } from 'react-redux'; // Supprimer import Redux
 
 import {
     actionRegistryWithHandlers as actionRegistry,
     areaRegistry,
-    areaSlice,
-    setAreaType,
+    // areaSlice, // Non nécessaire ici si on utilise l'action Zustand
+    // setAreaType, // Action Redux remplacée
     useArea,
     useRegisterAreaType,
     useStatusBar,
-    useSyncContextMenuActions
+    useSyncContextMenuActions,
 } from '@gamesberry/karmyc-core';
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore'; // Importer directement
 
 import { ColorPickerArea } from './components/ColorPickerArea';
 import { HistoryDrawingArea } from './components/HistoryDrawingArea';
@@ -22,10 +23,14 @@ import { ResetButtonWrapper } from './components/ResetButtonWrapper';
 import { SpaceManager } from './components/SpaceManager';
 import { TextNoteArea } from './components/TextNoteArea';
 
-const { actions: areaActions } = areaSlice;
+// Supprimer l'import des actions Redux
+// const { actions: areaActions } = areaSlice;
 
 export const AreaInitializer: React.FC = () => {
-    const dispatch = useDispatch();
+    // Supprimer useDispatch
+    // const dispatch = useDispatch();
+    // Récupérer l'action Zustand
+    const { updateArea } = useAreaStore.getState();
     const { createArea } = useArea();
     const { registerComponent: registerRootStatusComponent } = useStatusBar('app', 'root');
 
@@ -147,102 +152,102 @@ export const AreaInitializer: React.FC = () => {
         }
     );
 
-    // Action handlers for area creation
+    // Action handlers for area creation (utilisation de updateArea Zustand)
     const handleTextNote = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'text-note',
-                initialState: { content: '' }
-            }));
+                state: { content: '' }
+            });
         }
     };
 
     const handleColorPicker = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'color-picker',
-                initialState: { color: '#1890ff' }
-            }));
+                state: { color: '#1890ff' }
+            });
         }
     };
 
     const handleImageViewer = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'image-viewer',
-                initialState: { imageUrl: 'https://picsum.photos/300/400', caption: '' }
-            }));
+                state: { imageUrl: 'https://picsum.photos/300/400', caption: '' }
+            });
         }
     };
 
     const handleImagesGallery = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'images-gallery',
-                initialState: {
+                state: {
                     images: [],
                     selectedImageId: null,
                     zoom: 1,
                     filter: 'none',
                     sortBy: 'default'
                 }
-            }));
+            });
         }
     };
 
     const handleNotificationExample = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'notification-example',
-                initialState: {}
-            }));
+                state: {}
+            });
         }
     };
 
     const handlePerformanceExample = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'performance-example',
-                initialState: {}
-            }));
+                state: {}
+            });
         }
     };
 
     const handleHistoryDrawing = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'history-drawing',
-                initialState: {
+                state: {
                     lines: [],
                     currentColor: '#000000',
                     strokeWidth: 3
                 }
-            }));
+            });
         }
     };
 
     const handleSpaceManager = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
-            dispatch(setAreaType({
-                areaId,
+            updateArea({
+                id: areaId,
                 type: 'space-manager',
-                initialState: {}
-            }));
+                state: {}
+            });
         }
     };
 
@@ -268,7 +273,7 @@ export const AreaInitializer: React.FC = () => {
             actionRegistry.unregisterActionHandler('area.create-history-drawing');
             actionRegistry.unregisterActionHandler('area.create-space-manager');
         };
-    }, []);
+    }, [updateArea]); // Ajouter updateArea aux dépendances si nécessaire
 
     // Register context menu
     useEffect(() => {

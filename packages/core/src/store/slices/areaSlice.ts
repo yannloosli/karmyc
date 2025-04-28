@@ -852,10 +852,27 @@ export const areaSlice = createSlice({
             localStorage.setItem('areaState', JSON.stringify(validateLoadedState(state)));
         },
         cleanState: (state) => {
+            // Nettoyer les zones déconnectées
             cleanDisconnectedAreas(state);
+
+            // Si pas de rootId ou rootId invalide, essayer d'en trouver un
+            if (!state.rootId || !state.layout[state.rootId]) {
+                const firstAreaId = Object.keys(state.layout).find(id => state.layout[id].type === "area");
+                if (firstAreaId) {
+                    state.rootId = firstAreaId;
+                } else {
+                    // Si aucune zone valide n'est trouvée, réinitialiser l'état
+                    state.layout = {};
+                    state.areas = {};
+                    state.viewports = {};
+                    state.rootId = null;
+                    state.activeAreaId = null;
+                }
+            }
+
+            // Sauvegarder l'état sans retourner de nouvelle valeur
             const stateToSave = validateLoadedState(state);
             localStorage.setItem('areaState', JSON.stringify(stateToSave));
-            return stateToSave;
         },
         setAreaToOpen: (state, action: PayloadAction<{
             position: Point;
