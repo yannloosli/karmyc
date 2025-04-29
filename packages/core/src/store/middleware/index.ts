@@ -11,6 +11,5 @@
 
 export * from './actions';
 export * from './diff';
-export * from './history';
 export * from './persistence';
 export * from './state';

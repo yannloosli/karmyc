@@ -3,11 +3,11 @@
  * This file exports the functionalities of the action system
  */
 
+import { actionLogger } from './logger';
 import {
     analyticsPlugin,
     historyPlugin,
     loggingPlugin,
-    performancePlugin,
     predefinedRules,
     validationPlugin
 } from './plugins';
@@ -16,16 +16,17 @@ import { actionRegistry } from './registry';
 // Register default plugins
 actionRegistry.registerPlugin(historyPlugin);
 actionRegistry.registerPlugin(loggingPlugin);
-actionRegistry.registerPlugin(performancePlugin);
 actionRegistry.registerPlugin(validationPlugin);
 actionRegistry.registerPlugin(analyticsPlugin);
 
 // Register predefined validation rules
-Object.values(predefinedRules).forEach(domain => {
-    Object.values(domain).forEach(rule => {
-        actionRegistry.registerValidator(rule.actionType, rule.validator);
+if (predefinedRules) {
+    Object.values(predefinedRules).forEach((rule: any) => {
+        if (rule && typeof rule.id === 'string' && typeof rule.actionType === 'string' && typeof rule.validator === 'function') {
+            actionRegistry.registerValidator(rule.actionType, rule.validator);
+        }
     });
-});
+}
 
 // Export action registry
 export { actionRegistry, ActionRegistry } from './registry';
@@ -43,3 +44,5 @@ export * from './plugins/history';
 export * from './priorities';
 
 export * from './plugins';
+
+export { actionLogger };

@@ -1,6 +1,10 @@
-import { useArea, useSpace } from '@gamesberry/karmyc-core';
+import { useSpace } from '@gamesberry/karmyc-core/hooks/useSpace';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/src/types/areaTypes';
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
+import { useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore';
 import React, { useMemo, useState } from 'react';
+import { shallow } from 'zustand/shallow';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 interface SpaceManagerState {
     // Pas de propriétés spécifiques pour le moment
@@ -42,18 +46,38 @@ interface AreaType<T = AreaTypeValue> {
     [key: string]: any;
 }
 
+// Define expected return types for selectors
+interface SpacesMap { [key: string]: SpaceType }
+interface AreasMap { [key: string]: AreaType }
+
 export const SpaceManager: React.FC<AreaComponentProps<SpaceManagerState>> = ({
     id,
     viewport
 }) => {
-    const { spaces, activeSpace, activeSpaceId, createSpace, deleteSpace, setActive, updateSharedState } = useSpace();
-    const { createArea, areas: allAreas } = useArea();
+    // Get actions and activeId from the hook
+    const { activeSpaceId, createSpace, deleteSpace, setActive, updateSharedState, getSpaceById } = useSpace();
+
+    // Use useStoreWithEqualityFn and shallow comparison for selectors returning objects/arrays
+    const spaces = useStoreWithEqualityFn(
+        useSpaceStore,
+        (s) => s.getAllSpaces() as SpacesMap, // Cast to expected type
+        shallow
+    );
+    const activeSpace = useStoreWithEqualityFn(
+        useSpaceStore,
+        (s) => s.getActiveSpace() as SpaceType | null, // Cast to expected type
+        shallow
+    );
+    const allAreas = useStoreWithEqualityFn(
+        useAreaStore,
+        (s) => s.getAllAreas() as AreasMap, // Cast to expected type
+        shallow
+    );
+
+    const addArea = useAreaStore((s) => s.addArea); // Selector returning a function, no shallow needed
+
     const [newSpaceName, setNewSpaceName] = useState('');
     const [newColor, setNewColor] = useState('#1890ff');
-
-    // Récupérer toutes les areas directement au niveau racine du composant
-    // pour éviter d'appeler des hooks dans d'autres hooks
-    // const allAreas = useSelector(selectAllAreas);
 
     // Calculer les areas par espace en utilisant les données déjà obtenues
     const areasBySpaceId = useMemo(() => {
@@ -107,12 +131,12 @@ export const SpaceManager: React.FC<AreaComponentProps<SpaceManagerState>> = ({
     // Créer un color picker dans l'espace actif
     const handleCreateColorPicker = () => {
         if (activeSpace) {
-            createArea(
-                'color-picker',
-                { color: activeSpace.sharedState.color || '#1890ff' },
-                undefined,
-                activeSpace.id
-            );
+            addArea({
+                type: 'color-picker',
+                state: { color: activeSpace.sharedState.color || '#1890ff' },
+                id: ``,
+                spaceId: activeSpace.id
+            });
         }
     };
 

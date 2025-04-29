@@ -15,12 +15,17 @@
 
 import { configureStore, Middleware } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux';
+import {
+    FLUSH,
+    PAUSE,
+    PERSIST,
+    PURGE,
+    REGISTER,
+    REHYDRATE
+} from 'redux-persist';
 
-import { actionRegistry } from '../actions';
-import { historyPlugin } from '../actions/plugins/history';
 import {
     diffMiddleware,
-    historyMiddleware,
     stateMiddleware
 } from './middleware';
 
@@ -29,7 +34,6 @@ import { errorMiddleware } from './errorHandling';
 import areaReducer, { areaSlice } from './slices/areaSlice';
 import { closeContextMenu, contextMenuReducer, openContextMenu } from './slices/contextMenuSlice';
 import diffReducer from './slices/diffSlice';
-import historyReducer from './slices/historySlice';
 import notificationReducer from './slices/notificationSlice';
 import spaceReducer from './slices/spaceSlice';
 import stateReducer from './slices/stateSlice';
@@ -48,13 +52,12 @@ const persistConfig = {
 // Combine reducers
 const rootReducer = combineReducers({
     area: areaReducer,
-    history: historyReducer,
-    toolbar: toolbarReducer,
-    diff: diffReducer,
-    state: stateReducer,
     contextMenu: contextMenuReducer,
     notification: notificationReducer,
-    space: spaceReducer
+    diff: diffReducer,
+    state: stateReducer,
+    space: spaceReducer,
+    toolbar: toolbarReducer
 });
 
 // COMMENTÉE : const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -112,30 +115,22 @@ export const store = configureStore({
     reducer: rootReducer,
     middleware: (getDefaultMiddleware) => {
         const middleware = getDefaultMiddleware({
-            serializableCheck: false,
+            serializableCheck: {
+                // Ignore these action types in serializableCheck
+                ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+            },
+            immutableCheck: { warnAfter: 100 }, // Augmenter le seuil pour l'avertissement
         }).concat(
             errorMiddleware,
             diffMiddleware,
             stateMiddleware,
-            historyMiddleware,
             areaCleanupMiddleware
         );
         // Utilisation de "any" pour contourner l'erreur de typage
         return middleware as any;
     },
-    devTools: process.env.NODE_ENV !== 'production'
+    devTools: import.meta.env.DEV // Utiliser import.meta.env.DEV au lieu de process.env
 });
-
-// Define AppDispatch type based on the store
-export type AppDispatch = typeof store.dispatch;
-
-// Make store globally accessible for keyboard shortcuts
-if (typeof window !== 'undefined') {
-    (window as any).store = store;
-}
-
-// Register default plugins
-actionRegistry.registerPlugin(historyPlugin);
 
 // Export selectors
 export * from './selectors';

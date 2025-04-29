@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Ce document présente le plan de migration à venir du système de gestion d'état de Karmyc Core, passant de Redux Toolkit à Zustand. Cette initiative vise à simplifier l'architecture, améliorer les performances et faciliter la maintenance du code.
+Ce document présente le plan de migration **en cours** du système de gestion d'état de Karmyc Core, passant de Redux Toolkit à Zustand. Cette initiative vise à simplifier l'architecture, améliorer les performances et faciliter la maintenance du code.
 
 ## Pourquoi migrer vers Zustand ?
 
@@ -110,39 +110,55 @@ const reduxSlices = [
   {
     nom: 'areaSlice',
     chemin: 'packages/core/src/store/slices/areaSlice.ts',
-    dépendances: ['historySlice', 'diffSlice'],
+    dépendances: ['historySlice', 'diffSlice'], // Dépendances Redux initiales
+    // STATUT ZUSTAND: Store 'areaStore.ts' créé.
+    // Middlewares Zustand: devtools, persist, immer utilisés.
     actions: [
-      'addArea',                  // Ajoute une nouvelle zone
-      'removeArea',               // Supprime une zone existante
-      'setActiveArea',            // Définit la zone active
-      'updateArea',               // Met à jour les propriétés d'une zone
-      'cleanState',               // Nettoie l'état des zones déconnectées
-      'setFields',                // Met à jour des propriétés spécifiques
-      'setJoinAreasPreview',      // Aperçu des zones à fusionner
-      'joinAreas',                // Fusionne deux zones
-      'convertAreaToRow',         // Convertit une zone en ligne
-      'insertAreaIntoRow',        // Insère une zone dans une ligne
-      'setRowSizes',              // Définit les tailles des lignes
-      'setAreaType',              // Change le type d'une zone
-      'setViewports',             // Définit les viewports
-      'setAreaToOpen',            // Définit la zone à ouvrir
-      'updateAreaToOpenPosition', // Met à jour la position d'ouverture
-      'finalizeAreaPlacement',    // Finalise le placement d'une zone
-      'clearAreaToOpen'           // Efface la zone à ouvrir
+      // Actions Redux originales et leur statut Zustand:
+      'addArea',                  // Migré
+      'removeArea',               // Migré
+      'setActiveArea',            // Migré
+      'updateArea',               // Migré
+      'cleanState',               // Obsolète / Non migré
+      'setFields',                // Obsolète / Remplacé par updateArea
+      'setJoinAreasPreview',      // Remplacé par setJoinPreview
+      'joinAreas',                // À FAIRE: Restaurer/Implémenter la logique de fusion (joinOrMoveArea)
+      'convertAreaToRow',         // Remplacé par splitArea
+      'insertAreaIntoRow',        // Remplacé par splitArea
+      'setRowSizes',              // Migré
+      'setAreaType',              // Remplacé par updateArea
+      'setViewports',             // Non utilisé (viewports calculés)
+      'setAreaToOpen',            // Migré
+      'updateAreaToOpenPosition', // Migré
+      'finalizeAreaPlacement',    // Placeholder (non implémenté)
+      'clearAreaToOpen'           // Remplacé par `setAreaToOpen(null)` ou `cleanupTemporaryStates`
+      // --- Actions Zustand ajoutées --- 
+      // 'splitArea',
+      // 'setJoinPreview',
+      // 'getLastSplitResult',
+      // 'joinOrMoveArea' (placeholder),
+      // 'cleanupTemporaryStates'
     ],
     sélecteurs: [
-      'selectAreaState',
-      'selectAllAreas',
-      'selectActiveAreaId',
-      'selectActiveArea',
-      'selectAreaById'
+      // Sélecteurs Redux originaux et leur statut Zustand:
+      'selectAreaState',          // Remplacé par accès direct `useAreaStore()`
+      'selectAllAreas',           // Remplacé par `getAllAreas()` ou `state.areas`
+      'selectActiveAreaId',       // Remplacé par `state.activeAreaId`
+      'selectActiveArea',         // Remplacé par `getActiveArea()`
+      'selectAreaById'            // Remplacé par `getAreaById()`
+      // --- Sélecteurs Zustand ajoutés ---
+      // 'getActiveArea',
+      // 'getAreaById',
+      // 'getAllAreas',
+      // 'getAreaErrors'
     ],
-    stockagePersistant: true, // Slice persisté via redux-persist (whitelist)
-    complexité: 'Élevée' // Fichier volumineux (58KB, 1457 lignes)
+    stockagePersistant: true, // Géré via middleware `persist` Zustand avec `partialize`.
+    complexité: 'Élevée' // Reste élevé avec la logique de layout
   },
   {
     nom: 'contextMenuSlice',
     chemin: 'packages/core/src/store/slices/contextMenuSlice.ts',
+    // STATUT ZUSTAND: Non migré
     dépendances: [],
     actions: [
       'openContextMenu',           // Ouvre le menu contextuel
@@ -161,12 +177,13 @@ const reduxSlices = [
       'selectCustomContextMenu',
       'selectContextMenuErrors'
     ],
-    stockagePersistant: false, // Non persisté
+    stockagePersistant: false,
     complexité: 'Moyenne'
   },
   {
     nom: 'historySlice',
     chemin: 'packages/core/src/store/slices/historySlice.ts',
+     // STATUT ZUSTAND: Non migré
     dépendances: ['diffSlice', 'areaSlice'],
     actions: [
       'addHistoryEntry', // Ajoute une entrée à l'historique 
@@ -179,12 +196,13 @@ const reduxSlices = [
       'hasFutureEntriesForArea',
       'hasPastEntriesForArea'
     ],
-    stockagePersistant: false, // Non persisté (blacklisté)
+    stockagePersistant: false,
     complexité: 'Élevée'
   },
   {
     nom: 'notificationSlice',
     chemin: 'packages/core/src/store/slices/notificationSlice.ts',
+    // STATUT ZUSTAND: Non migré
     dépendances: [],
     actions: [
       'addNotification',      // Ajoute une notification
@@ -196,12 +214,13 @@ const reduxSlices = [
       'selectNotifications',
       'selectMaxNotifications'
     ],
-    stockagePersistant: false, // Non persisté
+    stockagePersistant: false,
     complexité: 'Simple'
   },
   {
     nom: 'diffSlice',
     chemin: 'packages/core/src/store/slices/diffSlice.ts',
+    // STATUT ZUSTAND: Non migré
     dépendances: ['areaSlice'],
     actions: [
       'addDiff',           // Ajoute un diff
@@ -222,12 +241,13 @@ const reduxSlices = [
       'selectDiffHistory',
       'selectDiffErrors'
     ],
-    stockagePersistant: false, // Non persisté (blacklisté)
+    stockagePersistant: false,
     complexité: 'Élevée'
   },
   {
     nom: 'stateSlice', 
     chemin: 'packages/core/src/store/slices/stateSlice.ts',
+    // STATUT ZUSTAND: Non migré
     dépendances: [],
     actions: [
       'registerState',     // Enregistre un nouvel état
@@ -252,12 +272,13 @@ const reduxSlices = [
       'selectStateErrors',
       'selectStateLoading'
     ],
-    stockagePersistant: true, // Persisté (whitelist)
+    stockagePersistant: true,
     complexité: 'Moyenne'
   },
   {
     nom: 'toolbarSlice',
     chemin: 'packages/core/src/store/slices/toolbarSlice.ts',
+    // STATUT ZUSTAND: Non migré
     dépendances: [],
     actions: [
       'registerToolbar',      // Enregistre une barre d'outils
@@ -279,12 +300,13 @@ const reduxSlices = [
       'selectActiveToolbarConfig',
       'selectToolbarErrors'
     ],
-    stockagePersistant: true, // Persisté (whitelist)
+    stockagePersistant: true,
     complexité: 'Moyenne'
   },
   {
     nom: 'spaceSlice',
     chemin: 'packages/core/src/store/slices/spaceSlice.ts',
+    // STATUT ZUSTAND: Non migré (mais un useSpace existe potentiellement)
     dépendances: ['areaSlice'],
     actions: [
       'addSpace',                // Ajoute un nouvel espace
@@ -299,7 +321,7 @@ const reduxSlices = [
       'selectActiveSpace',
       'selectSpaceById'
     ],
-    stockagePersistant: true, // Persisté (whitelist)
+    stockagePersistant: true,
     complexité: 'Moyenne'
   }
 ]
@@ -310,90 +332,79 @@ const reduxSlices = [
 ## Recensement des composants utilisant Redux
 
 ```typescript
-// Analyse des composants utilisant Redux (basée sur la recherche de `useSelector`/`useDispatch` le YYYY-MM-DD)
-// NOTE: La liste précédente (AreaExplorer, AreaEditor, etc.) était obsolète.
+// Analyse des composants utilisant Redux (Mise à jour YYYY-MM-DD basée sur la migration en cours)
 const reduxComponents = [
   {
     composant: 'NotificationList',
     chemin: 'packages/core/src/components/NotificationList.tsx',
     slicesUtilisés: ['notificationSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['selectNotifications'], // À vérifier
-    prioritéMigration: 'Moyenne' // À ajuster
+    statutMigration: 'Non migré',
+    prioritéMigration: 'Moyenne'
   },
   {
     composant: 'CustomContextMenu',
     chemin: 'packages/core/src/components/context-menu/CustomContextMenu.tsx',
     slicesUtilisés: ['contextMenuSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['selectCustomContextMenu'], // À vérifier
-    prioritéMigration: 'Moyenne' // À ajuster
+    statutMigration: 'Non migré',
+    prioritéMigration: 'Moyenne'
   },
   {
     composant: 'MenuBar',
     chemin: 'packages/core/src/components/area/components/MenuBar.tsx',
-    slicesUtilisés: [], // À vérifier (utilise dispatch)
-    actions: [], // À vérifier
-    selectors: [], // À vérifier
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: [], // Utilise dispatch directement (potentiellement pour actions non-area)
+    statutMigration: 'Non migré',
+    prioritéMigration: 'Moyenne' // Priorité peut dépendre des actions dispatchées
   },
   {
     composant: 'Area',
     chemin: 'packages/core/src/components/area/components/Area.tsx',
-    slicesUtilisés: ['areaSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['state.area.activeAreaId', 'state.area'], // À vérifier (sélecteurs inline)
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
   },
   {
     composant: 'AreaRowSeparators',
     chemin: 'packages/core/src/components/area/components/AreaRowSeparators.tsx',
-    slicesUtilisés: ['areaSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['state.area'], // À vérifier (sélecteur inline)
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
   },
   {
     composant: 'AreaToOpenPreview',
     chemin: 'packages/core/src/components/area/components/AreaToOpenPreview.tsx',
-    slicesUtilisés: ['areaSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['state.area'], // À vérifier (sélecteur inline)
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
+  },
+   {
+    composant: 'JoinAreaPreview', // Ajout du composant manquant
+    chemin: 'packages/core/src/components/area/components/JoinAreaPreview.tsx',
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
   },
   {
     composant: 'AreaRoot',
     chemin: 'packages/core/src/components/area/components/AreaRoot.tsx',
-    slicesUtilisés: ['areaSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['state.area'], // À vérifier (sélecteur inline)
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
   },
   {
     composant: 'NormalContextMenu',
     chemin: 'packages/core/src/components/context-menu/normal/NormalContextMenu.tsx',
     slicesUtilisés: ['contextMenuSlice'], // À vérifier
-    actions: ['closeContextMenu'], // À vérifier (dispatch utilisé)
-    selectors: [
-      'selectContextMenuVisible', 
-      'selectContextMenuItems', 
-      'selectContextMenuPosition', 
-      'selectContextMenuTargetId', 
-      'selectContextMenuMetadata'
-    ], // À vérifier
-    prioritéMigration: 'Moyenne' // À ajuster
+    statutMigration: 'Non migré',
+    prioritéMigration: 'Moyenne'
   },
     {
     composant: 'KarmycInitializer',
     chemin: 'packages/core/src/providers/KarmycInitializer.tsx',
-    slicesUtilisés: ['areaSlice'], // À vérifier
-    actions: [], // À vérifier
-    selectors: ['state.area.areas'], // À vérifier (sélecteur inline)
-    prioritéMigration: 'Haute' // À ajuster
+    slicesUtilisés: ['areaSlice'],
+    statutMigration: 'Migré (utilise useAreaStore)',
+    prioritéMigration: 'FAIT'
   }
-  // NOTE: Les anciens composants listés (AreaExplorer, AreaEditor, MainLayout, NotificationCenter)
-  // n'ont pas été trouvés aux chemins indiqués et sont considérés comme obsolètes dans ce contexte.
-  // Le composant ContextMenu existe mais le chemin était incorrect.
+  // ... (Note sur composants obsolètes - inchangée) ...
 ]
 ```
 
@@ -401,69 +412,38 @@ const reduxComponents = [
 
 ### Phase 1 : Préparation
 
-1. **Création d'une branche dédiée** : `feature/zustand-migration`
-2. **Installation de Zustand** : `yarn add zustand`
-3. **Audit du code actuel** : Identifier tous les slices Redux et leurs dépendances
+1. **Création d'une branche dédiée** : `feature/zustand-migration` - **FAIT**
+2. **Installation de Zustand** : `yarn add zustand` - **FAIT**
+3. **Audit du code actuel** : Identifier tous les slices Redux et leurs dépendances - **FAIT** (Voir inventaire ci-dessus)
 
 ### Phase 2 : Implémentation des stores Zustand
 
-1. **Créer la structure de base**
-   ```
-   src/
-     stores/           # Nouveau dossier pour les stores Zustand
-       areaStore.ts
-       contextMenuStore.ts
-       historyStore.ts
-       notificationStore.ts
-       # ... autres stores ...
-       index.ts        # Export centralisé
-   ```
-
+1. **Créer la structure de base** - **FAIT** (`src/stores/`)
 2. **Implémenter les stores Zustand équivalents aux slices Redux**
-   - Convertir chaque autre slice Redux en store Zustand distinct (en suivant une approche 1:1 pour ceux-ci, sauf si une autre refactorisation évidente apparaît).
-   - Reproduire les actions et sélecteurs.
-   - Ajouter les middlewares nécessaires (persist, devtools, immer) en se basant sur l'inventaire et les besoins spécifiques (ex: `persist` pour les stores issus de `areaSlice`, `stateSlice`, `toolbarSlice`, `spaceSlice`).
-
-3. **Créer des hooks personnalisés pour abstraire l'accès aux stores**
-   - Simplifier la migration des composants.
+   - `areaStore.ts`: **EN COURS** (Logique de base + layout/split migrés. **Priorité : Restaurer la logique de fusion (join)**. Finalize en attente).
+   - Autres stores (`contextMenu`, `history`, `notification`, etc.) : **À FAIRE**.
+3. **Créer des hooks personnalisés pour abstraire l'accès aux stores** - **PARTIEL** (Fait implicitement via `useAreaStore`, à généraliser si besoin).
 
 ### Phase 3 : Migration des fonctionnalités spéciales
 
-1. **Système d'historique (undo/redo)**
-   - Implémenter un middleware Zustand pour l'historique
+1. **Système d'historique (undo/redo)** - **À FAIRE**
+   - Implémenter un middleware Zustand pour l'historique (ou lib externe)
    - Recréer la logique de diff et d'application des changements
-
-2. **Persistance des données**
-   - Utiliser le middleware `persist` de Zustand
-   - Configurer les options de stockage (localStorage, etc.)
-
-3. **Système de plugins et middleware**
-   - Créer une architecture de plugins compatible avec Zustand
-   - Adapter les plugins existants
+2. **Persistance des données** - **PARTIELLEMENT FAIT** (Middleware `persist` configuré pour `areaStore`. À vérifier/configurer pour les autres stores persistants).
+3. **Système de plugins et middleware** - **À FAIRE**
 
 ### Phase 4 : Migration des composants
 
-1. **Approche systématique**
-   - Commencer par les composants de bas niveau
-   - Remplacer `useSelector` et `useDispatch` par les hooks Zustand
-   - Tester chaque composant après migration
-
-2. **Mettre à jour le Provider principal**
-   - Remplacer `<Provider store={store}>` par un Provider simplifié si nécessaire
+1. **Approche systématique** - **EN COURS**
+   - Composants liés à `areaStore`: `Area`, `AreaRoot`, `AreaRowSeparators`, `AreaToOpenPreview`, `JoinAreaPreview`, `KarmycInitializer` - **FAIT**.
+   - Autres composants listés : **À FAIRE**.
+2. **Mettre à jour le Provider principal** - **À FAIRE** (Supprimer `<Provider store={store}>`).
 
 ### Phase 5 : Tests et validation
 
-1. **Tests unitaires**
-   - Mettre à jour les tests unitaires pour utiliser Zustand
-   - Vérifier que tous les tests passent
-
-2. **Tests fonctionnels**
-   - Vérifier que toutes les fonctionnalités marchent comme prévu
-   - Corriger les bugs éventuels
-
-3. **Tests de performance**
-   - Mesurer les améliorations de performance
-   - Optimiser si nécessaire
+1. **Tests unitaires** - **À FAIRE** (Les tests pour `areaStore` ont été adaptés).
+2. **Tests fonctionnels** - **EN COURS** (Tests manuels effectués pendant la migration).
+3. **Tests de performance** - **À FAIRE**.
 
 ## Exemples d'implémentation détaillés
 
@@ -695,27 +675,22 @@ const deploymentStrategy = {
 ## Dépendances externes à Redux
 
 ```typescript
-// Inventaire des dépendances externes liées à Redux effectivement présentes dans package.json
+// Inventaire des dépendances externes liées à Redux (Mise à jour YYYY-MM-DD)
 const externalDependencies = [
-  // Supprimé: connected-react-router (non trouvé)
   {
     bibliothèque: 'redux-persist',
     utilisation: 'Persistance de l'état Redux',
-    stratégieMigration: 'Utiliser le middleware persist de Zustand',
+    statutMigration: 'Remplacé par le middleware `persist` de Zustand pour `areaStore`. À vérifier pour les autres stores.',
     complexité: 'Faible',
-    codeAffecté: ['src/store/index.ts'] // À vérifier
+    codeAffecté: ['src/store/index.ts', 'src/stores/areaStore.ts']
   },
   {
     bibliothèque: 'redux-undo',
     utilisation: 'Fonctionnalité undo/redo',
-    stratégieMigration: 'Créer un middleware personnalisé pour Zustand ou utiliser une lib existante',
+    statutMigration: 'Non migré. Stratégie : middleware Zustand personnalisé ou lib externe (ex: zundo).',
     complexité: 'Élevée',
-    codeAffecté: ['src/store/slices/historySlice.ts'] // À vérifier
+    codeAffecté: ['src/store/slices/historySlice.ts']
   },
-  // Supprimé: reselect (non trouvé comme dépendance directe)
-  // Note: La logique des sélecteurs mémoïsés devra toujours être migrée.
-  // Supprimé: redux-thunk (non trouvé comme dépendance directe, inclus dans RTK)
-  // Note: La logique des actions asynchrones devra toujours être migrée.
 ]
 ```
 

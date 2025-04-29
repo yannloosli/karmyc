@@ -1,15 +1,12 @@
 import { AreaToOpenPreview } from '@gamesberry/karmyc-core/components/area/components/AreaToOpenPreview';
-import { useArea } from '@gamesberry/karmyc-core/hooks/useArea';
-import { RootState } from '@gamesberry/karmyc-core/store';
-import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen } from '@gamesberry/karmyc-core/store/slices/areaSlice';
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
 import { ImageData, ImagesGalleryState } from '@gamesberry/karmyc-core/types/image';
 import { computeAreaToViewport } from '@gamesberry/karmyc-core/utils/areaToViewport';
 import { getHoveredAreaId } from '@gamesberry/karmyc-core/utils/areaUtils';
 import { getAreaRootViewport } from '@gamesberry/karmyc-core/utils/getAreaViewport';
 import { Vec2 } from '@gamesberry/karmyc-shared';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // Static registry for gallery components
 const galleryComponentRegistry: Record<string, {
@@ -128,10 +125,19 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     state,
     viewport
 }) => {
-    const { updateAreaState } = useArea();
     const { registerMenuComponent, registerStatusComponent, registerToolbarComponent, registerSlotComponent } = useGalleryComponents('images-gallery', id);
-    const areaState = useSelector((state: RootState) => state.area);
-    const dispatch = useDispatch();
+
+    // Obtenir les actions et l'état nécessaires depuis useAreaStore (appels séparés)
+    const updateArea = useAreaStore(s => s.updateArea);
+    const setAreaToOpen = useAreaStore(s => s.setAreaToOpen);
+    const clearAreaToOpen = useAreaStore(s => s.cleanupTemporaryStates);
+    const finalizeAreaPlacement = useAreaStore(s => s.finalizeAreaPlacement);
+
+    // Sélectionner les parties de l'état nécessaires séparément
+    const layout = useAreaStore(s => s.layout);
+    const rootId = useAreaStore(s => s.rootId);
+    const areaToOpen = useAreaStore(s => s.areaToOpen);
+    // const joinPreview = useAreaStore(s => s.joinPreview); // Toujours commenté car non utilisé
 
     // Local states
     const [viewMode, setViewMode] = useState<'grid' | 'single'>('grid');
@@ -150,7 +156,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
     const selectedImage = images.find(img => img.id === selectedImageId) || images[0];
 
     // Function to add a new image
-    const addImage = () => {
+    const addImage = useCallback(() => {
         const newImage: ImageData = {
             id: Date.now().toString(),
             url: `https://picsum.photos/300/400?t=${Date.now()}`,
@@ -159,82 +165,114 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
             height: 400
         };
 
-        updateAreaState(id, {
-            ...state,
-            images: [...images, newImage],
-            selectedImageId: newImage.id
+        // Utiliser updateArea du store
+        updateArea({
+            id: id, // ID de l'aire actuelle
+            state: { // Le nouveau contenu de la propriété `state` de l'aire
+                ...state,
+                images: [...images, newImage],
+                selectedImageId: newImage.id
+            }
         });
-    };
+    }, [id, state, images, updateArea]);
 
     // Function to select an image
-    const selectImage = (imageId: string) => {
-        updateAreaState(id, {
-            ...state,
-            selectedImageId: imageId
+    const selectImage = useCallback((imageId: string) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                selectedImageId: imageId
+            }
         });
-    };
+    }, [id, state, updateArea]);
 
     // Function to delete an image
-    const deleteImage = (imageId: string) => {
-        updateAreaState(id, {
-            ...state,
-            images: images.filter(img => img.id !== imageId),
-            selectedImageId: selectedImageId === imageId ? null : selectedImageId
+    const deleteImage = useCallback((imageId: string) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                images: images.filter(img => img.id !== imageId),
+                selectedImageId: selectedImageId === imageId ? null : selectedImageId
+            }
         });
-    };
+    }, [id, state, images, selectedImageId, updateArea]);
 
     // Function to update image caption
-    const updateCaption = (imageId: string, caption: string) => {
-        updateAreaState(id, {
-            ...state,
-            images: images.map(img =>
-                img.id === imageId ? { ...img, caption } : img
-            )
+    const updateCaption = useCallback((imageId: string, caption: string) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                images: images.map(img =>
+                    img.id === imageId ? { ...img, caption } : img
+                )
+            }
         });
-    };
+    }, [id, state, images, updateArea]);
 
     // Function to change zoom
-    const changeZoom = (newZoom: number) => {
-        updateAreaState(id, {
-            ...state,
-            zoom: newZoom
+    const changeZoom = useCallback((newZoom: number) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                zoom: newZoom
+            }
         });
-    };
+    }, [id, state, updateArea]);
 
     // Function to change view mode
-    const toggleViewMode = () => {
-        setViewMode(viewMode === 'grid' ? 'single' : 'grid');
-    };
+    const toggleViewMode = useCallback(() => {
+        setViewMode(prev => prev === 'grid' ? 'single' : 'grid');
+    }, []);
 
     // Function to change filter
-    const changeFilter = (newFilter: string) => {
-        updateAreaState(id, {
-            ...state,
-            filter: newFilter
+    const changeFilter = useCallback((newFilter: string) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                filter: newFilter
+            }
         });
-    };
+    }, [id, state, updateArea]);
 
     // Function to sort images
-    const sortImages = (sortType: string) => {
-        updateAreaState(id, {
-            ...state,
-            sortBy: sortType
+    const sortImages = useCallback((sortType: string) => {
+        // Utiliser updateArea du store
+        updateArea({
+            id: id,
+            state: {
+                ...state,
+                sortBy: sortType
+            }
         });
-    };
+    }, [id, state, updateArea]);
 
     // Sort images according to selected criteria
-    const sortedImages = [...images].sort((a: ImageData, b: ImageData) => {
-        if (sortBy === 'title') {
-            return (a.caption || '').localeCompare(b.caption || '');
-        }
-        if (sortBy === 'titleDesc') {
-            return (b.caption || '').localeCompare(a.caption || '');
-        }
-        if (sortBy === 'random') {
-            return Math.random() - 0.5;
-        }
-        return 0;
-    });
+    const sortedImages = useMemo(() => {
+        const imagesToSort = state?.images || [];
+        const currentSortBy = state?.sortBy || 'default';
+        return [...imagesToSort].sort((a: ImageData, b: ImageData) => {
+            if (currentSortBy === 'title') {
+                return (a.caption || '').localeCompare(b.caption || '');
+            }
+            if (currentSortBy === 'titleDesc') {
+                return (b.caption || '').localeCompare(a.caption || '');
+            }
+            if (currentSortBy === 'random') {
+                return Math.random() - 0.5;
+            }
+            return 0;
+        });
+    }, [state?.images, state?.sortBy]);
 
     // Effect to handle component registration
     useEffect(() => {
@@ -457,7 +495,6 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         toggleViewMode,
         viewMode,
         sortBy,
-        updateAreaState,
         images,
         zoom,
         selectImage,
@@ -466,123 +503,96 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         changeFilter
     ]);
 
-    const handleStart = useCallback((e: React.DragEvent) => {
-        const imageId = e.currentTarget.getAttribute('data-source-id');
-        if (!imageId) {
-            console.warn('ImagesGalleryArea - No imageId found');
-            return;
-        }
+    // --- Callbacks pour Drag & Drop ---
+    // Les dépendances de useMemo sont correctes car layout et rootId sont maintenant
+    // des variables stables obtenues via des hooks séparés.
+    const areaToViewportMap = useMemo(() => {
+        if (!rootId) return {};
+        // Attention: getAreaRootViewport() peut être coûteux, idéalement il faudrait le mémoizer
+        // ou le passer en prop s'il dépend du DOM extérieur.
+        return computeAreaToViewport(layout, rootId, getAreaRootViewport());
+    }, [layout, rootId]);
 
-        const image = images.find(img => img.id === imageId);
-        if (!image) return;
 
+    const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, image: ImageData) => {
         const rect = e.currentTarget.getBoundingClientRect();
-        dragRef.current = {
-            startX: e.clientX - rect.left,
-            startY: e.clientY - rect.top,
-            image
-        };
+        const startX = e.clientX - rect.left;
+        const startY = e.clientY - rect.top;
+        dragRef.current = { startX, startY, image };
 
-        // Create invisible drag image
+        // Utiliser l'action Zustand directement
+        setAreaToOpen({
+            position: { x: e.clientX, y: e.clientY },
+            area: {
+                type: 'image-viewer', // Type de l'aire à créer/ouvrir
+                state: { imageUrl: image.url, caption: image.caption, sourceAreaId: id } // État initial
+            }
+        });
+
+        // Créer une image fantôme (identique à avant)
         const dragImage = document.createElement('div');
-        dragImage.style.width = '1px';
-        dragImage.style.height = '1px';
-        dragImage.style.position = 'fixed';
-        dragImage.style.top = '-1px';
-        dragImage.style.left = '-1px';
-        dragImage.style.opacity = '0.01';
+        dragImage.style.cssText = `width: 1px; height: 1px; position: fixed; top: -1px; left: -1px; opacity: 0.01; pointer-events: none;`;
         document.body.appendChild(dragImage);
-
-        // Set up drag effect
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-            type: 'create-new',
-            areaType: 'image-viewer',
-            imageId,
-            areaId: id
-        }));
+        e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'image-gallery-item', imageId: image.id, sourceAreaId: id }));
         e.dataTransfer.setDragImage(dragImage, 0, 0);
+        requestAnimationFrame(() => { document.body.removeChild(dragImage); });
 
-        // Clean up drag image after short delay
-        setTimeout(() => {
-            document.body.removeChild(dragImage);
-        }, 0);
-    }, [images, id]);
+    }, [id, setAreaToOpen]); // Dépendance à setAreaToOpen
 
-    const handleMove = useCallback((e: React.DragEvent) => {
+
+    const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-
-        if (!dragRef.current || !dragRef.current.image) {
-            console.warn('❌ No dragRef or image found');
-            return;
+        const now = Date.now();
+        if (now - lastUpdateRef.current < UPDATE_INTERVAL) {
+            return; // Limiter la fréquence
         }
+        lastUpdateRef.current = now;
 
-        const now = performance.now();
-        if (now - lastUpdateRef.current >= UPDATE_INTERVAL) {
-            dispatch(setAreaToOpen({
-                position: {
-                    x: e.clientX - dragRef.current.startX,
-                    y: e.clientY - dragRef.current.startY
-                },
-                area: {
-                    type: 'image-viewer',
-                    state: { image: dragRef.current.image }
-                }
-            }));
-            lastUpdateRef.current = now;
-        }
-    }, [dispatch]);
+        // Obtenir le layout actuel directement du store si nécessaire, mais areaToViewportMap devrait être suffisant
+        // car il est déjà basé sur le layout/rootId du store.
+        const hoveredId = getHoveredAreaId(Vec2.new(e.clientX, e.clientY), { layout, rootId } as any, areaToViewportMap); // Forcer le type pour l'instant
 
-    const handleRelease = useCallback((e: React.DragEvent) => {
+        // Pas besoin de setAreaToOpen ici, AreaToOpenPreview s'en charge via son propre useAreaStore
+
+        e.dataTransfer.dropEffect = 'move'; // Indiquer l'effet possible
+
+    }, [id, areaToViewportMap, layout, rootId]); // Ajouter layout et rootId comme dépendances car utilisés dans getHoveredAreaId
+
+    const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!dragRef.current || !dragRef.current.image) return;
+        const dropPosition = Vec2.new(e.clientX, e.clientY);
+        // Utiliser le layout et rootId obtenus via les hooks
+        const hoveredId = getHoveredAreaId(dropPosition, { layout, rootId } as any, areaToViewportMap); // Forcer le type pour l'instant
 
-        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-        if (data.type !== 'create-new') return;
-
-        // Calculate final position
-        const position = {
-            x: e.clientX - dragRef.current.startX,
-            y: e.clientY - dragRef.current.startY
-        };
-
-        // Get target area ID
-        const areaToViewport = computeAreaToViewport(
-            areaState.layout,
-            areaState.rootId || '',
-            getAreaRootViewport()
-        );
-        const targetAreaId = getHoveredAreaId(Vec2.new(position.x, position.y), areaState, areaToViewport);
-
-        if (targetAreaId) {
-            // If we have a target area, finalize placement with the image
-            dispatch(finalizeAreaPlacement());
+        if (hoveredId && hoveredId !== id) {
+            console.log(`Image dropped onto area ${hoveredId}`);
+            // Logique pour finaliser le drop sur une autre aire
+            // (potentiellement déclencher une action pour ajouter l'image à l'autre aire, ou déplacer ?)
+            // Pour l'instant, on assume que finalizeAreaPlacement gère la création d'une nouvelle aire si nécessaire.
+            finalizeAreaPlacement();
         } else {
-            // Otherwise cancel
-            dispatch(clearAreaToOpen());
+            // Drop sur soi-même ou en dehors d'une aire valide
+            clearAreaToOpen(); // Nettoyer l'état areaToOpen
         }
-
         dragRef.current = null;
-    }, [dispatch, areaState]);
+
+    }, [id, areaToViewportMap, finalizeAreaPlacement, clearAreaToOpen, layout, rootId]); // Ajouter layout et rootId comme dépendances
 
     return (
-        <div
-            className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`}
-            style={{
-                width: viewport.width,
-                height: viewport.height,
-                padding: '1rem',
-                background: '#fff',
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                gap: '1rem',
-                position: 'relative'
-            }}
-        >
+        <div className={`images-gallery-area ${viewMode === 'grid' ? 'grid-view' : 'list-view'}`} style={{
+            width: viewport.width,
+            height: viewport.height,
+            padding: '1rem',
+            background: '#fff',
+            display: 'grid',
+            gridTemplateColumns: '200px 1fr',
+            gap: '1rem',
+            position: 'relative'
+        }} onDragOver={handleDragOver} onDrop={handleDrop}>
             {/* Sidebar with image list */}
             <div style={{
                 borderRight: '1px solid #d9d9d9',
@@ -602,9 +612,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                             key={img.id}
                             data-source-id={img.id}
                             draggable
-                            onDragStart={handleStart}
-                            onDragOver={handleMove}
-                            onDragEnd={handleRelease}
+                            onDragStart={(e) => handleDragStart(e, img)}
                             style={{
                                 border: selectedImageId === img.id ? '2px solid #1890ff' : '1px solid #d9d9d9',
                                 borderRadius: '4px',
@@ -674,7 +682,7 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                 gap: '1rem',
                 position: 'relative'
             }}>
-                {selectedImageId ? (
+                {selectedImage ? (
                     <>
                         <div style={{
                             flex: 1,
@@ -715,15 +723,13 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
                         alignItems: 'center',
                         color: '#999'
                     }}>
-                        Select an image to display
+                        {images.length > 0 ? 'No image selected' : 'No images available'}
                     </div>
                 )}
             </div>
 
             {/* Preview of the area to open */}
-            {areaState.areaToOpen && (
-                <AreaToOpenPreview areaToViewport={areaState.viewports} />
-            )}
+            <AreaToOpenPreview areaToViewport={areaToViewportMap} />
         </div>
     );
 };

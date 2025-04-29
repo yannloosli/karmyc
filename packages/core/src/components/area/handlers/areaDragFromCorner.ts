@@ -27,6 +27,28 @@ const cornerDirections: Record<IntercardinalDirection, [CardinalDirection, Cardi
 
 // Removed parseCorner as directionParts wasn't used in Zustand logic
 
+// Function to determine if the movement is toward the inside of the area
+// Copied from the original Redux version
+function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2): boolean {
+    switch (corner) {
+    case "ne":
+        // For northeast corner, "inward" means movement toward southwest
+        return moveVec.x < 0 && moveVec.y > 0;
+    case "nw":
+        // For northwest corner, "inward" means movement toward southeast
+        return moveVec.x > 0 && moveVec.y > 0;
+    case "se":
+        // For southeast corner, "inward" means movement toward northwest
+        return moveVec.x < 0 && moveVec.y < 0;
+    case "sw":
+        // For southwest corner, "inward" means movement toward northeast
+        return moveVec.x > 0 && moveVec.y < 0;
+    default:
+        console.warn("Unknown corner direction in determineIfMovingInwards:", corner);
+        return false; // Default to outward/join for safety?
+    }
+}
+
 export const handleAreaDragFromCorner = (
     e: MouseEvent,
     corner: IntercardinalDirection,
@@ -277,6 +299,35 @@ export const handleAreaDragFromCorner = (
     function setupJoinMoveHandlers() {
         console.log("Setting up join/move handlers for area:", areaId);
 
+        // Find the parent row of the source area ONCE
+        const initialParentRow = parentRowId ? initialLayout[parentRowId] as AreaRowLayout : null;
+        if (!initialParentRow || initialParentRow.type !== 'area_row') {
+            console.error("Join/Move setup: Source area does not have a valid parent row. Cannot determine siblings.");
+            // Cannot proceed with join logic without siblings
+            currentOnMove = null;
+            currentOnMouseUp = () => { setAreaResizing(false); getFreshState().setJoinPreview(null); }; // Basic cleanup
+            return;
+        }
+        const sourceAreaIndex = initialParentRow.areas.findIndex(a => a.id === areaId);
+        if (sourceAreaIndex === -1) {
+            console.error(`Join/Move setup: Source area ${areaId} not found within its supposed parent row ${parentRowId}.`);
+            currentOnMove = null;
+            currentOnMouseUp = () => { setAreaResizing(false); getFreshState().setJoinPreview(null); };
+            return;
+        }
+
+        // Determine the ACTUAL eligible siblings (all others in the same row, based on original logic)
+        const actualEligibleAreaIds = initialParentRow.areas
+            .filter((_, index) => index !== sourceAreaIndex)
+            .map(a => a.id);
+
+        // Identify IMMEDIATE siblings
+        const leftSiblingId = sourceAreaIndex > 0 ? initialParentRow.areas[sourceAreaIndex - 1].id : null;
+        const rightSiblingId = sourceAreaIndex < initialParentRow.areas.length - 1 ? initialParentRow.areas[sourceAreaIndex + 1].id : null;
+        const immediateSiblings = [leftSiblingId, rightSiblingId].filter(id => id !== null) as string[];
+
+        console.log("Eligible siblings for join:", actualEligibleAreaIds, "Immediate siblings:", immediateSiblings);
+
         currentOnMove = (vec: Vec2) => {
             const currentState = getFreshState();
             const currentLayout = currentState.layout;
@@ -288,34 +339,45 @@ export const handleAreaDragFromCorner = (
             let targetAreaId: string | null = null;
             let direction: CardinalDirection | null = null;
 
-            // Logic to find target area based on vec and viewports (Simplified example)
-            for (const id in areaToViewportMap) {
-                if (id === areaId) continue; // Don't target self
-                const vp = areaToViewportMap[id];
-                if (vec.x >= vp.left && vec.x <= vp.left + vp.width && vec.y >= vp.top && vec.y <= vp.top + vp.height) {
-                    targetAreaId = id;
+            // Logic to find target area based on vec and viewports
+            // Iterate ONLY over IMMEDIATE eligible siblings to find the target
+            for (const eligibleId of immediateSiblings) {
+                // No need to check for self (id === areaId)
+                const vp = areaToViewportMap[eligibleId];
+                if (vp && vec.x >= vp.left && vec.x <= vp.left + vp.width && vec.y >= vp.top && vec.y <= vp.top + vp.height) {
+                    targetAreaId = eligibleId;
                     // Determine direction (simplified)
-                    const sourceVp = areaToViewportMap[areaId];
+                    const sourceVp = areaToViewportMap[areaId]; // Viewport of the area being dragged
                     if (sourceVp) {
-                        if (vec.x > sourceVp.left + sourceVp.width) direction = 'e';
-                        else if (vec.x < sourceVp.left) direction = 'w';
-                        else if (vec.y > sourceVp.top + sourceVp.height) direction = 's';
-                        else if (vec.y < sourceVp.top) direction = 'n';
+                        // Use target viewport center vs source viewport center for more robust direction?
+                        const targetVp = vp;
+                        const deltaX = (targetVp.left + targetVp.width / 2) - (sourceVp.left + sourceVp.width / 2);
+                        const deltaY = (targetVp.top + targetVp.height / 2) - (sourceVp.top + sourceVp.height / 2);
+
+                        if (initialParentRow.orientation === 'horizontal') {
+                            direction = deltaX > 0 ? 'e' : 'w';
+                        } else {
+                            direction = deltaY > 0 ? 's' : 'n';
+                        }
                     }
-                    break;
+                    break; // Found the target among immediate eligible siblings
                 }
             }
 
-            // TODO: Determine eligibleAreaIds based on adjacency and layout rules
-            const eligibleAreaIds: string[] = targetAreaId ? [targetAreaId] : []; // Placeholder
-
-            getFreshState().setJoinPreview({
-                areaId: targetAreaId,
-                movingInDirection: direction,
-                eligibleAreaIds: eligibleAreaIds
-            });
-
-            // console.log("Join/Move Move Handler - Vec:", vec, "Target:", targetAreaId, "Dir:", direction); // Debug log
+            // Call setJoinPreview ONLY if a valid immediate sibling target is hovered
+            if (targetAreaId && direction) {
+                getFreshState().setJoinPreview({
+                    areaId: targetAreaId, // The immediate eligible sibling area currently hovered
+                    movingInDirection: direction,
+                    eligibleAreaIds: actualEligibleAreaIds // Pass the correct full list of *all* siblings for potential future use?
+                    // Or should this also be immediateSiblings? Let's keep all siblings for now.
+                });
+            } else {
+                // If not hovering over an eligible immediate sibling, clear the preview
+                if (getFreshState().joinPreview !== null) { // Only clear if needed
+                    getFreshState().setJoinPreview(null);
+                }
+            }
         };
 
         currentOnMouseUp = () => {
@@ -323,11 +385,16 @@ export const handleAreaDragFromCorner = (
             const state = getFreshState();
             const preview = state.joinPreview;
 
-            if (preview && preview.areaId && preview.movingInDirection) {
-                console.log(`TODO: Trigger final join/move action: source=${areaId}, target=${preview.areaId}, direction=${preview.movingInDirection}`);
-                // getFreshState().joinOrMoveArea({ sourceAreaId: areaId, targetAreaId: preview.areaId, direction: preview.movingInDirection });
+            // Check if the PREVIEW state contains a valid IMMEDIATE sibling target when mouse is released
+            if (preview && preview.areaId && preview.movingInDirection && immediateSiblings.includes(preview.areaId)) {
+                console.log(`Triggering final join/move action: source=${areaId}, target=${preview.areaId}, direction=${preview.movingInDirection}`);
+                getFreshState().joinOrMoveArea({ sourceAreaId: areaId, targetAreaId: preview.areaId, direction: preview.movingInDirection });
+            } else {
+                console.log("MouseUp but no valid join target in preview state. Cancelling join.");
+                // No action needed here, preview is cleared below anyway
             }
 
+            // Clear preview regardless of whether the action was triggered
             getFreshState().setJoinPreview(null);
             setAreaResizing(false);
             currentOnMove = null;
@@ -342,11 +409,25 @@ export const handleAreaDragFromCorner = (
     const determineInitialDirection = (currentPos: Vec2) => {
         // Use new Vec2 for delta calculation to avoid modifying original vectors
         const delta = new Vec2(currentPos.x - initialMousePosition.x, currentPos.y - initialMousePosition.y);
+
         if (Math.abs(delta.x) > deltaThreshold || Math.abs(delta.y) > deltaThreshold) {
-            const horizontalMove = Math.abs(delta.x) > Math.abs(delta.y);
-            console.log(`Initial direction determined: ${horizontalMove ? 'horizontal' : 'vertical'}`);
-            createNewArea(horizontalMove);
+            // --- Logic adapted from Redux version --- 
+            const isMovingInwards = determineIfMovingInwards(corner, delta);
+
+            if (isMovingInwards) {
+                // If moving inward, create a new area (division)
+                const horizontalMove = Math.abs(delta.x) > Math.abs(delta.y);
+                console.log(`Initial direction determined: Inward (Split - Horizontal: ${horizontalMove})`);
+                createNewArea(horizontalMove);
+            } else {
+                // If moving outward, initiate join/move
+                console.log(`Initial direction determined: Outward (Join/Move)`);
+                setupJoinMoveHandlers();
+            }
+            // --- End of adapted logic ---
+
             initialDirectionDetermined = true;
+            // Trigger the first move event for the selected handler
             if (currentOnMove) {
                 currentOnMove(currentPos);
             }

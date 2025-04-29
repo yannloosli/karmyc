@@ -1,7 +1,5 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { actionLogger } from '../logger';
-import { ActionPriority } from '../priorities';
-import { IActionPlugin } from '../types';
 
 /**
  * Performance plugin configuration
@@ -186,19 +184,6 @@ class PerformanceMonitor {
 }
 
 const performanceMonitor = PerformanceMonitor.getInstance();
-
-/**
- * Performance plugin for actions
- * Allows measuring and analyzing action performance
- */
-export const performancePlugin: IActionPlugin = {
-    id: 'performance',
-    priority: ActionPriority.HIGH,
-    actionTypes: null,
-    handler: (action: AnyAction) => {
-        performanceMonitor.endTracking(action);
-    }
-};
 
 // Export for performance monitor access
 export { performanceMonitor };

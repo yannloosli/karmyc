@@ -1,3 +1,4 @@
+import { temporal } from 'zundo';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -41,149 +42,149 @@ export interface SpaceState {
 //     return { isValid: errors.length === 0, errors };
 // }
 
-export const useSpaceStore = create<SpaceState>()(
-    devtools(
-        persist(
-            immer((set, get) => ({
-                _idCounter: 0,
-                spaces: {},
-                activeSpaceId: null,
-                errors: [],
+// Define the core state logic with immer first
+const immerConfig = immer<SpaceState>((set, get) => {
+    console.log('[spaceStore] Initializing immer state logic');
+    return {
+        _idCounter: 0,
+        spaces: {},
+        activeSpaceId: null,
+        errors: [],
 
-                // Actions
-                addSpace: (spaceData) => {
-                    // Basic validation example
-                    if (!spaceData.name) {
-                        set(state => {
-                            state.errors = ["Space name cannot be empty."];
-                        });
-                        console.error("Validation failed for space:", get().errors);
-                        return undefined;
-                    }
-
-                    const newId = `space-${get()._idCounter + 1}`;
-                    const newSpace: Space = {
-                        id: newId,
-                        name: spaceData.name,
-                        sharedState: spaceData.sharedState || {},
-                    };
-
-                    set(state => {
-                        state.spaces[newId] = newSpace;
-                        state._idCounter += 1;
-                        state.errors = []; // Clear errors on success
-                        // Optionally set the new space as active
-                        // state.activeSpaceId = newId;
-                    });
-                    return newId;
-                },
-
-                removeSpace: (id) => {
-                    set(state => {
-                        delete state.spaces[id];
-                        if (state.activeSpaceId === id) {
-                            state.activeSpaceId = null; // Reset active if deleted
-                        }
-                        state.errors = [];
-                    });
-                },
-
-                setActiveSpace: (id) => {
-                    set(state => {
-                        if (id === null || state.spaces[id]) {
-                            state.activeSpaceId = id;
-                        } else {
-                            console.warn(`Attempted to set active space to non-existent ID: ${id}`);
-                        }
-                        state.errors = [];
-                    });
-                },
-
-                updateSpace: (spaceData) => {
-                    set(state => {
-                        const space = state.spaces[spaceData.id];
-                        if (space) {
-                            // Basic validation example for update
-                            if (spaceData.name === '') {
-                                state.errors = ["Space name cannot be empty."];
-                                console.error("Validation failed for space update:", state.errors);
-                                return;
-                            }
-                            // Merge changes, ensuring id remains unchanged
-                            const { id, ...changes } = spaceData;
-                            state.spaces[id] = { ...space, ...changes };
-                            state.errors = []; // Clear errors on success
-                        } else {
-                            state.errors = [`Space with ID ${spaceData.id} not found for update.`];
-                            console.error("Update failed:", state.errors);
-                        }
-                    });
-                },
-
-                updateSpaceGenericSharedState: (payload) => {
-                    set(state => {
-                        const space = state.spaces[payload.spaceId];
-                        if (space) {
-                            space.sharedState = {
-                                ...space.sharedState,
-                                ...payload.changes,
-                            };
-                            state.errors = [];
-                        } else {
-                            state.errors = [`Space with ID ${payload.spaceId} not found for shared state update.`];
-                            console.error("Shared state update failed:", state.errors);
-                        }
-                    });
-                },
-
-                clearErrors: () => {
-                    set(state => {
-                        state.errors = [];
-                    });
-                },
-
-                // Selectors implemented as methods
-                getSpaceById: (id) => {
-                    return get().spaces[id];
-                },
-
-                getAllSpaces: () => {
-                    return get().spaces;
-                },
-
-                getActiveSpace: () => {
-                    const state = get();
-                    return state.activeSpaceId ? state.spaces[state.activeSpaceId] : null;
-                },
-
-                getActiveSpaceId: () => {
-                    return get().activeSpaceId;
-                },
-
-                getSpaceErrors: () => {
-                    return get().errors;
-                }
-
-            })),
-            {
-                name: 'space-storage', // Unique name for localStorage persistence
-                partialize: (state) => ({
-                    // Select parts of the state to persist
-                    _idCounter: state._idCounter,
-                    spaces: state.spaces,
-                    activeSpaceId: state.activeSpaceId,
-                    // errors are typically not persisted
-                }),
-                // Optional: Add onRehydrateStorage if validation/cleanup is needed on load
-                // onRehydrateStorage: () => (state) => {
-                //     if (state) {
-                //         console.log("Space state rehydrated from storage");
-                //         // Perform validation or cleanup if necessary
-                //     }
-                // }
+        // Actions with logs
+        addSpace: (spaceData) => {
+            console.log('[spaceStore] addSpace called', spaceData);
+            if (!spaceData.name) {
+                set(state => {
+                    console.log('[spaceStore] set (addSpace - validation error)');
+                    state.errors = ["Space name cannot be empty."];
+                });
+                console.error("Validation failed for space:", get().errors);
+                return undefined;
             }
-        )
-    )
+            const newId = `space-${get()._idCounter + 1}`;
+            const newSpace: Space = {
+                id: newId,
+                name: spaceData.name,
+                sharedState: spaceData.sharedState || {},
+            };
+            set(state => {
+                console.log('[spaceStore] set (addSpace - success)');
+                state.spaces[newId] = newSpace;
+                state._idCounter += 1;
+                state.errors = [];
+            });
+            return newId;
+        },
+        removeSpace: (id) => {
+            console.log('[spaceStore] removeSpace called', id);
+            set(state => {
+                console.log('[spaceStore] set (removeSpace)');
+                delete state.spaces[id];
+                if (state.activeSpaceId === id) {
+                    state.activeSpaceId = null;
+                }
+                state.errors = [];
+            });
+        },
+        setActiveSpace: (id) => {
+            console.log('[spaceStore] setActiveSpace called', id);
+            set(state => {
+                console.log('[spaceStore] set (setActiveSpace)');
+                if (id === null || state.spaces[id]) {
+                    state.activeSpaceId = id;
+                } else {
+                    console.warn(`Attempted to set active space to non-existent ID: ${id}`);
+                }
+                state.errors = [];
+            });
+        },
+        updateSpace: (spaceData) => {
+            console.log('[spaceStore] updateSpace called', spaceData);
+            set(state => {
+                const space = state.spaces[spaceData.id];
+                if (space) {
+                    if (spaceData.name === '') {
+                        console.log('[spaceStore] set (updateSpace - validation error)');
+                        state.errors = ["Space name cannot be empty."];
+                        console.error("Validation failed for space update:", state.errors);
+                        return;
+                    }
+                    const { id, ...changes } = spaceData;
+                    console.log('[spaceStore] set (updateSpace - success)');
+                    state.spaces[id] = { ...space, ...changes };
+                    state.errors = [];
+                } else {
+                    console.log('[spaceStore] set (updateSpace - not found)');
+                    state.errors = [`Space with ID ${spaceData.id} not found for update.`];
+                    console.error("Update failed:", state.errors);
+                }
+            });
+        },
+        updateSpaceGenericSharedState: (payload) => {
+            console.log('[spaceStore] updateSpaceGenericSharedState called', payload);
+            set(state => {
+                const space = state.spaces[payload.spaceId];
+                if (space) {
+                    console.log('[spaceStore] set (updateSpaceGenericSharedState - success)');
+                    space.sharedState = {
+                        ...space.sharedState,
+                        ...payload.changes,
+                    };
+                    state.errors = [];
+                } else {
+                    console.log('[spaceStore] set (updateSpaceGenericSharedState - not found)');
+                    state.errors = [`Space with ID ${payload.spaceId} not found for shared state update.`];
+                    console.error("Shared state update failed:", state.errors);
+                }
+            });
+        },
+        clearErrors: () => {
+            console.log('[spaceStore] clearErrors called');
+            set(state => {
+                console.log('[spaceStore] set (clearErrors)');
+                state.errors = [];
+            });
+        },
+
+        // Selectors
+        getSpaceById: (id) => get().spaces[id],
+        getAllSpaces: () => get().spaces,
+        getActiveSpace: () => {
+            const state = get();
+            return state.activeSpaceId ? state.spaces[state.activeSpaceId] : null;
+        },
+        getActiveSpaceId: () => get().activeSpaceId,
+        getSpaceErrors: () => get().errors
+    };
+});
+
+// Wrap with temporal
+const temporalConfig = temporal(immerConfig, {
+    partialize: (state: SpaceState): Partial<SpaceState> => {
+        const { spaces } = state;
+        console.log('[spaceStore temporal] Partialize called, tracking:', { spaces });
+        return { spaces };
+    },
+    onSave: (pastState: SpaceState, currentState: SpaceState) => {
+        console.log('[spaceStore temporal] onSave called', { pastState, currentState });
+    }
+    // limit: 100, // Optional limit
+});
+
+// Wrap with persist
+const persistConfig = persist(temporalConfig, {
+    name: 'space-storage',
+    partialize: (state: SpaceState) => {
+        const { _idCounter, spaces, activeSpaceId } = state;
+        // console.log('[spaceStore persist] Partialize called, persisting:', { _idCounter, spaces, activeSpaceId });
+        return { _idCounter, spaces, activeSpaceId };
+    },
+});
+
+// Finally, wrap with devtools and create the store
+export const useSpaceStore = create<SpaceState>()(
+    devtools(persistConfig, { name: 'SpaceStore' })
 );
 
 // Example of how to use selectors outside components (e.g., in utility functions)

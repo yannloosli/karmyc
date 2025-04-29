@@ -1,9 +1,9 @@
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
+import { actionLogger } from "../actions/logger";
 import { diffFactory } from "../history/diffFactory";
 import { DiffType } from "../history/diffs";
 import { store } from "../store";
 import { sendDiffsToSubscribers } from "../store/diffSubscription";
-import { addHistoryEntry } from "../store/slices/historySlice";
 import { IDiff } from "../types/diff";
 import { DiffParams, ListenHandlers, RequestActionCallback, RequestActionParams } from "../types/requestAction";
 
@@ -153,13 +153,15 @@ export function requestAction(
                 }
 
                 if (shouldAdd) {
-                    store.dispatch(addHistoryEntry({
-                        name,
-                        prevState,
-                        nextState
-                    }));
+                    // Example: Adding to history (assuming history middleware handles diffing)
+                    // Note: This might need adjustment based on final history implementation
+                    // if (options.addToHistory) {
+                    //     dispatch(addHistoryEntry({ name: type, metadata: options.metadata }));
+                    // }
                 }
             }
+
+            actionLogger.info('Action success', { type: name, payload: nextState, result: nextState });
         },
         cancelAction: () => {
             cancelled = true;

@@ -1,10 +1,9 @@
 import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
 import { AREA_BORDER_WIDTH, AREA_PLACEMENT_TRESHOLD } from "@gamesberry/karmyc-core/constants";
 import { useVec2TransitionState } from "@gamesberry/karmyc-core/hooks/useNumberTransitionState";
-import { RootState } from "@gamesberry/karmyc-core/store";
-import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from "@gamesberry/karmyc-core/store/slices/areaSlice";
+import { useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
 import AreaRootStyles from "@gamesberry/karmyc-core/styles/AreaRoot.styles";
-import { AreaToOpen } from "@gamesberry/karmyc-core/types/areaTypes";
+import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from "@gamesberry/karmyc-core/types/areaTypes";
 import { Rect } from "@gamesberry/karmyc-core/types/geometry";
 import { computeAreaToParentRow } from "@gamesberry/karmyc-core/utils/areaToParentRow";
 import { computeAreaToViewport } from "@gamesberry/karmyc-core/utils/areaToViewport";
@@ -14,20 +13,28 @@ import { requestAction } from "@gamesberry/karmyc-core/utils/requestAction";
 import { compileStylesheetLabelled } from "@gamesberry/karmyc-core/utils/stylesheets";
 import { contractRect, Vec2 } from "@gamesberry/karmyc-shared";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import { AreaComponent } from "./Area";
+
+type LayoutMap = Record<string, AreaLayout | AreaRowLayout>;
+type AreasMap = Record<string, Area>;
 
 interface RenderAreaToOpenProps {
     viewport: Rect;
     areaToOpen: AreaToOpen;
     dimensions: Vec2;
-    areaState: RootState['area'];
+    layout: LayoutMap;
+    rootId: string | null;
+    areas: AreasMap;
     areaToViewport: { [key: string]: Rect };
 }
 
 const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => {
-    const { areaToOpen, viewport, dimensions, areaState, areaToViewport } = props;
-    const dispatch = useDispatch();
+    const { areaToOpen, viewport, dimensions, layout, rootId, areas, areaToViewport } = props;
+    const updateAreaToOpenPosition = useAreaStore(s => s.updateAreaToOpenPosition);
+    const clearAreaToOpen = useAreaStore(s => s.cleanupTemporaryStates);
+    const setAreaToOpen = useAreaStore(s => s.setAreaToOpen);
+    const finalizeAreaPlacement = useAreaStore(s => s.finalizeAreaPlacement);
+
     const rafRef = useRef<number | undefined>(undefined);
     const isUpdatingRef = useRef(false);
 
@@ -36,10 +43,10 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
         isUpdatingRef.current = true;
 
         rafRef.current = requestAnimationFrame(() => {
-            dispatch(updateAreaToOpenPosition({ x, y }));
+            updateAreaToOpenPosition({ x, y });
             isUpdatingRef.current = false;
         });
-    }, [dispatch]);
+    }, [updateAreaToOpenPosition]);
 
     useEffect(() => {
         return () => {
@@ -49,26 +56,23 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
         };
     }, []);
 
-    // Memorize areaToViewport calculation
     const memoizedAreaToViewport = useMemo(() => {
-        return computeAreaToViewport(areaState.layout, areaState.rootId, getAreaRootViewport());
-    }, [areaState.layout, areaState.rootId]);
+        if (!rootId) return {};
+        return computeAreaToViewport(layout, rootId, getAreaRootViewport());
+    }, [layout, rootId]);
 
-    // Function to check if an area is a leaf
     const isAreaLeaf = useCallback((areaId: string): boolean => {
-        // Search the layout to find the area
-        const layout = areaState.layout[areaId];
-        if (!layout) return false;
+        const layoutEntry = layout[areaId];
+        if (!layoutEntry) return false;
 
-        // If it's an area (not a row), it's a leaf
-        return layout.type === 'area';
-    }, [areaState.layout]);
+        return layoutEntry.type === 'area';
+    }, [layout]);
 
-    // Calculate the target area ID
     const targetId = useMemo(() => {
+        if (!rootId) return null;
         const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
-        return getHoveredAreaId(position, areaState, areaToViewport, dimensions);
-    }, [areaToOpen.position, areaState, areaToViewport, dimensions]);
+        return getHoveredAreaId(position, { layout, rootId, areas, areaToOpen }, areaToViewport, dimensions);
+    }, [areaToOpen, layout, rootId, areas, areaToViewport, dimensions]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -81,106 +85,83 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
         e.preventDefault();
         e.stopPropagation();
 
-        // Get sourceId from transfer data
         const sourceId = e.dataTransfer.getData('text/plain');
         if (!sourceId) {
             console.warn('[AreaToOpenPreview] handleDrop - No sourceId found');
-            dispatch(clearAreaToOpen());
+            clearAreaToOpen();
             return;
         }
 
-        // Update state with sourceId and correct type
         const sourceData = JSON.parse(sourceId);
 
-        // If it's a new area creation, keep the current areaToOpen
         if (sourceData.type === 'create-new') {
             requestAction({}, (params) => {
-                params.dispatch(finalizeAreaPlacement());
+                finalizeAreaPlacement();
                 params.submitAction("Finalize area placement");
             });
             return;
         }
 
-        // For other types (like menubar), use a simplified approach with a single action
-        const sourceArea = areaState.areas[sourceData.areaId];
+        const sourceArea = areas[sourceData.areaId];
         if (!sourceArea) {
             console.warn('[AreaToOpenPreview] handleDrop - Source area not found:', sourceData.areaId);
-            dispatch(clearAreaToOpen());
+            clearAreaToOpen();
             return;
         }
 
-        // Check if dropping on the same area or within the same area
         const dropPosition = Vec2.new(e.clientX, e.clientY);
-        const hoveredAreaId = getHoveredAreaId(dropPosition, areaState, areaToViewport, dimensions);
+        const hoveredAreaId = getHoveredAreaId(dropPosition, { layout, rootId, areas, areaToOpen }, areaToViewport, dimensions);
 
-        // Get information about the structure for verification
-        const areaToParentRow = computeAreaToParentRow(areaState);
+        const areaToParentRow = computeAreaToParentRow(layout, rootId);
         const sourceParentRowId = areaToParentRow[sourceData.areaId];
 
-        // Safety check for parent
         if (!sourceParentRowId) {
             console.warn('[AreaToOpenPreview] handleDrop - No parent row for source area, risky operation, cancelling');
-            dispatch(clearAreaToOpen());
+            clearAreaToOpen();
             return;
         }
 
-        // Determine if it's a self-drop (same ID or border of the same area)
         let isSelfDrop = false;
 
-        // 1. Direct ID check (exactly the same area)
         if (hoveredAreaId && sourceData.areaId === hoveredAreaId) {
             isSelfDrop = true;
         }
-        // 2. Placement check if we're on a border of the same area
         else if (hoveredAreaId && areaToViewport[hoveredAreaId]) {
             const viewport = areaToViewport[hoveredAreaId];
             const placement = getAreaToOpenPlacementInViewport(viewport, dropPosition);
 
-            // If the target area and source area are in the same parent row
-            // and we're on a border (top, left, right, bottom)
             const targetParentRowId = areaToParentRow[hoveredAreaId];
 
             if (targetParentRowId && sourceParentRowId === targetParentRowId &&
                 (placement === "top" || placement === "left" || placement === "right" || placement === "bottom")) {
 
-                // For areas in the same parent row, check orientation
-                const parentRow = areaState.layout[sourceParentRowId];
+                const parentRow = layout[sourceParentRowId];
                 if (parentRow && parentRow.type === 'area_row') {
                     const isHorizontal = parentRow.orientation === 'horizontal';
 
-                    // If we're in the same row and dropping on the same source area
                     if (sourceData.areaId === hoveredAreaId) {
                         isSelfDrop = true;
                     }
-                    // Otherwise, check only adjacent areas in the same orientation
                     else {
-                        // Find the index of the source area and target area in the row
                         const sourceIndex = parentRow.areas.findIndex((a: { id: string }) => a.id === sourceData.areaId);
                         const targetIndex = parentRow.areas.findIndex((a: { id: string }) => a.id === hoveredAreaId);
 
-                        // If the two zones are adjacent and the drop is in the same orientation as the row,
-                        // we allow the drop (not a self-drop)
                         const areAdjacent = Math.abs(sourceIndex - targetIndex) === 1;
 
-                        // If not adjacent or if dropping in a different orientation, not a self-drop
                         if (!areAdjacent) {
                             console.log('[AreaToOpenPreview] handleDrop - Drop on a non-adjacent area in the same row, allowed');
                         } else if ((isHorizontal && (placement === "top" || placement === "bottom")) ||
                             (!isHorizontal && (placement === "left" || placement === "right"))) {
                             console.log('[AreaToOpenPreview] handleDrop - Drop in a different orientation than the row, allowed');
                         } else {
-                            // Case where an area is dropped next to itself in the same orientation
-                            // Example: left area dropped on the left edge of its right neighbor
                             isSelfDrop = true;
                         }
                     }
                 }
             }
 
-            // Check specifically for nested rows that could be related
-            const sourceParentRow = areaState.layout[sourceParentRowId];
+            const sourceParentRow = layout[sourceParentRowId];
             if (sourceParentRow && sourceParentRow.type === 'area_row') {
-                // If the target area is part of a larger structure that includes the source area
                 if (targetParentRowId &&
                     (targetParentRowId === sourceData.areaId ||
                         sourceParentRowId === hoveredAreaId)) {
@@ -189,16 +170,13 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
             }
         }
 
-        // Cancel if it's a self-drop
         if (isSelfDrop) {
-            dispatch(clearAreaToOpen());
+            clearAreaToOpen();
             return;
         }
 
-        // Create a single action to move the area
         requestAction({}, (params) => {
             try {
-                // Prepare information needed for the move
                 const areaToOpenData = {
                     position: { x: e.clientX, y: e.clientY },
                     area: {
@@ -207,26 +185,22 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                     }
                 };
 
-                // We use setAreaToOpen followed immediately by finalizeAreaPlacement
-                // to avoid issues with Immer and intermediate state
-                params.dispatch(setAreaToOpen(areaToOpenData));
-                params.dispatch(finalizeAreaPlacement());
+                setAreaToOpen(areaToOpenData);
+                finalizeAreaPlacement();
 
-                // Submit the action after everything is done
                 params.submitAction("Move area");
             } catch (error) {
                 console.error('[AreaToOpenPreview] handleDrop - Error during move:', error);
-                dispatch(clearAreaToOpen());
+                clearAreaToOpen();
             }
         });
-    }, [dispatch, areaState.areas, areaState, areaToViewport, dimensions]);
+    }, [clearAreaToOpen, setAreaToOpen, finalizeAreaPlacement, areas, layout, rootId, areaToViewport, dimensions, areaToOpen]);
 
     const placement = useMemo(() => {
         const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
         return getAreaToOpenPlacementInViewport(viewport, position);
     }, [viewport, areaToOpen.position]);
 
-    // Memorize the placement lines calculations
     const placementLinesMemo = useMemo(() => {
         const treshold = Math.min(viewport.width, viewport.height) * AREA_PLACEMENT_TRESHOLD;
         const O = Vec2.new(treshold, treshold);
@@ -266,7 +240,6 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
         return { lines, placementLines };
     }, [viewport.width, viewport.height]);
 
-    // Memorize the SVG path calculation
     const pathData = useMemo(() => {
         const hlines = placementLinesMemo.placementLines[placement];
         return hlines
@@ -275,7 +248,6 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
             .join(" ") + " Z";
     }, [placementLinesMemo.placementLines, placement]);
 
-    // Get the component from the registry
     const Component = areaRegistry.getComponent(areaToOpen.area.type);
     if (!Component) {
         return null;
@@ -312,6 +284,7 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                         height: dimensions.y,
                         width: dimensions.x,
                     }}
+                    setResizePreview={() => { }}
                 />
             </div>
             {targetId && isAreaLeaf(targetId) && (
@@ -363,22 +336,22 @@ interface OwnProps {
 }
 
 export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
-    const areaState = useSelector((state: RootState) => state.area);
-    const { areaToOpen } = areaState;
+    const areaToOpen = useAreaStore(s => s.areaToOpen);
+    const layout = useAreaStore(s => s.layout as LayoutMap);
+    const rootId = useAreaStore(s => s.rootId);
+    const areas = useAreaStore(s => s.areas as AreasMap);
 
-    // Visual dimensions of the preview (with animation)
     const [areaToOpenDimensions, setAreaToOpenDimensions] = useVec2TransitionState(
         Vec2.new(100, 100),
         { duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] },
     );
 
-    // Fixed dimensions for target area detection
     const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
 
     const areaToOpenTargetId = useMemo(() => {
-        if (!areaToOpen || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
-        return getHoveredAreaId(areaToOpen.position, areaState, props.areaToViewport, detectionDimensions);
-    }, [areaToOpen, areaState, props.areaToViewport, detectionDimensions]);
+        if (!areaToOpen || !rootId || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
+        return getHoveredAreaId(Vec2.new(areaToOpen.position.x, areaToOpen.position.y), { layout, rootId, areas, areaToOpen }, props.areaToViewport, detectionDimensions);
+    }, [areaToOpen, layout, rootId, areas, props.areaToViewport, detectionDimensions]);
 
     const areaToOpenTargetViewport = areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
 
@@ -390,7 +363,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
 
         const dimensions = Vec2.new(viewport.width, viewport.height);
         setAreaToOpenDimensions(dimensions);
-    }, [areaToOpenTargetId, props.areaToViewport]);
+    }, [areaToOpenTargetId, props.areaToViewport, setAreaToOpenDimensions]);
 
     if (!areaToOpen || !areaToOpenTargetViewport) {
         return null;
@@ -401,7 +374,9 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
             areaToOpen={areaToOpen}
             viewport={areaToOpenTargetViewport}
             dimensions={areaToOpenDimensions}
-            areaState={areaState}
+            layout={layout}
+            rootId={rootId}
+            areas={areas}
             areaToViewport={props.areaToViewport}
         />
     );
