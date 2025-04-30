@@ -130,7 +130,7 @@ export const AreaInitializer: React.FC = () => {
         HistoryDrawingArea,
         {
             lines: [],
-            currentColor: '#000000',
+            color: '#000000',
             strokeWidth: 3
         },
         {
@@ -233,7 +233,7 @@ export const AreaInitializer: React.FC = () => {
                 type: 'history-drawing',
                 state: {
                     lines: [],
-                    currentColor: '#000000',
+                    color: '#000000',
                     strokeWidth: 3
                 }
             });

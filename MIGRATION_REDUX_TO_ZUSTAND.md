@@ -687,7 +687,7 @@ const externalDependencies = [
   {
     bibliothèque: 'redux-undo',
     utilisation: 'Fonctionnalité undo/redo',
-    statutMigration: 'Non migré. Stratégie : middleware Zustand personnalisé ou lib externe (ex: zundo).',
+    statutMigration: 'Non migré. Stratégie : middleware Zustand personnalisé.',
     complexité: 'Élevée',
     codeAffecté: ['src/store/slices/historySlice.ts']
   },
@@ -972,7 +972,7 @@ Pour assurer la complétion de la migration, voici une matrice détaillée couvr
 
 | Plugin Redux | Fonction principale | Équivalent Zustand | Stratégie de migration |
 |--------------|---------------------|-------------------|------------------------|
-| `historyPlugin` | Gestion undo/redo | Middleware personnalisé | utiliser @https://github.com/charkour/zundo  |
+| `historyPlugin` | Gestion undo/redo | Middleware personnalisé | |
 | `loggingPlugin` | Journalisation des actions | Middleware personnalisé | Implémenter un middleware qui intercepte les mutations d'état |
 | `analyticsPlugin` | Suivi d'utilisation | Middleware d'observateur | Utiliser un middleware qui observe les changements d'état |
 | `performancePlugin` | Mesures de performance | Middleware avec timestamps | Créer un middleware qui mesure le temps d'exécution des mutations |

@@ -403,34 +403,46 @@ export const handleAreaDragFromCorner = (
     }
 
     // --- Initial Decision Logic ---
-    const deltaThreshold = 5;
+    const deltaThreshold = 10;
     let initialDirectionDetermined = false;
 
     const determineInitialDirection = (currentPos: Vec2) => {
         // Use new Vec2 for delta calculation to avoid modifying original vectors
         const delta = new Vec2(currentPos.x - initialMousePosition.x, currentPos.y - initialMousePosition.y);
 
-        if (Math.abs(delta.x) > deltaThreshold || Math.abs(delta.y) > deltaThreshold) {
-            // --- Logic adapted from Redux version --- 
-            const isMovingInwards = determineIfMovingInwards(corner, delta);
+        const dist = delta.length();
 
-            if (isMovingInwards) {
-                // If moving inward, create a new area (division)
-                const horizontalMove = Math.abs(delta.x) > Math.abs(delta.y);
-                console.log(`Initial direction determined: Inward (Split - Horizontal: ${horizontalMove})`);
-                createNewArea(horizontalMove);
-            } else {
-                // If moving outward, initiate join/move
-                console.log(`Initial direction determined: Outward (Join/Move)`);
-                setupJoinMoveHandlers();
-            }
-            // --- End of adapted logic ---
+        console.log(`InternalMouseMove: dist=${dist.toFixed(1)}, corner=${corner}, moveVec=(${delta.x.toFixed(1)}, ${delta.y.toFixed(1)})`);
 
-            initialDirectionDetermined = true;
-            // Trigger the first move event for the selected handler
-            if (currentOnMove) {
-                currentOnMove(currentPos);
-            }
+        if (dist < 10) { // Threshold
+            return; // Not moved enough
+        }
+
+        // DIRECTION DETERMINED - Detach this initial listener and attach the correct one
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp); // Need a matching mouseup
+
+        // *** LOG before determination ***
+        console.log(`---> Determining direction: corner=${corner}, moveVec.x=${delta.x}, moveVec.y=${delta.y}`);
+        const isMovingInwards = determineIfMovingInwards(corner, delta);
+        const horizontalSplit = Math.abs(delta.x) > Math.abs(delta.y);
+
+        console.log(`Initial direction determined: ${isMovingInwards ? 'Inward' : 'Outward'} (Split - Horizontal: ${horizontalSplit})`);
+
+        if (isMovingInwards) {
+            // If moving inward, create a new area (division)
+            console.log(`Initial direction determined: Inward (Split - Horizontal: ${horizontalSplit})`);
+            createNewArea(horizontalSplit);
+        } else {
+            // If moving outward, initiate join/move
+            console.log(`Initial direction determined: Outward (Join/Move)`);
+            setupJoinMoveHandlers();
+        }
+
+        initialDirectionDetermined = true;
+        // Trigger the first move event for the selected handler
+        if (currentOnMove) {
+            currentOnMove(currentPos);
         }
     };
 

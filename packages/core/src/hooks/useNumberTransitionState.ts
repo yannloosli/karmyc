@@ -1,5 +1,5 @@
 import { animate, Vec2 } from "@gamesberry/karmyc-shared";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export const useNumberTransitionState = (
     initialValue: number,
@@ -37,20 +37,19 @@ export const useVec2TransitionState = (
     options: { bezier?: [number, number, number, number]; duration?: number } = {},
 ): [Vec2, (value: Vec2) => void] => {
     const [value, _setValue] = useState(initialValue);
-
-    let activeAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
-
+    const activeAnimationRef = useRef<ReturnType<typeof animate> | null>(null);
     const lastValRef = useRef(value);
     lastValRef.current = value;
 
-    const setValue = (newValue: Vec2) => {
+    const setValue = useCallback((newValue: Vec2) => {
         if (activeAnimationRef.current) {
             activeAnimationRef.current.cancel();
         }
 
         const from = lastValRef.current;
         const promise = animate({ ...options, from: 0, to: 1 }, (t) => {
-            _setValue(from.lerp(newValue, t));
+            const currentVec = Vec2.new(from);
+            _setValue(currentVec.lerp(newValue, t));
         });
         promise.then((cancelled) => {
             if (!cancelled) {
@@ -59,7 +58,7 @@ export const useVec2TransitionState = (
         });
 
         activeAnimationRef.current = promise;
-    };
+    }, [_setValue, options]);
 
     return [value, setValue];
 };

@@ -1,4 +1,3 @@
-import { temporal } from 'zundo';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -6,6 +5,8 @@ import { AreaTypeValue } from '../constants';
 import { Area, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
 import { Point, Rect } from '../types/geometry';
+import { computeAreaToParentRow } from '../utils/areaToParentRow';
+import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 import { performance } from './middleware/performanceMiddleware';
 
@@ -27,7 +28,6 @@ function validateLoadedState(state: Partial<AreaState>): Omit<AreaState, 'addAre
 
     // Minimal validation: Check if essential parts exist and rootId is in layout
     if (state?.rootId && state.layout && typeof state.layout === 'object' && state.layout[state.rootId] && state.areas && typeof state.areas === 'object') {
-        console.log("[validateLoadedState] Loaded state seems valid, merging with defaults.");
         // Merge loaded state with defaults to ensure all keys are present
         const mergedState = {
             ...defaultDataState, // Provides default data structure
@@ -101,7 +101,7 @@ export interface AreaState {
     lastSplitResultData: SplitResult | null;
 
     // Actions
-    addArea: (area: Area<AreaTypeValue>) => void;
+    addArea: (area: Area<AreaTypeValue>) => string;
     removeArea: (id: string) => void;
     setActiveArea: (id: string | null) => void;
     updateArea: (areaData: Partial<Area<AreaTypeValue>> & { id: string }) => void;
@@ -144,7 +144,6 @@ export interface AreaState {
 let initialStateData: ReturnType<typeof validateLoadedState>;
 try {
     const savedStateString = localStorage.getItem('areaState');
-    console.log("Raw loaded state from localStorage:", savedStateString);
     const parsedData = savedStateString ? JSON.parse(savedStateString) : null;
     const stateToValidate = parsedData?.state ?? {};
     initialStateData = validateLoadedState(stateToValidate);
@@ -210,37 +209,42 @@ function findAllDescendantAreaIds(layout: { [key: string]: AreaRowLayout | AreaL
 
 // Define the core state logic with immer first
 const immerConfig = immer<AreaState>((set, get) => {
-    console.log('[areaStore] Initializing immer state logic with initial data:', initialStateData);
     return {
         ...initialStateData, // Start with validated initial data
 
         // Actions with logs
         addArea: (area) => {
-            console.log('[areaStore] addArea called', area);
-            const validation = validateArea(area);
+            // 1. Generate ID first if missing
+            const areaId = area.id || `area-${get()._id + 1}`; // Use current _id + 1 for generation
+            const areaWithId = { ...area, id: areaId };
+
+            // 2. Validate the object that now guaranteed has an ID
+            const validation = validateArea(areaWithId);
+
             if (!validation.isValid) {
                 set(state => {
-                    console.log('[areaStore] set (addArea - validation error)');
                     state.errors = validation.errors;
                 });
                 console.error("Validation failed for area:", validation.errors);
-                return;
+                return ''; // Return empty string on failure
             }
+            // ID generation logic was here, now removed as it's done above
+
             set(state => {
-                console.log('[areaStore] set (addArea - success)');
-                state.areas[area.id] = area;
-                state.layout[area.id] = { type: 'area', id: area.id }; // Simplified layout entry
-                if (!state.rootId) state.rootId = area.id; // Set root if first area
-                state._id += 1; // Assuming this counts areas added
+                // Use areaWithId here which has the generated ID
+                state.areas[areaWithId.id] = areaWithId;
+                // Layout addition is now handled separately by initializer or other actions
+                // state.layout[areaId] = { type: 'area', id: areaId }; 
+                // if (!state.rootId) state.rootId = areaId; 
+                state._id += 1; // Increment counter AFTER using it
                 state.errors = [];
             });
+            return areaWithId.id; // Return the generated/validated ID
         },
 
         removeArea: (id) => {
-            console.log('[areaStore] removeArea called', id);
             // TODO: Implement robust removal logic (updating layout, handling root, etc.)
             set(state => {
-                console.log('[areaStore] set (removeArea)');
                 delete state.areas[id];
                 delete state.layout[id];
                 // Placeholder: Needs proper layout cleanup
@@ -256,9 +260,7 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         setActiveArea: (id) => {
-            console.log('[areaStore] setActiveArea called', id);
             set(state => {
-                console.log('[areaStore] set (setActiveArea)');
                 if (id === null || state.areas[id]) {
                     state.activeAreaId = id;
                 } else {
@@ -269,17 +271,14 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         updateArea: (areaData) => {
-            console.log('[areaStore] updateArea called', areaData);
             set(state => {
                 const area = state.areas[areaData.id];
                 if (area) {
                     const { id, ...changes } = areaData;
                     // Add validation if needed before update
-                    console.log('[areaStore] set (updateArea - success)');
                     state.areas[id] = { ...area, ...changes };
                     state.errors = [];
                 } else {
-                    console.log('[areaStore] set (updateArea - not found)');
                     state.errors = [`Area with ID ${areaData.id} not found for update.`];
                     console.error("Update failed:", state.errors);
                 }
@@ -287,38 +286,30 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         setAreaToOpen: (payload) => {
-            console.log('[areaStore] setAreaToOpen called', payload);
             set(state => {
-                console.log('[areaStore] set (setAreaToOpen)');
                 state.areaToOpen = payload;
             });
         },
 
         updateAreaToOpenPosition: (position) => {
-            console.log('[areaStore] updateAreaToOpenPosition called', position);
             set(state => {
                 if (state.areaToOpen) {
-                    console.log('[areaStore] set (updateAreaToOpenPosition)');
                     state.areaToOpen.position = position;
                 }
             });
         },
 
         finalizeAreaPlacement: () => {
-            console.log('[areaStore] finalizeAreaPlacement called');
             // Placeholder: Actual logic to place the area based on areaToOpen
             // This would likely involve calling addArea or updateArea/layout
             set(state => {
-                console.log('[areaStore] set (finalizeAreaPlacement) - Placeholder');
                 // Example: Clear areaToOpen after placement
                 state.areaToOpen = null;
             });
         },
 
         cleanupTemporaryStates: () => {
-            console.log('[areaStore] cleanupTemporaryStates called');
             set(state => {
-                console.log('[areaStore] set (cleanupTemporaryStates)');
                 state.joinPreview = null;
                 state.areaToOpen = null;
                 state.lastSplitResultData = null;
@@ -326,21 +317,17 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         setViewports: (viewports) => {
-            console.log('[areaStore] setViewports called', viewports);
             set(state => {
-                console.log('[areaStore] set (setViewports)');
                 state.viewports = viewports;
             });
         },
 
         setRowSizes: (payload) => {
-            console.log('[areaStore] setRowSizes called', payload);
             set(state => {
                 const rowLayout = state.layout[payload.rowId];
                 if (rowLayout && rowLayout.type === 'area_row') {
                     const typedRowLayout = rowLayout as AreaRowLayout; // Cast for type safety
                     if (typedRowLayout.areas.length === payload.sizes.length) {
-                        console.log('[areaStore] set (setRowSizes) applying sizes');
                         typedRowLayout.areas.forEach((areaInfo, index) => {
                             if (areaInfo) { // Check if areaInfo is defined
                                 areaInfo.size = payload.sizes[index];
@@ -367,38 +354,187 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         splitArea: (payload) => {
-            console.log('[areaStore] splitArea called', payload);
-            // Placeholder: Actual split logic needed here
-            // Should return SplitResult | null
-            const result: SplitResult | null = null; // Placeholder
+            const { areaIdToSplit, parentRowId, horizontal, corner } = payload;
+
+            const areaToSplit = get().areas[areaIdToSplit];
+            if (!areaToSplit) {
+                console.error(`splitArea: Area ${areaIdToSplit} not found.`);
+                return null;
+            }
+
+            let result: SplitResult | null = null;
+
             set(state => {
-                console.log('[areaStore] set (splitArea) - Placeholder');
-                state.lastSplitResultData = result;
-                // ... update layout and areas ...
-            });
+                const baseId = state._id; // Use current _id as base for new IDs
+                const newAreaId = `area-${baseId + 1}`;
+                const newRowId = `row-${baseId + 2}`;
+
+                // 1. Create the new Area
+                const newArea: Area<AreaTypeValue> = {
+                    id: newAreaId,
+                    type: areaToSplit.type, // Copy type
+                    state: {}, // Reset state - TODO: Consider copying state?
+                };
+                state.areas[newAreaId] = newArea;
+                state.layout[newAreaId] = { type: 'area', id: newAreaId };
+
+                // 2. Create the new AreaRowLayout
+                const newRow: AreaRowLayout = {
+                    id: newRowId,
+                    type: 'area_row',
+                    orientation: horizontal ? 'horizontal' : 'vertical',
+                    // Initial split is 50/50
+                    // TODO: Determine order based on corner/drag direction?
+                    areas: [
+                        { id: areaIdToSplit, size: 0.5 },
+                        { id: newAreaId, size: 0.5 },
+                    ],
+                };
+                state.layout[newRowId] = newRow;
+
+                // 3. Update the parent row (or rootId)
+                let originalSize = 0.5; // Default size if parent update fails
+                if (parentRowId) {
+                    const parentRow = state.layout[parentRowId] as AreaRowLayout;
+                    if (parentRow && parentRow.type === 'area_row') {
+                        const index = parentRow.areas.findIndex(a => a.id === areaIdToSplit);
+                        if (index !== -1) {
+                            originalSize = parentRow.areas[index].size; // Store original size
+                            // Replace the old area ref with the new row ref, preserving size
+                            parentRow.areas[index] = { id: newRowId, size: originalSize };
+                        } else {
+                            console.error(`splitArea Error: Area ${areaIdToSplit} not found in parent ${parentRowId}. State might be inconsistent.`);
+                            // TODO: Implement state rollback or better error handling
+                        }
+                    } else {
+                        console.error(`splitArea Error: Parent row ${parentRowId} not found or not a row. State might be inconsistent.`);
+                        // TODO: Implement state rollback
+                    }
+                } else if (state.rootId === areaIdToSplit) {
+                    // If the split area was the root, the new row becomes the root
+                    state.rootId = newRowId;
+                } else {
+                    console.error(`splitArea Error: Area ${areaIdToSplit} has no parent row and is not root. State might be inconsistent.`);
+                    // TODO: Implement state rollback
+                }
+
+                // Update ID counter after using baseId+1 and baseId+2
+                state._id = baseId + 2;
+
+                // Set result for the caller
+                // Separator index is the index *between* the two areas in the new row, which is always 1 for a 2-element row.
+                result = {
+                    newRowId: newRowId,
+                    separatorIndex: 1,
+                };
+                state.lastSplitResultData = result; // Store the result
+
+            }); // End set
+
             return result;
         },
 
         setJoinPreview: (payload) => {
-            console.log('[areaStore] setJoinPreview called', payload);
             set(state => {
-                console.log('[areaStore] set (setJoinPreview)');
                 state.joinPreview = payload;
             });
         },
 
         joinOrMoveArea: (payload) => {
-            console.log('[areaStore] joinOrMoveArea called', payload);
-            // Placeholder: Actual join/move logic
+            const { sourceAreaId, targetAreaId } = payload;
             set(state => {
-                console.log('[areaStore] set (joinOrMoveArea) - Placeholder');
-                // ... update layout and areas ...
-                state.joinPreview = null; // Clear preview after operation
+                // Assuming computeAreaToParentRow is imported or available
+                // Assuming joinAreasUtil is imported or available
+
+                const { parentRow, sourceIndex, targetIndex } = findParentRowAndIndices(state.layout, sourceAreaId, targetAreaId);
+
+                if (!parentRow) {
+                    console.error(`joinOrMoveArea: Could not find adjacent areas ${sourceAreaId} and ${targetAreaId} in the same row.`);
+                    state.errors = [`Could not find adjacent areas ${sourceAreaId} and ${targetAreaId} in the same row.`];
+                    state.joinPreview = null;
+                    return;
+                }
+
+                // Determine which direction to merge based on indices
+                // mergeInto = 1 means merge into the area at the higher index (targetIndex)
+                // mergeInto = -1 means merge into the area at the lower index (targetIndex)
+                const mergeIntoDirection = targetIndex > sourceIndex ? 1 : -1;
+                const areaIndexToRemove = sourceIndex; // The source area is always the one being removed after merge
+
+                try {
+                    // Call the utility function to perform the core join logic
+                    const result = joinAreasUtil(parentRow, areaIndexToRemove, mergeIntoDirection);
+                    const { area: updatedLayoutItem, removedAreaId } = result; // Destructure result
+
+                    // Handle row collapse and promotion if only one area remains
+                    if (updatedLayoutItem.type === 'area') {
+                        const survivingAreaId = updatedLayoutItem.id;
+                        const areaToParentRowMap = computeAreaToParentRow(state.layout, state.rootId);
+                        const grandParentRowId = areaToParentRowMap[parentRow.id]; // Find the parent of the row we modified
+
+                        let sizeInGrandParent: number | undefined = undefined;
+
+                        if (grandParentRowId && state.layout[grandParentRowId]?.type === 'area_row') {
+                            // If the parent row had a grandparent row
+                            const grandParentRow = state.layout[grandParentRowId] as AreaRowLayout;
+                            const parentRowIndex = grandParentRow.areas.findIndex(a => a.id === parentRow.id);
+
+                            if (parentRowIndex !== -1) {
+                                sizeInGrandParent = grandParentRow.areas[parentRowIndex].size; // Get the size the parent row had
+                                // Replace parent row ref with surviving area ref, preserving size
+                                grandParentRow.areas[parentRowIndex] = { id: survivingAreaId, size: sizeInGrandParent };
+                            } else {
+                                console.error(`Join Cleanup Error: Could not find parent row ${parentRow.id} in grandparent ${grandParentRowId}. State might be inconsistent.`);
+                            }
+                        } else if (state.rootId === parentRow.id) {
+                            // If the parent row was the root
+                            state.rootId = survivingAreaId; // The surviving area becomes the new root
+                        } else {
+                            // This case should ideally not happen with a valid layout structure
+                            console.warn(`Join Cleanup Warning: Row ${parentRow.id} had no grandparent and was not root. Cannot promote ${survivingAreaId}.`);
+                        }
+
+                        // Delete the layout entry for the now-empty parent row
+                        delete state.layout[parentRow.id];
+
+                    } else if (updatedLayoutItem.type === 'area_row') {
+                        // If the row still exists (more than one area left), update its entry in the layout
+                        state.layout[parentRow.id] = updatedLayoutItem as AreaRowLayout;
+                    }
+
+                    // --- Cleanup removed area and its descendants --- 
+                    // Use the removedAreaId returned by joinAreasUtil
+                    const allRemovedDescendantAreaIds = findAllDescendantAreaIds(state.layout, removedAreaId);
+                    delete state.layout[removedAreaId]; // Remove the direct layout entry if it exists (e.g., { type: 'area', id: ... })
+
+                    allRemovedDescendantAreaIds.forEach(id => {
+                        delete state.areas[id]; // Delete area state
+                        delete state.layout[id]; // Delete potential layout entries for descendants (if they were rows)
+                    });
+
+                    // Ensure the primary removed area is also cleaned up if not caught by descendants
+                    if (state.areas[removedAreaId]) {
+                        delete state.areas[removedAreaId];
+                    }
+
+                    // Reset active area if it was the removed one or one of its descendants
+                    if (state.activeAreaId === removedAreaId || allRemovedDescendantAreaIds.has(state.activeAreaId ?? '')) {
+                        state.activeAreaId = null;
+                    }
+
+                    // Reset errors and preview state
+                    state.errors = [];
+                    state.joinPreview = null;
+
+                } catch (error) {
+                    console.error('Error during joinOrMoveArea:', error);
+                    state.errors = [(error instanceof Error ? error.message : String(error))];
+                    state.joinPreview = null;
+                }
             });
         },
 
         getLastSplitResult: () => {
-            console.log('[areaStore] getLastSplitResult called');
             return get().lastSplitResultData;
         },
 
@@ -414,40 +550,37 @@ const immerConfig = immer<AreaState>((set, get) => {
 });
 
 // Wrap with performance middleware
-// Assuming performanceMiddleware is correctly typed to handle immer
 const performanceConfig = performance(immerConfig);
 
-// Wrap with temporal
-const temporalConfig = temporal(performanceConfig, {
-    partialize: (state: AreaState): Partial<AreaState> => {
-        // Define what parts of the state should be tracked by undo/redo
-        const { _id, rootId, layout, areas, activeAreaId } = state;
-        console.log('[areaStore temporal] Partialize called, tracking:', { _id, rootId, layout, areas, activeAreaId });
-        return { _id, rootId, layout, areas, activeAreaId };
-    },
-    onSave: (pastState: AreaState, currentState: AreaState) => {
-        console.log('[areaStore temporal] onSave called', { pastState, currentState });
-    },
-    // limit: 50 // Example limit
-});
-
 // Wrap with persist
-const persistConfig = persist(temporalConfig, {
+const persistConfig = persist(performanceConfig, {
     name: 'areaState', // Storage key
     partialize: (state: AreaState) => {
-        // Use the validated data structure for persistence
-        const validatedData = validateLoadedState(state);
-        // console.log('[areaStore persist] Partialize called, persisting validated data:', validatedData);
-        return validatedData;
+        // --- MODIFIED: Explicitly select only the state to persist --- 
+        const {
+            _id,
+            rootId,
+            layout,
+            areas
+            // EXPLICITLY EXCLUDE: activeAreaId, errors, joinPreview, areaToOpen, viewports, lastSplitResultData
+        } = state;
+        return {
+            _id,
+            rootId,
+            layout,
+            areas
+        };
+        // --- OLD LOGIC REMOVED --- 
+        // // Use the validated data structure for persistence
+        // const validatedData = validateLoadedState(state);
+        // // console.log('[areaStore persist] Partialize called, persisting validated data:', validatedData);
+        // return validatedData;
     },
     // storage: createJSONStorage(() => localStorage), // Default is localStorage
     onRehydrateStorage: (state) => {
-        console.log('[areaStore persist] Hydration starts');
         return (state, error) => {
             if (error) {
                 console.error('[areaStore persist] Hydration failed:', error);
-            } else {
-                console.log('[areaStore persist] Hydration finished', state);
             }
         };
     },

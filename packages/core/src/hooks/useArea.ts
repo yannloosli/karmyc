@@ -19,14 +19,14 @@ export function useArea() {
         getAreaErrors
     } = useAreaStore();
 
-    const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }) => {
+    const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }): string => {
         const area: Area<AreaTypeValue> = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: '',
             type,
             state,
             position
         };
-        addArea(area);
+        return addArea(area);
     }, [addArea]);
 
     const removeArea = useCallback((id: string) => {

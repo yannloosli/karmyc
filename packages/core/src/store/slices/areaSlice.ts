@@ -281,7 +281,7 @@ export const areaSlice = createSlice({
             const areaId = action.payload;
 
             // Trouver la rangée parente de la zone à supprimer
-            const areaToParentRow = computeAreaToParentRow(state);
+            const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
             const parentRowId = areaToParentRow[areaId];
 
             // Créer un ensemble pour suivre toutes les zones et rangées à supprimer
@@ -474,7 +474,7 @@ export const areaSlice = createSlice({
 
                 const { area, removedAreaId } = result;
                 const shouldRemoveRow = row.areas.length === 2;
-                const areaToParentRow = computeAreaToParentRow(state);
+                const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
 
                 // Conserver le type de la zone source
                 const sourceAreaId = row.areas[mergeArea].id;
@@ -690,7 +690,7 @@ export const areaSlice = createSlice({
             state.layout[areaId] = row;
 
             // Mettre à jour le layout parent si nécessaire
-            const areaToParentRow = computeAreaToParentRow(state);
+            const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
             const parentRowId = areaToParentRow[areaId];
             if (parentRowId) {
                 const parentRow = state.layout[parentRowId] as AreaRowLayout;
@@ -950,7 +950,7 @@ export const areaSlice = createSlice({
 
             // Si c'est un déplacement, on retire d'abord l'élément de sa position d'origine
             if (sourceAreaId) {
-                const areaToParentRow = computeAreaToParentRow(state);
+                const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
                 const sourceParentRowId = areaToParentRow[sourceAreaId];
 
                 if (sourceParentRowId) {
@@ -1037,7 +1037,7 @@ export const areaSlice = createSlice({
                 if (newAreaId !== targetAreaId) {
 
                     // Trouver la rangée parente de la zone source
-                    const areaToParentRow = computeAreaToParentRow(state);
+                    const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
                     const sourceParentRowId = areaToParentRow[newAreaId];
 
                     if (sourceParentRowId) {
@@ -1081,7 +1081,7 @@ export const areaSlice = createSlice({
 
 
             // Vérifier si la zone cible est déjà dans une rangée
-            const areaToParentRow = computeAreaToParentRow(state);
+            const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
             const parentRowId = areaToParentRow[targetAreaId];
             const parentRow = parentRowId ? state.layout[parentRowId] as AreaRowLayout : null;
 
@@ -1116,8 +1116,6 @@ export const areaSlice = createSlice({
                     // Ajouter l'area au layout si ce n'est pas un déplacement
                     if (!sourceAreaId) {
                         state.layout[newAreaId] = { type: "area", id: newAreaId };
-                    } else {
-                        console.log('[areaSlice] finalizeAreaPlacement - Utilisation de layout existant pour:', { sourceAreaId });
                     }
                 } else {
                     // Orientation différente : créer une nouvelle rangée

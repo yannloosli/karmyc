@@ -569,7 +569,6 @@ export const ImagesGalleryArea: React.FC<AreaComponentProps<ImagesGalleryState>>
         const hoveredId = getHoveredAreaId(dropPosition, { layout, rootId } as any, areaToViewportMap); // Forcer le type pour l'instant
 
         if (hoveredId && hoveredId !== id) {
-            console.log(`Image dropped onto area ${hoveredId}`);
             // Logique pour finaliser le drop sur une autre aire
             // (potentiellement déclencher une action pour ajouter l'image à l'autre aire, ou déplacer ?)
             // Pour l'instant, on assume que finalizeAreaPlacement gère la création d'une nouvelle aire si nécessaire.

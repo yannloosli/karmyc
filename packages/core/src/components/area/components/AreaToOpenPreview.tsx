@@ -341,19 +341,48 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
     const rootId = useAreaStore(s => s.rootId);
     const areas = useAreaStore(s => s.areas as AreasMap);
 
+    const initialPosition = useMemo(() => areaToOpen ? Vec2.new(areaToOpen.position) : Vec2.ORIGIN, [areaToOpen]);
+
+    const dimensionOptions = useMemo(() => ({ duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] as [number, number, number, number] }), []);
     const [areaToOpenDimensions, setAreaToOpenDimensions] = useVec2TransitionState(
         Vec2.new(100, 100),
-        { duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] },
+        dimensionOptions
     );
 
     const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
 
     const areaToOpenTargetId = useMemo(() => {
         if (!areaToOpen || !rootId || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
-        return getHoveredAreaId(Vec2.new(areaToOpen.position.x, areaToOpen.position.y), { layout, rootId, areas, areaToOpen }, props.areaToViewport, detectionDimensions);
+        const currentPositionVec2 = Vec2.new(areaToOpen.position);
+        return getHoveredAreaId(currentPositionVec2, { layout, rootId, areas, areaToOpen }, props.areaToViewport, detectionDimensions);
     }, [areaToOpen, layout, rootId, areas, props.areaToViewport, detectionDimensions]);
 
     const areaToOpenTargetViewport = areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
+
+    const positionOptions = useMemo(() => ({ duration: 0.1 }), []);
+    const [position, setPosition] = useVec2TransitionState(
+        initialPosition,
+        positionOptions
+    );
+
+    useEffect(() => {
+        if (areaToOpen) {
+            setPosition(Vec2.new(areaToOpen.position));
+        }
+    }, [areaToOpen?.position.x, areaToOpen?.position.y, setPosition, areaToOpen]);
+
+    const previewStyle: React.CSSProperties = useMemo(() => ({
+        left: position.x,
+        top: position.y,
+        position: 'fixed',
+        zIndex: 10001,
+        cursor: 'move',
+        pointerEvents: 'none',
+        userSelect: 'none',
+        touchAction: 'none',
+        willChange: 'transform',
+        transform: 'translate(-50%, -50%) scale(0.4)',
+    }), [position]);
 
     useEffect(() => {
         if (!areaToOpenTargetId) return;

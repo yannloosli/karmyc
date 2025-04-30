@@ -18,15 +18,26 @@ import { useCallback, useMemo } from 'react';
 import { Space, useSpaceStore } from '../stores/spaceStore';
 // Import the shallow comparator
 import { shallow } from 'zustand/shallow';
+// Import hook with equality fn support
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 /**
  * Hook for managing spaces using Zustand
  * Provides functions to manipulate spaces and access their state
  */
 export function useSpace() {
-    // Select state slices
-    const spaces = useSpaceStore(state => state.spaces, shallow) as Record<string, Space>;
-    const activeSpaceId = useSpaceStore(state => state.activeSpaceId);
+    // Select state slices reactively using useStoreWithEqualityFn
+    const spaces = useStoreWithEqualityFn(
+        useSpaceStore,
+        state => state.spaces,
+        shallow
+    ) as Record<string, Space>; // Cast might still be needed depending on selector result type
+
+    const activeSpaceId = useStoreWithEqualityFn(
+        useSpaceStore,
+        state => state.activeSpaceId,
+        shallow
+    );
 
     // Select actions individually (references should be stable)
     const addSpaceAction = useSpaceStore(state => state.addSpace);
