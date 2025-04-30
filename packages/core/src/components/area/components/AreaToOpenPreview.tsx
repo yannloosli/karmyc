@@ -1,18 +1,15 @@
 import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
 import { AREA_BORDER_WIDTH, AREA_PLACEMENT_TRESHOLD } from "@gamesberry/karmyc-core/constants";
-import { useVec2TransitionState } from "@gamesberry/karmyc-core/hooks/useNumberTransitionState";
 import { useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
 import AreaRootStyles from "@gamesberry/karmyc-core/styles/AreaRoot.styles";
 import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from "@gamesberry/karmyc-core/types/areaTypes";
 import { Rect } from "@gamesberry/karmyc-core/types/geometry";
-import { computeAreaToParentRow } from "@gamesberry/karmyc-core/utils/areaToParentRow";
 import { computeAreaToViewport } from "@gamesberry/karmyc-core/utils/areaToViewport";
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from "@gamesberry/karmyc-core/utils/areaUtils";
 import { getAreaRootViewport } from "@gamesberry/karmyc-core/utils/getAreaViewport";
-import { requestAction } from "@gamesberry/karmyc-core/utils/requestAction";
 import { compileStylesheetLabelled } from "@gamesberry/karmyc-core/utils/stylesheets";
 import { contractRect, Vec2 } from "@gamesberry/karmyc-shared";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AreaComponent } from "./Area";
 
 type LayoutMap = Record<string, AreaLayout | AreaRowLayout>;
@@ -30,30 +27,59 @@ interface RenderAreaToOpenProps {
 
 const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => {
     const { areaToOpen, viewport, dimensions, layout, rootId, areas, areaToViewport } = props;
+
+    // Sélectionner uniquement les actions nécessaires du store pour éviter les rendus inutiles
     const updateAreaToOpenPosition = useAreaStore(s => s.updateAreaToOpenPosition);
     const clearAreaToOpen = useAreaStore(s => s.cleanupTemporaryStates);
     const setAreaToOpen = useAreaStore(s => s.setAreaToOpen);
     const finalizeAreaPlacement = useAreaStore(s => s.finalizeAreaPlacement);
 
-    const rafRef = useRef<number | undefined>(undefined);
-    const isUpdatingRef = useRef(false);
+    // Ajouter un état local pour suivre le drag
+    const [isDragging, setIsDragging] = useState(false);
 
+    // Optimisation du updatePosition pour réduire les mises à jour
     const updatePosition = useCallback((x: number, y: number) => {
-        if (isUpdatingRef.current) return;
-        isUpdatingRef.current = true;
-
-        rafRef.current = requestAnimationFrame(() => {
+        if (isDragging) {
+            console.log('[AreaToOpenPreview] Updating position:', { x, y });
             updateAreaToOpenPosition({ x, y });
-            isUpdatingRef.current = false;
-        });
-    }, [updateAreaToOpenPosition]);
+        }
+    }, [updateAreaToOpenPosition, isDragging]);
 
-    useEffect(() => {
-        return () => {
-            if (rafRef.current) {
-                cancelAnimationFrame(rafRef.current);
-            }
-        };
+    // Memoization du calcul de targetId qui est coûteux
+    const targetId = useMemo(() => {
+        if (!rootId) return null;
+        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
+        return getHoveredAreaId(position, { layout, rootId, areas, areaToOpen }, areaToViewport, dimensions);
+    }, [areaToOpen.position.x, areaToOpen.position.y, layout, rootId, areas, areaToViewport, dimensions]);
+
+    // Le calcul du placement est également coûteux, mémoisons-le
+    const placement = useMemo(() => {
+        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
+        return getAreaToOpenPlacementInViewport(viewport, position);
+    }, [viewport, areaToOpen.position.x, areaToOpen.position.y]);
+
+    // Simplifier le handleDragOver
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        updatePosition(e.clientX, e.clientY);
+    }, [updatePosition]);
+
+    // Ajouter un gestionnaire de dragStart
+    const handleDragStart = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+        console.log('[AreaToOpenPreview] DragStart dans la prévisualisation');
+    }, []);
+
+    // Ajouter un gestionnaire de dragEnd
+    const handleDragEnd = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        console.log('[AreaToOpenPreview] DragEnd dans la prévisualisation');
     }, []);
 
     const memoizedAreaToViewport = useMemo(() => {
@@ -67,139 +93,6 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
 
         return layoutEntry.type === 'area';
     }, [layout]);
-
-    const targetId = useMemo(() => {
-        if (!rootId) return null;
-        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
-        return getHoveredAreaId(position, { layout, rootId, areas, areaToOpen }, areaToViewport, dimensions);
-    }, [areaToOpen, layout, rootId, areas, areaToViewport, dimensions]);
-
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.dataTransfer.dropEffect = 'move';
-        updatePosition(e.clientX, e.clientY);
-    }, [updatePosition]);
-
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const sourceId = e.dataTransfer.getData('text/plain');
-        if (!sourceId) {
-            console.warn('[AreaToOpenPreview] handleDrop - No sourceId found');
-            clearAreaToOpen();
-            return;
-        }
-
-        const sourceData = JSON.parse(sourceId);
-
-        if (sourceData.type === 'create-new') {
-            requestAction({}, (params) => {
-                finalizeAreaPlacement();
-                params.submitAction("Finalize area placement");
-            });
-            return;
-        }
-
-        const sourceArea = areas[sourceData.areaId];
-        if (!sourceArea) {
-            console.warn('[AreaToOpenPreview] handleDrop - Source area not found:', sourceData.areaId);
-            clearAreaToOpen();
-            return;
-        }
-
-        const dropPosition = Vec2.new(e.clientX, e.clientY);
-        const hoveredAreaId = getHoveredAreaId(dropPosition, { layout, rootId, areas, areaToOpen }, areaToViewport, dimensions);
-
-        const areaToParentRow = computeAreaToParentRow(layout, rootId);
-        const sourceParentRowId = areaToParentRow[sourceData.areaId];
-
-        if (!sourceParentRowId) {
-            console.warn('[AreaToOpenPreview] handleDrop - No parent row for source area, risky operation, cancelling');
-            clearAreaToOpen();
-            return;
-        }
-
-        let isSelfDrop = false;
-
-        if (hoveredAreaId && sourceData.areaId === hoveredAreaId) {
-            isSelfDrop = true;
-        }
-        else if (hoveredAreaId && areaToViewport[hoveredAreaId]) {
-            const viewport = areaToViewport[hoveredAreaId];
-            const placement = getAreaToOpenPlacementInViewport(viewport, dropPosition);
-
-            const targetParentRowId = areaToParentRow[hoveredAreaId];
-
-            if (targetParentRowId && sourceParentRowId === targetParentRowId &&
-                (placement === "top" || placement === "left" || placement === "right" || placement === "bottom")) {
-
-                const parentRow = layout[sourceParentRowId];
-                if (parentRow && parentRow.type === 'area_row') {
-                    const isHorizontal = parentRow.orientation === 'horizontal';
-
-                    if (sourceData.areaId === hoveredAreaId) {
-                        isSelfDrop = true;
-                    }
-                    else {
-                        const sourceIndex = parentRow.areas.findIndex((a: { id: string }) => a.id === sourceData.areaId);
-                        const targetIndex = parentRow.areas.findIndex((a: { id: string }) => a.id === hoveredAreaId);
-
-                        const areAdjacent = Math.abs(sourceIndex - targetIndex) === 1;
-
-                        if (!areAdjacent) {
-                            console.log('[AreaToOpenPreview] handleDrop - Drop on a non-adjacent area in the same row, allowed');
-                        } else if ((isHorizontal && (placement === "top" || placement === "bottom")) ||
-                            (!isHorizontal && (placement === "left" || placement === "right"))) {
-                            console.log('[AreaToOpenPreview] handleDrop - Drop in a different orientation than the row, allowed');
-                        } else {
-                            isSelfDrop = true;
-                        }
-                    }
-                }
-            }
-
-            const sourceParentRow = layout[sourceParentRowId];
-            if (sourceParentRow && sourceParentRow.type === 'area_row') {
-                if (targetParentRowId &&
-                    (targetParentRowId === sourceData.areaId ||
-                        sourceParentRowId === hoveredAreaId)) {
-                    isSelfDrop = true;
-                }
-            }
-        }
-
-        if (isSelfDrop) {
-            clearAreaToOpen();
-            return;
-        }
-
-        requestAction({}, (params) => {
-            try {
-                const areaToOpenData = {
-                    position: { x: e.clientX, y: e.clientY },
-                    area: {
-                        type: sourceArea.type,
-                        state: { ...sourceArea.state, sourceId: sourceData.areaId }
-                    }
-                };
-
-                setAreaToOpen(areaToOpenData);
-                finalizeAreaPlacement();
-
-                params.submitAction("Move area");
-            } catch (error) {
-                console.error('[AreaToOpenPreview] handleDrop - Error during move:', error);
-                clearAreaToOpen();
-            }
-        });
-    }, [clearAreaToOpen, setAreaToOpen, finalizeAreaPlacement, areas, layout, rootId, areaToViewport, dimensions, areaToOpen]);
-
-    const placement = useMemo(() => {
-        const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
-        return getAreaToOpenPlacementInViewport(viewport, position);
-    }, [viewport, areaToOpen.position]);
 
     const placementLinesMemo = useMemo(() => {
         const treshold = Math.min(viewport.width, viewport.height) * AREA_PLACEMENT_TRESHOLD;
@@ -263,14 +156,17 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                     position: 'fixed',
                     zIndex: 10001,
                     cursor: 'move',
-                    pointerEvents: 'none',
+                    pointerEvents: 'auto',
                     userSelect: 'none',
                     touchAction: 'none',
                     willChange: 'transform',
                     transform: 'translate(-50%, -50%) scale(0.4)',
+                    outline: '2px solid red'
                 }}
+                draggable={true}
+                onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
-                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
             >
                 <AreaComponent
                     id="-1"
@@ -300,15 +196,52 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
                         touchAction: 'none',
                         willChange: 'transform'
                     }}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
+                    onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = 'move';
+                        console.log('[AreaToOpenPreview] DragOver on overlay');
+                        updatePosition(e.clientX, e.clientY);
+                    }}
+                    onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Annuler le timeout de nettoyage de dragEnd s'il existe
+                        if ((window as any).__dragEndCleanupTimeout) {
+                            clearTimeout((window as any).__dragEndCleanupTimeout);
+                            (window as any).__dragEndCleanupTimeout = null;
+                            console.log('[AreaToOpenPreview] Cancelled dragEnd cleanup timeout from overlay');
+                        }
+
+                        console.log('[AreaToOpenPreview] Drop on overlay!', {
+                            position: { x: e.clientX, y: e.clientY },
+                            targetId,
+                            placement
+                        });
+
+                        try {
+                            // Mettre à jour une dernière fois la position
+                            updatePosition(e.clientX, e.clientY);
+                            // Finaliser le placement
+                            finalizeAreaPlacement();
+                            console.log('[AreaToOpenPreview] finalizeAreaPlacement completed successfully');
+                        } catch (error) {
+                            console.error('[AreaToOpenPreview] Drop overlay error:', error);
+                            clearAreaToOpen();
+                        } finally {
+                            setIsDragging(false);
+                        }
+                    }}
                     onDragEnter={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('[AreaToOpenPreview] DragEnter on overlay');
                     }}
                     onDragLeave={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        console.log('[AreaToOpenPreview] DragLeave from overlay');
                     }}
                 >
                     <svg width={viewport.width} height={viewport.height} className={s("placement")}>
@@ -341,58 +274,44 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
     const rootId = useAreaStore(s => s.rootId);
     const areas = useAreaStore(s => s.areas as AreasMap);
 
-    const initialPosition = useMemo(() => areaToOpen ? Vec2.new(areaToOpen.position) : Vec2.ORIGIN, [areaToOpen]);
-
-    const dimensionOptions = useMemo(() => ({ duration: 250, bezier: [0.24, 0.02, 0.18, 0.97] as [number, number, number, number] }), []);
-    const [areaToOpenDimensions, setAreaToOpenDimensions] = useVec2TransitionState(
-        Vec2.new(100, 100),
-        dimensionOptions
-    );
-
     const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
 
     const areaToOpenTargetId = useMemo(() => {
         if (!areaToOpen || !rootId || !props.areaToViewport || Object.keys(props.areaToViewport).length === 0) return null;
-        const currentPositionVec2 = Vec2.new(areaToOpen.position);
-        return getHoveredAreaId(currentPositionVec2, { layout, rootId, areas, areaToOpen }, props.areaToViewport, detectionDimensions);
-    }, [areaToOpen, layout, rootId, areas, props.areaToViewport, detectionDimensions]);
+        const currentPositionVec2 = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
+        return getHoveredAreaId(
+            currentPositionVec2,
+            { layout, rootId, areas, areaToOpen },
+            props.areaToViewport,
+            detectionDimensions
+        );
+    }, [
+        areaToOpen?.position.x,
+        areaToOpen?.position.y,
+        layout,
+        rootId,
+        areas,
+        props.areaToViewport,
+        detectionDimensions
+    ]);
 
-    const areaToOpenTargetViewport = areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
+    const areaToOpenTargetViewport = useMemo(() => {
+        return areaToOpenTargetId ? props.areaToViewport[areaToOpenTargetId] : null;
+    }, [areaToOpenTargetId, props.areaToViewport]);
 
-    const positionOptions = useMemo(() => ({ duration: 0.1 }), []);
-    const [position, setPosition] = useVec2TransitionState(
-        initialPosition,
-        positionOptions
-    );
-
-    useEffect(() => {
-        if (areaToOpen) {
-            setPosition(Vec2.new(areaToOpen.position));
-        }
-    }, [areaToOpen?.position.x, areaToOpen?.position.y, setPosition, areaToOpen]);
-
-    const previewStyle: React.CSSProperties = useMemo(() => ({
-        left: position.x,
-        top: position.y,
-        position: 'fixed',
-        zIndex: 10001,
-        cursor: 'move',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        touchAction: 'none',
-        willChange: 'transform',
-        transform: 'translate(-50%, -50%) scale(0.4)',
-    }), [position]);
+    const initialDimensions = useMemo(() => Vec2.new(100, 100), []);
+    const [areaToOpenDimensions, setAreaToOpenDimensions] = useState(initialDimensions);
 
     useEffect(() => {
         if (!areaToOpenTargetId) return;
-
         const viewport = props.areaToViewport[areaToOpenTargetId];
         if (!viewport) return;
 
-        const dimensions = Vec2.new(viewport.width, viewport.height);
-        setAreaToOpenDimensions(dimensions);
-    }, [areaToOpenTargetId, props.areaToViewport, setAreaToOpenDimensions]);
+        const newDimensions = Vec2.new(viewport.width, viewport.height);
+        if (newDimensions.x !== areaToOpenDimensions.x || newDimensions.y !== areaToOpenDimensions.y) {
+            setAreaToOpenDimensions(newDimensions);
+        }
+    }, [areaToOpenTargetId, props.areaToViewport, areaToOpenDimensions]);
 
     if (!areaToOpen || !areaToOpenTargetViewport) {
         return null;
@@ -409,4 +328,11 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
             areaToViewport={props.areaToViewport}
         />
     );
+}, (prevProps, nextProps) => {
+    const prevKeys = Object.keys(prevProps.areaToViewport || {});
+    const nextKeys = Object.keys(nextProps.areaToViewport || {});
+
+    if (prevKeys.length !== nextKeys.length) return false;
+
+    return prevKeys.every(key => nextKeys.includes(key));
 });

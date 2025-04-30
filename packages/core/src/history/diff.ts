@@ -1,4 +1,6 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { KarmycAction } from '../types/actions';
+// import { Change } from './jsonDiffPatch'; // TODO: Resolve missing module
+type Change = any; // Placeholder type
 
 // Export the type
 export interface THistoryChange {
@@ -8,10 +10,16 @@ export interface THistoryChange {
 }
 
 // Export the type
+export interface THistoryDiffMetadata {
+    type: string;
+    action?: KarmycAction;
+    timestamp?: number;
+    [key: string]: any;
+}
+
 export interface THistoryDiff {
-    timestamp: number;
-    actionType: string;
-    changes: THistoryChange[];
+    changes: Change[];
+    metadata: THistoryDiffMetadata;
 }
 
 /**
@@ -20,12 +28,15 @@ export interface THistoryDiff {
 export function generateDiff(
     prevState: Record<string, any>,
     nextState: Record<string, any>,
-    action: AnyAction
+    action: KarmycAction
 ): THistoryDiff {
     const diff: THistoryDiff = {
-        timestamp: Date.now(),
-        actionType: action.type,
         changes: [],
+        metadata: {
+            type: action.type,
+            action: action,
+            timestamp: Date.now()
+        }
     };
 
     // Recursive function to generate differences with paths
@@ -147,12 +158,13 @@ export function applyDiff(
  * Inverts a difference
  */
 export function invertDiff(diff: THistoryDiff): THistoryDiff {
+    const invertedChanges: Change[] = diff.changes.map(change => ({
+        ...change,
+        oldValue: change.newValue,
+        newValue: change.oldValue,
+    }));
     return {
         ...diff,
-        changes: diff.changes.map(change => ({
-            ...change,
-            oldValue: change.newValue,
-            newValue: change.oldValue,
-        })),
+        changes: invertedChanges
     };
 } 

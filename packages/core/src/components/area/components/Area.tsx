@@ -6,7 +6,6 @@ import styles from "@gamesberry/karmyc-core/styles/Area.styles";
 import { AreaComponentProps, ResizePreviewState } from "@gamesberry/karmyc-core/types/areaTypes";
 import { Rect } from "@gamesberry/karmyc-core/types/geometry";
 import { AreaIdContext } from "@gamesberry/karmyc-core/utils/AreaIdContext";
-import { requestAction } from "@gamesberry/karmyc-core/utils/requestAction";
 import { compileStylesheetLabelled } from "@gamesberry/karmyc-core/utils/stylesheets";
 import { Vec2 } from "@gamesberry/karmyc-shared";
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
@@ -75,12 +74,10 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const openSelectArea = (_: React.MouseEvent) => {
         const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
 
-        requestAction({}, () => {
-            openContextMenuAction({
-                position: { x: pos.x, y: pos.y },
-                items: contextMenuItems,
-                metadata: { areaId: id }
-            });
+        openContextMenuAction({
+            position: { x: pos.x, y: pos.y },
+            items: contextMenuItems,
+            metadata: { areaId: id }
         });
     };
 

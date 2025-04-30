@@ -1,20 +1,20 @@
-import { RootState, useArea } from "@gamesberry/karmyc-core";
+import { useArea } from "@gamesberry/karmyc-core";
 import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
+import { useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
 import React from "react";
-import { useSelector } from "react-redux";
 
 // Component to reset the state
 export const ResetButtonWrapper: React.FC = () => {
-    const { updateAreaState } = useArea();
-    const areas = useSelector((state: RootState) => state.area.areas);
-    const activeAreaId = useSelector((state: RootState) => state.area.activeAreaId);
+    const { update } = useArea();
+    const areas = useAreaStore((state) => state.areas);
+    const activeAreaId = useAreaStore((state) => state.activeAreaId);
 
     const handleReset = () => {
         if (activeAreaId && areas[activeAreaId]) {
             const area = areas[activeAreaId];
             const initialState = areaRegistry.getInitialState(area.type);
             if (initialState) {
-                updateAreaState(activeAreaId, initialState);
+                update(activeAreaId, { state: initialState });
             }
         }
     };

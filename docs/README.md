@@ -29,7 +29,6 @@ Karmyc is organized as a monorepo with the following packages:
 - [Context Menus](./guides/context-menus.md) - Working with context menus
 - [Drag and Drop](./guides/drag-and-drop.md) - Implementing drag and drop
 - [Keyboard Shortcuts](./guides/keyboard-shortcuts.md) - Adding keyboard shortcuts
-- [Notifications](./guides/notifications.md) - Using the notification system
 - [Plugins](./guides/plugins.md) - Using and creating plugins
 - [Performance Monitoring](./guides/performance.md) - Tracking and optimizing performance
 
@@ -42,7 +41,7 @@ Karmyc is organized as a monorepo with the following packages:
 
 ### Architecture
 
-- [Redux Store](./architecture/store.md) - Global store structure
+- [Zustand Store](./architecture/store.md) - Zustand stores structure
 - [Action System](./architecture/actions.md) - Action system architecture
 - [State Transitions](./architecture/state-transitions.md) - State transition management
 - [Project Structure](./architecture/project-structure.md) - Organization of files and directories
@@ -66,7 +65,6 @@ Karmyc is a modular layout system that allows you to create interfaces divided i
 - **State Management**: Store each area's state and synchronize it
 - **History**: Undo and redo changes
 - **Events**: Communication between areas via an event system
-- **Notifications**: Display feedback to users with a notification system
 - **Plugins**: Extend functionality with the plugin system
 - **Performance Monitoring**: Track and optimize application performance
 

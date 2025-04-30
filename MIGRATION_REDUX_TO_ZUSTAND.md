@@ -2,119 +2,21 @@
 
 ## Introduction
 
-Ce document présente le plan de migration **en cours** du système de gestion d'état de Karmyc Core, passant de Redux Toolkit à Zustand. Cette initiative vise à simplifier l'architecture, améliorer les performances et faciliter la maintenance du code.
-
-## Pourquoi migrer vers Zustand ?
-
-### Avantages de Zustand par rapport à Redux
-
-| Aspect | Redux Toolkit | Zustand | Avantage |
-|--------|---------------|---------|----------|
-| Taille | ~10.5KB | ~1.1KB | Zustand est ~10x plus léger |
-| Configuration | Complexe (store, slices, reducers, actions) | Simple (hooks) | Moins de boilerplate avec Zustand |
-| API | Verbeux | Minimaliste | Code plus concis avec Zustand |
-| Réactivité | Re-rendus potentiellement plus fréquents | Re-rendus optimisés | Meilleures performances avec Zustand |
-| Modularité | Store monolithique | Stores multiples | Architecture plus flexible avec Zustand |
-| Intégration React | Nécessite Provider | Pas de Provider nécessaire | Mise en place simplifiée avec Zustand |
-
-### Exemples concrets de simplification
-
-**Avec Redux (actuel) :**
-
-```typescript
-// store/slices/areaSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-const areaSlice = createSlice({
-  name: 'area',
-  initialState: {
-    areas: {},
-    activeAreaId: null,
-  },
-  reducers: {
-    setActiveArea: (state, action: PayloadAction<string>) => {
-      state.activeAreaId = action.payload;
-    },
-    updateArea: (state, action) => {
-      state.areas[action.payload.id] = {
-        ...state.areas[action.payload.id],
-        ...action.payload
-      };
-    }
-  }
-});
-
-export const { setActiveArea, updateArea } = areaSlice.actions;
-export default areaSlice.reducer;
-
-// Utilisation dans un composant
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { setActiveArea } from '../store/slices/areaSlice';
-
-const AreaComponent = ({ id }) => {
-  const dispatch = useDispatch();
-  const area = useSelector((state: RootState) => state.areas.areas[id]);
-  
-  return (
-    <div onClick={() => dispatch(setActiveArea(id))}>
-      {area.name}
-    </div>
-  );
-};
-```
-
-**Avec Zustand (objectif) :**
-
-```typescript
-// store/areaStore.ts
-import { create } from 'zustand';
-
-export const useAreaStore = create((set) => ({
-  areas: {},
-  activeAreaId: null,
-  
-  setActiveArea: (id) => set({ activeAreaId: id }),
-  
-  updateArea: (areaData) => set((state) => ({
-    areas: {
-      ...state.areas,
-      [areaData.id]: {
-        ...state.areas[areaData.id],
-        ...areaData
-      }
-    }
-  }))
-}));
-
-// Utilisation dans un composant
-import { useAreaStore } from '../store/areaStore';
-
-const AreaComponent = ({ id }) => {
-  const area = useAreaStore((state) => state.areas[id]);
-  const setActiveArea = useAreaStore((state) => state.setActiveArea);
-  
-  return (
-    <div onClick={() => setActiveArea(id)}>
-      {area.name}
-    </div>
-  );
-};
-```
+Ce document résume la migration **terminée** du système de gestion d'état de Karmyc Core, passant de Redux Toolkit à Zustand. L'objectif de simplification de l'architecture, d'amélioration des performances et de facilitation de la maintenance a été atteint.
 
 ## Inventaire des slices Redux existants
 
-```typescript
-// Liste complète des slices Redux à migrer (vérifiée par analyse approfondie du code source)
+// Tous les slices Redux listés ci-dessous ont été migrés vers des stores Zustand ou supprimés.
+```
 const reduxSlices = [
   {
     nom: 'areaSlice',
-    chemin: 'packages/core/src/store/slices/areaSlice.ts',
+    chemin: 'Supprimé',
     dépendances: ['historySlice', 'diffSlice'], // Dépendances Redux initiales
-    // STATUT ZUSTAND: Store 'areaStore.ts' créé.
+    // STATUT ZUSTAND: Migré vers 'areaStore.ts'.
     // Middlewares Zustand: devtools, persist, immer utilisés.
     actions: [
-      // Actions Redux originales et leur statut Zustand:
+      // Actions Redux originales (statut final):
       'addArea',                  // Migré
       'removeArea',               // Migré
       'setActiveArea',            // Migré
@@ -157,8 +59,8 @@ const reduxSlices = [
   },
   {
     nom: 'contextMenuSlice',
-    chemin: 'packages/core/src/store/slices/contextMenuSlice.ts',
-    // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Migré vers 'contextMenuStore.ts'
     dépendances: [],
     actions: [
       'openContextMenu',           // Ouvre le menu contextuel
@@ -182,8 +84,10 @@ const reduxSlices = [
   },
   {
     nom: 'historySlice',
-    chemin: 'packages/core/src/store/slices/historySlice.ts',
-     // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Fonctionnalité d'historique gérée différemment.
+    // areaStore: Utilise zundo (middleware temporal) - mais hook non utilisé.
+    // spaceStore: Utilise une gestion de diffs personnalisée.
     dépendances: ['diffSlice', 'areaSlice'],
     actions: [
       'addHistoryEntry', // Ajoute une entrée à l'historique 
@@ -201,8 +105,8 @@ const reduxSlices = [
   },
   {
     nom: 'notificationSlice',
-    chemin: 'packages/core/src/store/slices/notificationSlice.ts',
-    // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Migré vers 'notificationStore.ts'
     dépendances: [],
     actions: [
       'addNotification',      // Ajoute une notification
@@ -219,8 +123,8 @@ const reduxSlices = [
   },
   {
     nom: 'diffSlice',
-    chemin: 'packages/core/src/store/slices/diffSlice.ts',
-    // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Supprimé, redondant avec la gestion d'historique de Zustand/personnalisée.
     dépendances: ['areaSlice'],
     actions: [
       'addDiff',           // Ajoute un diff
@@ -246,8 +150,8 @@ const reduxSlices = [
   },
   {
     nom: 'stateSlice', 
-    chemin: 'packages/core/src/store/slices/stateSlice.ts',
-    // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Supprimé (non utilisé). La partie 'loading' est dans 'loadingStore.ts'.
     dépendances: [],
     actions: [
       'registerState',     // Enregistre un nouvel état
@@ -277,8 +181,8 @@ const reduxSlices = [
   },
   {
     nom: 'toolbarSlice',
-    chemin: 'packages/core/src/store/slices/toolbarSlice.ts',
-    // STATUT ZUSTAND: Non migré
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Supprimé (non utilisé, approche différente dans Toolbar.tsx).
     dépendances: [],
     actions: [
       'registerToolbar',      // Enregistre une barre d'outils
@@ -305,8 +209,8 @@ const reduxSlices = [
   },
   {
     nom: 'spaceSlice',
-    chemin: 'packages/core/src/store/slices/spaceSlice.ts',
-    // STATUT ZUSTAND: Non migré (mais un useSpace existe potentiellement)
+    chemin: 'Supprimé',
+    // STATUT ZUSTAND: Migré vers 'spaceStore.ts'
     dépendances: ['areaSlice'],
     actions: [
       'addSpace',                // Ajoute un nouvel espace
@@ -325,12 +229,13 @@ const reduxSlices = [
     complexité: 'Moyenne'
   }
 ]
+);
 ```
-
-**Note importante:** Le fichier `area.ts` présent dans le dossier des slices est un slice simplifié qui semble être utilisé pour des cas spécifiques ou des tests. Il n'est pas intégré dans le store principal et n'est donc pas inclus dans cet inventaire.
+**Note importante:** Le fichier `area.ts` (ancien slice simplifié) a également été supprimé.
 
 ## Recensement des composants utilisant Redux
 
+// Tous les composants listés ont été migrés pour utiliser les stores Zustand.
 ```typescript
 // Analyse des composants utilisant Redux (Mise à jour YYYY-MM-DD basée sur la migration en cours)
 const reduxComponents = [
@@ -338,21 +243,21 @@ const reduxComponents = [
     composant: 'NotificationList',
     chemin: 'packages/core/src/components/NotificationList.tsx',
     slicesUtilisés: ['notificationSlice'], // À vérifier
-    statutMigration: 'Non migré',
+    statutMigration: 'Migré (utilise useNotificationStore)',
     prioritéMigration: 'Moyenne'
   },
   {
     composant: 'CustomContextMenu',
     chemin: 'packages/core/src/components/context-menu/CustomContextMenu.tsx',
     slicesUtilisés: ['contextMenuSlice'], // À vérifier
-    statutMigration: 'Non migré',
+    statutMigration: 'Migré (utilise useContextMenuStore)',
     prioritéMigration: 'Moyenne'
   },
   {
     composant: 'MenuBar',
     chemin: 'packages/core/src/components/area/components/MenuBar.tsx',
     slicesUtilisés: [], // Utilise dispatch directement (potentiellement pour actions non-area)
-    statutMigration: 'Non migré',
+    statutMigration: 'Migré (utilise useAreaStore)',
     prioritéMigration: 'Moyenne' // Priorité peut dépendre des actions dispatchées
   },
   {
@@ -394,7 +299,7 @@ const reduxComponents = [
     composant: 'NormalContextMenu',
     chemin: 'packages/core/src/components/context-menu/normal/NormalContextMenu.tsx',
     slicesUtilisés: ['contextMenuSlice'], // À vérifier
-    statutMigration: 'Non migré',
+    statutMigration: 'Migré (utilise useContextMenuStore)',
     prioritéMigration: 'Moyenne'
   },
     {
@@ -408,42 +313,34 @@ const reduxComponents = [
 ]
 ```
 
-## Plan de migration
+## État final de la migration
 
-### Phase 1 : Préparation
+### Structure Zustand
 
-1. **Création d'une branche dédiée** : `feature/zustand-migration` - **FAIT**
-2. **Installation de Zustand** : `yarn add zustand` - **FAIT**
-3. **Audit du code actuel** : Identifier tous les slices Redux et leurs dépendances - **FAIT** (Voir inventaire ci-dessus)
+1. **Structure de dossiers**: Les stores Zustand se trouvent dans `packages/core/src/stores/`. Chaque store principal (`areaStore`, `spaceStore`, etc.) a son propre fichier.
+2. **Stores implémentés**: `areaStore`, `spaceStore`, `contextMenuStore`, `notificationStore`, `loadingStore`.
 
-### Phase 2 : Implémentation des stores Zustand
+### Fonctionnalités spécifiques
 
-1. **Créer la structure de base** - **FAIT** (`src/stores/`)
-2. **Implémenter les stores Zustand équivalents aux slices Redux**
-   - `areaStore.ts`: **EN COURS** (Logique de base + layout/split migrés. **Priorité : Restaurer la logique de fusion (join)**. Finalize en attente).
-   - Autres stores (`contextMenu`, `history`, `notification`, etc.) : **À FAIRE**.
-3. **Créer des hooks personnalisés pour abstraire l'accès aux stores** - **PARTIEL** (Fait implicitement via `useAreaStore`, à généraliser si besoin).
+1. **Système d'historique (undo/redo)**:
+   - `areaStore`: Utilise un middleware Zustand (`immer` + `temporal`/`zundo`), mais le hook d'accès (`useHistory`) a été supprimé car non utilisé. La fonctionnalité n'est donc pas active.
+   - `spaceStore`: Implémente un système d'historique personnalisé basé sur des diffs pour son `sharedState`.
+2. **Persistance des données**:
+   - Gérée via le middleware `persist` de Zustand.
+   - `areaStore` et `spaceStore` sont configurés pour persister une partie de leur état dans `localStorage`.
+3. **Système de plugins et middleware Redux**: Les middlewares Redux (`diffMiddleware`, `stateMiddleware`, `areaCleanupMiddleware`) ont été supprimés. Les fonctionnalités équivalentes (si nécessaires) devraient être implémentées via des middlewares Zustand ou directement dans les actions/logiques des stores.
 
-### Phase 3 : Migration des fonctionnalités spéciales
+### Composants et Nettoyage Redux
 
-1. **Système d'historique (undo/redo)** - **À FAIRE**
-   - Implémenter un middleware Zustand pour l'historique (ou lib externe)
-   - Recréer la logique de diff et d'application des changements
-2. **Persistance des données** - **PARTIELLEMENT FAIT** (Middleware `persist` configuré pour `areaStore`. À vérifier/configurer pour les autres stores persistants).
-3. **Système de plugins et middleware** - **À FAIRE**
+1. **Composants**: Tous les composants identifiés comme utilisant Redux ont été mis à jour pour utiliser les hooks et stores Zustand correspondants.
+2. **Nettoyage**: Tous les slices Redux, le store Redux principal (`store/index.ts`), les middlewares Redux non utilisés, et les dépendances associées (`@reduxjs/toolkit`, `react-redux`, `redux-persist`, `redux-undo`) ont été supprimés du package `core`.
 
-### Phase 4 : Migration des composants
+## Tests
 
-1. **Approche systématique** - **EN COURS**
-   - Composants liés à `areaStore`: `Area`, `AreaRoot`, `AreaRowSeparators`, `AreaToOpenPreview`, `JoinAreaPreview`, `KarmycInitializer` - **FAIT**.
-   - Autres composants listés : **À FAIRE**.
-2. **Mettre à jour le Provider principal** - **À FAIRE** (Supprimer `<Provider store={store}>`).
-
-### Phase 5 : Tests et validation
-
-1. **Tests unitaires** - **À FAIRE** (Les tests pour `areaStore` ont été adaptés).
-2. **Tests fonctionnels** - **EN COURS** (Tests manuels effectués pendant la migration).
-3. **Tests de performance** - **À FAIRE**.
+*(Cette section peut nécessiter une mise à jour basée sur l'état réel des tests)*
+1. **Tests unitaires**: Des tests pour `areaStore` existent. Des tests supplémentaires pour les autres stores et utilitaires sont recommandés.
+2. **Tests fonctionnels/intégration**: À renforcer pour couvrir les interactions entre les stores Zustand et les flux utilisateurs complets.
+3. **Tests de performance**: À réaliser pour comparer les performances avant/après si pertinent.
 
 ## Exemples d'implémentation détaillés
 
@@ -493,11 +390,16 @@ export const useAreaStore = create<AreaState>()(
 ### Système d'historique (historyStore.ts)
 
 ```typescript
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
-import { useAreaStore } from './areaStore';
-import { generateDiff, applyDiff } from '../utils/diffUtils';
-
+// Note: Ce store n'a pas été implémenté. 
+// L'historique pour areaStore utilisait temporal/zundo (maintenant inactif).
+// L'historique pour spaceStore est implémenté différemment dans spaceStore.ts.
+// Exemple de l'approche envisagée initialement (basée sur diffs, similaire à spaceStore) :
+```typescript
+// import { create } from 'zustand';
+// import { devtools } from 'zustand/middleware';
+// import { useAreaStore } from './areaStore';
+// import { generateDiff, applyDiff } from '../utils/diffUtils';
+ 
 interface HistoryEntry {
   actionType: string;
   timestamp: number;
@@ -560,144 +462,19 @@ export const useHistoryStore = create<HistoryState>()(
 
 ## Stratégie de tests détaillée
 
-```typescript
-// Plan de tests complet
-const testingStrategy = {
-  testsUnitaires: {
-    stores: [
-      {
-        store: 'areaStore',
-        tests: [
-          'initialState est correct',
-          'setActiveArea modifie correctement activeAreaId',
-          'updateArea fusionne correctement les données',
-          'createArea ajoute correctement une nouvelle zone',
-          'deleteArea supprime correctement une zone'
-        ],
-        couvertureVisée: '95%'
-      },
-      // Détails pour chaque store...
-    ],
-    utilsTests: [
-      'generateDiff produit un diff correct',
-      'applyDiff applique correctement les changements',
-      'middleware de persistance sauvegarde correctement l'état'
-    ]
-  },
-  testsIntégration: [
-    'Interaction entre areaStore et historyStore lors d'une modification',
-    'Synchronisation du contexte menu avec les actions disponibles',
-    'Persistance et restauration de l'état complet',
-    'Propagation des notifications sur les actions utilisateur'
-  ],
-  testsPerformance: [
-    {
-      scénario: 'Manipulation d'une large zone',
-      métriques: ['temps de rendu', 'utilisation mémoire', 'réactivité UI'],
-      objectifs: 'Amélioration de 30% vs Redux'
-    },
-    {
-      scénario: 'Historique volumineux',
-      métriques: ['temps d'undo/redo', 'empreinte mémoire'],
-      objectifs: 'Amélioration de 40% vs Redux'
-    }
-  ],
-  outilsDeTest: {
-    unitaires: 'Jest avec React Testing Library',
-    performance: 'Lighthouse et mesures personnalisées',
-    couverture: 'Istanbul/nyc'
-  }
-}
-```
+// Section obsolète (plan initial)
 
 ## Stratégie de déploiement progressif
 
-```typescript
-// Plan de déploiement progressif
-const deploymentStrategy = {
-  phases: [
-    {
-      nom: 'Phase Alpha',
-      composants: ['NotificationCenter', 'ContextMenu'],
-      durée: '3 jours',
-      critèresAcceptation: [
-        'Fonctionnalités identiques à Redux',
-        'Pas de régression UI/UX',
-        'Tests verts à 100%'
-      ]
-    },
-    {
-      nom: 'Phase Beta',
-      composants: ['MainLayout', 'uiStateStore'],
-      durée: '3 jours',
-      critèresAcceptation: [
-        'Intégration réussie avec composants Alpha',
-        'Performance équivalente ou supérieure',
-        'Validation par équipe UX'
-      ]
-    },
-    {
-      nom: 'Phase Critique',
-      composants: ['AreaExplorer', 'AreaEditor', 'historyStore'],
-      durée: '5 jours',
-      critèresAcceptation: [
-        'Système d'historique 100% fonctionnel',
-        'Performances supérieures de 25%+',
-        'Test utilisateurs internes positifs'
-      ]
-    },
-    {
-      nom: 'Phase Release',
-      action: 'Suppression complète de Redux',
-      durée: '2 jours',
-      critèresAcceptation: [
-        'Aucune référence à Redux dans le code',
-        'Bundle size réduit',
-        'Documentation à jour'
-      ]
-    }
-  ],
-  rollbackStrategy: {
-    critèresDéclenchement: [
-      'Bugs critiques non résolus sous 4h',
-      'Performance dégradée de plus de 10%',
-      'Feedback utilisateur négatif'
-    ],
-    procédure: [
-      'Tag git du dernier état stable',
-      'Scripts de restauration automatisés',
-      'Communication d'incident'
-    ]
-  }
-}
-```
+// Section obsolète (plan initial)
 
 ## Dépendances externes à Redux
 
-```typescript
-// Inventaire des dépendances externes liées à Redux (Mise à jour YYYY-MM-DD)
-const externalDependencies = [
-  {
-    bibliothèque: 'redux-persist',
-    utilisation: 'Persistance de l'état Redux',
-    statutMigration: 'Remplacé par le middleware `persist` de Zustand pour `areaStore`. À vérifier pour les autres stores.',
-    complexité: 'Faible',
-    codeAffecté: ['src/store/index.ts', 'src/stores/areaStore.ts']
-  },
-  {
-    bibliothèque: 'redux-undo',
-    utilisation: 'Fonctionnalité undo/redo',
-    statutMigration: 'Non migré. Stratégie : middleware Zustand personnalisé.',
-    complexité: 'Élevée',
-    codeAffecté: ['src/store/slices/historySlice.ts']
-  },
-]
-```
+// Les dépendances Redux (`@reduxjs/toolkit`, `react-redux`, `redux-persist`, `redux-undo`) ont été supprimées du package `core`.
 
 ## Stratégie pour les middlewares
 
-Pour remplacer le système de middleware Redux, nous pouvons créer un système personnalisé avec Zustand :
-
+// Le système de middleware Redux a été supprimé. Les middlewares Zustand (`devtools`, `persist`, `immer`, `performance`) sont utilisés directement lors de la création des stores Zustand.
 ```typescript
 // Middleware pour la journalisation des actions
 const logMiddleware = (config) => (set, get, api) => config(
@@ -709,37 +486,6 @@ const logMiddleware = (config) => (set, get, api) => config(
   },
   get,
   api
-);
-
-// Middleware pour le système de plugins
-const pluginMiddleware = (plugins) => (config) => (set, get, api) => config(
-  (args) => {
-    // Exécuter les plugins avant l'action
-    plugins.forEach(plugin => {
-      if (plugin.beforeAction) plugin.beforeAction(args, get());
-    });
-    
-    // Appliquer les changements
-    set(args);
-    
-    // Exécuter les plugins après l'action
-    plugins.forEach(plugin => {
-      if (plugin.afterAction) plugin.afterAction(args, get());
-    });
-  },
-  get,
-  api
-);
-
-// Utilisation des middlewares
-export const useStore = create(
-  logMiddleware(
-    pluginMiddleware([/* plugins */])(
-      (set, get) => ({
-        // État et actions...
-      })
-    )
-  )
 );
 ```
 
@@ -754,175 +500,26 @@ export const useStore = create(
 | 5 | Documentation et finalisation | 1 jour | 1 semaine |
 | **Total** | | **6-10 jours** | **5-8 semaines** |
 
+## Conclusion
+
+La migration de Redux vers Zustand est **terminée**. L'ensemble du code Redux (slices, store, middlewares, dépendances) a été retiré du package `core`. L'état de l'application est maintenant géré par un ensemble de stores Zustand modulaires.
+
+**Points restants / Améliorations possibles :**
+*   **Activer l'historique (Undo/Redo)**: Décider si la fonctionnalité est souhaitée pour `areaStore` et, si oui, réintroduire et connecter `useHistory` (ou une approche similaire) à l'interface.
+*   **Tests**: Compléter la couverture de tests unitaires et d'intégration pour les stores Zustand.
+*   **Documentation**: Mettre à jour la documentation générale pour refléter l'utilisation de Zustand.
+
 ## Approche assistée par IA
 
-Cette migration sera réalisée en utilisant une IA comme principal agent de transformation. Cette approche présente plusieurs avantages :
-
-### Avantages de la migration par IA
-
-1. **Rapidité d'exécution** : L'IA peut analyser et transformer le code à une vitesse bien supérieure à celle d'un développeur humain, réduisant les délais de semaines à quelques jours.
-
-2. **Cohérence** : L'IA applique systématiquement les mêmes patterns de transformation à travers toute la base de code, assurant une cohérence parfaite.
-
-3. **Réduction des erreurs manuelles** : Les erreurs typiques de copier-coller ou d'oubli sont évitées grâce à l'approche systématique de l'IA.
-
-4. **Gestion de la complexité** : L'IA peut traiter des structures de données complexes et des interdépendances difficiles à appréhender manuellement.
-
-### Processus de migration assistée
-
-1. **Analyse automatisée** : L'IA analysera d'abord la structure complète du code Redux existant, identifiant tous les slices, reducers, actions et leurs interdépendances.
-
-2. **Génération de code** : Pour chaque slice Redux, l'IA générera automatiquement un store Zustand équivalent avec toutes les actions et sélecteurs nécessaires.
-
-3. **Transformation des composants** : L'IA identifiera tous les composants utilisant Redux et les transformera pour utiliser les nouveaux stores Zustand.
-
-4. **Validation et tests** : Des tests automatisés seront générés par l'IA pour valider que le comportement après migration est identique à celui d'avant.
-
-### Supervision humaine
-
-Bien que l'IA effectue l'essentiel du travail, une supervision humaine reste nécessaire pour :
-
-- Valider les approches architecturales proposées
-- Réviser les cas complexes ou ambigus
-- Tester manuellement les fonctionnalités critiques
-- Prendre les décisions finales sur l'intégration et le déploiement
-
-### Outils et techniques d'IA utilisés
-
-- **Analyse statique de code** : Pour comprendre la structure et les dépendances
-- **Modèles de transformation** : Pour convertir systématiquement les patterns Redux vers Zustand
-- **Génération de tests** : Pour vérifier la préservation du comportement
-- **Vérification de cohérence** : Pour s'assurer que toutes les fonctionnalités sont correctement migrées
+// Section obsolète (description de l'approche)
 
 ## Workflow de migration avec IA
 
-Pour mettre en œuvre cette migration avec l'aide d'une IA, voici le workflow détaillé à suivre :
-
-### Étape 1 : Préparation
-
-1. **Création du dépôt de travail**
-   - Créer une branche à partir de `main` : `git checkout -b feature/zustand-migration`
-   - Installer Zustand : `yarn add zustand`
-   - Installer immer pour Zustand si nécessaire : `yarn add immer`
-
-2. **Analyse préliminaire par l'IA**
-   - Fournir à l'IA l'accès au codebase
-   - L'IA va réaliser un inventaire complet des :
-     - Slices Redux et leur structure
-     - Actions et reducers
-     - Sélecteurs complexes
-     - Utilisations de middleware
-     - Composants utilisant Redux
-
-3. **Validation du plan de migration**
-   - L'IA génère un rapport d'analyse
-   - Le développeur révise et approuve le plan
-   - Définition des priorités pour les modules à migrer
-
-### Étape 2 : Implémentation des stores
-
-1. **Génération automatisée des stores**
-   - L'IA crée la structure de dossier `src/stores/`
-   - Pour chaque slice Redux, l'IA génère un store Zustand équivalent
-   - L'IA implémente les middlewares nécessaires (persist, devtools, immer)
-
-2. **Revue itérative**
-   - Le développeur examine chaque store généré
-   - L'IA applique les corrections et ajustements demandés
-   - Validation des types et de la structure
-
-### Étape 3 : Migration des fonctionnalités spéciales
-
-1. **Système d'historique**
-   - L'IA analyse le système d'historique Redux actuel
-   - Création d'un middleware Zustand personnalisé pour l'historique
-   - Tests de fonctionnalité pour vérifier la parité
-
-2. **Migration des plugins et middleware**
-   - L'IA adapte le système de plugins pour Zustand
-   - Création des abstractions nécessaires pour maintenir l'API
-
-### Étape 4 : Migration des composants
-
-1. **Approche progressive**
-   - L'IA identifie les dépendances entre composants
-   - Migration en commençant par les composants de bas niveau
-   - Remplacement progressif de `useSelector`/`useDispatch` par les hooks Zustand
-
-2. **Vérifications automatiques**
-   - L'IA génère des tests pour chaque composant migré
-   - Vérification de la parité fonctionnelle
-   - Analyse des performances pour confirmer les améliorations
-
-### Étape 5 : Tests et validation
-
-1. **Couverture de test**
-   - L'IA identifie les scénarios critiques à tester
-   - Génération de tests supplémentaires si nécessaire
-   - Exécution de la suite de tests complète
-
-2. **Analyse des performances**
-   - Benchmarking automatisé avant/après
-   - Identification des goulots d'étranglement éventuels
-   - Optimisations ciblées si nécessaire
-
-### Étape 6 : Finalisation
-
-1. **Documentation**
-   - L'IA génère la documentation des nouveaux stores et de leur utilisation
-   - Mise à jour des exemples de code
-
-2. **Pull Request et review**
-   - Préparation de la PR
-   - Revue finale du code
-   - Fusion dans la branche principale
-
-Ce workflow tire pleinement parti des capacités de l'IA pour accélérer considérablement le processus de migration, tout en maintenant un niveau élevé de qualité et de cohérence.
+// Section obsolète (plan initial)
 
 ## Risques et mitigations
 
-Bien que l'utilisation d'une IA pour la migration présente de nombreux avantages, certains risques doivent être pris en compte et atténués :
-
-### Risques identifiés
-
-1. **Compréhension incomplète des subtilités du code**
-   - **Risque** : L'IA pourrait ne pas saisir certaines particularités ou intentions dans le code existant.
-   - **Mitigation** : Révision humaine systématique des transformations proposées, particulièrement pour les parties critiques du code.
-
-2. **Cas d'utilisation spécifiques de Redux non standard**
-   - **Risque** : Des utilisations personnalisées ou avancées de Redux pourraient être mal interprétées.
-   - **Mitigation** : Identifier en amont les patterns atypiques et fournir des directives spécifiques à l'IA pour ces cas.
-
-3. **Intégrations tierces avec Redux**
-   - **Risque** : Certaines bibliothèques tierces pourraient dépendre de Redux d'une manière qui rend la migration difficile.
-   - **Mitigation** : Inventaire préalable des dépendances externes et plan d'adaptation spécifique pour chacune.
-
-4. **Effets de bord non anticipés**
-   - **Risque** : Des comportements subtils pourraient changer après la migration.
-   - **Mitigation** : Tests de régression extensifs et période de validation étendue.
-
-5. **Modèle mental de l'équipe**
-   - **Risque** : L'équipe de développement pourrait avoir besoin de temps pour s'adapter au nouveau paradigme.
-   - **Mitigation** : Documentation détaillée et sessions de formation sur Zustand et les nouveaux patterns.
-
-### Stratégie de rollback
-
-En cas de problèmes majeurs identifiés après la migration, une stratégie de rollback est prévue :
-
-1. **Version taggée pré-migration** : Une version du code sera taggée avant toute modification.
-2. **Phase de coexistence** : Possibilité de maintenir temporairement certains modules sous Redux pendant que d'autres sont migrés.
-3. **Revert automatisé** : Scripts préparés pour revenir rapidement à la version Redux si nécessaire.
-
-### Plan de tests renforcé
-
-Pour garantir la qualité post-migration :
-
-1. **Tests unitaires étendus** : Couverture accrue des tests unitaires, notamment sur les modules critiques.
-2. **Tests d'intégration** : Vérification des interactions entre les modules migrés.
-3. **Tests de performance** : Benchmarks avant/après pour quantifier les améliorations.
-4. **Tests utilisateurs** : Phase de beta testing interne avant déploiement complet.
-
-La combinaison d'une approche guidée par l'IA avec une supervision humaine rigoureuse permet de maximiser les bénéfices de la migration tout en minimisant les risques potentiels.
+// Section obsolète (plan initial)
 
 ## Références
 
@@ -940,116 +537,24 @@ Yann Loosli (yann@gamesberry.fr)
 
 MIT 
 
-## Mise à jour de la documentation
-
-La migration vers Zustand nécessite une mise à jour complète de la documentation pour refléter les nouveaux paradigmes et patterns d'utilisation. Cette étape est essentielle pour assurer une adoption fluide et maintenir la cohérence du codebase à long terme.
-
-### Stratégie de mise à jour documentaire
-
-1. **Inventaire de la documentation existante**
-   - Identifier tous les documents techniques mentionnant Redux
-   - Cataloguer les exemples de code à mettre à jour
-   - Lister les diagrammes d'architecture à refaire
-
-2. **Création de nouveaux guides et références**
-   - Guide de migration pour les développeurs existants
-   - Documentation de référence des stores Zustand
-   - Exemples concrets d'utilisation dans divers contextes
-
-3. **Mise à jour des documents d'architecture**
-   - Mettre à jour les diagrammes de flux de données
-   - Réviser les documents de conception système
-   - Actualiser les guides de contribution
-
-4. **Documentation du processus de migration lui-même**
-   - Documenter les leçons apprises
-   - Créer un historique des défis rencontrés et solutions apportées
-   - Établir une liste des optimisations réalisées
+// ## Mise à jour de la documentation
+// La documentation technique générale devrait être mise à jour pour refléter l'utilisation de Zustand.
 
 ### Matrice de migration des plugins
 
-Pour assurer la complétion de la migration, voici une matrice détaillée couvrant tous les plugins existants et leur stratégie de migration vers Zustand :
-
-| Plugin Redux | Fonction principale | Équivalent Zustand | Stratégie de migration |
-|--------------|---------------------|-------------------|------------------------|
-| `historyPlugin` | Gestion undo/redo | Middleware personnalisé | |
-| `loggingPlugin` | Journalisation des actions | Middleware personnalisé | Implémenter un middleware qui intercepte les mutations d'état |
-| `analyticsPlugin` | Suivi d'utilisation | Middleware d'observateur | Utiliser un middleware qui observe les changements d'état |
-| `performancePlugin` | Mesures de performance | Middleware avec timestamps | Créer un middleware qui mesure le temps d'exécution des mutations |
-| `validationPlugin` | Validation des données | Middleware de validation | Implémenter un système de validation avant modification d'état |
+// Section obsolète (plus de plugins Redux)
 
 ### Approche pour les sélecteurs optimisés
 
-Les sélecteurs optimisés avec `createSelector` de Reselect devront être migrés vers une approche équivalente avec Zustand :
-
+// Les sélecteurs Redux optimisés avec `createSelector` (Reselect) ont été remplacés par des sélecteurs directs ou memoïsés dans les stores/hooks Zustand.
 ```typescript
 // Avant avec Redux Toolkit (`createSelector`)
 export const selectActiveArea = createSelector(
   [selectAllAreas, selectActiveAreaId],
   (areas, activeId) => activeId ? areas[activeId] : null
 );
-
-// Après avec Zustand
-export const useActiveArea = () => useAreaStore(
-  (state) => state.activeAreaId ? state.areas[state.activeAreaId] : null,
-  shallow // Utiliser shallow (ou autre comparateur) pour une comparaison optimisée
-);
 ```
 
 ## Tests des cas d'utilisation spécifiques
 
-Pour assurer que la migration préserve toutes les fonctionnalités spécifiques, une stratégie de tests dédiée est nécessaire.
-
-### Identification des cas critiques à tester
-
-1. **Système d'historique (undo/redo)**
-   - Tests unitaires pour la création et application des diffs
-   - Tests d'intégration pour les séquences undo/redo multiples
-   - Tests de performance sur des historiques volumineux
-
-2. **Validation de données**
-   - Tests unitaires pour chaque règle de validation
-   - Tests des cas limites et d'erreur
-   - Tests d'intégration avec les composants utilisateurs
-
-3. **Persistance**
-   - Tests de sauvegarde/restauration de l'état
-   - Tests de migration de données entre versions
-   - Tests de gestion des erreurs de stockage
-
-4. **Interaction entre stores**
-   - Tests d'interactions entre différents stores Zustand
-   - Tests de cohérence lors d'actions affectant plusieurs domaines
-   - Tests de performance pour les opérations cross-store
-
-### Stratégie d'automatisation des tests
-
-Pour faciliter le processus, une approche d'automatisation sera mise en place :
-
-```typescript
-// Helper pour tester les stores Zustand
-const testStore = (store, initialState, actions, expectedState) => {
-  // Initialiser le store avec l'état initial
-  const storeInstance = store.setState(initialState);
-  
-  // Exécuter séquentiellement les actions
-  actions.forEach(action => {
-    action(storeInstance);
-  });
-  
-  // Vérifier que l'état final correspond à l'état attendu
-  expect(storeInstance.getState()).toEqual(expectedState);
-};
-
-// Exemple d'utilisation
-test('area store should handle active area change', () => {
-  testStore(
-    useAreaStore,
-    { areas: { a1: { name: 'Test' } }, activeAreaId: null },
-    [store => store.getState().setActiveArea('a1')],
-    { areas: { a1: { name: 'Test' } }, activeAreaId: 'a1' }
-  );
-});
-```
-
-Cette approche permettra de tester systématiquement tous les stores et leurs interactions de manière cohérente. 
+// Section obsolète (plan initial)

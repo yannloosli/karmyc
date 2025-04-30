@@ -1,10 +1,8 @@
 import React, { Dispatch, SetStateAction, useRef } from "react";
-// import { useSelector } from "react-redux"; // Supprimé
 import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../../../constants";
-// import { RootState } from "../../../store"; // Supprimé
-import { useAreaStore } from "../../../stores/areaStore"; // Ajouté
+import { useAreaStore } from "../../../stores/areaStore";
 import { cssZIndex } from "../../../styles/cssVariables";
-import { AreaRowLayout } from "../../../types/areaTypes"; // Gardé, potentiellement utile ailleurs
+import { AreaRowLayout } from "../../../types/areaTypes";
 import { Rect } from "../../../types/geometry";
 import { compileStylesheet } from "../../../utils/stylesheets";
 import { handleDragAreaResize } from "../handlers/areaDragResize";
@@ -27,8 +25,6 @@ const s = compileStylesheet(({ css }) => ({
 	`,
 }));
 
-// Importer ou définir le type ResizePreviewState ici aussi
-// (Alternative: exporter depuis AreaRoot et importer ici)
 interface ResizePreviewState {
     rowId: string;
     separatorIndex: number;
@@ -37,9 +33,7 @@ interface ResizePreviewState {
 
 interface OwnProps {
     row: AreaRowLayout;
-    // areaToViewport: Map<string, Rect>; // Remplacé
-    areaToViewport: { [key: string]: Rect }; // Retour au type objet
-    // Ajouter la prop pour la fonction de mise à jour du preview
+    areaToViewport: { [key: string]: Rect };
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
 }
 
@@ -48,9 +42,8 @@ type Props = OwnProps;
 export const AreaRowSeparators: React.FC<Props> = props => {
     // Extraire setResizePreview des props
     const { row, areaToViewport, setResizePreview } = props;
-    // const { layout, rootId } = useAreaStore(state => ({ layout: state.layout, rootId: state.rootId })); // Remplacé pour performance
-    const layout = useAreaStore(state => state.layout); // Sélecteur séparé
-    const rootId = useAreaStore(state => state.rootId); // Sélecteur séparé
+    const layout = useAreaStore(state => state.layout);
+    const rootId = useAreaStore(state => state.rootId);
     const viewportsRef = useRef(areaToViewport);
 
     // Basic validation before continuing

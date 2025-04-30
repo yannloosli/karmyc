@@ -12,7 +12,7 @@ Karmyc currently offers the following official plugins:
 
 ## Using Plugins
 
-To use a plugin, install it from npm and then import its components or hooks:
+To use a plugin, install it from npm and then import its components or hooks. Depending on the plugin type, it might need to be registered with a specific Zustand store (using `createPluginMiddleware` or `usePluginSystem`) or used directly.
 
 ```bash
 # Install the plugin
@@ -21,7 +21,7 @@ yarn add @gamesberry/karmyc-area-projects
 
 ```tsx
 // Import and use the plugin
-import { ProjectsArea, useProjects } from '@gamesberry/karmyc-area-projects';
+import { ProjectsArea } from '@gamesberry/karmyc-area-projects';
 import { useRegisterAreaType, KarmycProvider } from '@gamesberry/karmyc-core';
 
 function App() {
@@ -43,10 +43,11 @@ function App() {
 
 Plugins can extend Karmyc in various ways:
 
-1. **Custom Area Types**: New area types that can be placed in the layout
-2. **Custom Hooks**: Hooks for interacting with the plugin's functionality
-3. **Store Enhancements**: Additional state and reducers for the Redux store
-4. **UI Components**: Reusable components that integrate with the core
+1. **Custom Area Types**: New area types that can be placed in the layout.
+2. **Custom Hooks**: Hooks for interacting with the plugin's functionality.
+3. **Store Interactions**: Plugins can interact with existing Zustand stores (read state, call actions) or provide their own Zustand stores for managing plugin-specific state.
+4. **UI Components**: Reusable components that integrate with the core.
+5. **Action Registry Integration**: Plugins can register handlers for specific actions via the `actionRegistry` or the `usePluginSystem` hook (see `docs/guides/plugins.md`).
 
 ## Creating Plugins
 
@@ -169,4 +170,15 @@ yarn link @my-scope/karmyc-my-plugin
 3. Publish to npm:
 ```bash
 yarn publish
-``` 
+```
+
+A plugin can define:
+
+1.  **Area Types**: Custom rendering logic for new area types.
+2.  **Components**: Reusable UI components related to the plugin's functionality.
+3.  **Zustand Stores**: Provide new stores for plugin-specific state or interact with existing core stores.
+4.  **Hooks**: Custom hooks for accessing plugin features or interacting with stores.
+5.  **API Functions**: Utility functions or services.
+6.  **Context Menu Items**: Add specific actions to context menus.
+7.  **Keyboard Shortcuts**: Define relevant keyboard shortcuts.
+8.  **Zustand Plugins**: Implement the `ZustandPlugin` interface to hook into store lifecycles or the action registry (see `docs/guides/plugins.md`).

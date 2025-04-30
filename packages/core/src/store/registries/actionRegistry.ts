@@ -1,5 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
-import { IAction, TActionValidator } from '../../types/actions';
+import { Action, IAction, TActionValidator } from '../../types/actions';
 
 // Definition of action handler type
 type ActionHandler = (params: any) => void;
@@ -9,7 +8,7 @@ interface IActionRegistry {
     unregisterPlugin: (id: string) => void;
     registerValidator: (actionType: string, validator: TActionValidator) => void;
     unregisterValidators: (actionType: string) => void;
-    handleAction: (action: AnyAction) => void;
+    handleAction: (action: Action) => void;
     registerActionHandler: (actionId: string, handler: ActionHandler) => void;
     unregisterActionHandler: (actionId: string) => void;
     executeAction: (actionId: string, params: any) => boolean; // Returns true if the action was executed
@@ -40,7 +39,7 @@ export const actionRegistry: IActionRegistry = {
         validatorStorage.delete(actionType);
     },
 
-    handleAction: (action: AnyAction) => {
+    handleAction: (action: Action) => {
         // Validate the action
         const validators = validatorStorage.get(action.type) || [];
         for (const validator of validators) {

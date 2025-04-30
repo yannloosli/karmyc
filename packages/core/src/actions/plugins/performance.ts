@@ -1,4 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { Action } from '../../types/actions';
 import { actionLogger } from '../logger';
 
 /**
@@ -75,7 +75,7 @@ class PerformanceMonitor {
         this.config.enabled = false;
     }
 
-    startTracking(action: AnyAction): void {
+    startTracking(action: Action): void {
         if (!this.config.enabled) return;
         if (this.config.actionTypesToTrack && !this.config.actionTypesToTrack.includes(action.type)) {
             return;
@@ -86,7 +86,7 @@ class PerformanceMonitor {
         this.globalMetrics.actionsByType[action.type] = (this.globalMetrics.actionsByType[action.type] || 0) + 1;
     }
 
-    endTracking(action: AnyAction, success: boolean = true): void {
+    endTracking(action: Action, success: boolean = true): void {
         if (!this.config.enabled) return;
         const startTime = this.actionStartTimes.get(action.type);
         if (!startTime) return;

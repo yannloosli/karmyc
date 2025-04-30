@@ -12,7 +12,6 @@ import {
   AreaRoot,
   MenuBar,
   StatusBar,
-  NotificationList,
   Area,
   ContextMenu,
   // ...
@@ -71,6 +70,15 @@ function App() {
   );
 }
 ```
+
+### `<KarmycProvider>`
+
+Props:
+
+| Prop            | Type                 | Description                    | Default |
+|-----------------|----------------------|--------------------------------|---------|
+| initialState    | `Partial<KarmycState>` | Initial state for the stores | `{}`    |
+| onStateChange   | `(state) => void`    | Callback on state changes      | `null`  |
 
 ## Area
 
@@ -251,8 +259,7 @@ import {
   AreaRoot, 
   useArea, 
   MenuBar, 
-  StatusBar,
-  NotificationList
+  StatusBar
 } from '@gamesberry/karmyc-core';
 
 function App() {
@@ -280,7 +287,6 @@ function EditorLayout() {
       
       <AreaRoot />
       <StatusBar areaId="root" areaState={{}} areaType="app" />
-      <NotificationList />
     </div>
   );
 }

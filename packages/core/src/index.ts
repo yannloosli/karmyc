@@ -25,16 +25,6 @@ export * from './constants';
 // Export main provider
 export { KarmycProvider } from './providers/KarmycProvider';
 
-// Export store and store types
-export { store } from './store';
-export type { AppDispatch, RootState } from './store';
-
-// Export public actions
-export {
-    // Area actions
-    addArea, removeArea, setActiveArea, updateArea
-} from './store';
-
 // Export utilities
 export * from './utils/history';
 
@@ -52,9 +42,6 @@ export { areaRegistry } from './area/registry';
 
 // Export action registry from store registries (with registerActionHandler)
 export { actionRegistry as actionRegistryWithHandlers } from './store/registries/actionRegistry';
-
-// Export area slice
-export { areaSlice, setAreaType, setFields } from './store/slices/areaSlice';
 
 // Export context menu hooks
 export { useSyncContextMenuActions } from './hooks/useSyncContextMenuActions';

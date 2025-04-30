@@ -1,3 +1,4 @@
+import { Vec2 } from '@gamesberry/karmyc-shared';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -6,6 +7,9 @@ import { Area, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
 import { Point, Rect } from '../types/geometry';
 import { computeAreaToParentRow } from '../utils/areaToParentRow';
+import { computeAreaToViewport } from '../utils/areaToViewport';
+import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../utils/areaUtils';
+import { getAreaRootViewport } from '../utils/getAreaViewport';
 import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 import { performance } from './middleware/performanceMiddleware';
@@ -79,7 +83,6 @@ export interface AreaState {
     rootId: string | null;
     errors: string[];
     activeAreaId: string | null;
-    // Use the defined type for joinPreview
     joinPreview: JoinPreviewState | null;
     layout: {
         [key: string]: AreaRowLayout | AreaLayout;
@@ -94,10 +97,9 @@ export interface AreaState {
         position: Point;
         area: {
             type: string;
-            state: any;
+            state: any & { sourceId?: string };
         };
     };
-    // Internal state to hold the result of the last split operation
     lastSplitResultData: SplitResult | null;
 
     // Actions
@@ -105,32 +107,24 @@ export interface AreaState {
     removeArea: (id: string) => void;
     setActiveArea: (id: string | null) => void;
     updateArea: (areaData: Partial<Area<AreaTypeValue>> & { id: string }) => void;
-    setAreaToOpen: (payload: null | {
-        position: Point;
-        area: {
-            type: string;
-            state: any;
-        };
-    }) => void;
+    setAreaToOpen: (payload: AreaState['areaToOpen']) => void;
     updateAreaToOpenPosition: (position: Point) => void;
     finalizeAreaPlacement: () => void;
     cleanupTemporaryStates: () => void;
     setViewports: (viewports: Record<string, Rect>) => void;
     setRowSizes: (payload: { rowId: string; sizes: number[] }) => void;
-    // NEW ACTIONS
     splitArea: (payload: {
         areaIdToSplit: string;
-        parentRowId: string | null; // ID of the parent row, if exists
-        horizontal: boolean; // Desired orientation of the split
-        corner: IntercardinalDirection; // Corner dragged from (optional, might inform orientation)
-    }) => SplitResult | null; // Returns result directly
+        parentRowId: string | null;
+        horizontal: boolean;
+        corner: IntercardinalDirection;
+    }) => SplitResult | null;
     setJoinPreview: (payload: JoinPreviewState | null) => void;
     joinOrMoveArea: (payload: {
         sourceAreaId: string;
         targetAreaId: string;
         direction: CardinalDirection;
-    }) => void; // Placeholder
-    // Helper to get the last split result without making it part of the persisted state
+    }) => void;
     getLastSplitResult: () => SplitResult | null;
 
     // Sélecteurs
@@ -205,6 +199,36 @@ function findAllDescendantAreaIds(layout: { [key: string]: AreaRowLayout | AreaL
         }
     }
     return descendantIds;
+}
+
+// Helper function to find all disconnected areas that are not accessible from the root
+function findAllDisconnectedAreas(layout: { [key: string]: AreaRowLayout | AreaLayout }, rootId: string | null): Set<string> {
+    const allAreaIds = new Set<string>();
+    const connectedAreaIds = new Set<string>();
+
+    // Collect all area IDs from the layout
+    Object.keys(layout).forEach(id => {
+        allAreaIds.add(id);
+    });
+
+    // If we have a root, find all areas connected to it
+    if (rootId && layout[rootId]) {
+        const descendantIds = findAllDescendantAreaIds(layout, rootId);
+        descendantIds.forEach(id => {
+            connectedAreaIds.add(id);
+        });
+        connectedAreaIds.add(rootId); // Add the root itself
+    }
+
+    // The difference between all areas and connected areas are the disconnected ones
+    const disconnectedAreas = new Set<string>();
+    allAreaIds.forEach(id => {
+        if (!connectedAreaIds.has(id)) {
+            disconnectedAreas.add(id);
+        }
+    });
+
+    return disconnectedAreas;
 }
 
 // Define the core state logic with immer first
@@ -300,11 +324,303 @@ const immerConfig = immer<AreaState>((set, get) => {
         },
 
         finalizeAreaPlacement: () => {
-            // Placeholder: Actual logic to place the area based on areaToOpen
-            // This would likely involve calling addArea or updateArea/layout
             set(state => {
-                // Example: Clear areaToOpen after placement
-                state.areaToOpen = null;
+                if (!state.areaToOpen) {
+                    console.warn('[areaStore] finalizeAreaPlacement - No areaToOpen data available');
+                    return;
+                }
+
+                try {
+                    console.log('[areaStore] finalizeAreaPlacement - Processing drop operation');
+                    const { position, area } = state.areaToOpen;
+                    const sourceAreaId = area.state?.sourceId;
+                    const newAreaId = sourceAreaId || `area-${Date.now()}`;
+
+                    // Si c'est un déplacement, on garde l'area source
+                    if (sourceAreaId && state.areas[sourceAreaId]) {
+                        // On garde l'area source, mais on vérifie si elle doit être clonée
+                        if (sourceAreaId !== newAreaId) {
+                            state.areas[newAreaId] = {
+                                ...state.areas[sourceAreaId],
+                                id: newAreaId
+                            };
+                        }
+                    } else {
+                        // Sinon on crée une nouvelle area
+                        state.areas[newAreaId] = {
+                            id: newAreaId,
+                            type: area.type,
+                            state: area.state
+                        };
+                    }
+
+                    const rootViewport = getAreaRootViewport();
+                    const areaToViewport = computeAreaToViewport(
+                        state.layout,
+                        state.rootId || '',
+                        rootViewport,
+                    );
+
+                    // Utiliser des dimensions de détection plus larges pour faciliter le ciblage
+                    const detectionDimensions = Vec2.new(300, 200);
+
+                    const targetAreaId = getHoveredAreaId(
+                        Vec2.new(position.x, position.y),
+                        { layout: state.layout, rootId: state.rootId, areas: state.areas, areaToOpen: state.areaToOpen },
+                        areaToViewport,
+                        detectionDimensions
+                    );
+
+                    if (!targetAreaId) {
+                        // Si la souris n'est pas au-dessus d'une zone, on annule
+                        state.areaToOpen = null;
+                        if (!sourceAreaId) {
+                            delete state.areas[newAreaId];
+                        }
+                        return;
+                    }
+
+                    const viewport = areaToViewport[targetAreaId];
+                    const placement = getAreaToOpenPlacementInViewport(viewport, Vec2.new(position.x, position.y));
+
+                    console.log('[areaStore] finalizeAreaPlacement - Target:', targetAreaId, 'Placement:', placement);
+
+                    // Nettoyer l'état de drag
+                    state.areaToOpen = null;
+
+                    // Si c'est un déplacement, on retire d'abord l'élément de sa position d'origine
+                    if (sourceAreaId) {
+                        const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
+                        const sourceParentRowId = areaToParentRow[sourceAreaId];
+
+                        if (sourceParentRowId) {
+                            const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
+                            if (sourceParentRow) {
+                                sourceParentRow.areas = sourceParentRow.areas.filter(a => a.id !== sourceAreaId);
+
+                                if (sourceParentRow.areas.length === 0) {
+                                    // Avant de supprimer la rangée vide, on doit supprimer toutes les références à cette rangée
+                                    // dans les autres rangées du layout
+                                    Object.entries(state.layout).forEach(([id, layoutItem]) => {
+                                        if (layoutItem.type === 'area_row' && id !== sourceParentRowId) {
+                                            const rowLayout = layoutItem as AreaRowLayout;
+                                            const hadReference = rowLayout.areas.some(a => a.id === sourceParentRowId);
+
+                                            // Filtrer les références à la rangée vide
+                                            rowLayout.areas = rowLayout.areas.filter(a => a.id !== sourceParentRowId);
+
+                                            // Si des références ont été supprimées, normaliser les tailles
+                                            if (hadReference && rowLayout.areas.length > 0) {
+                                                const totalSize = rowLayout.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                                if (totalSize > 0) {
+                                                    const factor = 1.0 / totalSize;
+                                                    rowLayout.areas.forEach(area => {
+                                                        area.size = (area.size || 0) * factor;
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                    // Maintenant on peut supprimer la rangée vide
+                                    delete state.layout[sourceParentRowId];
+                                }
+                            }
+                        }
+
+                        // Suppression de l'area source si elle est différente de l'area cible
+                        if (sourceAreaId !== newAreaId) {
+                            delete state.areas[sourceAreaId];
+                            if (state.layout[sourceAreaId]) {
+                                delete state.layout[sourceAreaId];
+                            }
+                        }
+                    }
+
+                    // Déterminer l'orientation basée sur le placement
+                    let orientation: "horizontal" | "vertical" = "horizontal";
+                    switch (placement) {
+                    case "top":
+                    case "bottom":
+                        orientation = "vertical";
+                        break;
+                    case "left":
+                    case "right":
+                        orientation = "horizontal";
+                        break;
+                    case "replace":
+                        // VÉRIFICATION
+                        if (!state.areas[newAreaId]) {
+                            console.error('[areaStore] finalizeAreaPlacement - ERREUR: Area source introuvable:', newAreaId);
+                            return;
+                        }
+
+                        // Si la zone source est la même que la zone cible, ne rien faire pour éviter la disparition
+                        if (sourceAreaId === targetAreaId) {
+                            return;
+                        }
+
+                        // Conserver l'état et le type de la zone source
+                        const sourceAreaState = { ...state.areas[newAreaId].state };
+                        const sourceAreaType = state.areas[newAreaId].type;
+
+                        // Mettre à jour la zone cible plutôt que de la remplacer complètement
+                        state.areas[targetAreaId] = {
+                            ...state.areas[targetAreaId],
+                            type: sourceAreaType,
+                            state: sourceAreaState
+                        };
+
+                        // Supprimer la zone source si elle est différente
+                        if (newAreaId !== targetAreaId) {
+                            // Trouver la rangée parente de la zone source
+                            const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
+                            const sourceParentRowId = areaToParentRow[newAreaId];
+
+                            if (sourceParentRowId) {
+                                const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
+
+                                if (sourceParentRow && sourceParentRow.areas) {
+                                    // Filtrer la zone source de sa rangée parente
+                                    sourceParentRow.areas = sourceParentRow.areas.filter(a => a.id !== newAreaId);
+
+                                    // Si la rangée est maintenant vide, la marquer pour suppression
+                                    if (sourceParentRow.areas.length === 0) {
+                                        delete state.layout[sourceParentRowId];
+                                    } else {
+                                        // Normaliser les tailles des zones restantes
+                                        const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                        if (totalSize > 0) {
+                                            const factor = 1.0 / totalSize;
+                                            sourceParentRow.areas.forEach(area => {
+                                                area.size = (area.size || 0) * factor;
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Supprimer la zone source et ses entrées
+                            delete state.areas[newAreaId];
+                            delete state.layout[newAreaId];
+                            if (state.viewports && state.viewports[newAreaId]) {
+                                delete state.viewports[newAreaId];
+                            }
+                        }
+
+                        return;
+                    }
+
+                    // Vérifier si la zone cible est déjà dans une rangée
+                    const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
+                    const parentRowId = areaToParentRow[targetAreaId];
+                    const parentRow = parentRowId ? state.layout[parentRowId] as AreaRowLayout : null;
+
+                    if (parentRow) {
+                        const targetIndex = parentRow.areas.findIndex(a => a.id === targetAreaId);
+                        if (targetIndex === -1) return;
+
+                        if (parentRow.orientation === orientation) {
+                            // Même orientation : ajouter comme sibling
+                            const totalSize = parentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                            const newSize = totalSize / (parentRow.areas.length + 1);
+
+                            // Ajuster les tailles existantes
+                            parentRow.areas = parentRow.areas.map(a => ({
+                                ...a,
+                                size: (a.size || 0) * (1 - 1 / (parentRow.areas.length + 1))
+                            }));
+
+                            // Déterminer l'index d'insertion en fonction du placement
+                            let insertIndex = targetIndex;
+                            if (placement === "bottom" || placement === "right") {
+                                insertIndex += 1;
+                            }
+
+                            // Insérer la nouvelle area
+                            parentRow.areas.splice(insertIndex, 0, {
+                                id: newAreaId,
+                                size: newSize
+                            });
+
+                            // Ajouter l'area au layout si ce n'est pas un déplacement
+                            if (!sourceAreaId) {
+                                state.layout[newAreaId] = { type: "area", id: newAreaId };
+                            }
+                        } else {
+                            // Orientation différente : créer une nouvelle rangée
+                            const newRowId = `row-${Date.now()}`;
+                            const newRow: AreaRowLayout = {
+                                id: newRowId,
+                                type: "area_row",
+                                orientation,
+                                areas: placement === "top" || placement === "left"
+                                    ? [
+                                        { id: newAreaId, size: 0.5 },
+                                        { id: targetAreaId, size: 0.5 }
+                                    ]
+                                    : [
+                                        { id: targetAreaId, size: 0.5 },
+                                        { id: newAreaId, size: 0.5 }
+                                    ]
+                            };
+
+                            // Ajouter les nouvelles entrées dans le layout
+                            state.layout[newRowId] = newRow;
+                            if (!sourceAreaId) {
+                                state.layout[newAreaId] = { type: "area", id: newAreaId };
+                            }
+
+                            // Remplacer la référence dans le parent
+                            parentRow.areas[targetIndex] = {
+                                id: newRowId,
+                                size: parentRow.areas[targetIndex].size
+                            };
+                        }
+                    } else {
+                        // La zone cible n'a pas de parent (c'est la racine)
+                        const newRowId = `row-${Date.now()}`;
+                        const newRow: AreaRowLayout = {
+                            id: newRowId,
+                            type: "area_row",
+                            orientation,
+                            areas: placement === "top" || placement === "left"
+                                ? [
+                                    { id: newAreaId, size: 0.5 },
+                                    { id: targetAreaId, size: 0.5 }
+                                ]
+                                : [
+                                    { id: targetAreaId, size: 0.5 },
+                                    { id: newAreaId, size: 0.5 }
+                                ]
+                        };
+
+                        // Ajouter les nouvelles entrées dans le layout
+                        state.layout[newRowId] = newRow;
+                        if (!sourceAreaId) {
+                            state.layout[newAreaId] = { type: "area", id: newAreaId };
+                        }
+
+                        // Mettre à jour le root
+                        state.rootId = newRowId;
+                    }
+
+                    // Nettoyer les zones déconnectées à la fin
+                    const disconnectedAreas = findAllDisconnectedAreas(state.layout, state.rootId);
+
+                    disconnectedAreas.forEach(id => {
+                        delete state.layout[id];
+                        delete state.areas[id];
+                        if (state.viewports && state.viewports[id]) {
+                            delete state.viewports[id];
+                        }
+                    });
+                    if (state.activeAreaId && disconnectedAreas.has(state.activeAreaId)) {
+                        state.activeAreaId = null;
+                    }
+                } catch (error) {
+                    console.error('[areaStore] finalizeAreaPlacement - Error:', error);
+                }
             });
         },
 

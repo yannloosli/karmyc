@@ -1,18 +1,4 @@
 import { useCallback, useMemo } from 'react';
-// Remove Redux imports
-// import { useDispatch, useSelector } from 'react-redux';
-// import {
-//     addSpace,
-//     removeSpace,
-//     selectActiveSpace,
-//     selectActiveSpaceId,
-//     selectAllSpaces,
-//     selectSpaceById,
-//     setActiveSpace,
-//     Space,
-//     updateSpace,
-//     updateSpaceGenericSharedState
-// } from '../store/slices/spaceSlice';
 
 // Import the Zustand store and its types
 import { Space, useSpaceStore } from '../stores/spaceStore';

@@ -1,5 +1,5 @@
-import { AnyAction } from '@reduxjs/toolkit';
 import {
+    Action,
     IActionPlugin,
     IActionRegistry,
     IActionRegistryOptions,
@@ -35,6 +35,11 @@ class ActionRegistry implements IActionRegistry {
         // Sort by priority (higher priority = executed first)
         this.plugins.sort((a, b) => b.priority - a.priority);
 
+        // Call onRegister if it exists
+        if (plugin.onRegister) {
+            plugin.onRegister();
+        }
+
         if (this.options.enableLogging) {
             console.log(`Action plugin registered: ${plugin.id} with priority ${plugin.priority}`);
         }
@@ -44,6 +49,13 @@ class ActionRegistry implements IActionRegistry {
      * Unregisters an action plugin by its ID
      */
     unregisterPlugin(id: string): void {
+        const plugin = this.plugins.find(p => p.id === id);
+
+        // Call onUnregister if it exists
+        if (plugin && plugin.onUnregister) {
+            plugin.onUnregister();
+        }
+
         this.plugins = this.plugins.filter(plugin => plugin.id !== id);
 
         if (this.options.enableLogging) {
@@ -79,7 +91,7 @@ class ActionRegistry implements IActionRegistry {
     /**
      * Validates an action
      */
-    validateAction(action: AnyAction): IActionValidationResult {
+    validateAction(action: Action): IActionValidationResult {
         const validators = this.validators[action.type] || [];
 
         for (const validator of validators) {
@@ -98,7 +110,7 @@ class ActionRegistry implements IActionRegistry {
     /**
      * Handles an action by sending it to all relevant plugins
      */
-    handleAction(action: AnyAction): void {
+    handleAction(action: Action): void {
         // Validate the action
         const validationResult = this.validateAction(action);
         if (!validationResult.valid) {

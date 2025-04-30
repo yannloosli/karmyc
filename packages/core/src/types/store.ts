@@ -1,51 +1,14 @@
-import { StateWithHistory } from 'redux-undo';
-import { AreaState } from './area';
-import { ContextMenuState } from './contextMenu';
-import { HistoryState } from './history';
-
-/**
- * Interface de base pour tous les slices
- */
-export interface IBaseSlice {
-    // Propriétés communes à tous les slices
-}
-
 /**
  * État racine de l'application
  */
-export interface IRootState {
-    area: AreaState & IBaseSlice;
-    contextMenu: ContextMenuState & IBaseSlice;
-    history: HistoryState & IBaseSlice;
-    [key: string]: IBaseSlice;
-    // Autres slices à ajouter ici
-}
 
 /**
  * Options pour la création du store
  */
-export interface IStoreOptions {
-    preloadedState?: Partial<IRootState>;
-    enablePersistence?: boolean;
-    persistenceKey?: string;
-    enableHistory?: boolean;
-    maxHistorySize?: number;
-    devTools?: boolean;
-}
 
 /**
  * Type pour le dispatch de l'application
  */
-export type AppDispatch = any; // Sera remplacé par le type réel une fois le store implémenté
-
-export interface RootState {
-    area: StateWithHistory<AreaState>;
-    contextMenu: ContextMenuState;
-    history: HistoryState;
-    _persist?: {
-        rehydrated: boolean;
-    };
-}
 
 export interface AreaWithMetadata {
     id: string;

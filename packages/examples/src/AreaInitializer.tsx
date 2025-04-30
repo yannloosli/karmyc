@@ -1,11 +1,8 @@
 import React, { useEffect } from 'react';
-// import { useDispatch } from 'react-redux'; // Supprimer import Redux
 
 import {
     actionRegistryWithHandlers as actionRegistry,
     areaRegistry,
-    // areaSlice, // Non nécessaire ici si on utilise l'action Zustand
-    // setAreaType, // Action Redux remplacée
     useArea,
     useRegisterAreaType,
     useStatusBar,
@@ -17,18 +14,13 @@ import { ColorPickerArea } from './components/ColorPickerArea';
 import { HistoryDrawingArea } from './components/HistoryDrawingArea';
 import { ImageViewerArea } from './components/ImageViewerArea';
 import { ImagesGalleryArea } from './components/ImagesGalleryArea';
-import { NotificationExample } from './components/NotificationExample';
 import { PerformanceExample } from './components/PerformanceExample';
 import { ResetButtonWrapper } from './components/ResetButtonWrapper';
 import { SpaceManager } from './components/SpaceManager';
 import { TextNoteArea } from './components/TextNoteArea';
 
-// Supprimer l'import des actions Redux
-// const { actions: areaActions } = areaSlice;
 
 export const AreaInitializer: React.FC = () => {
-    // Supprimer useDispatch
-    // const dispatch = useDispatch();
     // Récupérer l'action Zustand
     const { updateArea } = useAreaStore.getState();
     const { createArea } = useArea();
@@ -97,18 +89,6 @@ export const AreaInitializer: React.FC = () => {
         {
             displayName: 'Gallery',
             defaultSize: { width: 800, height: 600 }
-        }
-    );
-
-    // Register notification example area
-    useRegisterAreaType(
-        'notification-example',
-        NotificationExample,
-        {},
-        {
-            displayName: 'Notifications',
-            defaultSize: { width: 500, height: 600 },
-            supportedActions: ['send', 'clear', 'delete', 'move', 'resize']
         }
     );
 
@@ -203,16 +183,6 @@ export const AreaInitializer: React.FC = () => {
         }
     };
 
-    const handleNotificationExample = (params: any) => {
-        const areaId = params.areaId || params.itemMetadata?.areaId;
-        if (areaId) {
-            updateArea({
-                id: areaId,
-                type: 'notification-example',
-                state: {}
-            });
-        }
-    };
 
     const handlePerformanceExample = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
@@ -257,7 +227,6 @@ export const AreaInitializer: React.FC = () => {
         actionRegistry.registerActionHandler('area.create-color-picker', handleColorPicker);
         actionRegistry.registerActionHandler('area.create-image-viewer', handleImageViewer);
         actionRegistry.registerActionHandler('area.create-images-gallery', handleImagesGallery);
-        actionRegistry.registerActionHandler('area.create-notification-example', handleNotificationExample);
         actionRegistry.registerActionHandler('area.create-performance-example', handlePerformanceExample);
         actionRegistry.registerActionHandler('area.create-history-drawing', handleHistoryDrawing);
         actionRegistry.registerActionHandler('area.create-space-manager', handleSpaceManager);
@@ -268,7 +237,6 @@ export const AreaInitializer: React.FC = () => {
             actionRegistry.unregisterActionHandler('area.create-color-picker');
             actionRegistry.unregisterActionHandler('area.create-image-viewer');
             actionRegistry.unregisterActionHandler('area.create-images-gallery');
-            actionRegistry.unregisterActionHandler('area.create-notification-example');
             actionRegistry.unregisterActionHandler('area.create-performance-example');
             actionRegistry.unregisterActionHandler('area.create-history-drawing');
             actionRegistry.unregisterActionHandler('area.create-space-manager');
@@ -308,12 +276,6 @@ export const AreaInitializer: React.FC = () => {
                     icon: '📷'
                 },
                 {
-                    id: 'notification-example',
-                    label: 'Notifications',
-                    action: 'area.create-notification-example',
-                    icon: '🔔'
-                },
-                {
                     id: 'performance-example',
                     label: 'Performance',
                     action: 'area.create-performance-example',
@@ -345,7 +307,6 @@ export const AreaInitializer: React.FC = () => {
             areaRegistry.unregisterAreaType('color-picker');
             areaRegistry.unregisterAreaType('image-viewer');
             areaRegistry.unregisterAreaType('images-gallery');
-            areaRegistry.unregisterAreaType('notification-example');
             areaRegistry.unregisterAreaType('performance-example');
             areaRegistry.unregisterAreaType('history-drawing');
             areaRegistry.unregisterAreaType('space-manager');

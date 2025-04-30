@@ -1,15 +1,21 @@
 import { Vec2 } from '@gamesberry/karmyc-shared';
 import React, { useCallback, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
-import { clearAreaToOpen, finalizeAreaPlacement, setAreaToOpen, updateAreaToOpenPosition } from '../store/slices/areaSlice';
+import { useAreaStore } from '../stores/areaStore';
 import { computeAreaToViewport } from '../utils/areaToViewport';
 import { getHoveredAreaId } from '../utils/areaUtils';
 import { getAreaRootViewport } from '../utils/getAreaViewport';
 
 const useAreaDragAndDrop = () => {
-    const dispatch = useDispatch();
-    const areaState = useSelector((state: RootState) => state.area);
+    // Get actions and state selectors from Zustand store
+    const setAreaToOpenAction = useAreaStore(state => state.setAreaToOpen);
+    const updateAreaToOpenPositionAction = useAreaStore(state => state.updateAreaToOpenPosition);
+    const finalizeAreaPlacementAction = useAreaStore(state => state.finalizeAreaPlacement);
+    // Select necessary state parts (consider using shallow comparison if selecting multiple parts)
+    const layout = useAreaStore(state => state.layout);
+    const rootId = useAreaStore(state => state.rootId);
+    const areas = useAreaStore(state => state.areas);
+    const areaToOpen = useAreaStore(state => state.areaToOpen); // Needed for getHoveredAreaId?
+
     const dragRef = useRef<{ startX: number; startY: number; sourceId: string | null } | null>(null);
     const lastUpdateRef = useRef<number>(0);
     const UPDATE_INTERVAL = 32; // Reduce to 30fps
@@ -17,8 +23,8 @@ const useAreaDragAndDrop = () => {
     // Calculate areaToViewport from layout and viewports
     const areaToViewport = React.useMemo(() => {
         const rootViewport = getAreaRootViewport();
-        return computeAreaToViewport(areaState.layout, areaState.rootId, rootViewport);
-    }, [areaState.layout, areaState.rootId]);
+        return computeAreaToViewport(layout, rootId, rootViewport);
+    }, [layout, rootId]);
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -53,13 +59,13 @@ const useAreaDragAndDrop = () => {
 
         // Initialize areaToOpen directly with cursor position
         // so the preview is centered on the mouse from the start
-        dispatch(setAreaToOpen({
+        setAreaToOpenAction({
             position: { x: e.clientX, y: e.clientY },
             area: {
                 type: 'image-viewer',
                 state: { sourceId }
             }
-        }));
+        });
 
         // Clean up drag image
         requestAnimationFrame(() => {
@@ -67,7 +73,7 @@ const useAreaDragAndDrop = () => {
                 document.body.removeChild(dragImage);
             }
         });
-    }, [dispatch]);
+    }, [setAreaToOpenAction]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -82,10 +88,10 @@ const useAreaDragAndDrop = () => {
                 x: e.clientX,
                 y: e.clientY
             };
-            dispatch(updateAreaToOpenPosition(position));
+            updateAreaToOpenPositionAction(position);
             lastUpdateRef.current = now;
         }
-    }, [dispatch]);
+    }, [updateAreaToOpenPositionAction]);
 
     const handleDragEnd = useCallback((e: React.DragEvent) => {
         if (!dragRef.current) return;
@@ -98,8 +104,9 @@ const useAreaDragAndDrop = () => {
         }
 
         dragRef.current = null;
-        dispatch(clearAreaToOpen());
-    }, [dispatch]);
+        // Use cleanupTemporaryStates which clears areaToOpen and joinPreview
+        useAreaStore.getState().cleanupTemporaryStates();
+    }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -113,16 +120,19 @@ const useAreaDragAndDrop = () => {
         };
 
         const positionVec2 = Vec2.new(position.x, position.y);
-        const hoveredAreaId = getHoveredAreaId(positionVec2, areaState, areaToViewport);
+        // Construct the state object needed by getHoveredAreaId
+        const currentAreaState = { layout, rootId, areas, areaToOpen }; // Use current state from store
+        const hoveredAreaId = getHoveredAreaId(positionVec2, currentAreaState, areaToViewport);
 
         if (hoveredAreaId) {
-            dispatch(finalizeAreaPlacement());
+            finalizeAreaPlacementAction();
         } else {
-            dispatch(clearAreaToOpen());
+            // Use cleanupTemporaryStates which clears areaToOpen and joinPreview
+            useAreaStore.getState().cleanupTemporaryStates();
         }
 
         dragRef.current = null;
-    }, [dispatch, areaState, areaToViewport]);
+    }, [finalizeAreaPlacementAction, layout, rootId, areas, areaToOpen, areaToViewport]);
 
     return {
         handleDragStart,

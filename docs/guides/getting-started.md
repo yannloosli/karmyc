@@ -184,12 +184,11 @@ For consistent and maintainable code, always import Karmyc components, hooks, an
 // ✅ Recommended approach
 import { 
     KarmycProvider, 
-    useKarmyc, 
+    useKarmyc,
     useArea, 
     useRegisterAreaType,
     areaRegistry,
     actionRegistry,
-    store
 } from '@gamesberry/karmyc-core';
 
 // ❌ Avoid importing directly from internal implementation files

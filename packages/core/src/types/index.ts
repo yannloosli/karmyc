@@ -25,7 +25,6 @@
 
 // Export only types confirmed to be imported via this index file
 export type { CardinalDirection } from './directions';
-export * from './notificationTypes'; // Export notification types
 // IntercardinalDirection from './directions' is unused according to ts-prune
 
 // Keep local definition as it's used

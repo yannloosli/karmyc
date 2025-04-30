@@ -1,18 +1,4 @@
-import { IActionPlugin, TActionValidator } from '../actions/types';
-import { IArea, IAreaLayout } from './area';
-
-/**
- * Options d'initialisation du module core
- */
-export interface IInitializeOptions {
-    plugins?: IActionPlugin[];
-    validators?: Array<{
-        actionType: string;
-        validator: TActionValidator;
-    }>;
-    defaultAreaTypes?: string[];
-    defaultLayout?: IAreaLayout;
-}
+import { IActionPlugin } from '../actions/types';
 
 /**
  * Configuration du module core
@@ -29,14 +15,6 @@ export interface IKarmycConfig {
     contextMenu: {
         actions: any[];
     };
-}
-
-export interface IProject {
-    id: string;
-    name: string;
-    areas: IArea[];
-    createdAt: string;
-    updatedAt: string;
 }
 
 export interface IKarmycOptions {

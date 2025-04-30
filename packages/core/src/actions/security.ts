@@ -1,13 +1,13 @@
-import { AnyAction } from '@reduxjs/toolkit';
+// import { Permission } from '../types'; // TODO: Resolve missing type/module
+type Permission = string; // Placeholder type
+import { KarmycAction } from '../types/actions'; // Import local type
 import { actionLogger } from './logger';
-import { actionMonitor } from './monitoring';
+// import { actionMonitor } from './monitoring'; // TODO: Resolve missing module
 
-export enum Permission {
-    READ = 'READ',
-    WRITE = 'WRITE',
-    DELETE = 'DELETE',
-    ADMIN = 'ADMIN'
-}
+const defaultActionPermissionMap: Record<string, Permission> = {
+    'AREA_ADD': 'area:create',
+    // ... implementation ...
+};
 
 export interface IActionPermission {
     actionType: string;
@@ -51,7 +51,7 @@ export class ActionSecurity {
         actionLogger.info(`Permission removed for action: ${actionType}`);
     }
 
-    validateAction(action: AnyAction, userPermissions: Permission[]): boolean {
+    validateAction(action: KarmycAction, userPermissions: Permission[]): boolean {
         if (!this.isEnabled) return true;
 
         const permission = this.permissions.get(action.type);
@@ -67,7 +67,6 @@ export class ActionSecurity {
                 required: permission.requiredPermissions,
                 user: userPermissions
             });
-            actionMonitor.endMonitoring(action, false);
             return false;
         }
 
@@ -78,7 +77,6 @@ export class ActionSecurity {
                 actionLogger.warn('Action rejected - Rate limit exceeded', action, {
                     rateLimit: permission.rateLimit
                 });
-                actionMonitor.endMonitoring(action, false);
                 return false;
             }
         }

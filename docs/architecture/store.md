@@ -1,242 +1,113 @@
-# Redux Store Architecture
+# Zustand Store Architecture
 
-This document outlines the Redux store architecture used in Karmyc Core, including its structure, slices, and middleware.
+This document outlines the Zustand store architecture used in Karmyc Core.
 
 ## Overview
 
-Karmyc Core uses Redux Toolkit as its primary state management solution. The store is structured into multiple slices, each responsible for a specific domain of the application.
+Karmyc Core utilizes Zustand for its state management. Instead of a single monolithic store, the state is divided into multiple independent stores (hooks), each responsible for a specific domain of the application. This approach promotes modularity, performance, and simplifies state management.
 
 ```mermaid
 graph TD
-    A[Redux Store] --> B[Slices]
-    A --> C[Middleware]
-    A --> D[Enhancers]
-    
-    B --> E[area]
-    B --> F[contextMenu]
-    B --> G[project]
-    
-    C --> H[history]
-    C --> I[actionsMiddleware]
-    C --> J[persistence]
+    A[Application State] --> B[useAreaStore]
+    A --> C[useSpaceStore]
+    A --> D[useContextMenuStore]
+    A --> F[useLoadingStore]
+    A --> G[...]
+
+    subgraph Zustand Stores
+        B
+        C
+        D
+        F
+        G
+    end
+
+    H[React Components] --> B
+    H --> C
+    H --> D
+    H --> F
+    H --> G
 ```
 
-## Store Structure
+## Core Stores
 
-The store is composed of two main parts:
+Each store is created using Zustand's `create` function and typically combines state and actions within the same hook. Common middlewares like `devtools`, `persist`, and `immer` are used where appropriate.
 
-1. **Application State**: The complete application state, including history
-2. **Action State**: The current state without history, used for current operations
+### `useAreaStore`
 
-```mermaid
-graph TD
-    A[ApplicationState] --> B[ActionState]
-    A --> C[History]
-    B --> D[Area State]
-    B --> E[Context Menu State]
-    B --> F[Project State]
-    B --> G[Tool State]
-    C --> H[Previous States List]
-    C --> I[Current Index]
-    C --> J[Differences]
-```
+Manages the state related to areas, layout, and their interactions.
+- **State:** `areas`, `layout`, `activeAreaId`, `rootId`, `joinPreview`, `areaToOpen`, etc.
+- **Actions:** `addArea`, `removeArea`, `updateArea`, `setActiveArea`, `splitArea`, `joinOrMoveArea`, `setRowSizes`, etc.
+- **Middleware:** `devtools`, `persist` (partial), `immer`.
 
-## Core Slices
+### `useSpaceStore`
 
-### Area Slice
+Manages the state of different "spaces" which might contain shared drawing data or other context.
+- **State:** `spaces`, `activeSpaceId`, `sharedState` per space (including `lines`, `pastDiffs`, `futureDiffs`).
+- **Actions:** `addSpace`, `removeSpace`, `setActiveSpace`, `updateSpaceGenericSharedState`, `undoSharedState`, `redoSharedState`.
+- **Middleware:** `devtools`, `persist` (partial, excludes history), `immer`.
+- **History:** Implements custom diff-based history for `sharedState`.
 
-The Area slice manages the state of all areas in the layout:
+### `useContextMenuStore`
 
-```typescript
-interface AreaState {
-  areas: Record<string, Area>;
-  activeAreaId: string | null;
-  // Other area-related state...
-}
+Manages the state of the context menu (visibility, position, items).
+- **State:** `isVisible`, `position`, `items`, `metadata`, `customContextMenu`.
+- **Actions:** `openContextMenu`, `closeContextMenu`, `openCustomContextMenu`.
+- **Middleware:** `devtools`, `immer`.
 
-const areaSlice = createSlice({
-  name: 'area',
-  initialState,
-  reducers: {
-    addArea: (state, action) => { /* ... */ },
-    removeArea: (state, action) => { /* ... */ },
-    updateArea: (state, action) => { /* ... */ },
-    setActiveArea: (state, action) => { /* ... */ },
-    // Other reducers...
-  }
-});
-```
+### `useLoadingStore`
 
-### Context Menu Slice
+Manages generic loading states identified by keys.
+- **State:** `loadingStates`.
+- **Actions:** `setLoading`, `clearLoading`.
+- **Middleware:** `immer`.
 
-The Context Menu slice manages the state of context menus:
+*(Other potential stores might exist or be added as needed)*
 
-```typescript
-interface ContextMenuState {
-  isOpen: boolean;
-  position: { x: number, y: number };
-  items: ContextMenuItem[];
-  // Other context menu related state...
-}
+## Middleware Usage
 
-const contextMenuSlice = createSlice({
-  name: 'contextMenu',
-  initialState,
-  reducers: {
-    openContextMenu: (state, action) => { /* ... */ },
-    closeContextMenu: (state, action) => { /* ... */ },
-    // Other reducers...
-  }
-});
-```
-
-### Project Slice
-
-The Project slice manages project-specific state:
-
-```typescript
-interface ProjectState {
-  id: string;
-  name: string;
-  settings: ProjectSettings;
-  // Other project-related state...
-}
-
-const projectSlice = createSlice({
-  name: 'project',
-  initialState,
-  reducers: {
-    updateProject: (state, action) => { /* ... */ },
-    setProjectSettings: (state, action) => { /* ... */ },
-    // Other reducers...
-  }
-});
-```
-
-## Middleware
-
-### History Middleware
-
-The History middleware manages the undo/redo functionality:
-
-```typescript
-export const historyMiddleware: Middleware = store => next => action => {
-  // Process action for history tracking
-  if (shouldTrackInHistory(action)) {
-    // Add to history stack
-  }
-  
-  return next(action);
-};
-```
-
-### Actions Middleware
-
-The Actions middleware integrates with the action system:
-
-```typescript
-export const actionsMiddleware: Middleware = store => next => action => {
-  // Execute the action normally in Redux
-  const result = next(action);
-  
-  // Notify the action registry
-  actionRegistry.handleAction(action);
-  
-  return result;
-};
-```
-
-### Persistence Middleware
-
-The Persistence middleware handles saving state to local storage:
-
-```typescript
-export const persistenceMiddleware: Middleware = store => next => action => {
-  const result = next(action);
-  
-  // Save state to local storage after specific actions
-  if (shouldPersist(action)) {
-    const state = store.getState();
-    saveToLocalStorage(state);
-  }
-  
-  return result;
-};
-```
-
-## Selectors
-
-Karmyc Core provides memoized selectors for efficient state access:
-
-```typescript
-// Area selectors
-export const selectAllAreas = (state: RootState) => state.area.areas;
-export const selectActiveAreaId = (state: RootState) => state.area.activeAreaId;
-export const selectActiveArea = createSelector(
-  [selectAllAreas, selectActiveAreaId],
-  (areas, activeId) => activeId ? areas[activeId] : null
-);
-
-// Context menu selectors
-export const selectContextMenuState = (state: RootState) => state.contextMenu;
-export const selectIsContextMenuOpen = (state: RootState) => state.contextMenu.isOpen;
-
-// Project selectors
-export const selectProject = (state: RootState) => state.project;
-export const selectProjectSettings = (state: RootState) => state.project.settings;
-```
+- **`devtools`**: Integrates with the Redux DevTools Extension for debugging.
+- **`persist`**: Handles state persistence (usually to `localStorage`) for stores like `useAreaStore` and `useSpaceStore`. It's configured to only persist relevant parts of the state (partialize).
+- **`immer`**: Allows for easier immutable state updates by enabling direct state mutation within actions.
+- **`temporal` (zundo)**: *Previously* used for `areaStore` history, but currently inactive as the access hook (`useHistory`) was removed. `spaceStore` uses a custom diff-based history instead.
 
 ## Integration with React
 
-Karmyc Core provides custom hooks for working with the Redux store:
+Components access Zustand stores directly using the generated hooks:
 
 ```typescript
-// Use typed dispatch
-export const useAppDispatch = () => useDispatch<AppDispatch>();
+import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
 
-// Use typed selector
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+const MyComponent = () => {
+  // Select specific state parts (Zustand handles optimization)
+  const activeAreaId = useAreaStore((state) => state.activeAreaId);
+  const areas = useAreaStore((state) => state.areas);
 
-// Hook for area operations
-export const useArea = () => {
-  const dispatch = useAppDispatch();
-  const areas = useAppSelector(selectAllAreas);
-  const activeAreaId = useAppSelector(selectActiveAreaId);
-  
-  return {
-    areas,
-    activeAreaId,
-    activeArea: activeAreaId ? areas[activeAreaId] : null,
-    addArea: (areaData) => dispatch(addArea(areaData)),
-    removeArea: (id) => dispatch(removeArea(id)),
-    updateArea: (areaData) => dispatch(updateArea(areaData)),
-    setActiveArea: (id) => dispatch(setActiveArea(id)),
+  // Select actions
+  const setActiveArea = useAreaStore((state) => state.setActiveArea);
+  const updateArea = useAreaStore((state) => state.updateArea);
+
+  const handleActivate = (id: string) => {
+    setActiveArea(id);
   };
-};
 
-// Similar hooks for other slices...
+  // Use the state and actions...
+  return (
+    <div>
+      <p>Active Area: {activeAreaId}</p>
+      {/* ... render areas ... */}
+    </div>
+  );
+};
 ```
 
-## Store Configuration
+- **Selectors**: Components select only the necessary state slices. Zustand optimizes re-renders based on selector changes. Using `shallow` equality checks can further optimize selectors returning objects.
+- **No Provider**: Zustand does not require a context Provider wrapping the application.
 
-The Redux store is configured with all slices, middleware, and enhancers:
+## Key Changes from the Previous (Redux) Implementation
 
-```typescript
-export const configureStore = () => {
-  return createStore({
-    reducer: {
-      area: areaSlice.reducer,
-      contextMenu: contextMenuSlice.reducer,
-      project: projectSlice.reducer,
-      // Other reducers...
-    },
-    middleware: (getDefaultMiddleware) => 
-      getDefaultMiddleware().concat(
-        historyMiddleware,
-        actionsMiddleware,
-        persistenceMiddleware
-      ),
-    devTools: process.env.NODE_ENV !== 'production',
-    // Other store options...
-  });
-}; 
+- **Decentralized State**: State is split across multiple store hooks instead of one global object.
+- **Simplified Actions/Reducers**: Actions are typically functions defined directly within the store, often mutating state directly thanks to `immer`. The strict separation of actions, reducers, and dispatch is gone.
+- **Direct Hook Usage**: Components import and use the specific store hooks they need.
+- **Middleware**: Zustand's middleware approach differs from Redux middleware. It's applied during store creation using composition.
+- **History**: Handled via middleware (`temporal`/`zundo`) or custom logic within the store, not a dedicated slice/middleware combination.

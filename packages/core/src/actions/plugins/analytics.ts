@@ -1,6 +1,5 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { Action, IActionPlugin } from '../../types/actions';
 import { ActionPriority } from '../priorities';
-import { IActionPlugin } from '../types';
 
 /**
  * Analytics plugin configuration
@@ -9,8 +8,8 @@ export interface IAnalyticsConfig {
     enabled: boolean;
     maxEvents: number;
     actionTypesToTrack?: string[];
-    filter?: (action: AnyAction) => boolean;
-    metadataExtractor?: (action: AnyAction) => Record<string, any>;
+    filter?: (action: Action) => boolean;
+    metadataExtractor?: (action: Action) => Record<string, any>;
 }
 
 /**
@@ -43,7 +42,7 @@ class AnalyticsCollector {
         this.config = { ...this.config, ...config };
     }
 
-    addEvent(action: AnyAction) {
+    addEvent(action: Action) {
         if (!this.config.enabled) return;
         if (this.config.actionTypesToTrack && !this.config.actionTypesToTrack.includes(action.type)) {
             return;
@@ -111,8 +110,8 @@ const analyticsCollector = new AnalyticsCollector();
 export const analyticsPlugin: IActionPlugin = {
     id: 'analytics',
     priority: ActionPriority.LOW,
-    actionTypes: null,
-    handler: (action: AnyAction) => {
+    actionTypes: null, // Track all actions
+    handler: (action: Action) => {
         analyticsCollector.addEvent(action);
     }
 };

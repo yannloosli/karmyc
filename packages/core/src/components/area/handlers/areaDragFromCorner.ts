@@ -28,7 +28,6 @@ const cornerDirections: Record<IntercardinalDirection, [CardinalDirection, Cardi
 // Removed parseCorner as directionParts wasn't used in Zustand logic
 
 // Function to determine if the movement is toward the inside of the area
-// Copied from the original Redux version
 function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2): boolean {
     switch (corner) {
     case "ne":

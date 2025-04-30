@@ -1,5 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
-import { IActionPlugin, TActionValidator } from '../../types/actions';
+import { Action, IActionPlugin, TActionValidator } from '../../types/actions';
 import { ActionPriority } from '../priorities';
 
 interface IValidationRule {
@@ -33,15 +32,15 @@ const validationRegistry = new ValidationRegistry();
 export const validationPlugin: IActionPlugin = {
     id: 'validation',
     priority: ActionPriority.CRITICAL,
-    actionTypes: null,
-    handler: (action: AnyAction) => {
+    actionTypes: null, // Handle all actions
+    handler: (action: Action) => {
         const rules = validationRegistry.getRulesForAction(action.type);
 
         for (const rule of rules) {
             const result = rule.validator(action);
             if (!result.valid) {
                 console.error(`Validation failed for ${action.type}: ${rule.message}`);
-                // Here we could dispatch an error action or handle the error differently
+                // Here we could trigger an error notification or handle the error differently
             }
         }
     }
@@ -56,7 +55,7 @@ export const predefinedRules = {
     area: {
         addArea: {
             actionType: 'area/addArea',
-            validator: (action: AnyAction) => {
+            validator: (action: Action) => {
                 if (!action.payload?.id) {
                     return { valid: false, message: 'Area ID required' };
                 }
@@ -69,7 +68,7 @@ export const predefinedRules = {
         },
         updateArea: {
             actionType: 'area/updateArea',
-            validator: (action: AnyAction) => {
+            validator: (action: Action) => {
                 if (!action.payload?.id) {
                     return { valid: false, message: 'Area ID required for update' };
                 }

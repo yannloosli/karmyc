@@ -1,5 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
-import { ActionPriority, IAction } from '../../types/actions';
+import { Action, ActionPriority, IActionPlugin } from '../../types/actions';
 
 /**
  * Liste des types d'actions qui doivent être enregistrés dans l'historique
@@ -23,12 +22,11 @@ const HISTORY_ACTION_TYPES = [
  * Plugin qui gère l'historique des actions
  * Enregistre les actions dans l'historique pour permettre l'undo/redo
  */
-export const historyPlugin: IAction = {
+export const historyPlugin: IActionPlugin = {
     id: 'history',
-    type: 'history',
     priority: ActionPriority.HIGH, // Priorité élevée pour s'exécuter avant d'autres plugins
-    actionTypes: HISTORY_ACTION_TYPES,
-    handler: (action: AnyAction) => {
+    actionTypes: HISTORY_ACTION_TYPES, // Liste des types d'actions à enregistrer
+    handler: (action: Action) => {
         // Enregistrer l'action dans l'historique
         const { type, payload } = action;
 

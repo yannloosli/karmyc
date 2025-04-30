@@ -1,4 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { KarmycAction } from '../types/actions';
 
 // Error types
 export enum ErrorType {
@@ -16,7 +16,7 @@ export interface IError {
     code: string;
     details?: Record<string, any>;
     timestamp: number;
-    action?: AnyAction;
+    action?: KarmycAction;
 }
 
 // Error handler
@@ -100,7 +100,7 @@ export const errorUtils = {
     },
 
     // Create a transition error
-    createTransitionError(message: string, action?: AnyAction, details?: Record<string, any>): IError {
+    createTransitionError(message: string, action?: KarmycAction, details?: Record<string, any>): IError {
         return {
             type: ErrorType.TRANSITION,
             message,
@@ -146,7 +146,7 @@ export const errorUtils = {
 };
 
 // Error middleware
-export const errorMiddleware = () => (next: any) => (action: AnyAction) => {
+export const errorMiddleware = () => (next: any) => (action: KarmycAction) => {
     try {
         return next(action);
     } catch (error) {

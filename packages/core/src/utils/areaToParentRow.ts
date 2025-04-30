@@ -1,4 +1,3 @@
-// Import AreaState from the correct store if needed, or just specific types
 // import { AreaState } from "../store/slices/areaSlice"; // REMOVE Redux import
 import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
 

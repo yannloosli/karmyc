@@ -1,43 +1,23 @@
 import { IGlobalMetrics, IPerformanceMetrics, performanceMonitor } from '@gamesberry/karmyc-core/actions/plugins/performance';
+import { Action } from '@gamesberry/karmyc-core/types/actions'; // Import local type
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-// Remove Redux hooks import
-// import { useDispatch, useSelector } from 'react-redux';
-import { AnyAction } from 'redux'; // Keep AnyAction for type consistency if needed by performanceMonitor
 
-// Étendre l'interface Window pour inclure les propriétés Redux (optionnel maintenant)
+// Étendre l'interface Window pour inclure les propriétés de monitoring
 declare global {
     interface Window {
-        // store?: any; // Supprimer pour corriger l'erreur linter et car non utilisé
-        __REDUX_DEVTOOLS_EXTENSION__?: any;
-        __actionLog?: AnyAction[];
+        __REDUX_DEVTOOLS_EXTENSION__?: any; // Pour DevTools Zustand
+        __actionLog?: Action[];
         monkeyPatchInstalled?: boolean;
         // Exposer patchedDispatch manuellement si besoin
-        patchedDispatch?: (action: AnyAction) => void;
+        patchedDispatch?: (action: Action) => void;
     }
 }
 
 /**
- * Example component démontrant le système de suivi de performance (adapté pour ne plus dépendre de Redux)
+ * Example component démontrant le système de suivi de performance avec Zustand
  */
 export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) => {
-    // const dispatch = useDispatch(); // Supprimer useDispatch
-    // const reduxConnected = useSelector((state: any) => Boolean(state)); // Supprimer useSelector
-
     const [debugMode, setDebugMode] = useState(false);
-    // Commenter ou supprimer l'analyse Redux spécifique
-    /*
-    const [reduxInfo, setReduxInfo] = useState<{
-        storeDetected: boolean;
-        dispatchMethod: string;
-        actionTypes: string[];
-        stateKeys: string[];
-    }>({
-        storeDetected: false,
-        dispatchMethod: "unknown",
-        actionTypes: [],
-        stateKeys: []
-    });
-    */
     const [interceptedActions, setInterceptedActions] = useState<string[]>([]);
     const actionCountRef = useRef(0);
 
@@ -88,94 +68,10 @@ export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) 
         }
     }, [debugMode]); // thresholdRef est stable
 
-    // Commenter ou supprimer l'analyse Redux spécifique
-    /*
-    useEffect(() => {
-        const analyzeReduxSetup = () => {
-            console.log("ANALYZING REDUX SETUP...");
-            const storeDetected = Boolean(window.store || reduxConnected);
-            let dispatchMethod = "unknown";
-            if (dispatch) { // dispatch n'existe plus ici
-                dispatchMethod = "useDispatch hook available";
-                try {
-                    dispatch({ type: '__REDUX_ANALYSIS_TEST__' });
-                    dispatchMethod += " (test dispatch sent)";
-                } catch (e) {
-                    dispatchMethod += ` (dispatch error: ${e})`;
-                }
-            }
-            const actionTypes: string[] = [];
-            if (window.__REDUX_DEVTOOLS_EXTENSION__) {
-                // ... (code inchangé)
-            }
-            let stateKeys: string[] = [];
-            try {
-                if (window.store?.getState) {
-                    const state = window.store.getState();
-                    stateKeys = Object.keys(state || {});
-                }
-            } catch (e) {
-                console.log("Error accessing Redux state:", e);
-            }
-            setReduxInfo({
-                storeDetected,
-                dispatchMethod,
-                actionTypes,
-                stateKeys
-            });
-            console.log("Redux Analysis Complete:", {
-                storeDetected,
-                dispatchMethod,
-                stateSlices: stateKeys
-            });
-        };
-        analyzeReduxSetup();
-    }, []); // dispatch et reduxConnected supprimés des dépendances
-    */
-
-    // Commenter ou supprimer l'installation du monkey patch Redux
-    /*
-    const installGlobalMonkeyPatch = useCallback(() => {
-        if (window.monkeyPatchInstalled) {
-            console.log("Monkey patch already installed, refreshing...");
-            return;
-        }
-        console.log("INSTALLING GLOBAL REDUX MONKEY PATCH");
-        try {
-            window.__actionLog = [];
-            if (window.store && window.store.dispatch) {
-                // ... (logique de patch)
-            } else {
-                console.log("WARNING: window.store not found, skipping patch");
-            }
-            // ... (reste de la logique de patch, script, etc.)
-            const patchedDispatch = (action: AnyAction) => {
-                console.log(`LOCAL PATCHED DISPATCH[${++actionCountRef.current}]:`, action);
-                setInterceptedActions(prev => [action.type, ...prev].slice(0, 10));
-                // Suivre manuellement avec performanceMonitor
-                performanceMonitor.startTracking(action);
-                // Ne plus appeler le dispatch original ici car il n'existe plus
-                // const result = dispatch(action);
-                setTimeout(() => {
-                    performanceMonitor.endTracking(action, true);
-                    updateAllMetrics();
-                }, 20);
-                // return result; // Ne retourne rien
-            };
-            window.patchedDispatch = patchedDispatch;
-            window.monkeyPatchInstalled = true;
-            // ... (tests)
-            alert("Redux global interceptor installed (limited functionality without dispatch).");
-        } catch (error) {
-            console.error("CRITICAL ERROR installing global Redux monkey patch:", error);
-            alert("Failed to install Redux interceptor: " + error);
-        }
-    }, [updateAllMetrics]);
-    */
     // Placeholder si la fonction est toujours appelée par l'UI
     const installGlobalMonkeyPatch = useCallback(() => {
-        alert("Redux monkey patch functionality is disabled in Zustand migration.");
-        console.warn("Attempted to install Redux monkey patch, but it's disabled.");
+        alert("Fonctionnalité d'interception désactivée dans la migration Zustand.");
+        console.warn("Tentative d'installation d'interception, mais celle-ci est désactivée.");
     }, [])
 
     useEffect(() => {
@@ -298,52 +194,8 @@ export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) 
 
     return (
         <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-            <h2>Performance Monitoring Example (Zustand Adapted)</h2>
+            <h2>Performance Monitoring Example (Zustand)</h2>
 
-            {/* Informations Redux commentées ou supprimées */}
-
-            <div style={{ padding: '12px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '16px', margin: '0 0 8px 0' }}>Informations Redux (Désactivé)</h3>
-                <div style={{ fontSize: '14px' }}>
-                    <p style={{ margin: '4px 0' }}>
-                        <strong>Store détecté:</strong> {/* reduxInfo.storeDetected ? '✅ Oui' : '❌ Non' */}
-                    </p>
-                    <p style={{ margin: '4px 0' }}>
-                        <strong>Méthode dispatch:</strong> {/* reduxInfo.dispatchMethod */}
-                    </p>
-                    <p style={{ margin: '4px 0' }}>
-                        <strong>Slices d'état:</strong> {/* reduxInfo.stateKeys.join(', ') || 'Aucune' */}
-                    </p>
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                        <button
-                            onClick={installGlobalMonkeyPatch}
-                            style={{ // Styles du bouton (ou utiliser une classe)
-                                padding: '6px 12px',
-                                background: '#dc3545',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}>
-                            Installer l'intercepteur global (Désactivé)
-                        </button>
-                        <button
-                            onClick={testManualDispatch} // Ceci appelle maintenant la version adaptée
-                            style={{ // Styles du bouton (ou utiliser une classe)
-                                padding: '6px 12px',
-                                background: '#ffc107',
-                                color: 'black',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}>
-                            Tester suivi manuel
-                        </button>
-                    </div>
-                </div >
-            </div >
-
-            {/* Contrôles principaux */}
             <div style={{ marginBottom: '16px' }}>
                 <button
                     onClick={handleToggleMonitoring}
@@ -387,44 +239,23 @@ export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) 
                     {debugMode ? 'Désactiver Debug' : 'Activer Debug'}
                 </button>
                 <button
-                    onClick={testManualDispatch} // Bouton pour tester le suivi manuel
+                    onClick={testManualDispatch}
                     style={{
-                        padding: '6px 12px',
-                        marginLeft: '8px', // Ajout de marge
-                        background: '#63b3ed', // Couleur bleue
-                        color: 'white',
+                        padding: '8px 16px',
+                        background: '#ffc107',
+                        color: 'black',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: 'pointer'
-                    }}
-                >
+                        marginLeft: '8px'
+                    }}>
                     Tester suivi manuel
                 </button>
             </div>
-
-            {/* Section des actions (simulées) */}
-            {/*
-            <div style={{ marginBottom: '16px', padding: '12px', background: interceptedActions.length > 0 ? '#f0f9ff' : '#fff5f5', border: `1px solid ${interceptedActions.length > 0 ? '#bee3f8' : '#fed7d7'}`, borderRadius: '4px' }}>
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>Actions interceptées (Désactivé):</h3>
-                {interceptedActions.length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {interceptedActions.map((action, index) => (
-                            <li key={index}>{action}</li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p style={{ margin: '4px 0', color: '#e53e3e' }}>
-                        Interception Redux désactivée.
-                    </p>
-                )}
-            </div>
-            */}
 
             <div style={{ marginBottom: '10px', fontSize: '12px', color: '#666' }}>
                 Compteur d'actions suivies: {globalMetrics.totalActions || 0}, Métriques: {metrics.length}, Mise à jour: {forceUpdateCounter}
             </div>
 
-            {/* Métriques globales */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
                 <div style={{ /* Styles pour les cartes de métriques */ padding: '16px', background: '#f9f9f9', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#4a5568' }}>Actions totales</h3>
@@ -438,16 +269,8 @@ export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) 
                     <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#4a5568' }}>Taux d'erreur</h3>
                     <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2d3748' }}>{globalMetrics.totalActions > 0 ? ((globalMetrics.errors || 0) / globalMetrics.totalActions * 100).toFixed(1) : '0'}%</div>
                 </div>
-                {/* Actions/Minute peut être moins pertinent sans suivi continu */}
-                {/*
-                <div style={{ padding: '16px', background: '#f9f9f9', borderRadius: '4px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#4a5568' }}>Actions/Minute</h3>
-                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#2d3748' }}> ... </div>
-                </div>
-                */}
             </div>
 
-            {/* Actions de test */}
             <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ marginBottom: '12px' }}>Actions de test (pour Performance Monitor)</h3>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -457,7 +280,6 @@ export const PerformanceExample: React.FC<{ areaState: any }> = ({ areaState }) 
                 </div>
             </div>
 
-            {/* Infos de diagnostic adaptées */}
             <div style={{ marginTop: '24px', padding: '16px', background: '#f8f9fa', border: '1px solid #dee2e6', borderRadius: '4px' }}>
                 <h3 style={{ fontSize: '16px', margin: '0 0 12px 0' }}>Diagnostic</h3>
                 <p style={{ fontSize: '14px', margin: '0 0 8px 0' }}>

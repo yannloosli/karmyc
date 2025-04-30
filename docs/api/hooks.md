@@ -48,7 +48,6 @@ function App() {
 | plugins | `Array` | List of plugin objects to enable | `[]` |
 | validators | `Array` | Custom validators for actions | `[]` |
 | initialAreas | `Array` | Initial areas to create | `[]` |
-| customReducers | `Record<string, Reducer>` | Custom Redux reducers | `{}` |
 | keyboardShortcutsEnabled | `boolean` | Enable keyboard shortcuts | `true` |
 
 #### Return Value
@@ -208,49 +207,6 @@ function AreaManager() {
 | updateAreaState | `Function` | Updates an area's state |
 | setActive | `Function` | Sets the active area by ID |
 
-## Action Management
-
-### useRegisterAction
-
-Registers an action handler.
-
-```typescript
-import { useRegisterAction } from '@gamesberry/karmyc-core';
-
-function ActionRegistration() {
-  useRegisterAction(
-    'my-plugin',
-    ['area.create', 'area.remove'],
-    (action, getState, dispatch) => {
-      return action;
-    }
-  );
-  
-  return null;
-}
-```
-
-### useActions
-
-Provides a way to dispatch actions with the correct type.
-
-```typescript
-import { useActions } from '@gamesberry/karmyc-core';
-
-function ActionButton() {
-  const { dispatchAction } = useActions();
-  
-  const handleClick = () => {
-    dispatchAction({
-      type: 'area.create',
-      payload: { areaType: 'text-note', state: { content: 'Created from button' } }
-    });
-  };
-  
-  return <button onClick={handleClick}>Create Note</button>;
-}
-```
-
 ## Context Menu Management
 
 ### useContextMenu
@@ -358,3 +314,11 @@ export default function App() {
   );
 }
 ``` 
+
+## Integration with State Management (Zustand)
+
+Karmyc Core now uses Zustand for state management. Components interact with the state stores using specific hooks provided by each store (e.g., `useAreaStore`, `useContextMenuStore`).
+
+See the [Zustand Store Architecture](./../architecture/store.md) document for details on the available stores, their state, actions, and how to use them within React components.
+
+## Store Configuration

@@ -1,11 +1,8 @@
 import { useEffect } from 'react';
 import { actionRegistry } from '../actions/registry';
 import { IInitializeOptions } from '../types/karmyc';
-import { useAppDispatch } from './index';
 
 export function useInitialize(options: IInitializeOptions = {}) {
-    const dispatch = useAppDispatch();
-
     useEffect(() => {
         // Register plugins
         const pluginIds: string[] = [];
@@ -29,5 +26,5 @@ export function useInitialize(options: IInitializeOptions = {}) {
                 actionRegistry.unregisterPlugin(id);
             });
         };
-    }, [dispatch, options]);
+    }, [options]);
 } 

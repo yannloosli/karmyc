@@ -49,7 +49,7 @@ export const useContextMenuStore = create<ContextMenuState>()(
             set((state) => {
                 const { position, items, targetId, metadata } = payload;
 
-                // Validation (similar to Redux slice)
+                // Validation
                 const positionValidation = validatePosition(position);
                 if (!positionValidation.isValid) {
                     console.warn('Position validation failed:', positionValidation.errors);

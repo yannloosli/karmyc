@@ -1,11 +1,5 @@
 import { useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-    closeContextMenu,
-    openContextMenu,
-    selectContextMenuPosition,
-    selectContextMenuVisible,
-} from '../store/slices/contextMenuSlice';
+import { useContextMenuStore } from '../stores/contextMenuStore';
 import { ContextMenuItem } from '../types/contextMenu';
 
 /**
@@ -13,11 +7,11 @@ import { ContextMenuItem } from '../types/contextMenu';
  * Provides simplified functions to open and close the context menu
  */
 export const useContextMenu = () => {
-    const dispatch = useDispatch();
-
     // Selectors
-    const isVisible = useSelector(selectContextMenuVisible);
-    const position = useSelector(selectContextMenuPosition);
+    const isVisible = useContextMenuStore((state) => state.isVisible);
+    const position = useContextMenuStore((state) => state.position);
+    const openAction = useContextMenuStore((state) => state.openContextMenu);
+    const closeAction = useContextMenuStore((state) => state.closeContextMenu);
 
     // Actions
     const open = useCallback((params: {
@@ -26,12 +20,12 @@ export const useContextMenu = () => {
         targetId?: string;
         metadata?: Record<string, any>;
     }) => {
-        dispatch(openContextMenu(params));
-    }, [dispatch]);
+        openAction(params);
+    }, [openAction]);
 
     const close = useCallback(() => {
-        dispatch(closeContextMenu());
-    }, [dispatch]);
+        closeAction();
+    }, [closeAction]);
 
     return {
         // State

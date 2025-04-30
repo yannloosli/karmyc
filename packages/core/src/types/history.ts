@@ -1,4 +1,4 @@
-import { AnyAction } from '@reduxjs/toolkit';
+import { KarmycAction } from './actions';
 
 /**
  * Options for the history system
@@ -12,7 +12,7 @@ export interface IHistoryOptions {
     jumpToPastType?: string;
     includeActions?: string[];
     excludeActions?: string[];
-    groupBy?: (action: AnyAction) => string;
+    groupBy?: (action: KarmycAction) => string;
 }
 
 /**
@@ -90,4 +90,13 @@ export interface HistoryState {
     currentIndex: number;
     isUndoing: boolean;
     isRedoing: boolean;
+}
+
+/**
+ * Configuration de l'historique
+ */
+export interface HistoryConfig<S = any> {
+    maxHistorySize?: number;
+    filter?: (action: KarmycAction, currentState: S, previousHistory: any) => boolean;
+    groupBy?: (action: KarmycAction) => string;
 } 

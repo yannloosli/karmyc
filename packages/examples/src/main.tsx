@@ -6,7 +6,7 @@ import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
 import { debounce } from 'lodash';
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { App } from "./App"; // Re-enabled App import
 
 // Remplacer l'accès au store Redux par Zustand
 const getAreaState = () => useAreaStore.getState();
@@ -124,7 +124,7 @@ if (typeof window !== 'undefined') {
 }
 
 const Root: React.FC = () => {
-    // Initialiser Karmyc avec la configuration
+    // Initialiser Karmyc avec la configuration - Re-enabled
     const config = useKarmyc({
         enableLogging: true,
         plugins: [],
@@ -140,6 +140,7 @@ const Root: React.FC = () => {
         <KarmycProvider options={config}>
             <App />
         </KarmycProvider>
+        // Remove ThemeProvider and related isolation code
     );
 };
 
