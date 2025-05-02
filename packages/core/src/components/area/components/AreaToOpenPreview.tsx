@@ -77,14 +77,16 @@ interface OwnProps {
 }
 
 export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
-    const areaToOpen = useAreaStore(s => s.areaToOpen);
-    const layout = useAreaStore(s => s.layout as LayoutMap);
-    const rootId = useAreaStore(s => s.rootId);
-    const areas = useAreaStore(s => s.areas as AreasMap);
+    // Lire chaque partie de l'état séparément pour éviter les problèmes de référence d'objet
+    const areaToOpen = useAreaStore(state => state.screens[state.activeScreenId]?.areas.areaToOpen);
+    const layout = useAreaStore(state => (state.screens[state.activeScreenId]?.areas.layout || {}) as LayoutMap);
+    const rootId = useAreaStore(state => state.screens[state.activeScreenId]?.areas.rootId || null);
+    const areas = useAreaStore(state => (state.screens[state.activeScreenId]?.areas.areas || {}) as AreasMap);
 
-    const updateAreaToOpenPosition = useAreaStore(s => s.updateAreaToOpenPosition);
-    const clearAreaToOpen = useAreaStore(s => s.cleanupTemporaryStates);
-    const finalizeAreaPlacement = useAreaStore(s => s.finalizeAreaPlacement);
+    // Actions
+    const updateAreaToOpenPosition = useAreaStore(state => state.updateAreaToOpenPosition);
+    const finalizeAreaPlacement = useAreaStore(state => state.finalizeAreaPlacement);
+    const cleanupTemporaryStates = useAreaStore(state => state.cleanupTemporaryStates);
 
     const rafRef = useRef<number | undefined>(undefined);
     const isUpdatingRef = useRef(false);
@@ -158,7 +160,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
         const sourceData = JSON.parse(e.dataTransfer.getData('text/plain'));
         if (!sourceData || sourceData.type !== 'menubar') { // Only handle menubar drops for now
             console.warn('[AreaToOpenPreview] handleDrop - Invalid or missing source data');
-            clearAreaToOpen();
+            cleanupTemporaryStates();
             return;
         }
 
@@ -187,7 +189,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
 
         if (!targetAreaId) {
             console.log('[AreaToOpenPreview] handleDrop - No valid drop target found under cursor, cleaning up.');
-            clearAreaToOpen();
+            cleanupTemporaryStates();
             return;
         }
 
@@ -203,10 +205,10 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
             finalizeAreaPlacement();
         } catch (error) {
             console.error('[AreaToOpenPreview] handleDrop - Error during finalization:', error);
-            clearAreaToOpen();
+            cleanupTemporaryStates();
         }
         // No need to explicitly null dragRef here, handleDragEnd on the source will do it.
-    }, [clearAreaToOpen, finalizeAreaPlacement, updatePosition, s /* s is needed for class check */]);
+    }, [cleanupTemporaryStates, finalizeAreaPlacement, updatePosition, s /* s is needed for class check */]);
 
     const placement = useMemo(() => {
         if (!areaToOpen || !areaToOpenTargetViewport) return 'replace';

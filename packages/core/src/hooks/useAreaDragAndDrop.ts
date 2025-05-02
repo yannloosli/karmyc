@@ -99,7 +99,6 @@ const useAreaDragAndDrop = () => {
         // Check if the drag lasted long enough
         const dragDuration = Date.now() - lastUpdateRef.current;
         if (dragDuration < 100) {
-            console.log('useAreaDragAndDrop - Drag too short, ignored');
             return;
         }
 

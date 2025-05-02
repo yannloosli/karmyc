@@ -1,5 +1,5 @@
 import { areaRegistry } from '@gamesberry/karmyc-core/area/registry';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
+import { useKarmycStore } from '@gamesberry/karmyc-core/stores/areaStore';
 import { useContextMenuStore } from '@gamesberry/karmyc-core/stores/contextMenuStore';
 
 interface ContextMenuItem {
@@ -10,8 +10,8 @@ interface ContextMenuItem {
 }
 
 export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
-    const area = useAreaStore((state) => state.areas[areaId]);
-    const areaToOpen = useAreaStore((state) => state.areaToOpen);
+    const area = useKarmycStore((state) => state.getAreaById(areaId));
+    const areaToOpen = useKarmycStore((state) => state.screens[state.activeScreenId]?.areas.areaToOpen);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
     // Special case for area preview (ID -1)
@@ -48,7 +48,7 @@ export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
 
     // If area doesn't exist, return empty menu
     if (!area) {
-        console.warn(`Area ${areaId} not found in Zustand state`);
+        console.warn(`Area ${areaId} not found in active screen state`);
         return [];
     }
 

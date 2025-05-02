@@ -52,7 +52,7 @@ function simpleDragHandler(
 }
 
 export const handleDragAreaResize = (
-    initialEvent: React.MouseEvent,
+    initialEvent: MouseEvent,
     row: AreaRowLayout,
     horizontal: boolean,
     areaIndex: number, // 1 is the first separator
@@ -69,25 +69,30 @@ export const handleDragAreaResize = (
         return;
     }
 
-    // Retirer la référence au separatorElement, plus nécessaire pour la manip directe
-    // const separatorElement = initialEvent.currentTarget as HTMLDivElement;
+    // --- Récupérer l'état de l'écran actif au début --- 
+    const initialRootState = useAreaStore.getState();
+    const initialActiveScreenId = initialRootState.activeScreenId;
+    const initialActiveScreenAreas = initialRootState.screens[initialActiveScreenId]?.areas;
 
-    const initialAreaState = useAreaStore.getState();
-    if (!initialAreaState || !initialAreaState.layout || !initialAreaState.rootId) {
-        console.error("Invalid area state for resize (Zustand):", initialAreaState);
+    if (!initialActiveScreenAreas || !initialActiveScreenAreas.layout || !initialActiveScreenAreas.rootId) {
+        console.error("Invalid active screen area state for resize:", initialActiveScreenAreas);
         return;
     }
+    // Utiliser ces états spécifiques pour la suite
+    const activeLayout = initialActiveScreenAreas.layout;
+    const activeRootId = initialActiveScreenAreas.rootId;
+    // --- Fin récupération état actif ---
 
-    // Calculs initiaux basés sur l'état Zustand
-    const rowToMinSize = computeAreaRowToMinSize(initialAreaState.rootId, initialAreaState.layout);
+    // Calculs initiaux basés sur l'état de l'écran actif
+    const rowToMinSize = computeAreaRowToMinSize(activeRootId, activeLayout);
     const rootViewport = getAreaRootViewport();
     if (!rootViewport) {
         console.error("Unable to get root viewport");
         return;
     }
     const initialAreaToViewport = computeAreaToViewport(
-        initialAreaState.layout,
-        initialAreaState.rootId,
+        activeLayout,
+        activeRootId,
         rootViewport,
     );
 
@@ -107,10 +112,10 @@ export const handleDragAreaResize = (
     }
 
     const getMinSize = (id: string) => {
-        const layout = initialAreaState.layout[id];
-        if (!layout) return 1;
-        if (layout.type === "area") return 1;
-        const minSize = rowToMinSize[layout.id];
+        const layoutItem = activeLayout[id];
+        if (!layoutItem) return 1;
+        if (layoutItem.type === "area") return 1;
+        const minSize = rowToMinSize[layoutItem.id];
         return horizontal ? (minSize?.width ?? 1) : (minSize?.height ?? 1);
     };
 
@@ -145,7 +150,7 @@ export const handleDragAreaResize = (
     let lastT = 0.5; // Initialiser
     let latestFinalPercentages: number[] | null = null;
 
-    let lastVec = Vec2.fromEvent(initialEvent.nativeEvent as any);
+    let lastVec = Vec2.fromEvent(initialEvent);
 
     // --- Gestion du Debounce sans Hooks ---
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -205,7 +210,7 @@ export const handleDragAreaResize = (
                 latestFinalPercentages = row.areas.map((area, i) => {
                     if (i === areaIndex - 1) return tempFinalSizes[0];
                     if (i === areaIndex) return tempFinalSizes[1];
-                    const initialRowState = initialAreaState.layout[row.id] as AreaRowLayout | undefined;
+                    const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;
                     return initialRowState?.areas?.[i]?.size || 0;
                 });
                 const sum = latestFinalPercentages.reduce((a, b) => a + b, 0);
@@ -233,7 +238,7 @@ export const handleDragAreaResize = (
             let finalPercentages = row.areas.map((area, i) => {
                 if (i === areaIndex - 1) return finalCalculatedSizes[0];
                 if (i === areaIndex) return finalCalculatedSizes[1];
-                const initialRowState = initialAreaState.layout[row.id] as AreaRowLayout | undefined;
+                const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;
                 return initialRowState?.areas?.[i]?.size || 0;
             });
             const finalSum = finalPercentages.reduce((a, b) => a + b, 0);

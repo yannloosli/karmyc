@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
-
 import { TOOLBAR_HEIGHT } from '@gamesberry/karmyc-core/constants';
+import React, { useCallback } from 'react';
+// Importer le nouveau composant
+import { ScreenSwitcher } from './ScreenSwitcher';
 
 // Type to uniquely identify a component
 type ComponentIdentifier = {
@@ -92,39 +93,65 @@ export const StatusBar: React.FC<StatusBarProps> = ({ areaId, areaState, areaTyp
     const centerComponents = components.filter(c => c.alignment === 'center');
     const rightComponents = components.filter(c => c.alignment === 'right');
 
+    // Définir le style de base pour la barre de statut
+    const statusBarStyle: React.CSSProperties = {
+        height: TOOLBAR_HEIGHT + 'px',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 8px', // Ajouter un peu de padding
+        background: '#222', // Fond sombre
+        color: '#ccc', // Texte clair
+        fontSize: '12px',
+        borderTop: '1px solid #444' // Ligne de séparation
+    };
+
+    // Définir le style pour les sections
+    const sectionStyle: React.CSSProperties = {
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+    };
+
     return (
-        <div className="area-status-bar" style={{
-            height: TOOLBAR_HEIGHT + 'px',
-        }}>
-            <div className="area-status-bar-section left" style={{ flex: 1, display: 'flex', gap: '8px' }}>
+        <div className="karmyc-status-bar" style={statusBarStyle}>
+            {/* Section Gauche */}
+            <div className="karmyc-status-bar-section left" style={{ ...sectionStyle, justifyContent: 'flex-start' }}>
                 {leftComponents.map((item, index) => {
                     const Component = item.component;
                     return (
-                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="area-status-bar-item" style={{ width: item.width }}>
+                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="karmyc-status-bar-item" style={{ width: item.width }}>
                             <Component areaId={areaId} areaState={areaState} />
                         </div>
                     );
                 })}
             </div>
-            <div className="area-status-bar-section center" style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: '8px' }}>
+
+            {/* Section Centre */}
+            <div className="karmyc-status-bar-section center" style={{ ...sectionStyle, justifyContent: 'center' }}>
                 {centerComponents.map((item, index) => {
                     const Component = item.component;
                     return (
-                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="area-status-bar-item" style={{ width: item.width }}>
+                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="karmyc-status-bar-item" style={{ width: item.width }}>
                             <Component areaId={areaId} areaState={areaState} />
                         </div>
                     );
                 })}
             </div>
-            <div className="area-status-bar-section right" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+
+            {/* Section Droite - Ajouter le ScreenSwitcher conditionnellement */}
+            <div className="karmyc-status-bar-section right" style={{ ...sectionStyle, justifyContent: 'flex-end' }}>
+                {/* Composants enregistrés pour la droite */}
                 {rightComponents.map((item, index) => {
                     const Component = item.component;
                     return (
-                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="area-status-bar-item" style={{ width: item.width }}>
+                        <div key={`${item.identifier.type}-${item.identifier.name}-${index}`} className="karmyc-status-bar-item" style={{ width: item.width }}>
                             <Component areaId={areaId} areaState={areaState} />
                         </div>
                     );
                 })}
+                {/* Afficher le ScreenSwitcher SEULEMENT si areaType est "app" */}
+                {areaType === 'app' && <ScreenSwitcher />}
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction, useRef } from "react";
 import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../../../constants";
-import { useAreaStore } from "../../../stores/areaStore";
+import { useKarmycStore } from "../../../stores/areaStore";
 import { cssZIndex } from "../../../styles/cssVariables";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { Rect } from "../../../types/geometry";
@@ -40,10 +40,10 @@ interface OwnProps {
 type Props = OwnProps;
 
 export const AreaRowSeparators: React.FC<Props> = props => {
-    // Extraire setResizePreview des props
     const { row, areaToViewport, setResizePreview } = props;
-    const layout = useAreaStore(state => state.layout);
-    const rootId = useAreaStore(state => state.rootId);
+    const setRowSizes = useKarmycStore(state => state.setRowSizes);
+    const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout ?? {});
+    const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
     const viewportsRef = useRef(areaToViewport);
 
     // Basic validation before continuing
@@ -125,8 +125,8 @@ export const AreaRowSeparators: React.FC<Props> = props => {
 
         const handleMouseDown = (e: React.MouseEvent) => {
             e.stopPropagation();
-            // Passer setResizePreview à la fonction handler
-            handleDragAreaResize(e, row, horizontal, i + 1, setResizePreview);
+            // Passer setResizePreview ET setRowSizes à la fonction handler
+            handleDragAreaResize(e.nativeEvent, row, horizontal, i + 1, setResizePreview, setRowSizes);
         };
 
         separators.push(

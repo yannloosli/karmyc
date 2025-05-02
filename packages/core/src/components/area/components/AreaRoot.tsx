@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useLoadingState } from "../../../hooks/useLoadingState";
-import { useAreaStore } from "../../../stores/areaStore";
+import { useKarmycStore } from "../../../stores/areaStore";
 import AreaRootStyles from "../../../styles/AreaRoot.styles";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { computeAreaToViewport } from "../../../utils/areaToViewport";
@@ -29,20 +29,20 @@ interface ResizePreviewState {
     t: number;
 }
 
-// Remove RootInfo interface if not needed
-// interface RootInfo { ... }
+// Helper function to select active screen area state
+const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getState>) => {
+    return state.screens[state.activeScreenId]?.areas;
+};
 
 const AreaRoot: React.FC = () => {
-    const rootId = useAreaStore((state) => state.rootId);
-    const layout = useAreaStore((state) => state.layout);
-    const joinPreview = useAreaStore((state) => state.joinPreview);
-    const areaToOpen = useAreaStore((state) => state.areaToOpen);
-    // Supprimer la lecture depuis le store global
-    // const resizePreview = useAreaStore((state) => state.resizePreview);
+    // Selectors for active screen state
+    const rootId = useKarmycStore(state => selectActiveScreenAreas(state)?.rootId);
+    const layout = useKarmycStore(state => selectActiveScreenAreas(state)?.layout ?? {}); // Default to {} if undefined
+    const joinPreview = useKarmycStore(state => selectActiveScreenAreas(state)?.joinPreview);
+    const areaToOpen = useKarmycStore(state => selectActiveScreenAreas(state)?.areaToOpen);
 
     const [viewportMap, setViewportMap] = useState<{ [areaId: string]: Rect }>({});
     const [viewport, setViewport] = useState(getAreaRootViewport());
-    // Réintroduire l'état local pour le preview
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
     const { isLoading: loadingStateIsLoading } = useLoadingState('area-root');
 
@@ -57,24 +57,22 @@ const AreaRoot: React.FC = () => {
 
     // Effect for viewport calculation
     useEffect(() => {
-        const layoutSize = Object.keys(layout || {}).length;
-        const currentRootItem = rootId ? layout?.[rootId] : null;
+        const layoutSize = Object.keys(layout).length; // layout is now guaranteed to be an object
+        const currentRootItem = rootId ? layout[rootId] : null;
 
-        // Ne pas calculer si resize en cours, le calcul se fera via getAreaVisualViewport
         if (resizePreview) {
             return;
         }
 
         if (!rootId || !currentRootItem || layoutSize === 0) {
-            // S'assurer que viewportMap est vidé s'il n'y a plus rien à afficher
             if (Object.keys(viewportMap).length > 0) setViewportMap({});
             return;
         }
 
         try {
+            // computeAreaToViewport expects non-null layout and rootId here
             const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
 
-            // Comparaison profonde pour éviter re-rendus inutiles si l'objet est structurellement identique
             if (JSON.stringify(viewportMap) !== JSON.stringify(newViewportMap)) {
                 setViewportMap(newViewportMap);
             }
@@ -83,7 +81,6 @@ const AreaRoot: React.FC = () => {
             console.error("[AreaRoot] Erreur lors du calcul du viewportMap:", error);
             setViewportMap({});
         }
-        // AJOUTER resizePreview aux dépendances
     }, [layout, rootId, viewport, resizePreview]);
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
@@ -95,6 +92,7 @@ const AreaRoot: React.FC = () => {
 
         let parentRow: AreaRowLayout | undefined;
         let areaIndexInRow: number = -1;
+        // Filter/find on the layout object (already for the active screen)
         parentRow = Object.values(layout)
             .filter((item): item is AreaRowLayout => item.type === 'area_row')
             .find(row => {
@@ -110,27 +108,21 @@ const AreaRoot: React.FC = () => {
         const sepIndex = resizePreview.separatorIndex;
 
         if (areaIndexInRow === sepIndex - 1 || areaIndexInRow === sepIndex) {
-            // --- Retirer le DEBUG et remettre la logique de calcul corrigée ---
-            // console.log(`[VisViewport] ${areaId}: DEBUG - Is adjacent, forcing return of base viewport.`);
-            // return baseViewport;
-            // --- Fin DEBUG ---
-
-            // --- Logique de calcul originale (corrigée) ---
             const siblingIndex = areaIndexInRow === sepIndex - 1 ? sepIndex : sepIndex - 1;
             const siblingId = parentRow.areas[siblingIndex]?.id;
             if (!siblingId) return baseViewport;
+            // siblingViewport must also be fetched from the current viewportMap
             const siblingViewport = viewportMap[siblingId];
             if (!siblingViewport) return baseViewport;
             const isFirst = areaIndexInRow === sepIndex - 1;
             const t = resizePreview.t;
+            // Parent viewport also from current map
             const parentViewport = viewportMap[parentRow.id];
             if (!parentViewport) return baseViewport;
 
-            // Viewport de la première et deuxième zone adjacente
             const vp0 = isFirst ? baseViewport : siblingViewport;
             const vp1 = isFirst ? siblingViewport : baseViewport;
 
-            // Calculer le viewport partagé total
             const sharedRect: Rect = {
                 left: vp0.left,
                 top: vp0.top,
@@ -140,23 +132,19 @@ const AreaRoot: React.FC = () => {
 
             if (parentRow.orientation === 'horizontal') {
                 const totalPixelWidth = sharedRect.width;
-                // Calculer la largeur en pixels de la 1ère zone basée sur t
                 const newPixelWidth0 = Math.max(0, Math.floor(totalPixelWidth * t));
-                // La 2ème zone prend le reste
                 const newPixelWidth1 = Math.max(0, totalPixelWidth - newPixelWidth0);
 
-                // Déterminer la largeur et le left pour la zone ACTUELLE (areaId)
                 const newWidth = isFirst ? newPixelWidth0 : newPixelWidth1;
                 const newLeft = isFirst ? sharedRect.left : sharedRect.left + newPixelWidth0;
 
                 if (isNaN(newWidth) || isNaN(newLeft)) {
                     console.warn(`[VisViewport] ${areaId}: NaN detected in horizontal calc.`);
-                    return baseViewport; // Retourner base si calcul invalide
+                    return baseViewport;
                 }
-                // Retourner le nouveau viewport pour cette zone
                 return { ...baseViewport, width: newWidth, left: newLeft };
 
-            } else { // Cas vertical
+            } else { // Vertical
                 const totalPixelHeight = sharedRect.height;
                 const newPixelHeight0 = Math.max(0, Math.floor(totalPixelHeight * t));
                 const newPixelHeight1 = Math.max(0, totalPixelHeight - newPixelHeight0);
@@ -170,7 +158,6 @@ const AreaRoot: React.FC = () => {
                 }
                 return { ...baseViewport, height: newHeight, top: newTop };
             }
-            // --- Fin logique corrigée ---
         }
         return baseViewport;
     }, [layout, viewportMap, resizePreview]);
@@ -179,7 +166,8 @@ const AreaRoot: React.FC = () => {
         return <LoadingIndicator />;
     }
 
-    const currentRootItem = rootId ? layout?.[rootId] : null;
+    // Use the layout directly, already defaults to {} if undefined
+    const currentRootItem = rootId ? layout[rootId] : null;
 
     if (!rootId || !currentRootItem) {
         return <EmptyAreaMessage />;
@@ -187,16 +175,15 @@ const AreaRoot: React.FC = () => {
 
     return (
         <div className={s('root')}>
-            {/* Iterate over ALL layout items to find rows and render their separators */}
+            {/* Iterate over the active screen's layout */}
             {Object.values(layout).map((item) => {
                 if (item.type === 'area_row') {
                     const rowLayout = item as AreaRowLayout;
-                    // Check if all children of THIS row have viewports
                     const areChildrenReady = rowLayout.areas.every(area => viewportMap[area.id]);
                     if (areChildrenReady) {
                         return (
                             <AreaRowSeparators
-                                key={item.id} // Use row id as key
+                                key={item.id}
                                 areaToViewport={viewportMap}
                                 row={rowLayout}
                                 setResizePreview={setResizePreview}
@@ -207,22 +194,24 @@ const AreaRoot: React.FC = () => {
                 return null;
             })}
 
-            {/* Render Areas (keep existing logic) */}
+            {/* Render Areas using the active screen's layout */}
             {Object.entries(layout).map(([id, item]) => {
                 const visualViewport = getAreaVisualViewport(id);
+                // Only render if it's an area AND has a calculated viewport
                 if (item.type === 'area' && visualViewport) {
                     return (
                         <Area
                             key={id}
                             id={id}
                             viewport={visualViewport}
-                            setResizePreview={setResizePreview}
+                            setResizePreview={setResizePreview} // Pass down setResizePreview
                         />
                     );
                 }
                 return null;
             })}
 
+            {/* Join Preview and AreaToOpen Preview use data from active screen state */}
             {joinPreview && joinPreview.areaId && viewportMap[joinPreview.areaId] && (
                 <JoinAreaPreview
                     viewport={viewportMap[joinPreview.areaId]}

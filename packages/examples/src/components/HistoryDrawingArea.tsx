@@ -2,14 +2,13 @@
 // import { addHistoryEntry, hasFutureEntriesForSpace, hasPastEntriesForSpace, redo, undo } from '@gamesberry/karmyc-core/store/slices/historySlice'; // Comment out history actions
 // import { addDrawingLineToSpace, selectSpaceSharedState, setDrawingLinesForSpace, setDrawingStrokeWidthForSpace, Space } from '@gamesberry/karmyc-core/store/slices/spaceSlice'; // Comment out space slice specific actions/selectors
 import { useSpace } from '@gamesberry/karmyc-core/hooks/useSpace'; // Re-introduce useSpace
-import { AreaState, useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { Space, SpaceState, useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore';
+import { useKarmycStore } from '@gamesberry/karmyc-core/stores/areaStore';
+import { Space, SpaceSharedState, SpaceState, useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow'; // Import shallow
-import { useStoreWithEqualityFn } from 'zustand/traditional'; // Import hook with equality function support
+import { useStoreWithEqualityFn } from 'zustand/traditional'; // Import useStoreWithEqualityFn
 // Import Line using package alias
-import { SpaceSharedState } from '@gamesberry/karmyc-core/stores/spaceStore'; // Import the actual type
 import { Line } from '@gamesberry/karmyc-core/types/drawingTypes';
 
 // Keep DrawingState interface if needed, or remove if unused
@@ -40,8 +39,11 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
     viewport
 }) => {
     // const dispatch = useAppDispatch(); // Comment out dispatch
-    const updateArea = useAreaStore((s: AreaState) => s.updateArea); // Use Zustand store action
-    const currentArea = useAreaStore((s: AreaState) => s.getAreaById(id)); // Get current area data
+    const updateArea = useKarmycStore(state => state.updateArea);
+    const currentArea = useKarmycStore(state => {
+        const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+        return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;
+    });
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentLinePoints, setCurrentLinePoints] = useState<{ x: number; y: number }[]>([]);
@@ -62,51 +64,71 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
     // --- State Derivation --- 
     const currentSpaceId = currentArea?.spaceId ?? null;
 
-    // Read shared state and history status reactively
-    const { spaceSharedState, canUndoSpace, canRedoSpace } = useStoreWithEqualityFn(
-        useSpaceStore,
-        (state): SelectedSpaceHistoryState => {
-            const currentSpace = currentSpaceId ? state.spaces[currentSpaceId] : null;
-            // Use default structure if space or sharedState is missing
-            const shared = currentSpace?.sharedState ?? defaultSelectedSpaceHistoryState.spaceSharedState;
-            return {
-                // Ensure the returned shared state conforms to SpaceSharedState
-                spaceSharedState: {
-                    ...defaultSelectedSpaceHistoryState.spaceSharedState, // Ensure all keys exist
-                    ...shared, // Overwrite with actual values
-                },
-                canUndoSpace: (shared.pastDiffs?.length ?? 0) > 0,
-                canRedoSpace: (shared.futureDiffs?.length ?? 0) > 0,
-            };
-        },
-        shallow // Compare the { spaceSharedState, canUndo, canRedo } object shallowly
-    );
-
-    // Derive drawing properties from the reactive spaceSharedState object
-    const drawingLines: Line[] = spaceSharedState.lines;
-    const drawingStrokeWidth = spaceSharedState.strokeWidth;
-    const drawingColor = spaceSharedState.color;
-
-    // Local UI state
-    const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
+    // --- State Locaux --- 
+    const [localLines, setLocalLines] = useState<Line[]>([]);
     const [localStrokeWidth, setLocalStrokeWidth] = useState(defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
     const [localColor, setLocalColor] = useState(defaultSelectedSpaceHistoryState.spaceSharedState.color);
+    const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
 
-    // Sync local stroke width when drawingStrokeWidth from space state changes
+    // --- Lecture de l'historique seulement (réactif) --- 
+    const { pastDiffs, futureDiffs } = useStoreWithEqualityFn(
+        useSpaceStore,
+        (state: SpaceState) => {
+            const currentSpace = currentSpaceId ? state.spaces[currentSpaceId] : null;
+            return {
+                pastDiffs: currentSpace?.sharedState?.pastDiffs ?? [],
+                futureDiffs: currentSpace?.sharedState?.futureDiffs ?? []
+            }
+        },
+        shallow
+    );
+    const canUndoSpace = pastDiffs.length > 0;
+    const canRedoSpace = futureDiffs.length > 0;
+
+    // --- Subscribe Effect (Met à jour TOUT l'état local pertinent) --- 
     useEffect(() => {
-        setLocalStrokeWidth(drawingStrokeWidth);
-    }, [drawingStrokeWidth]);
+        if (!currentSpaceId) {
+            setLocalLines([]);
+            setLocalColor(defaultSelectedSpaceHistoryState.spaceSharedState.color);
+            setLocalStrokeWidth(defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
+            return;
+        }
+        // Sync initiale
+        const initialSharedState = useSpaceStore.getState().spaces[currentSpaceId]?.sharedState;
+        setLocalLines(initialSharedState?.lines ?? []);
+        setLocalColor(initialSharedState?.color ?? defaultSelectedSpaceHistoryState.spaceSharedState.color);
+        setLocalStrokeWidth(initialSharedState?.strokeWidth ?? defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
 
-    useEffect(() => {
-        setLocalColor(drawingColor);
-    }, [drawingColor]);
+        // Abonnement
+        const unsubscribe = useSpaceStore.subscribe(
+            (state: SpaceState, prevState: SpaceState) => {
+                const currentSpace = state.spaces[currentSpaceId]; // Get current space state
+                const currentStoreLines = currentSpace?.sharedState?.lines;
+                const previousStoreLines = prevState.spaces[currentSpaceId]?.sharedState?.lines;
 
-    // Sync selected space ID dropdown when area's spaceId changes
-    useEffect(() => {
-        setSelectedSpaceId(currentSpaceId);
-    }, [currentSpaceId]);
+                if (currentStoreLines !== previousStoreLines) {
+                    // Lire l'état frais complet du space au moment de la notification
+                    const freshSharedState = currentSpace?.sharedState;
+                    // Mettre à jour directement l'état local
+                    setLocalLines(freshSharedState?.lines ?? []);
+                    // Optionnel: Mettre aussi à jour couleur/largeur locales pour assurer la synchro complète
+                    setLocalColor(freshSharedState?.color ?? defaultSelectedSpaceHistoryState.spaceSharedState.color);
+                    setLocalStrokeWidth(freshSharedState?.strokeWidth ?? defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
+                }
+            }
+        );
 
-    // Redraw canvas when drawingLines (from reactive space state) or viewport changes
+        // Nettoyer l'abonnement
+        return () => {
+            unsubscribe();
+        };
+
+    }, [currentSpaceId, id]);
+
+    // --- Sync local UI pour le dropdown seulement --- 
+    useEffect(() => { setSelectedSpaceId(currentSpaceId); }, [currentSpaceId]);
+
+    // --- Redraw canvas based on LOCAL lines --- 
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
@@ -118,12 +140,12 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Add check for valid drawingLines array
-        if (!Array.isArray(drawingLines)) {
-            console.error(`[HistoryDrawingArea ${id}] Invalid drawingLines data detected (not an array):`, drawingLines);
+        if (!Array.isArray(localLines)) {
+            console.error(`[HistoryDrawingArea ${id}] Invalid drawingLines data detected (not an array):`, localLines);
             return; // Stop drawing if data is invalid
         }
 
-        drawingLines.forEach((line: Line | null | undefined, index: number) => { // Allow null/undefined for checking
+        localLines.forEach((line: Line | null | undefined, index: number) => { // Allow null/undefined for checking
             // *** Add check for valid line object and points array ***
             if (!line || !Array.isArray(line.points) || line.points.length < 1) {
                 console.warn(`[HistoryDrawingArea ${id}] Skipping invalid line data at index ${index}:`, line);
@@ -147,7 +169,7 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
             ctx.lineJoin = 'round';
             ctx.stroke();
         });
-    }, [drawingLines, viewport.width, viewport.height]);
+    }, [localLines, viewport.width, viewport.height, id]);
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current || !currentSpaceId) return;
@@ -174,8 +196,8 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
         ctx.beginPath();
         ctx.moveTo(prevPoint.x, prevPoint.y);
         ctx.lineTo(x, y);
-        ctx.strokeStyle = drawingColor; // Use reactive color from space state for preview
-        ctx.lineWidth = drawingStrokeWidth; // Use reactive width for preview consistency
+        ctx.strokeStyle = localColor; // Use reactive color from space state for preview
+        ctx.lineWidth = localStrokeWidth; // Use reactive width for preview consistency
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
@@ -192,29 +214,30 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
         const newLine: Line = {
             id: `line-${Date.now()}`,
             points: currentLinePoints,
-            color: drawingColor, // Use reactive color from space state
-            width: drawingStrokeWidth  // Use reactive width from space state
+            color: localColor,
+            width: localStrokeWidth
         };
 
-        const currentLines = spaceSharedState.lines ?? [];
+        const currentLines = useSpaceStore.getState().spaces[currentSpaceId]?.sharedState?.lines ?? [];
         const newLines = [...currentLines, newLine];
 
         updateSharedState(currentSpaceId, { lines: newLines });
         setCurrentLinePoints([]);
     };
 
+    // --- Handlers pour les contrôles UI (utilisent/mettent à jour l'état local ET le store) --- 
     const handleStrokeWidthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!currentSpaceId) return;
         const newWidth = parseInt(e.target.value);
-        setLocalStrokeWidth(newWidth);
-        updateSharedState(currentSpaceId, { strokeWidth: newWidth });
+        setLocalStrokeWidth(newWidth); // Met à jour UI locale immédiatement
+        updateSharedState(currentSpaceId, { strokeWidth: newWidth }); // Met à jour le store central
     }, [currentSpaceId, updateSharedState]);
 
     const handleColorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!currentSpaceId) return;
         const newColor = e.target.value;
-        setLocalColor(newColor);
-        updateSharedState(currentSpaceId, { color: newColor });
+        setLocalColor(newColor); // Met à jour UI locale immédiatement
+        updateSharedState(currentSpaceId, { color: newColor }); // Met à jour le store central
     }, [currentSpaceId, updateSharedState]);
 
     const handleClearCanvas = useCallback(() => {

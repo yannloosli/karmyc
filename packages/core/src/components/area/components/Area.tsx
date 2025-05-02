@@ -1,6 +1,6 @@
 import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
-import { AreaTypeValue } from "@gamesberry/karmyc-core/constants";
-import { AreaState, useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
+import { AreaTypeValue, TOOLBAR_HEIGHT } from "@gamesberry/karmyc-core/constants";
+import { useKarmycStore } from "@gamesberry/karmyc-core/stores/areaStore";
 import { useContextMenuStore } from "@gamesberry/karmyc-core/stores/contextMenuStore";
 import styles from "@gamesberry/karmyc-core/styles/Area.styles";
 import { AreaComponentProps, ResizePreviewState } from "@gamesberry/karmyc-core/types/areaTypes";
@@ -46,7 +46,6 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 }) => {
     if (!viewport) {
         console.warn(`No viewport found for area ${id}, using default viewport`);
-        // Use a default viewport to avoid rendering errors
         viewport = {
             left: 0,
             top: 0,
@@ -55,17 +54,12 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         };
     }
 
-    const active = useAreaStore((state: AreaState) => state.activeAreaId === id);
-    const setActiveArea = useAreaStore((state: AreaState) => state.setActiveArea);
+    const active = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId === id);
+    const setActiveArea = useKarmycStore(state => state.setActiveArea);
     const contextMenuItems = useAreaContextMenu(id);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
-    // Check if this is a custom or standard type
-    let IconComponent: React.ComponentType = PenIcon; // Use PenIcon as default
-
-    // For standard types, use the defined icon
-
-    // For custom types, try to get the icon from the registry
+    let IconComponent: React.ComponentType = PenIcon;
     const registeredIcon = areaRegistry.getIcon(type);
     if (registeredIcon) {
         IconComponent = registeredIcon;
@@ -73,7 +67,6 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
     const openSelectArea = (_: React.MouseEvent) => {
         const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
-
         openContextMenuAction({
             position: { x: pos.x, y: pos.y },
             items: contextMenuItems,
@@ -81,11 +74,9 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         });
     };
 
-    // Get viewport for keyboard shortcuts
     const viewportRef = useRef<HTMLDivElement>(null);
     const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
 
-    // Update the viewport when the component is mounted or resized
     useEffect(() => {
         const updateViewport = () => {
             if (viewportRef.current) {
@@ -98,34 +89,27 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 });
             }
         };
-
         updateViewport();
-
-        // Observe resizing
         const resizeObserver = new ResizeObserver(updateViewport);
         if (viewportRef.current) {
             resizeObserver.observe(viewportRef.current);
         }
-
-        // Clean up the observer when unmounting
         return () => {
             resizeObserver.disconnect();
         };
     }, []);
 
-    // Activate the area when clicked
     const onActivate = () => {
         if (!active) {
             setActiveArea(id);
         }
     };
 
-    // Prepare inner dimensions for the content area
     const contentViewport = {
         left: 0,
         top: 0,
         width: viewport.width,
-        height: viewport.height
+        height: viewport.height - TOOLBAR_HEIGHT * 2
     };
 
     return (
@@ -135,7 +119,6 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             className={s("area", { raised: !!raised, active })}
             style={{
                 ...viewport,
-                // Re-apply: Make preview non-interactive
                 ...(id === '-1' && { pointerEvents: 'none' }),
             }}
             onClick={onActivate}
@@ -177,17 +160,10 @@ interface AreaContainerProps extends OwnProps {
 
 export const Area: React.FC<AreaContainerProps> = (props) => {
     const { id, setResizePreview } = props;
-    const areas = useAreaStore((state: AreaState) => state.areas);
-    const layout = useAreaStore((state: AreaState) => state.layout);
-    const rootId = useAreaStore((state: AreaState) => state.rootId);
-    const activeAreaId = useAreaStore((state: AreaState) => state.activeAreaId);
+    const area = useKarmycStore(state => state.getAreaById(id));
 
-    if (!areas || !layout) {
-        return null;
-    }
-
-    const area = areas[id];
     if (!area) {
+        console.warn(`[Area Container] Area data not found for ID: ${id} in active screen.`);
         return null;
     }
 
@@ -195,6 +171,7 @@ export const Area: React.FC<AreaContainerProps> = (props) => {
     const initialState = areaRegistry.getInitialState(area.type);
 
     if (!Component) {
+        console.error(`[Area Container] Unsupported area type: ${area.type} for ID: ${id}`);
         return <div>Unsupported type: {area.type}</div>;
     }
 
