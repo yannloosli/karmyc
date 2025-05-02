@@ -127,8 +127,6 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                 }
             }
 
-        } else {
-            console.log("[KarmycInitializer] Store already initialized (isAlreadyInitialized=true), skipping default/initial areas setup.");
         }
 
         if (options.enableLogging) {

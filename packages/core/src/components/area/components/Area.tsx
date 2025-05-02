@@ -133,7 +133,11 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             ref={viewportRef}
             data-areaid={id}
             className={s("area", { raised: !!raised, active })}
-            style={viewport}
+            style={{
+                ...viewport,
+                // Re-apply: Make preview non-interactive
+                ...(id === '-1' && { pointerEvents: 'none' }),
+            }}
             onClick={onActivate}
         >
             {["ne", "nw", "se", "sw"].map((dir) => (

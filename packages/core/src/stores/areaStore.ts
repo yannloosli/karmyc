@@ -1,8 +1,9 @@
 import { Vec2 } from '@gamesberry/karmyc-shared';
+import type { WritableDraft } from 'immer';
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { AreaTypeValue } from '../constants';
+import { AreaTypeValue, TOOLBAR_HEIGHT } from '../constants';
 import { Area, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
 import { Point, Rect } from '../types/geometry';
@@ -233,8 +234,66 @@ function findAllDisconnectedAreas(layout: { [key: string]: AreaRowLayout | AreaL
 
 // Define the core state logic with immer first
 const immerConfig = immer<AreaState>((set, get) => {
+    // --- HELPER for Layout Simplification (Re-introduced) ---
+    function simplifyLayoutNodeIfNeeded(state: WritableDraft<AreaState>, rowId: string | null | undefined) {
+        // Added null/undefined check for safety
+        if (!rowId) return;
+
+        const layoutNode = state.layout[rowId];
+
+        // Only proceed if it's a row and exists
+        if (!layoutNode || layoutNode.type !== 'area_row') {
+            return; // Not a row or doesn't exist
+        }
+
+        const rowLayout = layoutNode as AreaRowLayout;
+
+        // Check if the row now contains exactly one item
+        if (rowLayout.areas.length !== 1) {
+            return; // Not a single child, no simplification needed
+        }
+
+        const survivingChildRef = rowLayout.areas[0];
+        const survivingChildId = survivingChildRef.id;
+        const sizeOfSimplifiedRow = survivingChildRef.size;
+
+        // Find the parent of the row we are simplifying (the grandparent of the surviving child)
+        const areaToParentRowMap = computeAreaToParentRow(state.layout, state.rootId);
+        const grandParentRowId = areaToParentRowMap[rowId]; // Get parent of the row itself
+
+        if (grandParentRowId && state.layout[grandParentRowId]?.type === 'area_row') {
+            // Case 1: The row to simplify has a grandparent row
+            const grandParentRow = state.layout[grandParentRowId] as AreaRowLayout;
+            const rowIndexInGrandparent = grandParentRow.areas.findIndex(a => a.id === rowId);
+
+            if (rowIndexInGrandparent !== -1) {
+                // Preserve the size the simplified row had in its parent
+                const sizeToPreserve = grandParentRow.areas[rowIndexInGrandparent].size ?? sizeOfSimplifiedRow; // Fallback just in case
+                // Replace the reference to the simplified row with the reference to the surviving child
+                grandParentRow.areas[rowIndexInGrandparent] = { id: survivingChildId, size: sizeToPreserve };
+                console.log(`[simplifyLayoutNodeIfNeeded] Replaced ${rowId} with ${survivingChildId} in grandparent ${grandParentRowId}`);
+            } else {
+                console.error(`[simplifyLayoutNodeIfNeeded] Cleanup Error: Could not find row ${rowId} in its supposed parent ${grandParentRowId}. Layout might be inconsistent.`);
+                return;
+            }
+        } else if (state.rootId === rowId) {
+            // Case 2: The row to simplify was the root
+            state.rootId = survivingChildId;
+            console.log(`[simplifyLayoutNodeIfNeeded] Promoted ${survivingChildId} to be the new root.`);
+        } else {
+            // Case 3: No grandparent and not root (shouldn't happen in valid layout)
+            console.warn(`[simplifyLayoutNodeIfNeeded] Cleanup Warning: Row ${rowId} had no grandparent and was not root. Cannot promote ${survivingChildId}.`);
+            return;
+        }
+
+        // Delete the layout entry for the now-simplified (empty) row
+        delete state.layout[rowId];
+        console.log(`[simplifyLayoutNodeIfNeeded] Deleted simplified row ${rowId} from layout.`);
+    }
+    // --- END HELPER ---
+
     return {
-        ...initialStateData, // Start with validated initial data
+        ...initialStateData,
 
         // Actions with logs
         addArea: (area) => {
@@ -336,22 +395,21 @@ const immerConfig = immer<AreaState>((set, get) => {
                     const sourceAreaId = area.state?.sourceId;
                     const newAreaId = sourceAreaId || `area-${Date.now()}`;
 
-                    // Si c'est un déplacement, on garde l'area source
-                    if (sourceAreaId && state.areas[sourceAreaId]) {
-                        // On garde l'area source, mais on vérifie si elle doit être clonée
-                        if (sourceAreaId !== newAreaId) {
-                            state.areas[newAreaId] = {
-                                ...state.areas[sourceAreaId],
-                                id: newAreaId
-                            };
-                        }
-                    } else {
-                        // Sinon on crée une nouvelle area
+                    // Adjust position to account for menu bar height
+                    const adjustedPosition = Vec2.new(position.x, position.y - TOOLBAR_HEIGHT);
+                    console.log(`[finalizeAreaPlacement] Original Pos: ${position.x},${position.y}. Adjusted Pos: ${adjustedPosition.x},${adjustedPosition.y}`);
+
+                    // Create new area entry if needed (before computing viewports)
+                    if (!sourceAreaId || sourceAreaId !== newAreaId) {
                         state.areas[newAreaId] = {
                             id: newAreaId,
                             type: area.type,
                             state: area.state
                         };
+                        // Also add basic layout entry if it's a new area
+                        if (!state.layout[newAreaId]) {
+                            state.layout[newAreaId] = { type: 'area', id: newAreaId };
+                        }
                     }
 
                     const rootViewport = getAreaRootViewport();
@@ -361,43 +419,51 @@ const immerConfig = immer<AreaState>((set, get) => {
                         rootViewport,
                     );
 
-                    // Utiliser des dimensions de détection plus larges pour faciliter le ciblage
                     const detectionDimensions = Vec2.new(300, 200);
 
+                    // Use adjustedPosition for hover detection
                     const targetAreaId = getHoveredAreaId(
-                        Vec2.new(position.x, position.y),
+                        adjustedPosition, // <-- Use adjusted position
                         { layout: state.layout, rootId: state.rootId, areas: state.areas, areaToOpen: state.areaToOpen },
                         areaToViewport,
                         detectionDimensions
                     );
 
                     if (!targetAreaId) {
-                        // Si la souris n'est pas au-dessus d'une zone, on annule
-                        state.areaToOpen = null;
+                        // Handle no target: clean up area if it was newly created
                         if (!sourceAreaId) {
                             delete state.areas[newAreaId];
+                            delete state.layout[newAreaId];
                         }
+                        state.areaToOpen = null;
                         return;
                     }
 
                     const viewport = areaToViewport[targetAreaId];
-                    const placement = getAreaToOpenPlacementInViewport(viewport, Vec2.new(position.x, position.y));
+                    // Use adjustedPosition for placement calculation
+                    const placement = getAreaToOpenPlacementInViewport(viewport, adjustedPosition); // <-- Use adjusted position
 
-                    console.log('[areaStore] finalizeAreaPlacement - Target:', targetAreaId, 'Placement:', placement);
-
-                    // Nettoyer l'état de drag
+                    console.log(`[finalizeAreaPlacement] Target: ${targetAreaId}, Placement: ${placement}`);
                     state.areaToOpen = null;
 
-                    // Si c'est un déplacement, on retire d'abord l'élément de sa position d'origine
+                    let sourceParentRowIdForCleanup: string | null = null; // Variable to store the source parent ID
+
+                    // --- Remove source from original position (if it was a move) ---
                     if (sourceAreaId) {
                         const areaToParentRow = computeAreaToParentRow(state.layout, state.rootId);
                         const sourceParentRowId = areaToParentRow[sourceAreaId];
+                        sourceParentRowIdForCleanup = sourceParentRowId; // Store for potential simplification later
 
                         if (sourceParentRowId) {
                             const sourceParentRow = state.layout[sourceParentRowId] as AreaRowLayout;
                             if (sourceParentRow) {
+                                // Remove the source area ref
                                 sourceParentRow.areas = sourceParentRow.areas.filter(a => a.id !== sourceAreaId);
+                                // console.log(`[finalizeAreaPlacement] Removed ${sourceAreaId} from source parent ${sourceParentRowId}`);
 
+                                // NOTE: We don't simplify here immediately. We simplify *after* potential empty row deletion.
+
+                                // --- Original logic to delete empty rows (KEEP THIS) ---
                                 if (sourceParentRow.areas.length === 0) {
                                     // Avant de supprimer la rangée vide, on doit supprimer toutes les références à cette rangée
                                     // dans les autres rangées du layout
@@ -424,10 +490,25 @@ const immerConfig = immer<AreaState>((set, get) => {
 
                                     // Maintenant on peut supprimer la rangée vide
                                     delete state.layout[sourceParentRowId];
+                                    console.log(`[finalizeAreaPlacement] Deleted empty source parent row ${sourceParentRowId}`);
+                                    // Since the row is deleted, we don't need to simplify it.
+                                    // But its parent might need simplification if deleting this row left IT with one child.
+                                    const grandParentId = areaToParentRow[sourceParentRowId]; // Find parent of the row we just deleted
+                                    simplifyLayoutNodeIfNeeded(state, grandParentId);
+                                } else {
+                                    // Row is not empty, normalize sizes
+                                    const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
+                                    if (totalSize > 0) {
+                                        const factor = 1.0 / totalSize;
+                                        sourceParentRow.areas.forEach(area => {
+                                            area.size = (area.size || 0) * factor;
+                                        });
+                                    }
+                                    // NOW, simplify the source row itself if needed (e.g., went from 2 children to 1)
+                                    simplifyLayoutNodeIfNeeded(state, sourceParentRowId);
                                 }
                             }
                         }
-
                         // Suppression de l'area source si elle est différente de l'area cible
                         if (sourceAreaId !== newAreaId) {
                             delete state.areas[sourceAreaId];
@@ -508,6 +589,8 @@ const immerConfig = immer<AreaState>((set, get) => {
                             }
                         }
 
+                        // After replacing, the source parent might need simplification
+                        simplifyLayoutNodeIfNeeded(state, sourceParentRowIdForCleanup);
                         return;
                     }
 
@@ -620,6 +703,16 @@ const immerConfig = immer<AreaState>((set, get) => {
                     }
                 } catch (error) {
                     console.error('[areaStore] finalizeAreaPlacement - Error:', error);
+                    // Ensure cleanup even on error
+                    if (state.areaToOpen) { // Check if areaToOpen still exists
+                        const sourceAreaId = state.areaToOpen.area.state?.sourceId;
+                        const newAreaId = sourceAreaId || `area-${Date.now()}`;
+                        if (!sourceAreaId && state.areas[newAreaId]) {
+                            delete state.areas[newAreaId];
+                            delete state.layout[newAreaId];
+                        }
+                    }
+                    state.areaToOpen = null;
                 }
             });
         },
@@ -759,9 +852,6 @@ const immerConfig = immer<AreaState>((set, get) => {
         joinOrMoveArea: (payload) => {
             const { sourceAreaId, targetAreaId } = payload;
             set(state => {
-                // Assuming computeAreaToParentRow is imported or available
-                // Assuming joinAreasUtil is imported or available
-
                 const { parentRow, sourceIndex, targetIndex } = findParentRowAndIndices(state.layout, sourceAreaId, targetAreaId);
 
                 if (!parentRow) {
@@ -771,74 +861,40 @@ const immerConfig = immer<AreaState>((set, get) => {
                     return;
                 }
 
-                // Determine which direction to merge based on indices
-                // mergeInto = 1 means merge into the area at the higher index (targetIndex)
-                // mergeInto = -1 means merge into the area at the lower index (targetIndex)
                 const mergeIntoDirection = targetIndex > sourceIndex ? 1 : -1;
-                const areaIndexToRemove = sourceIndex; // The source area is always the one being removed after merge
+                const areaIndexToRemove = sourceIndex;
 
                 try {
-                    // Call the utility function to perform the core join logic
                     const result = joinAreasUtil(parentRow, areaIndexToRemove, mergeIntoDirection);
-                    const { area: updatedLayoutItem, removedAreaId } = result; // Destructure result
+                    const { area: updatedLayoutItem, removedAreaId } = result;
 
-                    // Handle row collapse and promotion if only one area remains
+                    // --- Use helper function here --- 
                     if (updatedLayoutItem.type === 'area') {
-                        const survivingAreaId = updatedLayoutItem.id;
-                        const areaToParentRowMap = computeAreaToParentRow(state.layout, state.rootId);
-                        const grandParentRowId = areaToParentRowMap[parentRow.id]; // Find the parent of the row we modified
-
-                        let sizeInGrandParent: number | undefined = undefined;
-
-                        if (grandParentRowId && state.layout[grandParentRowId]?.type === 'area_row') {
-                            // If the parent row had a grandparent row
-                            const grandParentRow = state.layout[grandParentRowId] as AreaRowLayout;
-                            const parentRowIndex = grandParentRow.areas.findIndex(a => a.id === parentRow.id);
-
-                            if (parentRowIndex !== -1) {
-                                sizeInGrandParent = grandParentRow.areas[parentRowIndex].size; // Get the size the parent row had
-                                // Replace parent row ref with surviving area ref, preserving size
-                                grandParentRow.areas[parentRowIndex] = { id: survivingAreaId, size: sizeInGrandParent };
-                            } else {
-                                console.error(`Join Cleanup Error: Could not find parent row ${parentRow.id} in grandparent ${grandParentRowId}. State might be inconsistent.`);
-                            }
-                        } else if (state.rootId === parentRow.id) {
-                            // If the parent row was the root
-                            state.rootId = survivingAreaId; // The surviving area becomes the new root
-                        } else {
-                            // This case should ideally not happen with a valid layout structure
-                            console.warn(`Join Cleanup Warning: Row ${parentRow.id} had no grandparent and was not root. Cannot promote ${survivingAreaId}.`);
-                        }
-
-                        // Delete the layout entry for the now-empty parent row
-                        delete state.layout[parentRow.id];
-
+                        // Row collapsed. Call simplify helper for the original parent row ID.
+                        simplifyLayoutNodeIfNeeded(state, parentRow.id);
                     } else if (updatedLayoutItem.type === 'area_row') {
-                        // If the row still exists (more than one area left), update its entry in the layout
+                        // Row still exists, update layout. No simplification needed here.
                         state.layout[parentRow.id] = updatedLayoutItem as AreaRowLayout;
                     }
+                    // --- End helper usage ---
 
-                    // --- Cleanup removed area and its descendants --- 
-                    // Use the removedAreaId returned by joinAreasUtil
+                    // --- Cleanup (remains the same) ---
                     const allRemovedDescendantAreaIds = findAllDescendantAreaIds(state.layout, removedAreaId);
-                    delete state.layout[removedAreaId]; // Remove the direct layout entry if it exists (e.g., { type: 'area', id: ... })
+                    delete state.layout[removedAreaId];
 
                     allRemovedDescendantAreaIds.forEach(id => {
-                        delete state.areas[id]; // Delete area state
-                        delete state.layout[id]; // Delete potential layout entries for descendants (if they were rows)
+                        delete state.areas[id];
+                        delete state.layout[id];
                     });
 
-                    // Ensure the primary removed area is also cleaned up if not caught by descendants
                     if (state.areas[removedAreaId]) {
                         delete state.areas[removedAreaId];
                     }
 
-                    // Reset active area if it was the removed one or one of its descendants
                     if (state.activeAreaId === removedAreaId || allRemovedDescendantAreaIds.has(state.activeAreaId ?? '')) {
                         state.activeAreaId = null;
                     }
 
-                    // Reset errors and preview state
                     state.errors = [];
                     state.joinPreview = null;
 

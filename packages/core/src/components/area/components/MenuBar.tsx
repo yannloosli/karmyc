@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { TOOLBAR_HEIGHT } from '@gamesberry/karmyc-core/constants';
 // Supprimer imports actions Redux
@@ -113,195 +113,153 @@ export const MenuBar: React.FC<{
     const updateAreaToOpenPosition = useAreaStore(state => state.updateAreaToOpenPosition);
     const finalizeAreaPlacement = useAreaStore(state => state.finalizeAreaPlacement);
 
-    // Ajouter un état local pour suivre le drag
-    const [isDragging, setIsDragging] = useState(false);
+    // Ajouter les refs pour gérer le drag
+    const dragRef = useRef<{ startX: number; startY: number } | null>(null);
+    const rafRef = useRef<number | undefined>(undefined);
+    const isUpdatingRef = useRef<boolean>(false);
 
-    // Le updatePosition appelle directement l'action Zustand
+    // Optimisation du updatePosition avec requestAnimationFrame
     const updatePosition = useCallback((x: number, y: number) => {
-        updateAreaToOpenPosition({ x, y });
+        if (!dragRef.current || isUpdatingRef.current) return;
+        isUpdatingRef.current = true;
+
+        rafRef.current = requestAnimationFrame(() => {
+            if (!dragRef.current) return;
+            const position = {
+                x: x - dragRef.current.startX,
+                y: y - dragRef.current.startY
+            };
+            updateAreaToOpenPosition(position);
+            isUpdatingRef.current = false;
+        });
     }, [updateAreaToOpenPosition]);
 
-    // Effet pour les écouteurs globaux
+    // Nettoyage du RAF
     useEffect(() => {
-        let lastUpdateTime = 0;
-        const UPDATE_THRESHOLD = 16; // Environ 60fps (1000ms / 60 = 16.6ms)
-
-        const handleGlobalDragOver = (e: DragEvent) => {
-            e.preventDefault();
-            // On ne stoppe pas la propagation pour permettre au drop de se produire
-        };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            // Limiter le taux de mises à jour pour éviter les surcharges
-            const now = performance.now();
-            if (now - lastUpdateTime < UPDATE_THRESHOLD) return;
-
-            // Si un drag est en cours, mettre à jour la position
-            const store = useAreaStore.getState();
-            if (store.areaToOpen && isDragging) {
-                // Vérifier si la position a changé de manière significative (au moins 5px)
-                const currentPos = store.areaToOpen.position;
-                const dx = Math.abs(e.clientX - currentPos.x);
-                const dy = Math.abs(e.clientY - currentPos.y);
-
-                // Ne mettre à jour que si le déplacement est significatif ou si ça fait longtemps
-                if (dx > 5 || dy > 5 || now - lastUpdateTime > 100) {
-                    // Réduire les logs pour améliorer les performances
-                    if (now - lastUpdateTime > 100) {
-                        console.log('[MenuBar] MouseMove during drag - Updating position:', { x: e.clientX, y: e.clientY });
-                    }
-                    updatePosition(e.clientX, e.clientY);
-                    lastUpdateTime = now;
-                }
+        return () => {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
             }
         };
-
-        // Ne pas capturer dragstart/dragend globalement pour éviter les conflits
-        console.log('[MenuBar] Attaching simplified global listeners (mousemove, dragover)');
-        window.addEventListener('dragover', handleGlobalDragOver);
-        document.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-            console.log('[MenuBar] Removing global listeners');
-            window.removeEventListener('dragover', handleGlobalDragOver);
-            document.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, [updatePosition, isDragging]);
+    }, []);
 
     const handleDragStart = useCallback((e: React.DragEvent) => {
-        // Créer une image de drag invisible
+        const rect = e.currentTarget.getBoundingClientRect();
+        dragRef.current = {
+            startX: e.clientX - rect.left,
+            startY: e.clientY - rect.top
+        };
+
+        // --- Préparation des données et de l'image de drag (Synchrone) ---
         const dragImage = document.createElement('div');
         dragImage.style.cssText = `
-            width: 50px;
-            height: 50px;
+            width: 1px;
+            height: 1px;
             position: fixed;
-            top: -100px;
-            left: -100px;
+            top: -1px;
+            left: -1px;
             opacity: 0.01;
-            background-color: transparent;
+            pointer-events: none;
         `;
         document.body.appendChild(dragImage);
 
-        const initialPosition = { x: e.clientX, y: e.clientY };
-        console.log('[MenuBar] DragStart - Initial position:', initialPosition);
+        e.dataTransfer.effectAllowed = 'move';
+        const transferData = JSON.stringify({
+            type: 'menubar',
+            areaType,
+            areaId
+        });
+        e.dataTransfer.setData('text/plain', transferData);
+        e.dataTransfer.setDragImage(dragImage, 0, 0);
 
-        // Nettoyage des états préexistants au cas où
-        const store = useAreaStore.getState();
-        if (store.areaToOpen) {
-            console.log('[MenuBar] DragStart - Cleaning up previous areaToOpen:', store.areaToOpen);
-            store.cleanupTemporaryStates();
-        }
-
-        // Initialiser l'état areaToOpen dans Zustand avec la position ABSOLUE de la souris
-        setAreaToOpen({
-            position: initialPosition,
+        // --- Mise à jour de l'état (Asynchrone via rAF) ---
+        const areaToOpenData = {
+            position: { x: e.clientX, y: e.clientY },
             area: {
                 type: areaType,
                 state: { ...areaState, sourceId: areaId }
             }
+        };
+
+        requestAnimationFrame(() => {
+            setAreaToOpen(areaToOpenData);
         });
 
-        // Marquer le début du drag
-        setIsDragging(true);
-
-        // Important : utiliser une classe CSS pour marquer l'élément comme étant en cours de drag
-        e.currentTarget.classList.add('dragging');
-
-        // Définir l'effet de drag
-        e.dataTransfer.effectAllowed = 'move';
-
-        // Définir les données de drag
-        e.dataTransfer.setData('text/plain', JSON.stringify({
-            type: 'menubar',
-            areaType,
-            areaId
-        }));
-
-        // Définir l'image de drag
-        e.dataTransfer.setDragImage(dragImage, 0, 0);
-
-        // Garder l'image de drag en vie
-        setTimeout(() => {
+        // --- Nettoyage de l'image de drag (Timeout) ---
+        const dragImageTimeout = setTimeout(() => {
             if (document.body.contains(dragImage)) {
                 document.body.removeChild(dragImage);
             }
-        }, 300);
-
-        // Empêcher la propagation de l'événement
-        e.stopPropagation();
-
+        }, 50);
     }, [areaType, areaId, areaState, setAreaToOpen]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
+        // Ce handler sur MenuBar ne devrait pas être appelé souvent si on drag
+        // hors de la barre elle-même, mais ajoutons un log au cas où.
         e.preventDefault();
-        e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
-        // Mettre à jour la position avec les coordonnées ABSOLUES
-        updatePosition(e.clientX, e.clientY);
-    }, [updatePosition]);
+    }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
-        // Ne pas utiliser stopPropagation ici pour permettre la propagation aux parents
-        // e.stopPropagation();
+        e.stopPropagation();
 
-        console.log('[MenuBar] Drop event triggered', { x: e.clientX, y: e.clientY });
-
-        // Annuler le timeout de nettoyage de dragEnd s'il existe
-        if ((window as any).__dragEndCleanupTimeout) {
-            clearTimeout((window as any).__dragEndCleanupTimeout);
-            (window as any).__dragEndCleanupTimeout = null;
-            console.log('[MenuBar] Cancelled dragEnd cleanup timeout');
-        }
-
-        // Vérifier que areaToOpen existe dans le store
-        const store = useAreaStore.getState();
-        if (!store.areaToOpen) {
-            console.log('[MenuBar] Drop event - No areaToOpen found, ignoring drop');
+        // Explicitly check if dragRef.current is truly null/undefined
+        if (!dragRef.current) {
             return;
         }
 
-        // Mise à jour finale de la position avant finalisation
-        updatePosition(e.clientX, e.clientY);
-
-        // Appeler l'action Zustand qui contient toute la logique
+        let data;
         try {
-            console.log('[MenuBar] Calling finalizeAreaPlacement');
-            finalizeAreaPlacement();
-            console.log('[MenuBar] finalizeAreaPlacement completed successfully');
+            data = JSON.parse(e.dataTransfer.getData('text/plain'));
         } catch (error) {
-            console.error('[MenuBar] Error during finalizeAreaPlacement:', error);
-            // En cas d'erreur, nettoyer manuellement
-            store.cleanupTemporaryStates();
-        } finally {
-            // Marquer la fin du drag
-            setIsDragging(false);
+            return;
         }
-    }, [finalizeAreaPlacement, updatePosition]);
 
-    // Ajouter un gestionnaire onDragEnd pour les cas où le drop n'est pas capturé
+        // Prevent dropping onto self or invalid data type
+        if (data.type !== 'menubar' || data.areaId === areaId) {
+            return;
+        }
+
+        try {
+            // Check again before accessing properties, just in case
+            if (!dragRef.current) {
+                console.error('[MenuBar] handleDrop - dragRef became null unexpectedly before use!');
+                return;
+            }
+            const position = {
+                x: e.clientX - dragRef.current.startX,
+                y: e.clientY - dragRef.current.startY
+            };
+
+            updateAreaToOpenPosition({ x: e.clientX, y: e.clientY });
+            finalizeAreaPlacement();
+        } catch (error) {
+            // Attempt cleanup even if processing failed
+            try {
+                const store = useAreaStore.getState();
+                store.cleanupTemporaryStates();
+            } catch (cleanupError) {
+                console.error('[MenuBar] Error during cleanup after drop error:', cleanupError);
+            }
+            return;
+        }
+
+        // Null the ref ONLY on successful drop processing
+        dragRef.current = null;
+    }, [areaId, updateAreaToOpenPosition, finalizeAreaPlacement]);
+
+    // Ajouter un handleDragEnd pour logger quand il se produit
     const handleDragEnd = useCallback((e: React.DragEvent) => {
-        // Retirer la classe 'dragging' si elle a été ajoutée
-        e.currentTarget.classList.remove('dragging');
-
-        console.log('[MenuBar] DragEnd event on MenuBar component');
-
-        // Augmenter le délai de nettoyage et s'assurer qu'il n'y a pas de conflit
-        const timeoutId = setTimeout(() => {
+        // Nettoyer le dragRef au cas où le drop n'aurait pas eu lieu
+        if (dragRef.current) {
+            dragRef.current = null;
+            // Nettoyer l'état Zustand s'il existe toujours
             const store = useAreaStore.getState();
             if (store.areaToOpen) {
-                console.log('[MenuBar] No drop event detected after dragend, cleaning up state');
                 store.cleanupTemporaryStates();
             }
-            // Marquer la fin du drag
-            setIsDragging(false);
-        }, 1000); // Augmenter à 1 seconde
-
-        // Stocker l'ID du timeout dans une variable globale pour pouvoir l'annuler
-        (window as any).__dragEndCleanupTimeout = timeoutId;
-
-        // Ne pas stopper la propagation ici pour permettre au drop de se produire
-        // e.stopPropagation();
+        }
     }, []);
 
     return (
@@ -325,8 +283,8 @@ export const MenuBar: React.FC<{
                         style={{ width: item.width }}
                     >
                         <Component
-                            areaId={areaId} // Passer areaId au composant enfant
-                            areaState={areaState} // Passer areaState au composant enfant
+                            areaId={areaId}
+                            areaState={areaState}
                         />
                     </div>
                 );

@@ -62,31 +62,21 @@ const AreaRoot: React.FC = () => {
 
         // Ne pas calculer si resize en cours, le calcul se fera via getAreaVisualViewport
         if (resizePreview) {
-            console.log("[AreaRoot ViewportEffect] Skipping calculation during resize preview.");
             return;
         }
 
         if (!rootId || !currentRootItem || layoutSize === 0) {
-            console.log("[AreaRoot LOG] Conditions initiales non réunies pour calcul", { rootId, hasCurrentRootItem: !!currentRootItem, layoutSize });
             // S'assurer que viewportMap est vidé s'il n'y a plus rien à afficher
             if (Object.keys(viewportMap).length > 0) setViewportMap({});
             return;
         }
 
-        console.log("[AreaRoot ViewportEffect] Calculating final viewport map (layout or viewport or resizePreview changed).", { hasLayout: !!layout, rootId, hasViewport: !!viewport, resizePreviewIsNull: resizePreview === null });
-        // console.log("[AreaRoot LOG] Layout object passed to computeAreaToViewport:", JSON.stringify(layout, null, 2));
-        // console.log(`[AreaRoot LOG] Calcul du viewportMap pour rootId: ${rootId}`);
-
         try {
             const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
-            // console.log("[AreaRoot LOG] Résultat de computeAreaToViewport:", newViewportMap);
 
             // Comparaison profonde pour éviter re-rendus inutiles si l'objet est structurellement identique
             if (JSON.stringify(viewportMap) !== JSON.stringify(newViewportMap)) {
-                console.log("[AreaRoot ViewportEffect] Mise à jour de viewportMap.");
                 setViewportMap(newViewportMap);
-            } else {
-                // console.log("[AreaRoot LOG] Skipping setViewportMap, résultat identique.");
             }
 
         } catch (error) {
@@ -98,7 +88,6 @@ const AreaRoot: React.FC = () => {
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
         const baseViewport = viewportMap[areaId];
-        // console.log(`[VisViewport] Checking ${areaId}. Preview active: ${!!resizePreview}`);
 
         if (!baseViewport || !resizePreview) {
             return baseViewport;
@@ -187,18 +176,14 @@ const AreaRoot: React.FC = () => {
     }, [layout, viewportMap, resizePreview]);
 
     if (loadingStateIsLoading) {
-        console.log("[AreaRoot LOG] Affichage du LoadingIndicator");
         return <LoadingIndicator />;
     }
 
     const currentRootItem = rootId ? layout?.[rootId] : null;
 
     if (!rootId || !currentRootItem) {
-        console.log("[AreaRoot LOG] Affichage EmptyAreaMessage car structure invalide/vide", { rootId, hasCurrentRootItem: !!currentRootItem });
         return <EmptyAreaMessage />;
     }
-
-    console.log("[AreaRoot LOG] Rendu principal", { rootId, viewportMapKeys: Object.keys(viewportMap), resizePreview: !!resizePreview });
 
     return (
         <div className={s('root')}>
