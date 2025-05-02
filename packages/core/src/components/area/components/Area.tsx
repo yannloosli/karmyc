@@ -13,8 +13,8 @@ import { PenIcon } from "../../icons/PenIcon";
 import { handleAreaDragFromCorner } from "../handlers/areaDragFromCorner";
 import { useAreaContextMenu } from '../hooks/useAreaContextMenu';
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
-import { MenuBar } from './MenuBar';
-import { StatusBar } from './StatusBar';
+import { MenuBar, useMenuBar } from './MenuBar';
+import { StatusBar, useStatusBar } from './StatusBar';
 import { Toolbar } from './Toolbar';
 
 const s = compileStylesheetLabelled(styles);
@@ -105,12 +105,18 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         }
     };
 
-    const contentViewport = {
-        left: 0,
-        top: 0,
-        width: viewport.width,
-        height: viewport.height - TOOLBAR_HEIGHT * 2
-    };
+    const { getComponents: getMenuComponents } = useMenuBar(type, id);
+    const { getComponents: getStatusComponents } = useStatusBar(type, id);
+    const menuComponents = getMenuComponents();
+    const statusComponents = getStatusComponents();
+
+    const shouldRenderMenubar = menuComponents.length > 0;
+    const shouldRenderStatusbar = statusComponents.length > 0;
+
+    // Calculer la hauteur disponible pour le contenu
+    const menubarHeight = shouldRenderMenubar ? TOOLBAR_HEIGHT : 0;
+    const statusbarHeight = shouldRenderStatusbar ? TOOLBAR_HEIGHT : 0;
+    const contentAvailableHeight = Math.max(0, viewport.height - menubarHeight - statusbarHeight);
 
     return (
         <div
@@ -120,6 +126,9 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             style={{
                 ...viewport,
                 ...(id === '-1' && { pointerEvents: 'none' }),
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
             }}
             onClick={onActivate}
         >
@@ -134,22 +143,36 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 <IconComponent />
             </button>
 
-            <div className={s("area__content")} style={{ minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-                <MenuBar areaId={id} areaState={state} areaType={type} />
-                <div style={{ minHeight: 0, position: 'relative', opacity: active ? 1 : 0.8 }}>
-                    <AreaIdContext.Provider value={id}>
-                        <AreaErrorBoundary
-                            component={Component}
-                            areaId={id}
-                            areaState={state}
-                            type={type}
-                            viewport={contentViewport}
-                        />
-                    </AreaIdContext.Provider>
-                    <Toolbar areaId={id} areaState={state} areaType={type} />
-                </div>
-                <StatusBar areaId={id} areaState={state} areaType={type} />
+            {shouldRenderMenubar && <MenuBar areaId={id} areaState={state} areaType={type} />}
+
+            <div
+                className="area-main-content-wrapper"
+                style={{
+                    flexGrow: 1,
+                    minHeight: 0,
+                    overflowY: 'auto',
+                    position: 'relative',
+                    opacity: active ? 1 : 0.8
+                }}
+            >
+                <AreaIdContext.Provider value={id}>
+                    <AreaErrorBoundary
+                        component={Component}
+                        areaId={id}
+                        areaState={state}
+                        type={type}
+                        viewport={{
+                            left: 0,
+                            top: 0,
+                            width: viewport.width,
+                            height: contentAvailableHeight
+                        }}
+                    />
+                </AreaIdContext.Provider>
+                <Toolbar areaId={id} areaState={state} areaType={type} />
             </div>
+
+            {shouldRenderStatusbar && <StatusBar areaId={id} areaState={state} areaType={type} />}
         </div>
     );
 };
