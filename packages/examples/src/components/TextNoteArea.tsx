@@ -1,5 +1,4 @@
-import { useArea } from '@gamesberry/karmyc-core/hooks/useArea';
-import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
+import { useArea, AreaComponentProps } from '@gamesberry/karmyc-core';
 import React from 'react';
 
 interface TextNoteState {

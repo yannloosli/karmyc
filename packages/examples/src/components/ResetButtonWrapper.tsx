@@ -1,6 +1,6 @@
 import { useArea } from "@gamesberry/karmyc-core";
-import { areaRegistry } from "@gamesberry/karmyc-core/area/registry";
-import { useAreaStore } from "@gamesberry/karmyc-core/stores/areaStore";
+import { areaRegistry } from "@gamesberry/karmyc-core";
+import { useAreaStore } from "@gamesberry/karmyc-core";
 import React from "react";
 
 // Component to reset the state

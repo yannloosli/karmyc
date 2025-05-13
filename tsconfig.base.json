@@ -11,11 +11,9 @@
         "preserveConstEnums": true,
         "sourceMap": true,
         "lib": [
-            "es2017",
-            "dom",
-            "dom.iterable",
-            "es2016",
-            "es2019"
+            "DOM",
+            "DOM.Iterable",
+            "ESNext"
         ],
         "skipLibCheck": true,
         "esModuleInterop": true,
@@ -28,29 +26,18 @@
         "baseUrl": ".",
         "paths": {
             "@gamesberry/karmyc-core/*": [
-                "packages/core/src/*"
+                "packages/karmyc-core/src/*"
             ],
             "@gamesberry/karmyc-shared/*": [
-                "packages/shared/src/*"
-            ],
-            "@gamesberry/karmyc-area-projects/*": [
-                "packages/area-projects/src/*"
+                "packages/karmyc-shared/src/*"
             ]
-        },
-        "types": [
-            "vite/client",
-            "jest",
-            "react",
-            "react-dom"
-        ]
+        }
     },
     "exclude": [
         "node_modules",
         "**/dist",
         "examples/static/js/clipper.js",
         "jest.config.js",
-        "packages/core/utils/math/svgPath.js",
-        "packages/core/src/utils/math/svgPath.js",
         "rollup.config.js"
     ]
 }

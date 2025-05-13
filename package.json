@@ -13,7 +13,6 @@
         "publish-all": "yarn workspaces run publish",
         "bootstrap": "yarn install && yarn build",
         "watch:core": "yarn workspace @gamesberry/karmyc-core dev",
-        "watch:area-projects": "yarn workspace @gamesberry/karmyc-area-projects dev",
         "watch:shared": "yarn workspace @gamesberry/karmyc-shared dev",
         "dev:all": "concurrently \"yarn:watch:*\"",
         "dev:examples": "yarn workspace @gamesberry/karmyc-examples dev",

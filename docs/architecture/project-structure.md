@@ -22,10 +22,10 @@ karmyc/
 
 ### Core Package
 
-The `packages/core/` directory contains the main functionality of Karmyc:
+The `packages/karmyc-core/` directory contains the main functionality of Karmyc:
 
 ```
-packages/core/
+packages/karmyc-core/
 ├── src/                    # Source code
 │   ├── actions/            # Action system implementation
 │   ├── area/               # Area-related functionality
@@ -51,10 +51,10 @@ packages/core/
 
 ### Shared Package
 
-The `packages/shared/` directory contains utilities shared across packages:
+The `packages/karmyc-shared/` directory contains utilities shared across packages:
 
 ```
-packages/shared/
+packages/karmyc-shared/
 ├── src/                    # Source code
 │   ├── utils/              # Shared utility functions
 │   ├── types/              # Shared TypeScript types

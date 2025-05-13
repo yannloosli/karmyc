@@ -6,11 +6,11 @@ export default defineConfig({
     plugins: [react()],
     resolve: {
         alias: {
-            "@gamesberry/karmyc-core": path.resolve(__dirname, "../core/src"),
-            "@gamesberry/karmyc-shared": path.resolve(__dirname, "../shared/src"),
-            "@gamesberry/karmyc-area-projects": path.resolve(__dirname, "../area-projects/src"),
+            "@gamesberry/karmyc-core": path.resolve(__dirname, "../karmyc-core"),
+            "@gamesberry/karmyc-shared": path.resolve(__dirname, "../karmyc-shared"),
             "src": path.resolve(__dirname, "src")
         }
+        // preserveSymlinks: true // Je commente cette ligne
     },
     build: {
         outDir: "./dist"

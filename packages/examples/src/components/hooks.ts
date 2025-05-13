@@ -1,7 +1,7 @@
 // This file serves as a gateway to avoid import issues
-import { useMenuBar as _useMenuBar } from '../../packages/core/src/components/area/components/MenuBar';
-import { useStatusBar as _useStatusBar } from '../../packages/core/src/components/area/components/StatusBar';
-import { useToolbar as _useToolbar } from '../../packages/core/src/components/area/components/Toolbar';
+import { useMenuBar as _useMenuBar } from '../../../karmyc-core/src/components/area/components/MenuBar';
+import { useStatusBar as _useStatusBar } from '../../../karmyc-core/src/components/area/components/StatusBar';
+import { useToolbar as _useToolbar } from '../../../karmyc-core/src/components/area/components/Toolbar';
 
 // Re-export hooks ensuring the ID is passed
 export const useMenuBar = (areaType: string, areaId?: string) => _useMenuBar(areaType, areaId || '');

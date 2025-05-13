@@ -2,16 +2,13 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "dist",
-        "rootDir": "src",
-        "composite": true
+        "rootDir": "src"
     },
     "include": [
-        "src/**/*"
+        "./src/**/*",
+        "src/index.ts"
     ],
     "references": [
-        {
-            "path": "../karmyc-core"
-        },
         {
             "path": "../karmyc-shared"
         }

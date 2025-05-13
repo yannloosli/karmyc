@@ -7,8 +7,8 @@ import {
     useRegisterAreaType,
     useStatusBar,
     useSyncContextMenuActions,
-} from '@gamesberry/karmyc-core';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore'; // Importer directement
+} from '../../karmyc-core/src';
+import { useAreaStore } from '../../karmyc-core/src/stores/areaStore'; // Importer directement
 
 import { ColorPickerArea } from './components/ColorPickerArea';
 import { HistoryDrawingArea } from './components/HistoryDrawingArea';

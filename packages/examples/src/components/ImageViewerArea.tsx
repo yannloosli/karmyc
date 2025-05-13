@@ -1,9 +1,9 @@
-import { useMenuBar } from '@gamesberry/karmyc-core/components/area/components/MenuBar';
-import { useStatusBar } from '@gamesberry/karmyc-core/components/area/components/StatusBar';
-import { useToolbar } from '@gamesberry/karmyc-core/components/area/components/Toolbar';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
-import { ImageViewerState } from '@gamesberry/karmyc-core/types/image';
+import { useMenuBar } from '@gamesberry/karmyc-core';
+import { useStatusBar } from '@gamesberry/karmyc-core';
+import { useToolbar } from '@gamesberry/karmyc-core';
+import { useAreaStore } from '@gamesberry/karmyc-core';
+import { AreaComponentProps } from '@gamesberry/karmyc-core';
+import { ImageViewerState } from '@gamesberry/karmyc-core';
 import React from 'react';
 
 export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = ({

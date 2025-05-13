@@ -1,11 +1,11 @@
+import { useAreaStore } from '@gamesberry/karmyc-core';
+import { debounce } from 'lodash';
+import React from "react";
+import { createRoot } from "react-dom/client";
 import {
     KarmycProvider,
     useKarmyc
 } from '@gamesberry/karmyc-core';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { debounce } from 'lodash';
-import React from "react";
-import { createRoot } from "react-dom/client";
 import { App } from "./App"; // Re-enabled App import
 
 // Remplacer l'accès au store Redux par Zustand

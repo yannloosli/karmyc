@@ -8,8 +8,8 @@ Welcome to the Karmyc documentation. This guide will help you understand and use
 
 Karmyc is organized as a monorepo with the following packages:
 
-- **[@gamesberry/karmyc-core](../packages/core)** - Core layout system with the main functionality
-- **[@gamesberry/karmyc-shared](../packages/shared)** - Shared utilities used across packages
+- **[@gamesberry/karmyc-core](../packages/karmyc-core)** - Core layout system with the main functionality
+- **[@gamesberry/karmyc-shared](../packages/karmyc-shared)** - Shared utilities used across packages
 - **[@gamesberry/karmyc-area-projects](../packages/area-projects)** - Project management plugin
 
 ## Best Practices

@@ -217,10 +217,10 @@ function DynamicPluginController() {
 
 ## Action Plugin Priorities
 
-For plugins that integrate with the `actionRegistry` (by defining the `actions` property), the concept of priority still applies as defined in `ActionPriority` enum (`packages/core/src/types/actions.ts`). When `usePluginSystem` registers these plugins with the `actionRegistry`, it uses a default priority (`NORMAL` = 500). If specific priorities are needed for these action handlers, you might need to register them directly with `actionRegistry` using the `IActionPlugin` interface instead of relying on the automatic conversion by `usePluginSystem`.
+For plugins that integrate with the `actionRegistry` (by defining the `actions` property), the concept of priority still applies as defined in `ActionPriority` enum (`packages/karmyc-core/src/types/actions.ts`). When `usePluginSystem` registers these plugins with the `actionRegistry`, it uses a default priority (`NORMAL` = 500). If specific priorities are needed for these action handlers, you might need to register them directly with `actionRegistry` using the `IActionPlugin` interface instead of relying on the automatic conversion by `usePluginSystem`.
 
 ```typescript
-// From packages/core/src/types/actions.ts
+// From packages/karmyc-core/src/types/actions.ts
 export enum ActionPriority {
   CRITICAL = 1000,  // Critical actions (security, validation)
   HIGH = 800,       // Important actions (history, logging)

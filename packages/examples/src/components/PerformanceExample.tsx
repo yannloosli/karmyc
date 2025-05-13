@@ -1,4 +1,4 @@
-import { IGlobalMetrics, IPerformanceMetrics, performanceMonitor } from '@gamesberry/karmyc-core/actions/plugins/performance';
+import { IGlobalMetrics, IPerformanceMetrics, performanceMonitor } from '@gamesberry/karmyc-core';
 import { Action } from '@gamesberry/karmyc-core/types/actions'; // Import local type
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 

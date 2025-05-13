@@ -1,10 +1,10 @@
-import { AreaToOpenPreview } from '@gamesberry/karmyc-core/components/area/components/AreaToOpenPreview';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
-import { ImageData, ImagesGalleryState } from '@gamesberry/karmyc-core/types/image';
-import { computeAreaToViewport } from '@gamesberry/karmyc-core/utils/areaToViewport';
-import { getHoveredAreaId } from '@gamesberry/karmyc-core/utils/areaUtils';
-import { getAreaRootViewport } from '@gamesberry/karmyc-core/utils/getAreaViewport';
+import { AreaToOpenPreview } from '@gamesberry/karmyc-core';
+import { useAreaStore } from '@gamesberry/karmyc-core';
+import { AreaComponentProps } from '@gamesberry/karmyc-core';
+import { ImageData, ImagesGalleryState } from '@gamesberry/karmyc-core';
+import { computeAreaToViewport } from '@gamesberry/karmyc-core';
+import { getHoveredAreaId } from '@gamesberry/karmyc-core';
+import { getAreaRootViewport } from '@gamesberry/karmyc-core';
 import { Vec2 } from '@gamesberry/karmyc-shared';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

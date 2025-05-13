@@ -1,7 +1,7 @@
-import { useSpace } from '@gamesberry/karmyc-core/hooks/useSpace';
+import { useSpace } from '@gamesberry/karmyc-core/src/hooks/useSpace';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/src/types/areaTypes';
-import { useAreaStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore';
+import { useAreaStore } from '@gamesberry/karmyc-core/src/stores/areaStore';
+import { useSpaceStore } from '@gamesberry/karmyc-core/src/stores/spaceStore';
 import React, { useMemo, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';

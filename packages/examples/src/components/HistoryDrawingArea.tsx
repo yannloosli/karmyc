@@ -1,9 +1,9 @@
 // import { useAppDispatch } from '@gamesberry/karmyc-core/hooks'; // Comment out Redux hook
 // import { addHistoryEntry, hasFutureEntriesForSpace, hasPastEntriesForSpace, redo, undo } from '@gamesberry/karmyc-core/store/slices/historySlice'; // Comment out history actions
 // import { addDrawingLineToSpace, selectSpaceSharedState, setDrawingLinesForSpace, setDrawingStrokeWidthForSpace, Space } from '@gamesberry/karmyc-core/store/slices/spaceSlice'; // Comment out space slice specific actions/selectors
-import { useSpace } from '@gamesberry/karmyc-core/hooks/useSpace'; // Re-introduce useSpace
-import { useKarmycStore } from '@gamesberry/karmyc-core/stores/areaStore';
-import { Space, SpaceSharedState, SpaceState, useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore';
+import { useSpace } from '@gamesberry/karmyc-core'; // Re-introduce useSpace
+import { useKarmycStore } from '@gamesberry/karmyc-core';
+import { Space, SpaceSharedState, SpaceState, useSpaceStore } from '@gamesberry/karmyc-core';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow'; // Import shallow

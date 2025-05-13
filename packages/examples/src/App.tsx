@@ -1,9 +1,9 @@
+import React from "react";
 import {
     AreaRoot,
     MenuBar,
     StatusBar
-} from '@gamesberry/karmyc-core';
-import React from "react";
+} from '../../karmyc-core';
 import { AreaInitializer } from './AreaInitializer';
 import './styles/area.css';
 
