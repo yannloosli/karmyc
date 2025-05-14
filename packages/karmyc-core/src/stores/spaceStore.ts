@@ -75,7 +75,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 sharedState: {
                     lines: spaceData.sharedState?.lines ?? [],
                     strokeWidth: spaceData.sharedState?.strokeWidth ?? 3,
-                    color: spaceData.sharedState?.color ?? '#000000',
+                    color: spaceData.sharedState?.color ?? '#ff0000',
                     pastDiffs: [],
                     futureDiffs: [],
                     ...(spaceData.sharedState || {}),

@@ -37,6 +37,8 @@ function simpleDragHandler(
     onDrag: (e: MouseEvent) => void,
     onDragEnd: () => void
 ) {
+    // Désactiver la sélection de texte pendant le drag
+    document.body.style.userSelect = 'none';
     const handleMouseMove = (e: MouseEvent) => {
         onDrag(e);
     };
@@ -44,6 +46,8 @@ function simpleDragHandler(
     const handleMouseUp = () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        // Réactiver la sélection de texte à la fin du drag
+        document.body.style.userSelect = '';
         onDragEnd();
     };
 

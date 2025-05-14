@@ -82,20 +82,48 @@ export default ({ css }: StyleParams) => ({
 
     selectAreaButton: css`
 		position: absolute;
-		top: 6px;
-		left: 12px;
-		z-index: 10;
-		border: none;
-		padding: 2px 6px;
-		border-radius: 4px;
-		outline: none;
-		background: ${cssVariables.dark500};
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 100%;
+        background: radial-gradient(circle at bottom, color-mix(in srgb, var(--space-color), white 50%), color-mix(in srgb, var(--space-color), white 20%) 10%, color-mix(in srgb, var(--space-color), black 50%) 80%, color-mix(in srgb, var(--space-color), black 90%) 100%);
+        border: 2px outset var(--space-color);
+        box-shadow: -1px -1px 5px 0 rgba(0, 0, 0, 0.5);
+        margin: 5px;
+        cursor: grab;
+        right: 5px;
+        z-index: 1000;
+        top: 5px;
 
-		svg {
-			fill: ${cssVariables.gray800};
-			width: 12px;
-			height: 12px;
-		}
+        
+        &::before {
+            content: "";
+            position: absolute;
+            top: 1%;
+            left: 5%;
+            border-radius: 100%;
+            filter: blur(3px);
+            z-index: 2; 
+            height: 80%;
+            width: 40%;
+            background: radial-gradient(circle at 130% 130%, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.8) 58%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0) 100%);
+            transform: translateX(131%) translateY(58%) rotateZ(168deg) rotateX(10deg);
+        }
+
+        &::after {
+            display: block;
+            background: radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 74%, white 80%, white 84%, rgba(255, 255, 255, 0) 100%);
+            content: "";
+            position: absolute;
+            top: 5%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            border-radius: 100%;
+            filter: blur(1px);
+            z-index: 2;
+            transform: rotateZ(-30deg);
+        }
 	`,
 
     selectArea: css`

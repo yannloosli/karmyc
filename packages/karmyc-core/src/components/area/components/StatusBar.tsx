@@ -88,6 +88,9 @@ interface StatusBarProps {
 export const StatusBar: React.FC<StatusBarProps> = ({ areaId, areaState, areaType, style }) => {
     const { getComponents } = useStatusBar(areaType, areaId);
     const components = getComponents();
+    // Log de debug
+    console.log('[StatusBar] props:', { areaId, areaType, areaState, style });
+    console.log('[StatusBar] children components:', components);
 
     // Organize components by alignment
     const leftComponents = components.filter(c => c.alignment === 'left');
