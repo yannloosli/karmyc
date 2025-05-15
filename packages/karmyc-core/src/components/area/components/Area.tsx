@@ -59,14 +59,24 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
     const contextMenuItems = useAreaContextMenu(id);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
+    const removeArea = useKarmycStore((state) => state.removeArea);
+    const debugRemove = () => {
+      // eslint-disable-next-line no-console
+      console.log('[DEBUG] removeArea called with id:', id);
+      removeArea(id);
+    };
 
+    // Ref pour le bouton
+    const selectAreaButtonRef = useRef<HTMLButtonElement>(null);
     const openSelectArea = (_: React.MouseEvent) => {
-        const pos = Vec2.new(viewport.left + 4, viewport.top + 4);
-        openContextMenuAction({
-            position: { x: pos.x, y: pos.y },
-            items: contextMenuItems,
-            metadata: { areaId: id }
-        });
+        if (selectAreaButtonRef.current) {
+            const rect = selectAreaButtonRef.current.getBoundingClientRect();
+            openContextMenuAction({
+                position: { x: rect.left + rect.width / 2, y: rect.top + rect.height },
+                items: contextMenuItems,
+                metadata: { areaId: id }
+            });
+        }
     };
 
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -236,6 +246,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             }}
             onClick={onActivate}
         >
+            <button onClick={debugRemove} style={{position: 'absolute', top: 40, right: 10, zIndex: 9999}}>DEBUG REMOVE</button>
             {["ne", "nw", "se", "sw"].map((dir) => (
                 <div
                     key={dir}
@@ -253,6 +264,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 style={{
                     cursor: "grab"
                 }}
+                ref={selectAreaButtonRef}
             />
 
             {shouldRenderMenubar && <MenuBar areaId={id} areaState={state} areaType={type} />}

@@ -1,49 +1,63 @@
 import { areaRegistry } from '../../../area/registry';
 import { useKarmycStore } from '../../../stores/areaStore';
 import { useContextMenuStore } from '../../../stores/contextMenuStore';
+import { useSpaceStore } from '../../../stores/spaceStore';
 
 interface ContextMenuItem {
     id: string;
     label: string;
     actionId: string;
-    metadata: { areaId: string;[key: string]: any };
+    disabled?: boolean;
+    children?: ContextMenuItem[];
+    metadata: { areaId: string; [key: string]: any };
 }
 
 export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
     const area = useKarmycStore((state) => state.getAreaById(areaId));
     const areaToOpen = useKarmycStore((state) => state.screens[state.activeScreenId]?.areas.areaToOpen);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
+    const removeArea = useKarmycStore((state) => state.removeArea);
+    const updateArea = useKarmycStore((state) => state.updateArea);
+    const allSpaces = useSpaceStore((state) => state.getAllSpaces());
 
     // Special case for area preview (ID -1)
     if (areaId === "-1" && areaToOpen) {
-        const menuItems: ContextMenuItem[] = [
+        const areaTypeChildren: ContextMenuItem[] = [];
+        const registeredTypes = Array.from(areaRegistry.getRegisteredTypes());
+        registeredTypes.forEach((type) => {
+            if (type === areaToOpen.area.type) return;
+            const component = areaRegistry.getComponent(type);
+            if (!component) return;
+            const displayName = areaRegistry.getDisplayName(type);
+            areaTypeChildren.push({
+                id: `create-${type}`,
+                label: displayName,
+                actionId: `area.create-${type}`,
+                metadata: { areaId }
+            });
+        });
+        return [
             {
                 id: "separator",
                 label: "───────────────",
                 actionId: "area.separator",
                 metadata: { areaId }
+            },
+            {
+                id: "area-type",
+                label: "Area Type",
+                actionId: "area.type",
+                children: areaTypeChildren,
+                metadata: { areaId }
+            },
+            {
+                id: "detach",
+                label: "Detach",
+                actionId: "area.detach",
+                disabled: true,
+                metadata: { areaId }
             }
         ];
-
-        // Add conversion options for preview
-        const registeredTypes = Array.from(areaRegistry.getRegisteredTypes());
-        registeredTypes.forEach((type) => {
-            if (type === areaToOpen.area.type) return;
-
-            const component = areaRegistry.getComponent(type);
-            if (!component) return;
-
-            const displayName = areaRegistry.getDisplayName(type);
-
-            menuItems.push({
-                id: `create-${type}`,
-                label: `Convert to ${displayName.toLowerCase()}`,
-                actionId: `area.create-${type}`,
-                metadata: { areaId }
-            });
-        });
-
-        return menuItems;
     }
 
     // If area doesn't exist, return empty menu
@@ -52,36 +66,68 @@ export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
         return [];
     }
 
-    // Create basic menu items
+    // Sous-menu Area Type
+    const areaTypeChildren: ContextMenuItem[] = [];
+    const registeredTypes = Array.from(areaRegistry.getRegisteredTypes());
+    registeredTypes.forEach((type) => {
+        if (type === area.type) return;
+        const component = areaRegistry.getComponent(type);
+        if (!component) return;
+        const displayName = areaRegistry.getDisplayName(type);
+        areaTypeChildren.push({
+            id: `create-${type}`,
+            label: displayName,
+            actionId: `area.create-${type}`,
+            metadata: { areaId }
+        });
+    });
+    // Ajoute l'option Close Area à la fin du sous-menu Area Type
+    areaTypeChildren.push({
+        id: "close-area",
+        label: "Close Area",
+        actionId: "area.close",
+        metadata: { areaId }
+    });
+
+    // Sous-menu Space
+    const spaceChildren: ContextMenuItem[] = Object.values(allSpaces).map((space) => ({
+        id: `assign-space-${space.id}`,
+        label: space.name,
+        actionId: `area.assign-space-${space.id}`,
+        metadata: { areaId, spaceId: space.id },
+        disabled: area.spaceId === space.id
+    }));
+
     const menuItems: ContextMenuItem[] = [
         {
             id: "separator",
             label: "───────────────",
             actionId: "area.separator",
             metadata: { areaId }
+        },
+        {
+            id: "area-type",
+            label: "Area Type",
+            actionId: "area.type",
+            children: areaTypeChildren,
+            metadata: { areaId }
+        },
+        {
+            id: "space",
+            label: "Space",
+            actionId: "area.space",
+            children: spaceChildren,
+            metadata: { areaId }
+        },
+        // L'item Close Area est maintenant dans le sous-menu Area Type
+        {
+            id: "detach",
+            label: "Detach",
+            actionId: "area.detach",
+            disabled: true,
+            metadata: { areaId }
         }
     ];
-
-    // Get all registered types from registry
-    const registeredTypes = Array.from(areaRegistry.getRegisteredTypes());
-
-    // Dynamically add conversion options for each available type
-    registeredTypes.forEach((type) => {
-        // Don't add conversion option for current type
-        if (type === area.type) return;
-
-        const component = areaRegistry.getComponent(type);
-        if (!component) return; // Skip unregistered types
-
-        const displayName = areaRegistry.getDisplayName(type);
-
-        menuItems.push({
-            id: `create-${type}`,
-            label: `Convert to ${displayName.toLowerCase()}`,
-            actionId: `area.create-${type}`,
-            metadata: { areaId }
-        });
-    });
 
     return menuItems;
 }; 

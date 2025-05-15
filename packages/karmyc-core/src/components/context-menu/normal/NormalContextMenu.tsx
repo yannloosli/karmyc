@@ -7,6 +7,7 @@ import { ContextMenuItem } from "../../../types/contextMenu";
 import { Point, Rect } from "../../../types/geometry";
 import { boundingRectOfRects, isVecInRect } from "../../../utils/geometry";
 import { compileStylesheet } from "../../../utils/stylesheets";
+import { useKarmycStore } from '../../../stores/areaStore';
 
 const s = compileStylesheet(styles);
 
@@ -19,6 +20,8 @@ export const NormalContextMenu: React.FC = () => {
     const position = useContextMenuStore((state) => state.position);
     const metadata = useContextMenuStore((state) => state.metadata);
     const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
+
+    const removeArea = useKarmycStore((state) => state.removeArea);
 
     const [rect, setRect] = useState<Rect | null>(null);
     const [reduceStackRect, setReduceStackRect] = useState<Rect | null>(null);
@@ -141,8 +144,14 @@ export const NormalContextMenu: React.FC = () => {
         }
     };
 
-    const handleAction = (actionId: string, itemMetadata?: Record<string, any>) => {
+    const handleAction = (actionId: string, itemMetadata?: Record<string, any>, option?: ContextMenuItem) => {
         closeContextMenu();
+        if (actionId === 'area.close') {
+            if (itemMetadata && itemMetadata.areaId) {
+                removeArea(itemMetadata.areaId);
+            }
+            return;
+        }
         if (actionRegistry.executeAction(actionId, { ...metadata, ...itemMetadata })) {
             return;
         }
@@ -166,7 +175,6 @@ export const NormalContextMenu: React.FC = () => {
                     >
                         {options.map((option, j) => {
                             const Icon = option.icon;
-
                             if (option.children) {
                                 const active = stack[i + 1]?.fromIndex === j;
                                 const eligible = active || i === stack.length - 1;
@@ -195,7 +203,7 @@ export const NormalContextMenu: React.FC = () => {
                                 <button
                                     className={s("option", { eligible: i === stack.length - 1 })}
                                     key={j}
-                                    onClick={() => handleAction(option.actionId, option.metadata)}
+                                    onClick={() => handleAction(option.actionId, option.metadata, option)}
                                     disabled={option.disabled}
                                 >
                                     {Icon && (
