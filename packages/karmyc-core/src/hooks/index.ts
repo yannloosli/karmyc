@@ -23,9 +23,10 @@ export * from './useNumberTransitionState';
 export * from './usePerformance';
 
 // Import UI hooks directly from components
-import { useMenuBar } from '../components/area/components/MenuBar';
-import { useStatusBar } from '../components/area/components/StatusBar';
-import { useToolbar } from '../components/area/components/Toolbar';
+// import { useMenuBar } from '../components/area/components/MenuBar';
+// import { useStatusBar } from '../components/area/components/StatusBar';
+// import { useToolbar } from '../components/area/components/Toolbar';
+import { useToolsBar } from '../components/area/components/Tools';
 
 // Import types from our internal module
 import {
@@ -36,11 +37,7 @@ import {
 } from '../components/area/hooks';
 
 // Re-export UI hooks
-export {
-    useMenuBar,
-    useStatusBar,
-    useToolbar
-};
+export { useToolsBar };
 
 // Re-export UI types
 export type {

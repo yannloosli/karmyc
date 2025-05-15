@@ -1,6 +1,4 @@
-import { useMenuBar } from '@gamesberry/karmyc-core';
-import { useStatusBar } from '@gamesberry/karmyc-core';
-import { useToolbar } from '@gamesberry/karmyc-core';
+import { useToolsBar } from '@gamesberry/karmyc-core';
 import { useAreaStore } from '@gamesberry/karmyc-core';
 import { AreaComponentProps } from '@gamesberry/karmyc-core';
 import { ImageViewerState } from '@gamesberry/karmyc-core';
@@ -12,12 +10,10 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
     viewport
 }) => {
     const updateArea = useAreaStore((s) => s.updateArea);
-    const { registerComponent: registerMenuComponent } = useMenuBar('image-viewer', id);
-    const { registerComponent: registerStatusComponent } = useStatusBar('image-viewer', id);
-    const {
-        registerComponent: registerToolbarComponent,
-        registerSlotComponent
-    } = useToolbar('image-viewer', id);
+    const { registerComponent: registerMenuComponent } = useToolsBar('image-viewer', id, 'top-outside');
+    const { registerComponent: registerStatusComponent } = useToolsBar('image-viewer', id, 'bottom-outside');
+    const { registerComponent: registerToolbarTopInside } = useToolsBar('image-viewer', id, 'top-inside');
+    const { registerComponent: registerToolbarBottomInside } = useToolsBar('image-viewer', id, 'bottom-inside');
 
     // Ensure properties exist
     const image = state?.image || {
@@ -166,109 +162,23 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
             { order: 30, alignment: 'right', width: 'auto' }
         );
 
-        // --- Toolbar Components ---
-        // Zoom controls
-        registerSlotComponent(
-            'e',
+        // --- Toolbar Components (top-inside) ---
+        registerToolbarTopInside(
             () => (
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    background: 'white',
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    border: '1px solid #ccc'
-                }}>
-                    <button
-                        onClick={() => handleZoomChange(zoom * 1.2)}
-                        style={{
-                            background: '#f5f5f5',
-                            border: 'none',
-                            borderBottom: '1px solid #ccc',
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        🔍+
-                    </button>
-                    <button
-                        onClick={() => handleZoomChange(1)}
-                        style={{
-                            background: '#f5f5f5',
-                            border: 'none',
-                            borderBottom: '1px solid #ccc',
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                        }}
-                    >
-                        100%
-                    </button>
-                    <button
-                        onClick={() => handleZoomChange(zoom * 0.8)}
-                        style={{
-                            background: '#f5f5f5',
-                            border: 'none',
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        🔍-
-                    </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => handleZoomChange(zoom * 1.2)}>Zoom +</button>
+                    <button onClick={() => handleZoomChange(1)}>100%</button>
+                    <button onClick={() => handleZoomChange(zoom * 0.8)}>Zoom -</button>
                 </div>
             ),
-            { name: 'zoomControls', type: 'slot' }
+            { name: 'zoomControls', type: 'toolbar' },
+            { order: 10, alignment: 'center', width: 'auto' }
         );
 
-        // --- Slot Components ---
-        // Info in northeast corner
-        registerSlotComponent(
-            'ne',
-            () => (
-                <div style={{
-                    padding: '5px',
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px'
-                }}>
-                    <span role="img" aria-label="Information">ℹ️</span>
-                    <span>Random image</span>
-                </div>
-            ),
-            { name: 'imageInfo', type: 'slot' }
-        );
+        // --- Toolbar Components (bottom-inside) ---
+        // (exemple, rien par défaut)
 
-        // Share button in southwest corner
-        registerSlotComponent(
-            'sw',
-            () => (
-                <div style={{ padding: '5px' }}>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            alert('Image sharing simulated!');
-                        }}
-                        style={{
-                            background: '#52c41a',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            padding: '4px 8px',
-                            cursor: 'pointer',
-                            fontSize: '12px'
-                        }}
-                    >
-                        <span role="img" aria-label="Share">📤</span> Share
-                    </button>
-                </div>
-            ),
-            { name: 'shareButton', type: 'slot' }
-        );
-
-    }, [id, filter, zoom, image.caption, registerMenuComponent, registerStatusComponent, registerToolbarComponent, registerSlotComponent]);
+    }, [id, filter, zoom, image.caption, registerMenuComponent, registerStatusComponent, registerToolbarTopInside]);
 
     return (
         <div style={{

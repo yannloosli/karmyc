@@ -149,4 +149,9 @@ export default ({ css }: StyleParams) => ({
 		display: block;
 		width: 128px;
 	`,
+
+    "tools-bar": css`
+		padding-inline: 10px;
+		display: flex;
+	`,
 });

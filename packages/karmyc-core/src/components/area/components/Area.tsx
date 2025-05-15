@@ -1,10 +1,8 @@
-import { Vec2 } from "@gamesberry/karmyc-shared";
 import React, { Dispatch, SetStateAction, useEffect, useRef, useState, useCallback } from "react";
-import { PenIcon } from "../../icons/PenIcon";
 import { handleAreaDragFromCorner } from "../handlers/areaDragFromCorner";
 import { useAreaContextMenu } from '../hooks/useAreaContextMenu';
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
-import { MenuBar, useMenuBar } from './MenuBar';
+import { useToolsBar } from './Tools';
 import { areaRegistry } from "../../../area/registry";
 import { AreaTypeValue, TOOLBAR_HEIGHT } from "../../../constants";
 import { useKarmycStore } from "../../../stores/areaStore";
@@ -13,12 +11,13 @@ import styles from "../../../styles/Area.styles";
 import { AreaComponentProps, ResizePreviewState } from "../../../types/areaTypes";
 import { Rect } from "../../../types/geometry";
 import { AreaIdContext } from "../../../utils/AreaIdContext";
-import { compileStylesheetLabelled } from "../../../utils/stylesheets";
-import { StatusBar, useStatusBar } from './StatusBar';
-import { Toolbar } from './Toolbar';
+import { compileStylesheet } from "../../../utils/stylesheets";
 import { useSpaceStore } from "../../../stores/spaceStore";
+import { Tools } from './Tools';
 
-const s = compileStylesheetLabelled(styles);
+import "../../../styles/area.css";
+
+const s = compileStylesheet(styles);
 
 interface OwnProps {
     id: string;
@@ -45,6 +44,10 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     raised,
     setResizePreview,
 }) => {
+    // LOG: Vérification de la génération des classes CSS
+    console.log("[DEBUG] s('area') =", s("area"));
+    console.log("[DEBUG] s('area__corner', { nw: true }) =", s("area__corner", { nw: true }));
+
     if (!viewport) {
         console.warn(`No viewport found for area ${id}, using default viewport`);
         viewport = {
@@ -60,22 +63,17 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const contextMenuItems = useAreaContextMenu(id);
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
     const removeArea = useKarmycStore((state) => state.removeArea);
-    const debugRemove = () => {
-      // eslint-disable-next-line no-console
-      console.log('[DEBUG] removeArea called with id:', id);
-      removeArea(id);
-    };
 
     // Ref pour le bouton
     const selectAreaButtonRef = useRef<HTMLButtonElement>(null);
     const openSelectArea = (_: React.MouseEvent) => {
         if (selectAreaButtonRef.current) {
             const rect = selectAreaButtonRef.current.getBoundingClientRect();
-            openContextMenuAction({
+        openContextMenuAction({
                 position: { x: rect.left + rect.width / 2, y: rect.top + rect.height },
-                items: contextMenuItems,
-                metadata: { areaId: id }
-            });
+            items: contextMenuItems,
+            metadata: { areaId: id }
+        });
         }
     };
 
@@ -114,13 +112,21 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         }
     };
 
-    const { getComponents: getMenuComponents } = useMenuBar(type, id);
-    const { getComponents: getStatusComponents } = useStatusBar(type, id);
+    // --- Remplacement des hooks par useToolsBar ---
+    const { getComponents: getMenuComponents } = useToolsBar(type, id, 'top-outside');
+    const { getComponents: getStatusComponents } = useToolsBar(type, id, 'bottom-outside');
+    const { getComponents: getToolbarTopInside } = useToolsBar(type, id, 'top-inside');
+    const { getComponents: getToolbarBottomInside } = useToolsBar(type, id, 'bottom-inside');
     const menuComponents = getMenuComponents();
     const statusComponents = getStatusComponents();
+    const toolbarTopInsideComponents = getToolbarTopInside();
+    const toolbarBottomInsideComponents = getToolbarBottomInside();
 
+    // Nouvelle logique avec Tools
     const shouldRenderMenubar = menuComponents.length > 0;
     const shouldRenderStatusbar = statusComponents.length > 0;
+    const shouldRenderToolbarTopInside = toolbarTopInsideComponents.length > 0;
+    const shouldRenderToolbarBottomInside = toolbarBottomInsideComponents.length > 0;
 
     // Calculer la hauteur disponible pour le contenu
     const menubarHeight = shouldRenderMenubar ? TOOLBAR_HEIGHT : 0;
@@ -242,11 +248,10 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                '--space-color': spaceColor 
+                ['--space-color' as any]: spaceColor 
             }}
             onClick={onActivate}
         >
-            <button onClick={debugRemove} style={{position: 'absolute', top: 40, right: 10, zIndex: 9999}}>DEBUG REMOVE</button>
             {["ne", "nw", "se", "sw"].map((dir) => (
                 <div
                     key={dir}
@@ -267,7 +272,13 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 ref={selectAreaButtonRef}
             />
 
-            {shouldRenderMenubar && <MenuBar areaId={id} areaState={state} areaType={type} />}
+            <Tools
+                areaId={id}
+                areaType={type}
+                areaState={state}
+                position="top-outside"
+                style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+            />
 
             <div
                 className="area-main-content-wrapper"
@@ -279,6 +290,13 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     opacity: active ? 1 : 0.8
                 }}
             >
+                <Tools
+                    areaId={id}
+                    areaType={type}
+                    areaState={state}
+                    position="top-inside"
+                    style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+                />
                 <AreaIdContext.Provider value={id}>
                     <AreaErrorBoundary
                         component={Component}
@@ -293,10 +311,22 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                         }}
                     />
                 </AreaIdContext.Provider>
-                <Toolbar areaId={id} areaState={state} areaType={type} />
+                <Tools
+                    areaId={id}
+                    areaType={type}
+                    areaState={state}
+                    position="bottom-inside"
+                    style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+                />
             </div>
 
-            {shouldRenderStatusbar && <StatusBar areaId={id} areaState={state} areaType={type} />}
+            <Tools
+                areaId={id}
+                areaType={type}
+                areaState={state}
+                position="bottom-outside"
+                style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+            />
         </div>
     );
 };

@@ -75,5 +75,10 @@ export default ({ css, keyframes }: StyleParams) => {
 				fill: ${hexToRGBAString(cssVariables.primary700, 0.15)};
 			}
 		`,
+
+        tools__bar: css`
+            display: flex;
+            padding-inline: 10px;
+        `
     };
 };

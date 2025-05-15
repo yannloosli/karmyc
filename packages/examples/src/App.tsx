@@ -1,8 +1,7 @@
 import React from "react";
 import {
     AreaRoot,
-    MenuBar,
-    StatusBar
+    Tools
 } from '../../karmyc-core';
 import { AreaInitializer } from './AreaInitializer';
 import './styles/area.css';
@@ -17,9 +16,9 @@ export const App: React.FC = () => {
             overflow: 'hidden'
         }}>
             <AreaInitializer />
-            <MenuBar areaId="root" areaState={{}} areaType="app" />
+            <Tools areaId="root" areaType="app" areaState={{}} position="top-outside" style={{ height: 32, minHeight: 32 }} />
             <AreaRoot />
-            <StatusBar areaId="root" areaState={{}} areaType="app" />
+            <Tools areaId="root" areaType="app" areaState={{}} position="bottom-outside" style={{ height: 32, minHeight: 32 }} />
         </div>
     );
 };

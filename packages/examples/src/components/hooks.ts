@@ -1,12 +1,17 @@
 // This file serves as a gateway to avoid import issues
-import { useMenuBar as _useMenuBar } from '../../../karmyc-core/src/components/area/components/MenuBar';
-import { useStatusBar as _useStatusBar } from '../../../karmyc-core/src/components/area/components/StatusBar';
-import { useToolbar as _useToolbar } from '../../../karmyc-core/src/components/area/components/Toolbar';
+import { useToolsBar as _useToolsBar } from '../../../karmyc-core/src/components/area/components/Tools';
 
-// Re-export hooks ensuring the ID is passed
-export const useMenuBar = (areaType: string, areaId?: string) => _useMenuBar(areaType, areaId || '');
-export const useStatusBar = (areaType: string, areaId?: string) => _useStatusBar(areaType, areaId || '');
-export const useToolbar = (areaType: string, areaId?: string) => _useToolbar(areaType, areaId || '');
+// Hook générique pour toutes les barres
+export const useToolsBar = (areaType: string, areaId: string, position: 'top-outside' | 'top-inside' | 'bottom-outside' | 'bottom-inside') =>
+    _useToolsBar(areaType, areaId, position);
+
+// Types pour les composants enregistrables
+export interface ToolsBarComponentProps {
+    areaId: string;
+    areaState: any;
+    areaType: string;
+    width?: number | 'auto';
+}
 
 // Types for components
 export interface MenuBarComponentProps {

@@ -5,8 +5,8 @@ import {
     areaRegistry,
     useArea,
     useRegisterAreaType,
-    useStatusBar,
     useSyncContextMenuActions,
+    useToolsBar,
 } from '../../karmyc-core/src';
 import { useAreaStore } from '../../karmyc-core/src/stores/areaStore'; // Importer directement
 
@@ -24,7 +24,7 @@ export const AreaInitializer: React.FC = () => {
     // Récupérer l'action Zustand
     const { updateArea } = useAreaStore.getState();
     const { createArea } = useArea();
-    const { registerComponent: registerRootStatusComponent } = useStatusBar('app', 'root');
+    const { registerComponent: registerRootStatusComponent } = useToolsBar('app', 'root', 'bottom-outside', false);
 
     // Synchronize context menu actions
     useSyncContextMenuActions();
