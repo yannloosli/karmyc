@@ -1,9 +1,9 @@
-import { useMenuBar } from '@gamesberry/karmyc-core/components/area/components/MenuBar';
-import { useStatusBar } from '@gamesberry/karmyc-core/components/area/components/StatusBar';
-import { useToolbar } from '@gamesberry/karmyc-core/components/area/components/Toolbar';
-import { useArea } from '@gamesberry/karmyc-core/hooks/useArea';
-import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
-import { ImageViewerState } from '@gamesberry/karmyc-core/types/image';
+import { useMenuBar } from '@gamesberry/karmyc-core';
+import { useStatusBar } from '@gamesberry/karmyc-core';
+import { useToolbar } from '@gamesberry/karmyc-core';
+import { useAreaStore } from '@gamesberry/karmyc-core';
+import { AreaComponentProps } from '@gamesberry/karmyc-core';
+import { ImageViewerState } from '@gamesberry/karmyc-core';
 import React from 'react';
 
 export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = ({
@@ -11,7 +11,7 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
     state,
     viewport
 }) => {
-    const { updateAreaState } = useArea();
+    const updateArea = useAreaStore((s) => s.updateArea);
     const { registerComponent: registerMenuComponent } = useMenuBar('image-viewer', id);
     const { registerComponent: registerStatusComponent } = useStatusBar('image-viewer', id);
     const {
@@ -32,38 +32,46 @@ export const ImageViewerArea: React.FC<AreaComponentProps<ImageViewerState>> = (
 
     // Function to change zoom
     const handleZoomChange = (newZoom: number) => {
-        updateAreaState(id, {
-            ...state,
-            zoom: Math.max(0.1, Math.min(5, newZoom))
+        updateArea({
+            id: id, state: {
+                ...state,
+                zoom: Math.max(0.1, Math.min(5, newZoom))
+            }
         });
     };
 
     // Function to load a new image
     const reloadImage = () => {
-        updateAreaState(id, {
-            ...state,
-            image: {
-                ...image,
-                url: `https://picsum.photos/300/400?t=${Date.now()}`
+        updateArea({
+            id: id, state: {
+                ...state,
+                image: {
+                    ...image,
+                    url: `https://picsum.photos/300/400?t=${Date.now()}`
+                }
             }
         });
     };
 
     // Function to change filter
     const handleFilterChange = (newFilter: string) => {
-        updateAreaState(id, {
-            ...state,
-            filter: newFilter
+        updateArea({
+            id: id, state: {
+                ...state,
+                filter: newFilter
+            }
         });
     };
 
     // Function to change caption
     const handleCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        updateAreaState(id, {
-            ...state,
-            image: {
-                ...image,
-                caption: e.target.value
+        updateArea({
+            id: id, state: {
+                ...state,
+                image: {
+                    ...image,
+                    caption: e.target.value
+                }
             }
         });
     };

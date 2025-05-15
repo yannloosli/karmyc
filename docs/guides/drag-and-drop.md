@@ -316,16 +316,22 @@ The area opening system integrates with Karmyc's area management:
 ```tsx
 // In your area component (e.g., ImageViewerArea.tsx)
 import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@gamesberry/karmyc-core/store';
+// Import Zustand hooks
+import { useAreaState } from '@gamesberry/karmyc-core/hooks/useAreaState'; // Or adjust path to store/hook
+import { useSpaceStore } from '@gamesberry/karmyc-core/stores/spaceStore'; // Or adjust path to store/hook
 
 export const ImageViewerArea = ({ id }) => {
-  const spaceState = useSelector((state: RootState) => state.space);
-  const area = useSelector((state: RootState) => state.area.areas[id]);
+  const { areas } = useAreaState(); // Get all areas from Zustand store
+  const area = areas[id];           // Access the specific area by id
+  const spaceState = useSpaceStore(state => state); // Access the whole space state (or specific parts)
   const sourceId = area?.state?.sourceId;
   
   // Find the image using the sourceId
-  const image = sourceId ? spaceState.images[sourceId] : null;
+  // Assuming spaceState.spaces contains the relevant image data keyed by spaceId? 
+  // Or perhaps images are managed elsewhere now. Let's assume they are in active space's sharedState.
+  const activeSpace = useSpaceStore(state => state.getActiveSpace()); // Get the active space
+  // Adjust this logic based on where images are actually stored in the new state structure
+  const image = sourceId && activeSpace ? activeSpace.sharedState.images?.[sourceId] : null; 
   
   if (!image) {
     return <div className="empty-state">Select an image to view</div>;
@@ -358,11 +364,9 @@ Here's a complete example of an image gallery that allows dragging images to ope
 ```tsx
 import React from 'react';
 import { useAreaDragAndDrop } from '@gamesberry/karmyc-core';
-import { useDispatch } from 'react-redux';
 import './ImagesGallery.css';
 
 export const ImagesGalleryArea = ({ id }) => {
-  const dispatch = useDispatch();
   const { images } = useImages(); // Your custom hook to fetch images
   
   const {
@@ -423,7 +427,7 @@ const DragDropEventHandler = () => {
       console.log('Drag ended:', result);
       // Logic after drop
       if (result.dropped) {
-        // Show success notification
+        // success
       } else {
         // Handle drag cancellation
       }

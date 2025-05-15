@@ -1,10 +1,9 @@
+import React from "react";
 import {
     AreaRoot,
     MenuBar,
-    NotificationList,
     StatusBar
-} from '@gamesberry/karmyc-core';
-import React from "react";
+} from '../../karmyc-core';
 import { AreaInitializer } from './AreaInitializer';
 import './styles/area.css';
 
@@ -21,7 +20,6 @@ export const App: React.FC = () => {
             <MenuBar areaId="root" areaState={{}} areaType="app" />
             <AreaRoot />
             <StatusBar areaId="root" areaState={{}} areaType="app" />
-            <NotificationList />
         </div>
     );
 };

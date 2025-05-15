@@ -1,20 +1,17 @@
 # Action System Architecture
 
-This document provides an overview of the action system used in Karmyc Core, covering its design, components, and integration with Redux.
+This document provides an overview of the action system used in Karmyc Core, covering its design, components, and usage.
 
 ## Overview
 
-Karmyc Core uses a modular action system based on a plugin architecture that allows registering action handlers with different priorities. It is integrated with Redux Toolkit and provides React hooks for easy use.
+Karmyc Core uses a modular action system based on a plugin architecture that allows registering action handlers with different priorities. This system allows decoupling action triggers (e.g., from UI elements like menus) from their implementation. It operates independently from the main state management library (Zustand).
 
 ```mermaid
 graph TD
-    A[Action Dispatch] --> B[Action Registry]
+    A[Action Trigger] --> B[Action Registry]
     B --> C[Action Validation]
     C --> D[Action Handlers]
-    D --> E[Store Update]
-    D --> F[Side Effects]
-    B --> G[Middleware]
-    G --> H[History Management]
+    D --> E[Side Effects / State Updates]
 ```
 
 ## Core Components
@@ -23,11 +20,11 @@ graph TD
 
 ```typescript
 // Core action types used in the system
-import { AnyAction } from '@reduxjs/toolkit';
+import { KarmycAction } from '../types/actions';
 
-export type TActionHandler<T extends AnyAction = AnyAction> = (action: T) => void;
+export type TActionHandler<T extends KarmycAction = KarmycAction> = (action: T) => void;
 
-export interface IActionPlugin<T extends AnyAction = AnyAction> {
+export interface IActionPlugin<T extends KarmycAction = KarmycAction> {
   id: string;
   priority: number;
   actionTypes: string[] | null; // null means all action types
@@ -39,50 +36,43 @@ export interface IActionValidationResult {
   message?: string;
 }
 
-export type TActionValidator<T extends AnyAction = AnyAction> = 
+export type TActionValidator<T extends KarmycAction = KarmycAction> = 
   (action: T) => IActionValidationResult;
 ```
 
 ### Action Registry
 
-The action registry is the central component that manages action plugins and validators:
+The action registry (`actionRegistry`) is the central component that manages action handlers, plugins, and validators:
 
 ```typescript
 class ActionRegistry {
   // Registers an action plugin
-  registerPlugin<T extends AnyAction>(plugin: IActionPlugin<T>): void;
+  registerPlugin<T extends KarmycAction>(plugin: IActionPlugin<T>): void;
   
   // Unregisters an action plugin by its ID
   unregisterPlugin(id: string): void;
   
   // Registers a validator for a specific action type
-  registerValidator<T extends AnyAction>(
+  registerValidator<T extends KarmycAction>(
     actionType: string, 
     validator: TActionValidator<T>
   ): void;
   
   // Validates an action using registered validators
-  validateAction(action: AnyAction): IActionValidationResult;
+  validateAction(action: KarmycAction): IActionValidationResult;
   
   // Handles an action by sending it to all relevant plugins
-  handleAction(action: AnyAction): void;
+  handleAction(action: KarmycAction): void;
+
+  // Registers a simple handler for a specific action ID
+  registerActionHandler(actionId: string, handler: (metadata?: any) => any): void;
+
+  // Unregisters a handler for a specific action ID
+  unregisterActionHandler(actionId: string): void;
+
+  // Executes the handler associated with an action ID
+  executeAction(actionId: string, metadata?: any): any;
 }
-```
-
-### Redux Middleware
-
-The action system is integrated with Redux through middleware:
-
-```typescript
-export const actionsMiddleware: Middleware = store => next => action => {
-  // Execute the action normally in Redux
-  const result = next(action);
-  
-  // Notify the action registry
-  actionRegistry.handleAction(action);
-  
-  return result;
-};
 ```
 
 ## Priority System
@@ -105,7 +95,7 @@ The validation system verifies that an action is valid before executing it. Each
 
 ```typescript
 // Common validators
-export const hasPayload: TActionValidator = (action: AnyAction) => {
+export const hasPayload: TActionValidator = (action: KarmycAction) => {
   if (!action.payload) {
     return {
       valid: false,
@@ -116,7 +106,7 @@ export const hasPayload: TActionValidator = (action: AnyAction) => {
 };
 
 export const hasRequiredFields = (fields: string[]): TActionValidator => {
-  return (action: AnyAction) => {
+  return (action: KarmycAction) => {
     for (const field of fields) {
       if (action.payload && action.payload[field] === undefined) {
         return {
@@ -132,43 +122,28 @@ export const hasRequiredFields = (fields: string[]): TActionValidator => {
 
 ## React Hooks
 
-The action system provides React hooks for easy integration:
+The action system provides React hooks for easy integration with components:
 
 ```typescript
 // Hook to register an action plugin
-export function useActionPlugin<T extends AnyAction = AnyAction>(
+export function useActionPlugin<T extends KarmycAction = KarmycAction>(
   id: string,
   priority: number,
   actionTypes: string[] | null,
   handler: TActionHandler<T>
 ): void;
 
+// Hook to register an action handler for a specific action ID
+export function useRegisterActionHandler(
+  actionId: string,
+  handler: (metadata?: any) => any
+): void;
+
 // Hook to register an action validator
-export function useActionValidator<T extends AnyAction = AnyAction>(
+export function useActionValidator<T extends KarmycAction = KarmycAction>(
   actionType: string,
   validator: (action: T) => { valid: boolean; message?: string }
 ): void;
-```
-
-## History Integration
-
-The action system integrates with the history system to enable undo/redo functionality:
-
-```typescript
-export const historyPlugin: IActionPlugin = {
-  id: 'history',
-  priority: ActionPriority.HIGH,
-  actionTypes: [
-    'area/addArea',
-    'area/removeArea',
-    'area/updateArea',
-    // Other action types...
-  ],
-  handler: (action: AnyAction) => {
-    // Logic to record the action in history
-    console.log(`Action recorded in history: ${action.type}`);
-  }
-};
 ```
 
 ## Usage Examples
@@ -204,15 +179,19 @@ function MyComponent() {
 }
 ```
 
-### Dispatching an Action
+### Registering and Executing an Action Handler
 
 ```typescript
 function MyComponent() {
-  const dispatch = useAppDispatch();
+  // Register a handler when the component mounts
+  useRegisterActionHandler('myComponent.doSomething', (metadata) => {
+    console.log('Doing something with:', metadata);
+    // Update Zustand store or perform side effects
+  });
   
-  const handleAddArea = () => {
-    // The action will be validated by the action system
-    dispatch(addArea({ id: 'area-1', type: 'editor' }));
+  // ... somewhere else (e.g., a button click, a menu item)
+  const triggerAction = () => {
+    actionRegistry.executeAction('myComponent.doSomething', { extraData: 123 });
   };
   
   // Rest of the component...

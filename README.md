@@ -21,14 +21,14 @@ A multimodal React editor.
 
 This project is organized as a monorepo with the following packages:
 
-- **[@gamesberry/karmyc-core](./packages/core)** - Core layout system with drag & drop, resizable panels, and state management
-- **[@gamesberry/karmyc-shared](./packages/shared)** - Shared utilities and components used across packages
+- **[@gamesberry/karmyc-core](./packages/karmyc-core)** - Core layout system with drag & drop, resizable panels, and state management
+- **[@gamesberry/karmyc-shared](./packages/karmyc-shared)** - Shared utilities and components used across packages
 - **[@gamesberry/karmyc-area-projects](./packages/area-projects)** - Project management plugin for Karmyc
 - **[@gamesberry/karmyc-examples](./packages/examples)** - Example applications showing how to use Karmyc
 
 Each package has its own README with detailed documentation:
-- [Core Package Documentation](./packages/core/README.md)
-- [Shared Package Documentation](./packages/shared/README.md)
+- [Core Package Documentation](./packages/karmyc-core/README.md)
+- [Shared Package Documentation](./packages/karmyc-shared/README.md)
 - [Area Projects Package Documentation](./packages/area-projects/README.md)
 - [Examples Package Documentation](./packages/examples/README.md)
 

@@ -22,10 +22,10 @@ karmyc/
 
 ### Core Package
 
-The `packages/core/` directory contains the main functionality of Karmyc:
+The `packages/karmyc-core/` directory contains the main functionality of Karmyc:
 
 ```
-packages/core/
+packages/karmyc-core/
 ├── src/                    # Source code
 │   ├── actions/            # Action system implementation
 │   ├── area/               # Area-related functionality
@@ -33,12 +33,14 @@ packages/core/
 │   │   ├── area/           # Area-specific components
 │   │   └── ...             # Other UI components
 │   ├── constants/          # Constants and configuration
-│   ├── history/            # History (undo/redo) system
-│   ├── hooks/              # React hooks
-│   ├── providers/          # React context providers
-│   ├── store/              # Redux store implementation
-│   │   ├── slices/         # Redux Toolkit slices
-│   │   └── middleware/     # Redux middleware
+│   ├── history/            # History (undo/redo) system (Note: custom implementation per store now)
+│   ├── hooks/              # React hooks (including usePluginSystem)
+│   ├── providers/          # React context providers (if any remain)
+│   ├── stores/             # Zustand stores implementation
+│   │   ├── useAreaStore.ts
+│   │   ├── useSpaceStore.ts
+│   │   ├── ... (other store hooks)
+│   │   └── middleware/     # Zustand middleware (if separated)
 │   ├── types/              # TypeScript type definitions
 │   ├── utils/              # Utility functions
 │   └── index.ts            # Main entry point
@@ -49,10 +51,10 @@ packages/core/
 
 ### Shared Package
 
-The `packages/shared/` directory contains utilities shared across packages:
+The `packages/karmyc-shared/` directory contains utilities shared across packages:
 
 ```
-packages/shared/
+packages/karmyc-shared/
 ├── src/                    # Source code
 │   ├── utils/              # Shared utility functions
 │   ├── types/              # Shared TypeScript types

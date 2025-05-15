@@ -1,70 +1,167 @@
-import { useAppDispatch } from '@gamesberry/karmyc-core/hooks';
-import { useArea } from '@gamesberry/karmyc-core/hooks/useArea';
-import { useSpace } from '@gamesberry/karmyc-core/hooks/useSpace';
-import { RootState } from '@gamesberry/karmyc-core/store';
-import { selectAreaById } from '@gamesberry/karmyc-core/store/slices/areaSlice';
-import { addHistoryEntry, hasFutureEntriesForSpace, hasPastEntriesForSpace, redo, undo } from '@gamesberry/karmyc-core/store/slices/historySlice';
-import { addDrawingLineToSpace, selectSpaceSharedState, setDrawingLinesForSpace, setDrawingStrokeWidthForSpace, Space } from '@gamesberry/karmyc-core/store/slices/spaceSlice';
+// import { useAppDispatch } from '@gamesberry/karmyc-core/hooks'; // Comment out Redux hook
+// import { addHistoryEntry, hasFutureEntriesForSpace, hasPastEntriesForSpace, redo, undo } from '@gamesberry/karmyc-core/store/slices/historySlice'; // Comment out history actions
+// import { addDrawingLineToSpace, selectSpaceSharedState, setDrawingLinesForSpace, setDrawingStrokeWidthForSpace, Space } from '@gamesberry/karmyc-core/store/slices/spaceSlice'; // Comment out space slice specific actions/selectors
+import { useSpace } from '@gamesberry/karmyc-core'; // Re-introduce useSpace
+import { useKarmycStore } from '@gamesberry/karmyc-core';
+import { Space, SpaceSharedState, SpaceState, useSpaceStore } from '@gamesberry/karmyc-core';
 import { AreaComponentProps } from '@gamesberry/karmyc-core/types/areaTypes';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { shallow } from 'zustand/shallow'; // Import shallow
+import { useStoreWithEqualityFn } from 'zustand/traditional'; // Import useStoreWithEqualityFn
+// Import Line using package alias
+import { Line } from '@gamesberry/karmyc-core/types/drawingTypes';
 
-interface DrawingState { }
+// Keep DrawingState interface if needed, or remove if unused
+interface DrawingState { } // Re-added, remove if truly unused
 
-interface Line {
-    id: string;
-    points: { x: number; y: number }[];
-    color: string;
-    width: number;
+// Define a type for the object returned by the selector
+interface SelectedSpaceHistoryState {
+    spaceSharedState: SpaceSharedState;
+    canUndoSpace: boolean;
+    canRedoSpace: boolean;
 }
+
+// Define a default value for the entire selected object
+const defaultSelectedSpaceHistoryState: SelectedSpaceHistoryState = {
+    spaceSharedState: {
+        lines: [],
+        strokeWidth: 3,
+        color: '#000000',
+        pastDiffs: [],
+        futureDiffs: [],
+    },
+    canUndoSpace: false,
+    canRedoSpace: false,
+};
 
 export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
     id,
     viewport
 }) => {
-    const dispatch = useAppDispatch();
-    const { setAreaSpace } = useArea();
+    // const dispatch = useAppDispatch(); // Comment out dispatch
+    const updateArea = useKarmycStore(state => state.updateArea);
+    const currentArea = useKarmycStore(state => {
+        const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+        return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;
+    });
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [currentLinePoints, setCurrentLinePoints] = useState<{ x: number; y: number }[]>([]);
 
-    const { spaces } = useSpace();
-    const currentSpaceId = useSelector((state: RootState) => selectAreaById(id)(state)?.spaceId);
-    const currentSpaceSharedState = useSelector(selectSpaceSharedState(currentSpaceId ?? null));
+    const spaces = useSpaceStore((s: SpaceState) => s.spaces); // Get all spaces for dropdown
+    // const getSpaceById = useSpaceStore((s: SpaceState) => s.getSpaceById); // Not needed reactively here
+    const { updateSharedState } = useSpace();
 
-    const drawingLines = currentSpaceSharedState?.drawingLines ?? [];
-    const drawingStrokeWidth = currentSpaceSharedState?.drawingStrokeWidth ?? 3;
-    const drawingColor = currentSpaceSharedState?.color ?? '#000000';
+    // Get history functions for BOTH stores from the hook
+    // const {
+    //     undoArea, redoArea, canUndoArea, canRedoArea, // For area-specific history (like changing spaceId)
+    // } = useHistory();
 
+    // Get history actions directly from space store
+    const undoSharedState = useSpaceStore(state => state.undoSharedState);
+    const redoSharedState = useSpaceStore(state => state.redoSharedState);
+
+    // --- State Derivation --- 
+    const currentSpaceId = currentArea?.spaceId ?? null;
+
+    // --- State Locaux --- 
+    const [localLines, setLocalLines] = useState<Line[]>([]);
+    const [localStrokeWidth, setLocalStrokeWidth] = useState(defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
+    const [localColor, setLocalColor] = useState(defaultSelectedSpaceHistoryState.spaceSharedState.color);
     const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
-    const [localStrokeWidth, setLocalStrokeWidth] = useState(drawingStrokeWidth);
 
-    const canUndo = useSelector((state: RootState) => hasPastEntriesForSpace(state, currentSpaceId ?? null));
-    const canRedo = useSelector((state: RootState) => hasFutureEntriesForSpace(state, currentSpaceId ?? null));
+    // --- Lecture de l'historique seulement (réactif) --- 
+    const { pastDiffs, futureDiffs } = useStoreWithEqualityFn(
+        useSpaceStore,
+        (state: SpaceState) => {
+            const currentSpace = currentSpaceId ? state.spaces[currentSpaceId] : null;
+            return {
+                pastDiffs: currentSpace?.sharedState?.pastDiffs ?? [],
+                futureDiffs: currentSpace?.sharedState?.futureDiffs ?? []
+            }
+        },
+        shallow
+    );
+    const canUndoSpace = pastDiffs.length > 0;
+    const canRedoSpace = futureDiffs.length > 0;
 
+    // --- Subscribe Effect (Met à jour TOUT l'état local pertinent) --- 
     useEffect(() => {
-        setSelectedSpaceId(currentSpaceId ?? null);
-    }, [currentSpaceId]);
+        if (!currentSpaceId) {
+            setLocalLines([]);
+            setLocalColor(defaultSelectedSpaceHistoryState.spaceSharedState.color);
+            setLocalStrokeWidth(defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
+            return;
+        }
+        // Sync initiale
+        const initialSharedState = useSpaceStore.getState().spaces[currentSpaceId]?.sharedState;
+        setLocalLines(initialSharedState?.lines ?? []);
+        setLocalColor(initialSharedState?.color ?? defaultSelectedSpaceHistoryState.spaceSharedState.color);
+        setLocalStrokeWidth(initialSharedState?.strokeWidth ?? defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
 
-    useEffect(() => {
-        setLocalStrokeWidth(drawingStrokeWidth);
-    }, [drawingStrokeWidth]);
+        // Abonnement
+        const unsubscribe = useSpaceStore.subscribe(
+            (state: SpaceState, prevState: SpaceState) => {
+                const currentSpace = state.spaces[currentSpaceId]; // Get current space state
+                const currentStoreLines = currentSpace?.sharedState?.lines;
+                const previousStoreLines = prevState.spaces[currentSpaceId]?.sharedState?.lines;
 
+                if (currentStoreLines !== previousStoreLines) {
+                    // Lire l'état frais complet du space au moment de la notification
+                    const freshSharedState = currentSpace?.sharedState;
+                    // Mettre à jour directement l'état local
+                    setLocalLines(freshSharedState?.lines ?? []);
+                    // Optionnel: Mettre aussi à jour couleur/largeur locales pour assurer la synchro complète
+                    setLocalColor(freshSharedState?.color ?? defaultSelectedSpaceHistoryState.spaceSharedState.color);
+                    setLocalStrokeWidth(freshSharedState?.strokeWidth ?? defaultSelectedSpaceHistoryState.spaceSharedState.strokeWidth);
+                }
+            }
+        );
+
+        // Nettoyer l'abonnement
+        return () => {
+            unsubscribe();
+        };
+
+    }, [currentSpaceId, id]);
+
+    // --- Sync local UI pour le dropdown seulement --- 
+    useEffect(() => { setSelectedSpaceId(currentSpaceId); }, [currentSpaceId]);
+
+    // --- Redraw canvas based on LOCAL lines --- 
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+        const drawAreaHeight = Math.max(0, viewport.height - 50);
         canvas.width = viewport.width;
-        canvas.height = viewport.height - 50;
+        canvas.height = drawAreaHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        drawingLines.forEach(line => {
+        // Add check for valid drawingLines array
+        if (!Array.isArray(localLines)) {
+            console.error(`[HistoryDrawingArea ${id}] Invalid drawingLines data detected (not an array):`, localLines);
+            return; // Stop drawing if data is invalid
+        }
+
+        localLines.forEach((line: Line | null | undefined, index: number) => { // Allow null/undefined for checking
+            // *** Add check for valid line object and points array ***
+            if (!line || !Array.isArray(line.points) || line.points.length < 1) {
+                console.warn(`[HistoryDrawingArea ${id}] Skipping invalid line data at index ${index}:`, line);
+                return; // Skip this iteration if line or points are invalid
+            }
+            // Check points length again for safety before accessing index 0
             if (line.points.length < 2) return;
+
             ctx.beginPath();
+            // Access points only after validation
             ctx.moveTo(line.points[0].x, line.points[0].y);
             for (let i = 1; i < line.points.length; i++) {
-                ctx.lineTo(line.points[i].x, line.points[i].y);
+                // Check individual points for safety? Might be overkill
+                if (line.points[i]) {
+                    ctx.lineTo(line.points[i].x, line.points[i].y);
+                }
             }
             ctx.strokeStyle = line.color;
             ctx.lineWidth = line.width;
@@ -72,10 +169,10 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
             ctx.lineJoin = 'round';
             ctx.stroke();
         });
-    }, [drawingLines, viewport.width, viewport.height]);
+    }, [localLines, viewport.width, viewport.height, id]);
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!currentSpaceId || !canvasRef.current) return;
+        if (!canvasRef.current || !currentSpaceId) return;
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -85,28 +182,29 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!isDrawing || !currentSpaceId || !canvasRef.current) return;
+        if (!isDrawing || !canvasRef.current || !currentSpaceId) return;
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        setCurrentLinePoints(prev => [...prev, { x, y }]);
+        const newPoints = [...currentLinePoints, { x, y }];
+        setCurrentLinePoints(newPoints);
 
         const ctx = canvas.getContext('2d');
-        if (!ctx || currentLinePoints.length < 1) return;
-        const lastPoint = currentLinePoints[currentLinePoints.length - 1];
+        if (!ctx || newPoints.length < 2) return;
+        const prevPoint = newPoints[newPoints.length - 2];
         ctx.beginPath();
-        ctx.moveTo(lastPoint.x, lastPoint.y);
+        ctx.moveTo(prevPoint.x, prevPoint.y);
         ctx.lineTo(x, y);
-        ctx.strokeStyle = drawingColor;
-        ctx.lineWidth = localStrokeWidth;
+        ctx.strokeStyle = localColor; // Use reactive color from space state for preview
+        ctx.lineWidth = localStrokeWidth; // Use reactive width for preview consistency
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.stroke();
     };
 
     const handleMouseUp = () => {
-        if (!isDrawing || !currentSpaceId || currentLinePoints.length < 2) {
+        if (!isDrawing || currentLinePoints.length < 2 || !currentSpaceId) {
             setIsDrawing(false);
             setCurrentLinePoints([]);
             return;
@@ -116,85 +214,65 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
         const newLine: Line = {
             id: `line-${Date.now()}`,
             points: currentLinePoints,
-            color: drawingColor,
+            color: localColor,
             width: localStrokeWidth
         };
 
-        const prevSharedState = currentSpaceSharedState ?? { drawingLines: [], drawingStrokeWidth: localStrokeWidth, color: drawingColor };
-        const nextSharedState = {
-            ...prevSharedState,
-            drawingLines: [...(prevSharedState.drawingLines ?? []), newLine]
-        };
+        const currentLines = useSpaceStore.getState().spaces[currentSpaceId]?.sharedState?.lines ?? [];
+        const newLines = [...currentLines, newLine];
 
-        dispatch(addDrawingLineToSpace({ spaceId: currentSpaceId, line: newLine }));
-
-        dispatch(addHistoryEntry({
-            name: 'drawing/addLine',
-            prevState: prevSharedState,
-            nextState: nextSharedState,
-            metadata: { spaceId: currentSpaceId }
-        }));
-
+        updateSharedState(currentSpaceId, { lines: newLines });
         setCurrentLinePoints([]);
     };
 
+    // --- Handlers pour les contrôles UI (utilisent/mettent à jour l'état local ET le store) --- 
     const handleStrokeWidthChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         if (!currentSpaceId) return;
         const newWidth = parseInt(e.target.value);
-        setLocalStrokeWidth(newWidth);
+        setLocalStrokeWidth(newWidth); // Met à jour UI locale immédiatement
+        updateSharedState(currentSpaceId, { strokeWidth: newWidth }); // Met à jour le store central
+    }, [currentSpaceId, updateSharedState]);
 
-        const prevSharedState = currentSpaceSharedState ?? { drawingLines: [], drawingStrokeWidth: localStrokeWidth, color: drawingColor };
-        const nextSharedState = { ...prevSharedState, drawingStrokeWidth: newWidth };
-
-        dispatch(setDrawingStrokeWidthForSpace({ spaceId: currentSpaceId, width: newWidth }));
-
-        dispatch(addHistoryEntry({
-            name: 'drawing/changeStrokeWidth',
-            prevState: prevSharedState,
-            nextState: nextSharedState,
-            metadata: { spaceId: currentSpaceId }
-        }));
-    }, [currentSpaceId, currentSpaceSharedState, localStrokeWidth, drawingColor, dispatch]);
+    const handleColorChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!currentSpaceId) return;
+        const newColor = e.target.value;
+        setLocalColor(newColor); // Met à jour UI locale immédiatement
+        updateSharedState(currentSpaceId, { color: newColor }); // Met à jour le store central
+    }, [currentSpaceId, updateSharedState]);
 
     const handleClearCanvas = useCallback(() => {
-        if (!currentSpaceId || drawingLines.length === 0) return;
+        if (!currentSpaceId) return;
+        updateSharedState(currentSpaceId, { lines: [] });
+    }, [currentSpaceId, updateSharedState]);
 
-        const prevSharedState = currentSpaceSharedState ?? { drawingLines: [], drawingStrokeWidth: localStrokeWidth, color: drawingColor };
-        const nextSharedState = { ...prevSharedState, drawingLines: [] };
-
-        dispatch(setDrawingLinesForSpace({ spaceId: currentSpaceId, lines: [] }));
-
-        dispatch(addHistoryEntry({
-            name: 'drawing/clearCanvas',
-            prevState: prevSharedState,
-            nextState: nextSharedState,
-            metadata: { spaceId: currentSpaceId }
-        }));
-    }, [currentSpaceId, currentSpaceSharedState, localStrokeWidth, drawingColor, drawingLines, dispatch]);
-
+    // Affects Area state -> uses Area undo/redo
     const handleSpaceChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
         const newSpaceId = event.target.value || null;
         setSelectedSpaceId(newSpaceId);
-        setAreaSpace(id, newSpaceId);
-    }, [id, setAreaSpace]);
+        updateArea({ id: id, spaceId: newSpaceId });
+    }, [id, updateArea]);
 
-    const handleUndo = useCallback(() => {
+    // *** Use new space-specific history actions ***
+    const handleUndoDrawing = useCallback(() => {
         if (currentSpaceId) {
-            dispatch(undo({ spaceId: currentSpaceId }));
+            undoSharedState(currentSpaceId);
         }
-    }, [dispatch, currentSpaceId]);
+    }, [currentSpaceId, undoSharedState]);
 
-    const handleRedo = useCallback(() => {
+    const handleRedoDrawing = useCallback(() => {
         if (currentSpaceId) {
-            dispatch(redo({ spaceId: currentSpaceId }));
+            redoSharedState(currentSpaceId);
         }
-    }, [dispatch, currentSpaceId]);
+    }, [currentSpaceId, redoSharedState]);
 
-    const spaceOptions = Object.entries(spaces || {}).map(([spaceId, space]) => (
-        <option key={spaceId} value={spaceId}>
-            {(space as Space).name}
-        </option>
-    ));
+    // Populate space options using reactive `spaces` object
+    const spaceOptions = useMemo(() => {
+        return Object.entries(spaces || {}).map(([spaceId, space]) => (
+            <option key={spaceId} value={spaceId}>
+                {(space as Space).name}
+            </option>
+        ));
+    }, [spaces]);
 
     return (
         <div style={{
@@ -224,99 +302,43 @@ export const HistoryDrawingArea: React.FC<AreaComponentProps<DrawingState>> = ({
                         <option value="">-- Aucun espace --</option>
                         {spaceOptions}
                     </select>
-                    {currentSpaceId && (
-                        <span title={`Couleur de l'espace: ${drawingColor}`}
-                            style={{
-                                marginLeft: '4px',
-                                display: 'inline-block',
-                                width: '16px',
-                                height: '16px',
-                                backgroundColor: drawingColor,
-                                border: '1px solid grey',
-                                borderRadius: '2px'
-                            }}>
-                        </span>
-                    )}
+                    {/* <button onClick={undoArea} disabled={!canUndoArea}>Undo Area Action</button> */}
                 </div>
-
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button onClick={handleUndoDrawing} disabled={!canUndoSpace}>Undo Drawing</button>
+                    <button onClick={handleRedoDrawing} disabled={!canRedoSpace}>Redo Drawing</button>
+                    <button onClick={handleClearCanvas}>Clear Drawing</button>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <label htmlFor={`stroke-${id}`}>Épaisseur:</label>
+                    <label htmlFor={`stroke-width-${id}`}>Width:</label>
                     <input
-                        id={`stroke-${id}`}
+                        id={`stroke-width-${id}`}
                         type="range"
                         min="1"
                         max="20"
                         value={localStrokeWidth}
                         onChange={handleStrokeWidthChange}
-                        disabled={!currentSpaceId}
-                        style={{ width: '80px' }}
                     />
-                    <span style={{ minWidth: '25px' }}>{localStrokeWidth}px</span>
+                    <span>{localStrokeWidth}</span>
                 </div>
-
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px' }}>
-                    <button
-                        onClick={handleUndo}
-                        disabled={!canUndo}
-                        style={{
-                            padding: '4px 8px',
-                            background: canUndo ? '#1890ff' : '#d9d9d9',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: canUndo ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        Annuler
-                    </button>
-
-                    <button
-                        onClick={handleRedo}
-                        disabled={!canRedo}
-                        style={{
-                            padding: '4px 8px',
-                            background: canRedo ? '#1890ff' : '#d9d9d9',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: canRedo ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        Rétablir
-                    </button>
-
-                    <button
-                        onClick={handleClearCanvas}
-                        disabled={!currentSpaceId || drawingLines.length === 0}
-                        style={{
-                            padding: '4px 8px',
-                            background: (currentSpaceId && drawingLines.length > 0) ? '#ff4d4f' : '#d9d9d9',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: (currentSpaceId && drawingLines.length > 0) ? 'pointer' : 'not-allowed'
-                        }}
-                    >
-                        Effacer tout
-                    </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <label htmlFor={`color-picker-${id}`}>Color:</label>
+                    <input
+                        id={`color-picker-${id}`}
+                        type="color"
+                        value={localColor}
+                        onChange={handleColorChange}
+                    />
                 </div>
             </div>
-
-            <div style={{ flex: 1, position: 'relative', background: '#f5f5f5' }}>
-                <canvas
-                    ref={canvasRef}
-                    onMouseDown={currentSpaceId ? handleMouseDown : undefined}
-                    onMouseMove={currentSpaceId ? handleMouseMove : undefined}
-                    onMouseUp={currentSpaceId ? handleMouseUp : undefined}
-                    onMouseLeave={currentSpaceId ? handleMouseUp : undefined}
-                    style={{ display: 'block' }}
-                />
-                {!currentSpaceId && (
-                    <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(245,245,245,0.8)', pointerEvents: 'none', fontStyle: 'italic', color: '#666' }}>
-                        Veuillez sélectionner un espace pour dessiner.
-                    </div>
-                )}
-            </div>
+            <canvas
+                ref={canvasRef}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                style={{ display: 'block' }}
+            />
         </div>
     );
 }; 

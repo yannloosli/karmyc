@@ -14,7 +14,7 @@ The Karmyc monorepo contains the following packages:
 
 `@gamesberry/karmyc-core` - The main layout engine with all the core functionality.
 
-- Location: `/packages/core`
+- Location: `/packages/karmyc-core`
 - Description: Contains the layout system, area management, drag-and-drop, and all fundamental features.
 - Main exports: Components, hooks, and utilities for creating modular interfaces.
 
@@ -22,7 +22,7 @@ The Karmyc monorepo contains the following packages:
 
 `@gamesberry/karmyc-shared` - Common utilities and shared code.
 
-- Location: `/packages/shared`
+- Location: `/packages/karmyc-shared`
 - Description: Contains helper functions, common types, and utilities used across all packages.
 - Main exports: Utility functions, shared interfaces, and common hooks.
 

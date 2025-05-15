@@ -4,31 +4,26 @@ This document provides an overview of the architecture and fundamental design pa
 
 ## System Architecture
 
-Karmyc Core follows a modular architecture built around Redux for state management, with hooks for React integration. The system is designed to be flexible, extensible, and maintainable.
+Karmyc Core follows a modular architecture built around Zustand for state management, with hooks for React integration. The system is designed to be flexible, extensible, and maintainable.
 
 ```mermaid
 graph TD
-    A[lib/index.ts] --> B[store]
+    A[lib/index.ts] --> B[stores]
     A --> C[hooks]
     A --> D[actions]
     A --> E[components]
     A --> F[providers]
     
-    B --> G[slices]
-    B --> H[middleware]
-    B --> I[enhancers]
-    
-    G --> J[area.ts]
-    G --> K[contextMenu.ts]
-    G --> L[project.ts]
-    
-    H --> M[history.ts]
-    H --> N[actions.ts]
-    H --> O[persistence.ts]
+    B --> G[useAreaStore.ts]
+    B --> H[useSpaceStore.ts]
+    B --> K[useContextMenuStore.ts]
+    B --> M[useLoadingStore.ts]
+    B --> Z[...other stores]
     
     C --> P[useArea.ts]
     C --> Q[useContextMenu.ts]
-    C --> R[useProject.ts]
+    C --> R[usePluginSystem.ts]
+    C --> Y[...other hooks]
     
     D --> S[registry.ts]
     D --> T[validation.ts]
@@ -39,31 +34,20 @@ For a detailed overview of the project structure, please refer to the [Project S
 
 ## State Management
 
-### State Structure
-
-Karmyc Core uses a two-level state structure:
-
-1. **ApplicationState**: The complete application state, including history
-2. **ActionState**: The current state without history, used for current operations
-
-This distinction allows fine-grained history management while maintaining optimal performance for current operations.
+Karmyc Core utilizes Zustand for decentralized state management. See the [Store Architecture](./store.md) document for details.
 
 ```mermaid
 graph TD
-    A[ApplicationState] --> B[ActionState]
-    A --> C[History]
-    B --> D[Area State]
-    B --> E[Context Menu State]
-    B --> F[Project State]
-    B --> G[Tool State]
-    C --> H[Previous States List]
-    C --> I[Current Index]
-    C --> J[Differences]
+    A[Application State (Distributed)] --> B[Area State (useAreaStore)]
+    A --> C[Space State (useSpaceStore)]
+    A --> D[Context Menu State (useContextMenuStore)]
+    A --> F[Loading State (useLoadingStore)]
+    A --> G[...]
 ```
 
 ## Action System
 
-Karmyc Core uses a modular action system based on a plugin architecture that allows registering action handlers with different priorities. It is integrated with Redux Toolkit and provides React hooks for easy use.
+Karmyc Core uses a modular action system based on a plugin architecture that allows registering action handlers with different priorities. It's integrated with Zustand stores via custom middleware and hooks.
 
 ```mermaid
 graph TD
@@ -80,21 +64,22 @@ For a detailed explanation of the action system, see the [Action System](./actio
 
 ## Data Flow
 
-The data flow in Karmyc Core follows the Redux pattern with custom extensions for specific features like history, complex operations, and visual differences.
+The data flow in Karmyc Core primarily uses Zustand's hook-based model, where components subscribe to state changes. For complex operations involving multiple steps or side effects, an operation pattern might be used, coordinating actions across different stores or services.
 
 ```mermaid
 graph TD
-    U[User] -->|Interaction| C[UI Components]
-    C -->|requestAction| L[Listener System]
-    L -->|createOperation| O[Operation]
-    O -->|add actions| O
-    O -->|addDiff| O
-    O -->|submit| S[Redux Store]
-    S -->|dispatch| R[Reducers]
-    R -->|update| S
-    S -->|state changes| C
-    O -->|performDiff| D[Diff System]
-    D -->|visual updates| C
+    U[User] -->|Interaction| C[React Components]
+    C -->|Call Action/Hook| Z[Zustand Stores]
+    Z -->|Update State| Z
+    Z -->|Notify Subscribers| C
+    C -->|Update UI| C
+
+    subgraph Complex Operation (Optional)
+        C -->|Initiate Operation| O[Operation Handler]
+        O -->|Dispatch Actions to Stores| Z
+        O -->|Perform Side Effects| SE[External System / Diff]
+        SE -->|Feedback/Updates| Z
+    end
 ```
 
 ## Component Architecture

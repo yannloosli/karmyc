@@ -25,13 +25,10 @@
         "baseUrl": ".",
         "paths": {
             "@gamesberry/karmyc-core/*": [
-                "packages/core/src/*"
+                "packages/karmyc-core/src/*"
             ],
             "@gamesberry/karmyc-shared/*": [
-                "packages/shared/src/*"
-            ],
-            "@gamesberry/karmyc-area-projects/*": [
-                "packages/area-projects/src/*"
+                "packages/karmyc-shared/src/*"
             ]
         },
         "types": [
@@ -49,8 +46,8 @@
         "**/dist",
         "packages/examples/public/js/clipper.js",
         "jest.config.js",
-        "packages/core/utils/math/svgPath.js",
-        "packages/core/src/utils/math/svgPath.js",
+        "packages/karmyc-core/utils/math/svgPath.js",
+        "packages/karmyc-core/src/utils/math/svgPath.js",
         "**/rollup.config.js",
         "rollup.base.js"
     ]

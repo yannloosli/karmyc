@@ -10,13 +10,10 @@
     ],
     "references": [
         {
-            "path": "../core"
+            "path": "../karmyc-core"
         },
         {
-            "path": "../shared"
-        },
-        {
-            "path": "../area-projects"
+            "path": "../karmyc-shared"
         }
     ]
 }

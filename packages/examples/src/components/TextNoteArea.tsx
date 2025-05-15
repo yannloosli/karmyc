@@ -1,6 +1,5 @@
-import { useArea } from '@gamesberry/karmyc-core/hooks/useArea';
+import { useArea, AreaComponentProps } from '@gamesberry/karmyc-core';
 import React from 'react';
-import { AreaComponentProps } from '~/types/areaTypes';
 
 interface TextNoteState {
     content: string;
@@ -11,11 +10,13 @@ export const TextNoteArea: React.FC<AreaComponentProps<TextNoteState>> = ({
     state,
     viewport
 }) => {
-    const { updateAreaState } = useArea();
+    const { update } = useArea();
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        updateAreaState(id, {
-            content: e.target.value
+        update(id, {
+            state: {
+                content: e.target.value
+            }
         });
     };
 

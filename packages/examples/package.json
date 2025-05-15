@@ -8,9 +8,8 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@gamesberry/karmyc-core": "0.0.1",
-        "@gamesberry/karmyc-shared": "0.0.1",
-        "@gamesberry/karmyc-area-projects": "0.0.1",
+        "@gamesberry/karmyc-core": "file:../karmyc-core",
+        "@gamesberry/karmyc-shared": "file:../karmyc-shared",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     }
