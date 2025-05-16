@@ -9,6 +9,7 @@ import { Area, AreaLayout, AreaRowLayout, AreaToOpen } from "../../../types/area
 import { Rect } from "../../../types/geometry";
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from "../../../utils/areaUtils";
 import { compileStylesheetLabelled } from "../../../utils/stylesheets";
+import { css } from '@emotion/css';
 
 type LayoutMap = Record<string, AreaLayout | AreaRowLayout>;
 type AreasMap = Record<string, Area>;
@@ -49,7 +50,7 @@ const RenderAreaToOpen: React.FC<RenderAreaToOpenProps> = React.memo((props) => 
 
     return (
         <div
-            className={s("areaToOpenContainer")}
+            className={css(s("areaToOpenContainer"))}
             style={containerStyle}
         >
             <AreaComponent
@@ -172,7 +173,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
 
         for (const element of elementsUnderCursor) {
             // Ignore the overlay itself and the preview container
-            if (element.classList.contains('global-drag-overlay') || element.classList.contains(s('areaToOpenContainer'))) {
+            if (element.classList.contains('global-drag-overlay') || element.classList.contains(css(s("areaToOpenContainer")))) {
                 continue;
             }
             // Find the closest element with a data-areaid attribute
@@ -208,7 +209,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
             cleanupTemporaryStates();
         }
         // No need to explicitly null dragRef here, handleDragEnd on the source will do it.
-    }, [cleanupTemporaryStates, finalizeAreaPlacement, updatePosition, s /* s is needed for class check */]);
+    }, [cleanupTemporaryStates, finalizeAreaPlacement, updatePosition, css(s("areaToOpenContainer"))]);
 
     const placement = useMemo(() => {
         if (!areaToOpen || !areaToOpenTargetViewport) return 'replace';
@@ -260,7 +261,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
             />
 
             <div
-                className="global-drag-overlay"
+                className={"area-to-open-overlay " + css(s("areaToOpenTargetOverlay"))}
                 style={{
                     position: 'fixed',
                     inset: 0,
@@ -273,7 +274,7 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((props) => {
                 {areaToOpenTargetViewport && (
                     <svg width={areaToOpenTargetViewport.width}
                         height={areaToOpenTargetViewport.height}
-                        className={s("placement")}
+                        className={css(s("placement"))}
                         style={{
                             position: 'absolute',
                             left: areaToOpenTargetViewport.left,

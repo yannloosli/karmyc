@@ -1,0 +1,9 @@
+{
+  "name": "@gamesberry/karmyc-layer-system",
+  "version": "0.1.0",
+  "main": "index.ts",
+  "module": "index.ts",
+  "types": "index.ts",
+  "type": "module",
+  "license": "MIT"
+} 

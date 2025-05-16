@@ -4,7 +4,7 @@ import { useAreaContextMenu } from '../hooks/useAreaContextMenu';
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { useToolsBar } from './Tools';
 import { areaRegistry } from "../../../area/registry";
-import { AreaTypeValue, TOOLBAR_HEIGHT } from "../../../constants";
+import { AreaTypeValue, TOOLBAR_HEIGHT, AREA_ROLE } from "../../../constants";
 import { useKarmycStore } from "../../../stores/areaStore";
 import { useContextMenuStore } from "../../../stores/contextMenuStore";
 import styles from "../../../styles/Area.styles";
@@ -14,8 +14,8 @@ import { AreaIdContext } from "../../../utils/AreaIdContext";
 import { compileStylesheet } from "../../../utils/stylesheets";
 import { useSpaceStore } from "../../../stores/spaceStore";
 import { Tools } from './Tools';
-
-import "../../../styles/area.css";
+import type { AreaRole } from "../../../constants";
+import { css } from '@emotion/css';
 
 const s = compileStylesheet(styles);
 
@@ -34,6 +34,13 @@ interface StateProps {
 interface AreaComponentOwnProps extends AreaComponentProps {
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
 }
+
+const areaMainContentWrapper = css`
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+    position: relative;
+`;
 
 export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     id,
@@ -82,7 +89,23 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
     const area = useKarmycStore(state => state.getAreaById(id));
     const space = useSpaceStore(state => state.getSpaceById(area?.spaceId || ''));
-    const spaceColor = space?.sharedState?.color || '#0000ff';
+    // Si FOLLOW, on prend la couleur du space du dernier LEAD sélectionné
+    let spaceColor = space?.sharedState?.color || '#0000ff';
+    if (area?.role === 'FOLLOW') {
+        const activeScreenId = useKarmycStore.getState().activeScreenId;
+        const lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
+        const allAreas = useKarmycStore.getState().screens[activeScreenId]?.areas.areas || {};
+        const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+        const leadSpaceId = leadArea?.spaceId;
+        if (leadSpaceId) {
+            const leadSpace = useSpaceStore.getState().spaces[leadSpaceId];
+            if (leadSpace && leadSpace.sharedState?.color) {
+                spaceColor = leadSpace.sharedState.color;
+            }
+        }
+    }
+    const setActiveSpace = useSpaceStore(state => state.setActiveSpace);
+    const activeSpaceId = useSpaceStore(state => state.activeSpaceId);
 
     useEffect(() => {
         const updateViewport = () => {
@@ -109,6 +132,12 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const onActivate = () => {
         if (!active) {
             setActiveArea(id);
+            // Logique LEAD/FOLLOW/SELF
+            if (area?.role === AREA_ROLE.LEAD && area.spaceId) {
+                setActiveSpace(area.spaceId);
+            }
+            // FOLLOW : rien à faire ici, la logique d'action doit utiliser le space actif global
+            // SELF : rien à faire
         }
     };
 
@@ -231,35 +260,73 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         if (dragRef.current) {
             dragRef.current = null;
             const store = useKarmycStore.getState();
-            if (store.areaToOpen) {
+            if (store.screens[store.activeScreenId]?.areas.areaToOpen) {
                 store.cleanupTemporaryStates();
             }
         }
     }, []);
 
+    // Préparation des variables de debug pour FOLLOW
+    let lastLeadAreaId = null;
+    let leadArea = null;
+    let leadSpaceId = null;
+    let leadSpaceColor = null;
+    if (area?.role === 'FOLLOW') {
+        const activeScreenId = useKarmycStore.getState().activeScreenId;
+        lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
+        const allAreas = useKarmycStore.getState().screens[activeScreenId]?.areas.areas || {};
+        leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+        leadSpaceId = leadArea?.spaceId;
+        if (leadSpaceId) {
+            const leadSpace = useSpaceStore.getState().spaces[leadSpaceId];
+            leadSpaceColor = leadSpace?.sharedState?.color;
+        }
+    }
+
     return (
         <div
             ref={viewportRef}
-            data-areaid={id}
-            className={s("area", { raised: !!raised, active })}
+            className={`area ${s('area', { raised: !!raised })}`}
             style={{
-                ...viewport,
-                ...(id === '-1' && { pointerEvents: 'none' }),
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                ['--space-color' as any]: spaceColor 
+                left: viewport.left,
+                top: viewport.top,
+                width: viewport.width,
+                height: viewport.height,
             }}
             onClick={onActivate}
         >
-            {["ne", "nw", "se", "sw"].map((dir) => (
+            {/* Bloc de debug FOLLOW/LEAD */}
+            <div style={{
+                background: '#f8f8f8',
+                border: '1px solid #eee',
+                borderRadius: 4,
+                padding: 6,
+                marginBottom: 6,
+                fontSize: 11,
+                color: '#333',
+                width: '100%'
+            }}>
+                <div><b>DEBUG</b></div>
+                <div>Area id : {id}</div>
+                <div>Rôle : {area?.role || 'N/A'}</div>
+                <div>spaceId : {area?.spaceId || 'N/A'}</div>
+                <div>Couleur utilisée : <span style={{ color: spaceColor }}>{spaceColor}</span></div>
+                {area?.role === 'FOLLOW' && (
+                    <>
+                        <div>LEAD id : {lastLeadAreaId || 'N/A'}</div>
+                        <div>LEAD spaceId : {leadSpaceId || 'N/A'}</div>
+                        <div>Couleur du LEAD : <span style={{ color: spaceColor }}>{spaceColor || 'N/A'}</span></div>
+                    </>
+                )}
+            </div>
+            {['ne', 'nw', 'se', 'sw'].map((dir) => (
                 <div
                     key={dir}
-                    className={s("area__corner", { [dir]: true })}
-                    onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as "ne", id, viewport, setResizePreview)}
+                    className={`area__corner ${s('area__corner', { [dir]: true })}`}
+                    onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as 'ne', id, viewport, setResizePreview)}
                 />
             ))}
-            <button className={s("selectAreaButton")}
+            <button className={`select-area-button ${s('selectAreaButton')}`}
                 draggable
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
@@ -267,8 +334,9 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 onDragEnd={handleDragEnd}
                 onContextMenu={e => { e.preventDefault(); openSelectArea(e); }}
                 style={{
-                    cursor: "grab"
-                }}
+                    cursor: 'grab',
+                    '--space-color': spaceColor
+                } as React.CSSProperties}
                 ref={selectAreaButtonRef}
             />
 
@@ -281,14 +349,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             />
 
             <div
-                className="area-main-content-wrapper"
-                style={{
-                    flexGrow: 1,
-                    minHeight: 0,
-                    overflowY: 'auto',
-                    position: 'relative',
-                    opacity: active ? 1 : 0.8
-                }}
+                className={"area-main-content-wrapper " + areaMainContentWrapper}
+                style={{ opacity: active ? 1 : 0.8 }}
             >
                 <Tools
                     areaId={id}

@@ -2,6 +2,7 @@ import { ComponentType } from "react";
 import { AreaTypeValue } from "../constants";
 import { Point } from "./geometry";
 import { Rect } from "./math";
+import type { AreaRole } from "../constants";
 
 export interface AreaComponentProps<T = any> {
     id: string;
@@ -21,6 +22,9 @@ export interface Area<T extends AreaTypeValue = AreaTypeValue> {
     position?: Point;
     size?: { width: number; height: number };
     raised?: boolean;
+    role?: AreaRole;
+    zoom?: number;
+    pan?: { x: number; y: number };
 }
 
 export interface AreaLayout {

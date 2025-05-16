@@ -1,6 +1,6 @@
 /**
  * Utility functions of the core module
- * This file exports the utility functions of the module
+ * Ce fichier exporte uniquement les utilitaires réellement utilisés
  */
 
 // Utility functions will be implemented and exported here as

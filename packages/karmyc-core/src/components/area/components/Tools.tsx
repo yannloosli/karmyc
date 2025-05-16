@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { ScreenSwitcher } from './ScreenSwitcher';
+import { css } from '@emotion/css';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {
@@ -126,6 +127,22 @@ interface ToolsProps {
     forceRender?: boolean;
 }
 
+const toolsBarSection = css`
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+`;
+const toolsBarSectionLeft = css`
+    justify-content: flex-start;
+`;
+const toolsBarSectionCenter = css`
+    justify-content: center;
+`;
+const toolsBarSectionRight = css`
+    justify-content: flex-end;
+`;
+
 export const Tools: React.FC<ToolsProps> = ({
     areaId,
     areaType,
@@ -150,7 +167,7 @@ export const Tools: React.FC<ToolsProps> = ({
 
     return (
         <div className={`tools-bar tools-bar-${position}`} style={style}>
-            <div className="tools-bar-section left" style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 8, justifyContent: 'flex-start' }}>
+            <div className={"tools-bar-section left " + toolsBarSection + " " + toolsBarSectionLeft}>
                 {left.map((item, idx) => {
                     const Component = item.component;
                     return (
@@ -160,7 +177,7 @@ export const Tools: React.FC<ToolsProps> = ({
                     );
                 })}
             </div>
-            <div className="tools-bar-section center" style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 8, justifyContent: 'center' }}>
+            <div className={"tools-bar-section center " + toolsBarSection + " " + toolsBarSectionCenter}>
                 {center.map((item, idx) => {
                     const Component = item.component;
                     return (
@@ -170,7 +187,7 @@ export const Tools: React.FC<ToolsProps> = ({
                     );
                 })}
             </div>
-            <div className="tools-bar-section right" style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 8, justifyContent: 'flex-end' }}>
+            <div className={"tools-bar-section right " + toolsBarSection + " " + toolsBarSectionRight}>
                 {right.map((item, idx) => {
                     const Component = item.component;
                     return (

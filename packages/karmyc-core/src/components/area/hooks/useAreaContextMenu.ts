@@ -93,7 +93,7 @@ export const useAreaContextMenu = (areaId: string): ContextMenuItem[] => {
     const spaceChildren: ContextMenuItem[] = Object.values(allSpaces).map((space) => ({
         id: `assign-space-${space.id}`,
         label: space.name,
-        actionId: `area.assign-space-${space.id}`,
+        actionId: 'area.assign-space',
         metadata: { areaId, spaceId: space.id },
         disabled: area.spaceId === space.id
     }));

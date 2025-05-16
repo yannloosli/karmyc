@@ -1,4 +1,4 @@
-import { RootState } from '../store';
+import { THistoryDiff } from '../types/history';
 
 export interface IStateDiff {
     path: string[];
@@ -6,7 +6,7 @@ export interface IStateDiff {
     newValue: unknown;
 }
 
-export function generateDiff(prevState: RootState, nextState: RootState): IStateDiff[] {
+export function generateDiff(prevState: any, nextState: any): IStateDiff[] {
     const diffs: IStateDiff[] = [];
 
     function compareValues(path: string[], prev: unknown, next: unknown) {
@@ -61,6 +61,31 @@ export function generateDiff(prevState: RootState, nextState: RootState): IState
     return diffs;
 }
 
-export function getValueAtPath(state: RootState, path: string[]): unknown {
+export function getValueAtPath(state: any, path: string[]): unknown {
     return path.reduce((obj, key) => (obj as Record<string, unknown>)[key], state);
+}
+
+// Applique un diff à un état (version simplifiée)
+export function applyDiff<T>(state: T, diff: THistoryDiff): T {
+    let newState = { ...state } as any;
+    diff.changes.forEach(change => {
+        let obj = newState;
+        for (let i = 0; i < change.path.length - 1; i++) {
+            obj = obj[change.path[i]];
+        }
+        obj[change.path[change.path.length - 1]] = change.oldValue;
+    });
+    return newState;
+}
+
+// Inverse un diff (version simplifiée)
+export function invertDiff(diff: THistoryDiff): THistoryDiff {
+    return {
+        ...diff,
+        changes: diff.changes.map(change => ({
+            ...change,
+            oldValue: change.newValue,
+            newValue: change.oldValue,
+        })),
+    };
 } 

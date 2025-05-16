@@ -105,4 +105,4 @@ export const areaRegistry: IAreaRegistry = {
     unregisterAreaType: (areaType: string) => {
         areaStorage.delete(areaType);
     }
-}; 
+};

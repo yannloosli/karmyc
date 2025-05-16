@@ -38,6 +38,8 @@
         "@gamesberry/karmyc-shared": "file:../karmyc-shared",
         "@pixi/app": "^7.0.0",
         "@pixi/unsafe-eval": "^7.0.0",
+        "@pixi/react": "^8.0.0",
+        "@szhsin/react-menu": "^4.4.0",
         "@types/svg-parser": "^2.0.1",
         "bezier-easing": "^2.1.0",
         "bezier-js": "^4.0.3",

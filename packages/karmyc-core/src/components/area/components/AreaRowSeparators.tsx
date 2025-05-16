@@ -125,14 +125,14 @@ export const AreaRowSeparators: React.FC<Props> = props => {
 
         const handleMouseDown = (e: React.MouseEvent) => {
             e.stopPropagation();
-            // Passer setResizePreview ET setRowSizes à la fonction handler
-            handleDragAreaResize(e.nativeEvent, row, horizontal, i + 1, setResizePreview, setRowSizes);
+            // Passer setResizePreview à la fonction handler
+            handleDragAreaResize(e.nativeEvent, row, horizontal, i + 1, setResizePreview);
         };
 
         separators.push(
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
-                className={s("separator", { horizontal })}
+                className={`area-separator ${s("separator", { horizontal })}`}
                 style={separatorRect} // Use calculated rect directly
                 onMouseDown={handleMouseDown}
             />

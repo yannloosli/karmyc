@@ -1,6 +1,14 @@
 import React from 'react';
 import { AreaErrorBoundary } from './AreaErrorBoundary';
 import { AreaIdContext } from '../../../utils/AreaIdContext';
+import { css } from '@emotion/css';
+
+const areaContent = css`
+    flex: 1 !important;
+    position: relative !important;
+    overflow: auto !important;
+    border: 1px dashed blue !important;
+`;
 
 interface ContentAreaProps {
     id: string;
@@ -21,7 +29,7 @@ export const ContentArea: React.FC<ContentAreaProps> = ({
     const areaStateKey = state?.key || id;
 
     return (
-        <div className="area-content" style={{ border: '1px dashed blue', position: 'relative', overflow: 'auto' }}>
+        <div className={"area-content " + areaContent}>
             <AreaIdContext.Provider value={id}>
                 <AreaErrorBoundary
                     key={areaStateKey}
@@ -30,15 +38,7 @@ export const ContentArea: React.FC<ContentAreaProps> = ({
                     areaState={state}
                     type={type}
                     viewport={viewport}
-                >
-                    <Component
-                        id={id}
-                        state={state}
-                        type={type}
-                        viewport={viewport}
-                        isActive={true} // Should be modified to reflect the actual activation state
-                    />
-                </AreaErrorBoundary>
+                />
             </AreaIdContext.Provider>
         </div>
     );

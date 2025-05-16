@@ -6,7 +6,7 @@
 // Action types
 export * from './actionTypes';
 
-export const DEFAULT_AREA_TYPES = ['text', 'image', 'video', 'shape'] as const;
+export const DEFAULT_AREA_TYPES = ['text', 'image', 'video', 'shape', 'workspace'] as const;
 
 export const AREA_MIN_SIZE = {
     width: 50,
@@ -91,3 +91,11 @@ export const DEFAULT_CONTEXT_MENU_WIDTH = 180;
 export const CONTEXT_MENU_OPTION_HEIGHT = 20;
 export const CONTEXT_MENU_OPTION_PADDING_LEFT = 32;
 export const CONTEXT_MENU_OPTION_PADDING_RIGHT = 16;
+
+export const AREA_ROLE = {
+    LEAD: "LEAD",
+    FOLLOW: "FOLLOW",
+    SELF: "SELF"
+} as const;
+
+export type AreaRole = typeof AREA_ROLE[keyof typeof AREA_ROLE];

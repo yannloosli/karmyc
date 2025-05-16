@@ -18,7 +18,7 @@ export * from './components';
 
 // Export public types
 export * from './types/actions';
-export * from './types/areaTypes';
+// export * from './types/areaTypes';
 
 // Export public constants
 export * from './constants';
@@ -59,3 +59,36 @@ export * from './hooks/useArea';
 export * from './stores/spaceStore';
 export * from './stores/areaStore';
 export * from './stores/contextMenuStore';
+
+export {
+  Area, // ou AreaComponent
+} from "./components/area";
+export type { AreaComponentProps, WorkspaceAreaHandle } from "./components/area";
+export { WorkspaceArea } from "./components/area";
+
+
+// Export public hooks
+export * from './hooks';
+
+// Export public components
+export * from './components';
+export { AreaToOpenPreview } from './components/area/components/AreaToOpenPreview'; // Export spécifique
+
+// Export public types
+export * from './types/actions';
+export * from './types/areaTypes';
+export * from './types/image'; // Ajout pour ImageData etc.
+
+// Export public constants
+export * from './constants';
+
+// Export utilities
+export * from './utils/areaToViewport';
+export * from './utils/areaUtils';
+export { getAreaRootViewport } from './utils/getAreaViewport'; // Export spécifique
+
+// Export actions
+export * from './actions/validators';
+export * from './actions/plugins/performance'; // Ajout de l'export pour le plugin performance
+
+export { useSpaceStore } from './stores/spaceStore'; // Export de useSpaceStore

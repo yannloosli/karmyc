@@ -174,7 +174,7 @@ const AreaRoot: React.FC = () => {
     }
 
     return (
-        <div className={s('root')}>
+        <div className={"area-root " + s('root')}>
             {/* Iterate over the active screen's layout */}
             {Object.values(layout).map((item) => {
                 if (item.type === 'area_row') {

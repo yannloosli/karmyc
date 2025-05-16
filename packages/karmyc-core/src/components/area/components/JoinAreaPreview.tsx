@@ -3,6 +3,7 @@ import { compileStylesheet } from "../../../utils/stylesheets";
 import { ArrowBoldDownIcon } from "../../icons/ArrowBoldDownIcon";
 import styles from "../../../styles/JoinAreaPreview.styles";
 import { CardinalDirection } from "../../../types";
+import { css } from '@emotion/css';
 
 const s = compileStylesheet(styles);
 
@@ -11,11 +12,18 @@ interface Props {
     movingInDirection: CardinalDirection;
 }
 
+const joinAreaPreviewContainer = css`
+    position: absolute;
+`;
+
 export const JoinAreaPreview: React.FC<Props> = props => {
     const { viewport, movingInDirection } = props;
     const arrowWidth = Math.min(256, Math.min(viewport.width, viewport.height) * 0.75);
     return (
-        <div style={{ ...viewport }} className={s("container")}>
+        <div
+            className={"join-area-preview " + joinAreaPreviewContainer + " " + s("container")}
+            style={{ left: viewport.left, top: viewport.top, width: viewport.width, height: viewport.height }}
+        >
             <div
                 className={s("arrowContainer", {
                     [movingInDirection!]: true,

@@ -3,7 +3,7 @@ import { create, StateCreator } from 'zustand'; // Ensure StateCreator is import
 import { immer } from 'zustand/middleware/immer';
 // Import Vec2 directly from source to match expected type in utils
 import { Vec2 } from '@gamesberry/karmyc-shared';
-import { AreaTypeValue, TOOLBAR_HEIGHT } from '../constants';
+import { AreaTypeValue, TOOLBAR_HEIGHT, AREA_ROLE } from '../constants';
 import { Area, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
 import { Point, Rect } from '../types/geometry';
@@ -16,6 +16,7 @@ import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 // import { performance } from './middleware/performanceMiddleware'; // Keep commented for now
 import { devtools, persist } from 'zustand/middleware';
+import { areaRegistry } from '../area/registry';
 
 
 
@@ -57,6 +58,7 @@ export interface AreaSliceStateData {
         };
     };
     lastSplitResultData: SplitResult | null;
+    lastLeadAreaId?: string | null;
 }
 
 // --- Define the initial DATA state for the Area slice ---
@@ -71,6 +73,7 @@ const initialAreaStateData: AreaSliceStateData = {
     viewports: {},
     areaToOpen: null,
     lastSplitResultData: null,
+    lastLeadAreaId: null,
 };
 
 
@@ -107,6 +110,7 @@ export interface AreaSliceState extends AreaSliceStateData {
     getAreaById: (id: string) => Area<AreaTypeValue> | undefined;
     getAllAreas: () => Record<string, Area<AreaTypeValue>>;
     getAreaErrors: () => string[];
+    getLastLeadAreaId: () => string | null;
 }
 
 // --- Initial state for AreaSlice (Data + Dummy Actions/Selectors) ---
@@ -123,6 +127,7 @@ const initialAreaSliceState: AreaSliceState = {
     viewports: {},
     areaToOpen: null,
     lastSplitResultData: null,
+    lastLeadAreaId: null,
     // Dummy implementations for type completeness (will be replaced by real slice)
     addArea: () => '',
     removeArea: () => { },
@@ -142,6 +147,7 @@ const initialAreaSliceState: AreaSliceState = {
     getAreaById: () => undefined,
     getAllAreas: () => ({}),
     getAreaErrors: () => [],
+    getLastLeadAreaId: () => null,
 };
 
 
@@ -353,21 +359,30 @@ const createAreaSlice: StateCreator<
         // --- ACTIONS (adapted to operate on active screen) ---
         addArea: (area) => {
             let generatedAreaId = '';
-            set((state: WritableDraft<RootState>) => { // Ensure state is WritableDraft
+            set((state: WritableDraft<RootState>) => {
                 const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
                 if (!activeScreenAreas) return;
 
                 const areaId = area.id || `area-${activeScreenAreas._id + 1}`;
-                const areaWithId = { ...area, id: areaId };
-                const validation = validateArea(areaWithId); // Use imported validateArea
-
+                let role = undefined;
+                if (area.type) {
+                    const _roleMap = (areaRegistry as any)._roleMap || {};
+                    role = _roleMap[area.type];
+                }
+                // Initialisation de zoom/pan par défaut si non fournis
+                const areaWithId = {
+                    ...area,
+                    id: areaId,
+                    role,
+                    zoom: area.zoom ?? 1,
+                    pan: area.pan ?? { x: 0, y: 0 },
+                };
+                const validation = validateArea(areaWithId);
                 if (!validation.isValid) {
                     activeScreenAreas.errors = validation.errors;
                     console.error("Validation failed for area:", validation.errors);
-                    // generatedAreaId remains ''
                 } else {
                     activeScreenAreas.areas[areaId] = areaWithId;
-                    // Layout entry created by finalizePlacement or initial setup
                     activeScreenAreas._id += 1;
                     activeScreenAreas.errors = [];
                     generatedAreaId = areaId;
@@ -434,6 +449,9 @@ const createAreaSlice: StateCreator<
             if (!activeScreenAreas) return;
             if (id === null || activeScreenAreas.areas[id]) {
                 activeScreenAreas.activeAreaId = id;
+                if (id && activeScreenAreas.areas[id]?.role === AREA_ROLE.LEAD) {
+                    activeScreenAreas.lastLeadAreaId = id;
+                }
             } else {
                 console.warn(`Attempted to set active area to non-existent ID: ${id}`);
             }
@@ -445,9 +463,14 @@ const createAreaSlice: StateCreator<
             if (!activeScreenAreas) return;
             const area = activeScreenAreas.areas[areaData.id];
             if (area) {
-                const { id, ...changes } = areaData;
-                // Validate changes if necessary
-                activeScreenAreas.areas[id] = { ...area, ...changes };
+                // Si le type change ou si le rôle est absent, recalculer le rôle
+                const newType = areaData.type || area.type;
+                let newRole = area.role;
+                if (!newRole || (areaData.type && areaData.type !== area.type)) {
+                    const _roleMap = (areaRegistry as any)._roleMap || {};
+                    newRole = _roleMap[newType];
+                }
+                Object.assign(area, areaData, { role: newRole });
                 activeScreenAreas.errors = [];
             } else {
                 activeScreenAreas.errors = [`Area with ID ${areaData.id} not found for update.`];
@@ -987,6 +1010,11 @@ const createAreaSlice: StateCreator<
             const state = get();
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             return activeScreenAreas ? activeScreenAreas.errors : [];
+        },
+        getLastLeadAreaId: () => {
+            const state = get();
+            const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+            return activeScreenAreas?.lastLeadAreaId || null;
         },
     };
 };

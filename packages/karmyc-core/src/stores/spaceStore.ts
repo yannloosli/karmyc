@@ -1,15 +1,18 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { THistoryDiff, applyDiff, generateDiff, invertDiff } from '../history/diff'; // Adjust path as needed
-import { Line } from './src/types/drawingTypes';
+import { generateDiff, applyDiff, invertDiff } from '../utils/history';
+import { THistoryDiff } from '../types/history';
 
 export interface SpaceSharedState extends Record<string, any> {
-    lines: Line[];
+    lines: any[];
     strokeWidth: number;
     color: string;
     pastDiffs: THistoryDiff[];
     futureDiffs: THistoryDiff[];
+    layers: any[];
+    zoom: number;
+    pan: { x: number; y: number };
 }
 
 export interface Space {
@@ -78,6 +81,9 @@ const immerConfig = immer<SpaceState>((set, get) => {
                     color: spaceData.sharedState?.color ?? '#ff0000',
                     pastDiffs: [],
                     futureDiffs: [],
+                    layers: spaceData.sharedState?.layers ?? [],
+                    zoom: spaceData.sharedState?.zoom ?? 1,
+                    pan: spaceData.sharedState?.pan ?? { x: 0, y: 0 },
                     ...(spaceData.sharedState || {}),
                 },
             };
@@ -137,6 +143,11 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 return;
             }
 
+            // Garde-fou : layers ne doit contenir que des objets valides
+            if (Array.isArray(changes.layers)) {
+                changes.layers = [...changes.layers.filter(l => !!l)]; // force un nouveau tableau
+            }
+
             const prevState = space.sharedState;
 
             set(state => {
@@ -144,6 +155,10 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 if (currentSpace) {
                     currentSpace.sharedState = { ...currentSpace.sharedState, ...changes };
                     state.errors = [];
+                    // Log l'ordre des layers après update
+                    if (Array.isArray(currentSpace.sharedState.layers)) {
+                        console.log('[STORE] Nouvelle ordre layers:', currentSpace.sharedState.layers.map(l => l.id));
+                    }
                 }
             });
             const nextState = get().spaces[spaceId]?.sharedState;
@@ -152,13 +167,17 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 console.error("Shared state update failed: Space disappeared after update?");
                 return;
             }
-            const diff = generateDiff(prevState, nextState, { type: 'UPDATE_SHARED_STATE', payload });
-            if (diff.changes.length > 0) {
+            const diff = generateDiff(prevState, nextState);
+            if (Array.isArray(diff) && diff.length > 0) {
                 set(state => {
                     const currentSpace = state.spaces[spaceId];
                     if (currentSpace) {
                         if (!currentSpace.sharedState.pastDiffs) currentSpace.sharedState.pastDiffs = [];
-                        currentSpace.sharedState.pastDiffs.push(diff);
+                        currentSpace.sharedState.pastDiffs.push({
+                            timestamp: Date.now(),
+                            actionType: 'UPDATE_SHARED_STATE',
+                            changes: diff,
+                        });
                         currentSpace.sharedState.futureDiffs = [];
                     }
                 });
@@ -257,22 +276,20 @@ const persistConfig = persist(immerConfig, {
             validatedSpaces[spaceId] = {
                 id: spaceFromStorage?.id ?? spaceFromCode?.id ?? spaceId,
                 name: spaceFromStorage?.name ?? spaceFromCode?.name ?? `Space ${spaceId}`,
-                // Corrected Merge: Base -> Loaded -> Reset History
                 sharedState: {
-                    // 1. Start with base state from code (contains defaults like color, width, etc.)
                     ...baseShared,
-                    // 2. Overwrite with loaded state from storage (if any)
                     ...loadedShared,
-                    // 3. ALWAYS reset history arrays, overwriting any persisted history
                     pastDiffs: [],
                     futureDiffs: [],
+                    zoom: loadedShared.zoom ?? baseShared.zoom ?? 1,
+                    pan: loadedShared.pan ?? baseShared.pan ?? { x: 0, y: 0 },
                 },
             };
-            // Ensure defaults if loaded state completely misses sharedState
             if (!validatedSpaces[spaceId].sharedState.lines) validatedSpaces[spaceId].sharedState.lines = [];
             if (validatedSpaces[spaceId].sharedState.strokeWidth === undefined) validatedSpaces[spaceId].sharedState.strokeWidth = 3;
             if (!validatedSpaces[spaceId].sharedState.color) validatedSpaces[spaceId].sharedState.color = '#000000';
-
+            if (validatedSpaces[spaceId].sharedState.zoom === undefined) validatedSpaces[spaceId].sharedState.zoom = 1;
+            if (!validatedSpaces[spaceId].sharedState.pan) validatedSpaces[spaceId].sharedState.pan = { x: 0, y: 0 };
         }
 
         // Return the fully merged state, prioritizing loaded simple values

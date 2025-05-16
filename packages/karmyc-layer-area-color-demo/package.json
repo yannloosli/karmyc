@@ -1,0 +1,9 @@
+{
+  "name": "@gamesberry/karmyc-layer-area-color-demo",
+  "version": "0.1.0",
+  "main": "index.tsx",
+  "module": "index.tsx",
+  "types": "index.tsx",
+  "type": "module",
+  "license": "MIT"
+} 

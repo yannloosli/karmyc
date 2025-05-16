@@ -8,8 +8,12 @@ import {
     useSyncContextMenuActions,
     useToolsBar,
 } from '../../karmyc-core/src';
+import { AREA_ROLE } from '../../karmyc-core/src/constants';
 import { useAreaStore } from '../../karmyc-core/src/stores/areaStore'; // Importer directement
 
+import '../../karmyc-layer-area-color-demo';
+import LayerAreaManager from '../../karmyc-layer-area-manager';
+import { TilesetArea, TilesetAreaState } from '../../karmyc-layer-area-tilemap';
 import { ColorPickerArea } from './components/ColorPickerArea';
 import { HistoryDrawingArea } from './components/HistoryDrawingArea';
 import { ImageViewerArea } from './components/ImageViewerArea';
@@ -18,7 +22,7 @@ import { PerformanceExample } from './components/PerformanceExample';
 import { ResetButtonWrapper } from './components/ResetButtonWrapper';
 import { SpaceManager } from './components/SpaceManager';
 import { TextNoteArea } from './components/TextNoteArea';
-
+import { WorkspaceArea } from './components/WorkspaceArea';
 
 export const AreaInitializer: React.FC = () => {
     // Récupérer l'action Zustand
@@ -47,12 +51,24 @@ export const AreaInitializer: React.FC = () => {
 
     // Register all area types
     useRegisterAreaType(
+        'workspace',
+        WorkspaceArea,
+        { content: '' },
+        {
+            displayName: 'Workspace',
+            defaultSize: { width: 300, height: 200 },
+            role: AREA_ROLE.LEAD
+        }
+    );
+
+    useRegisterAreaType(
         'text-note',
         TextNoteArea,
         { content: '' },
         {
             displayName: 'Note',
-            defaultSize: { width: 300, height: 200 }
+            defaultSize: { width: 300, height: 200 },
+            role: AREA_ROLE.LEAD
         }
     );
 
@@ -62,7 +78,8 @@ export const AreaInitializer: React.FC = () => {
         { color: '#1890ff' },
         {
             displayName: 'Palette',
-            defaultSize: { width: 300, height: 250 }
+            defaultSize: { width: 300, height: 250 },
+            role: AREA_ROLE.FOLLOW
         }
     );
 
@@ -72,7 +89,8 @@ export const AreaInitializer: React.FC = () => {
         { imageUrl: 'https://picsum.photos/300/400', caption: '' },
         {
             displayName: 'Image',
-            defaultSize: { width: 350, height: 300 }
+            defaultSize: { width: 350, height: 300 },
+            role: AREA_ROLE.SELF
         }
     );
 
@@ -88,7 +106,8 @@ export const AreaInitializer: React.FC = () => {
         },
         {
             displayName: 'Gallery',
-            defaultSize: { width: 800, height: 600 }
+            defaultSize: { width: 800, height: 600 },
+            role: AREA_ROLE.SELF
         }
     );
 
@@ -100,7 +119,8 @@ export const AreaInitializer: React.FC = () => {
         {
             displayName: 'Performance',
             defaultSize: { width: 700, height: 600 },
-            supportedActions: ['run', 'monitor', 'clear', 'delete', 'move', 'resize']
+            supportedActions: ['run', 'monitor', 'clear', 'delete', 'move', 'resize'],
+            role: AREA_ROLE.SELF
         }
     );
 
@@ -116,7 +136,8 @@ export const AreaInitializer: React.FC = () => {
         {
             displayName: 'Dessin',
             defaultSize: { width: 600, height: 400 },
-            supportedActions: ['draw', 'clear', 'delete', 'move', 'resize']
+            supportedActions: ['draw', 'clear', 'delete', 'move', 'resize'],
+            role: AREA_ROLE.LEAD
         }
     );
 
@@ -128,11 +149,86 @@ export const AreaInitializer: React.FC = () => {
         {
             displayName: 'Espaces',
             defaultSize: { width: 400, height: 500 },
-            supportedActions: ['delete', 'move', 'resize']
+            supportedActions: ['delete', 'move', 'resize'],
+            role: AREA_ROLE.SELF
+        }
+    );
+
+    // Enregistrement du type d'area 'layer-demo'
+    useRegisterAreaType(
+        'layer-demo',
+        LayerAreaManager,
+        {
+            layers: [
+                {
+                    id: "layer-blue",
+                    type: "color-demo",
+                    color: "#3498db",
+                    opacity: 0.8,
+                    zIndex: 1,
+                    visible: true,
+                    enabled: true,
+                    locked: false,
+                },
+                {
+                    id: "layer-red",
+                    type: "color-demo",
+                    color: "#e74c3c",
+                    opacity: 0.5,
+                    zIndex: 2,
+                    visible: true,
+                    enabled: true,
+                    locked: false,
+                },
+            ]
+        },
+        {
+            displayName: 'Layer Demo',
+            defaultSize: { width: 400, height: 300 },
+            role: AREA_ROLE.FOLLOW
+        }
+    );
+
+    // Register tileset area
+    useRegisterAreaType(
+        'tileset',
+        TilesetArea,
+        {
+            tileset: {
+                image: null, // ou une URL de tileset de démo
+                tileWidth: 32,
+                tileHeight: 32,
+                columns: 8,
+                rows: 8,
+            },
+            selectedTile: 0,
+            id: 'tileset-1',
+            type: 'tileset',
+            zIndex: 1,
+            opacity: 1,
+            visible: true,
+            enabled: true,
+            locked: false,
+        } as TilesetAreaState,
+        {
+            displayName: 'Tileset',
+            defaultSize: { width: 320, height: 320 },
+            role: AREA_ROLE.FOLLOW
         }
     );
 
     // Action handlers for area creation (utilisation de updateArea Zustand)
+    const handleWorkspace = (params: any) => {
+        const areaId = params.areaId || params.itemMetadata?.areaId;
+        if (areaId) {
+            updateArea({
+                id: areaId,
+                type: 'workspace',
+                state: { content: '' }
+            });
+        }
+    };
+
     const handleTextNote = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
@@ -221,8 +317,71 @@ export const AreaInitializer: React.FC = () => {
         }
     };
 
+    // Handler pour la création d'une area 'layer-demo'
+    const handleLayerDemo = (params: any) => {
+        const areaId = params.areaId || params.itemMetadata?.areaId;
+        if (areaId) {
+            updateArea({
+                id: areaId,
+                type: 'layer-demo',
+                state: {
+                    layers: [
+                        {
+                            id: "layer-blue",
+                            type: "color-demo",
+                            color: "#3498db",
+                            opacity: 0.8,
+                            zIndex: 1,
+                            visible: true,
+                            enabled: true,
+                            locked: false,
+                        },
+                        {
+                            id: "layer-red",
+                            type: "color-demo",
+                            color: "#e74c3c",
+                            opacity: 0.5,
+                            zIndex: 2,
+                            visible: true,
+                            enabled: true,
+                            locked: false,
+                        },
+                    ]
+                }
+            });
+        }
+    };
+
+    const handleTileset = (params: any) => {
+        const areaId = params.areaId || params.itemMetadata?.areaId;
+        if (areaId) {
+            updateArea({
+                id: areaId,
+                type: 'tileset',
+                state: {
+                    tileset: {
+                        image: null,
+                        tileWidth: 32,
+                        tileHeight: 32,
+                        columns: 8,
+                        rows: 8,
+                    },
+                    selectedTile: 0,
+                    id: 'tileset-1',
+                    type: 'tileset',
+                    zIndex: 1,
+                    opacity: 1,
+                    visible: true,
+                    enabled: true,
+                    locked: false,
+                }
+            });
+        }
+    };
+
     // Register action handlers
     useEffect(() => {
+        actionRegistry.registerActionHandler('area.create-workspace', handleWorkspace);
         actionRegistry.registerActionHandler('area.create-text-note', handleTextNote);
         actionRegistry.registerActionHandler('area.create-color-picker', handleColorPicker);
         actionRegistry.registerActionHandler('area.create-image-viewer', handleImageViewer);
@@ -230,9 +389,11 @@ export const AreaInitializer: React.FC = () => {
         actionRegistry.registerActionHandler('area.create-performance-example', handlePerformanceExample);
         actionRegistry.registerActionHandler('area.create-history-drawing', handleHistoryDrawing);
         actionRegistry.registerActionHandler('area.create-space-manager', handleSpaceManager);
-
+        actionRegistry.registerActionHandler('area.create-layer-demo', handleLayerDemo);
+        actionRegistry.registerActionHandler('area.create-tileset', handleTileset);
         // Cleanup on unmount
         return () => {
+            actionRegistry.unregisterActionHandler('area.create-workspace');
             actionRegistry.unregisterActionHandler('area.create-text-note');
             actionRegistry.unregisterActionHandler('area.create-color-picker');
             actionRegistry.unregisterActionHandler('area.create-image-viewer');
@@ -240,69 +401,15 @@ export const AreaInitializer: React.FC = () => {
             actionRegistry.unregisterActionHandler('area.create-performance-example');
             actionRegistry.unregisterActionHandler('area.create-history-drawing');
             actionRegistry.unregisterActionHandler('area.create-space-manager');
+            actionRegistry.unregisterActionHandler('area.create-layer-demo');
+            actionRegistry.unregisterActionHandler('area.create-tileset');
         };
     }, [updateArea]); // Ajouter updateArea aux dépendances si nécessaire
-
-    // Register context menu
-    useEffect(() => {
-        // Get the existing context menu for the areas
-        const createAreaContextMenu = {
-            id: 'create-area',
-            label: 'Créer une zone',
-            icon: '+',
-            children: [
-                {
-                    id: 'text-note',
-                    label: 'Note',
-                    action: 'area.create-text-note',
-                    icon: '📝'
-                },
-                {
-                    id: 'color-picker',
-                    label: 'Palette',
-                    action: 'area.create-color-picker',
-                    icon: '🎨'
-                },
-                {
-                    id: 'image-viewer',
-                    label: 'Image',
-                    action: 'area.create-image-viewer',
-                    icon: '🖼️'
-                },
-                {
-                    id: 'images-gallery',
-                    label: 'Gallery',
-                    action: 'area.create-images-gallery',
-                    icon: '📷'
-                },
-                {
-                    id: 'performance-example',
-                    label: 'Performance',
-                    action: 'area.create-performance-example',
-                    icon: '⚡'
-                },
-                {
-                    id: 'history-drawing',
-                    label: 'Dessin',
-                    action: 'area.create-history-drawing',
-                    icon: '✏️'
-                },
-                {
-                    id: 'space-manager',
-                    label: 'Espaces',
-                    action: 'area.create-space-manager',
-                    icon: '🌐'
-                }
-            ]
-        };
-
-        // Les menus contextuels sont enregistrés via useSyncContextMenuActions
-        // qui est déjà utilisé au début de ce composant
-    }, []);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
+            areaRegistry.unregisterAreaType('workspace');
             areaRegistry.unregisterAreaType('text-note');
             areaRegistry.unregisterAreaType('color-picker');
             areaRegistry.unregisterAreaType('image-viewer');
@@ -310,6 +417,8 @@ export const AreaInitializer: React.FC = () => {
             areaRegistry.unregisterAreaType('performance-example');
             areaRegistry.unregisterAreaType('history-drawing');
             areaRegistry.unregisterAreaType('space-manager');
+            areaRegistry.unregisterAreaType('layer-demo');
+            areaRegistry.unregisterAreaType('tileset');
         };
     }, []);
 

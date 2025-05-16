@@ -13,6 +13,7 @@ export function useRegisterAreaType<T = any>(
         icon?: React.ComponentType;
         defaultSize?: { width: number, height: number };
         supportedActions?: string[];
+        role?: string;
     }
 ): void {
     useEffect(() => {
@@ -55,6 +56,13 @@ export function useRegisterAreaType<T = any>(
                     console.log(`SupportedActions is not yet supported for ${areaType}`);
                 }
             }
+
+            // Ajout du rôle dans le registre si fourni
+            if (options.role) {
+                // fallback temporaire : stocker dans areaRegistry (sera utilisé plus tard)
+                (areaRegistry as any)._roleMap = (areaRegistry as any)._roleMap || {};
+                (areaRegistry as any)._roleMap[areaType] = options.role;
+            }
         }
 
         // Clean up when component unmounts
@@ -69,6 +77,7 @@ export function useRegisterAreaType<T = any>(
         options?.displayName,
         options?.defaultSize,
         options?.supportedActions,
-        options?.icon
+        options?.icon,
+        options?.role
     ]);
 } 
