@@ -1,0 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- always use YARN
+- always ask user for more precision if only log in input
+- write doc, UI and comment in english but speak french in cursor chat
