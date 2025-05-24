@@ -28,6 +28,7 @@ interface ToolsBarComponent {
     width?: string | number;
     identifier: ComponentIdentifier;
     allowedLayerTypes?: string[];
+    callback?: (() => void)[];
 }
 
 // Registre global
@@ -51,7 +52,7 @@ export function useToolsSlot(
     areaType: string,
     areaId: string,
     position: ToolsBarPosition,
-    cleanupOnUnmount: boolean = true
+    cleanupOnUnmount: boolean = false
 ) {
     const registryKey = `${areaType}:${areaId}:${position}`;
 
@@ -65,9 +66,10 @@ export function useToolsSlot(
                 alignment?: ToolsBarAlignment;
                 width?: string | number;
                 allowedLayerTypes?: string[];
+                callback?: (() => void)[];
             } = {}
         ) => {
-            const { order = 0, alignment = 'left', width, allowedLayerTypes } = options;
+            const { order = 0, alignment = 'left', width, allowedLayerTypes, callback } = options;
             if (!toolsBarRegistry[registryKey]) {
                 toolsBarRegistry[registryKey] = [];
             } else {
@@ -82,7 +84,8 @@ export function useToolsSlot(
                 alignment,
                 width,
                 identifier,
-                allowedLayerTypes
+                allowedLayerTypes,
+                callback
             });
             toolsBarRegistry[registryKey].sort((a, b) => a.order - b.order);
             notifyToolsRegistryChange();
@@ -167,7 +170,7 @@ export const Tools: React.FC<ToolsProps> = ({
     const components = getComponents();
     const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
-    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached);
+    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
 
     // NOUVEAU: Fonction de filtrage des composants
     const filterComponentsByLayerType = (comps: ToolsBarComponent[]): ToolsBarComponent[] => {
@@ -188,48 +191,47 @@ export const Tools: React.FC<ToolsProps> = ({
     if (!forceRender && leftComponents.length === 0 && centerComponents.length === 0 && rightComponents.length === 0) {
         return null;
     }
-
     return (
         <>
             {
-            (
-                (position.includes('inside')) ||
-                (!isDetached && position.includes('outside'))
-            ) &&
-            <div className={`tools-bar tools-bar-${position}`} style={style}>
-                <div className={"tools-bar-section left " + toolsBarSection + " " + toolsBarSectionLeft}>
-                    {leftComponents.map((item, idx) => {
-                        const Component = item.component;
-                        return (
-                            <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                <Component areaId={areaId} areaState={areaState} />
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className={"tools-bar-section center " + toolsBarSection + " " + toolsBarSectionCenter}>
-                    {centerComponents.map((item, idx) => {
-                        const Component = item.component;
-                        return (
-                            <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                <Component areaId={areaId} areaState={areaState} />
-                            </div>
-                        );
-                    })}
-                </div>
-                <div className={"tools-bar-section right " + toolsBarSection + " " + toolsBarSectionRight}>
-                    {rightComponents.map((item, idx) => {
-                        const Component = item.component;
-                        return (
-                            <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                <Component areaId={areaId} areaState={areaState} />
-                            </div>
-                        );
-                    })}
-                    {/* Afficher le ScreenSwitcher SEULEMENT si areaType est 'app', position est 'bottom-outside' et l'écran n'est pas détaché */}
-                    {areaType === 'app' && position === 'bottom-outside' && <ScreenSwitcher />}
-                </div>
-            </div>}
+                (
+                    (position.includes('inside')) ||
+                    (!isDetached && position.includes('outside'))
+                ) &&
+                <div className={`tools-bar tools-bar-${position} ${toolsBarSection}`} style={style}>
+                    <div className={"tools-bar-section left " + toolsBarSection + " " + toolsBarSectionLeft}>
+                        {leftComponents.map((item, idx) => {
+                            const Component = item.component;
+                            return (
+                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
+                                    <Component areaId={areaId} areaState={areaState} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className={"tools-bar-section center " + toolsBarSection + " " + toolsBarSectionCenter}>
+                        {centerComponents.map((item, idx) => {
+                            const Component = item.component;
+                            return (
+                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
+                                    <Component areaId={areaId} areaState={areaState} />
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className={"tools-bar-section right " + toolsBarSection + " " + toolsBarSectionRight}>
+                        {rightComponents.map((item, idx) => {
+                            const Component = item.component;
+                            return (
+                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
+                                    <Component areaId={areaId} areaState={areaState} />
+                                </div>
+                            );
+                        })}
+                        {/* Afficher le ScreenSwitcher SEULEMENT si areaType est 'app', position est 'bottom-outside' et l'écran n'est pas détaché */}
+                        {areaType === 'app' && position === 'bottom-outside' && <ScreenSwitcher />}
+                    </div>
+                </div>}
         </>
     );
 }; 

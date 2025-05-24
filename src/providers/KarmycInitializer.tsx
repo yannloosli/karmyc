@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { historyPlugin } from '../../../plugins/history/src';
+//import { historyPlugin } from '@components/editor/plugins/history/src';
 import { actionRegistry } from '../stores/registries/actionRegistry';
 import { useArea } from '../hooks/useArea';
 import { useKarmycStore } from '../stores/areaStore'; // Utiliser le store principal
@@ -21,7 +21,8 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
         initialized.current = true;
 
         // Register default plugins
-        const defaultPlugins = [historyPlugin];
+        //const defaultPlugins = [historyPlugin];
+        const defaultPlugins = [];
         const customPlugins = options.plugins || [];
         const allPlugins = [...defaultPlugins, ...customPlugins];
 

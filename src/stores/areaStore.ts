@@ -1230,7 +1230,7 @@ const createAreaSlice: StateCreator<
         getAreaById: (id) => {
             const state = get();
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
-            return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;
+            return activeScreenAreas ? activeScreenAreas.areas[id] || activeScreenAreas.layout[id] : undefined;
         },
         getAllAreas: () => {
             const state = get();
@@ -1527,6 +1527,11 @@ const tryMigrateOldState = () => {
     const oldStateKey = 'areaState';
     const newStateKey = 'karmycRootState';
     try {
+        // Vérifier si nous sommes dans un environnement navigateur
+        if (typeof window === 'undefined') {
+            return;
+        }
+
         const oldStateString = localStorage.getItem(oldStateKey);
         const newStateString = localStorage.getItem(newStateKey);
 

@@ -31,12 +31,7 @@ interface AreaComponentOwnProps extends AreaComponentProps {
     isChildOfStack: boolean;
 }
 
-const areaMainContentWrapper = css`
-    flex-grow: 1;
-    min-height: 0;
-    overflow-y: auto;
-    position: relative;
-`;
+
 
 export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     id,
@@ -45,7 +40,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     type,
     viewport,
     raised,
-    isChildOfStack=false,
+    isChildOfStack = false,
     setResizePreview,
 }) => {
     if (!viewport) {
@@ -60,8 +55,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
     const active = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId === id);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
-   
-    
+
+
 
     const viewportRef = useRef<HTMLDivElement>(null);
     const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
@@ -120,8 +115,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached);
 
     // Nouvelle logique avec Tools
-    const shouldRenderMenubar = !isDetached && menuComponents.length > 0;
-    const shouldRenderStatusbar = !isDetached && statusComponents.length > 0;
+    const shouldRenderMenubar = menuComponents.length > 0;
+    const shouldRenderStatusbar = statusComponents.length > 0;
     const shouldRenderToolbarTopInside = toolbarTopInsideComponents.length > 0;
     const shouldRenderToolbarBottomInside = toolbarBottomInsideComponents.length > 0;
 
@@ -130,9 +125,19 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const statusbarHeight = shouldRenderStatusbar ? TOOLBAR_HEIGHT : 0;
     const contentAvailableHeight = Math.max(0, viewport.height - menubarHeight - statusbarHeight);
 
+    const areaMainContentWrapper = css`
+        flex-grow: 1;
+        height: ${contentAvailableHeight}px;
+        overflow-y: auto;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    `;
+
     // --- Logique de drag pour le bouton de sélection de type d'area ---
     const rafRef = useRef<number | undefined>(undefined);
-  
+
     useEffect(() => {
         return () => {
             if (rafRef.current) {
@@ -140,7 +145,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             }
         };
     }, []);
-    
+
 
     // Préparation des variables de debug pour FOLLOW
     let lastLeadAreaId = null;
@@ -158,6 +163,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             leadSpaceColor = leadSpace?.sharedState?.color;
         }
     }
+
     return (
         <AreaIdContext.Provider value={id}>
             <div
@@ -171,7 +177,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     height: viewport.height,
                 }}
                 onClick={onActivate}
-            >             
+            >
                 {!isDetached && !isChildOfStack && ['ne', 'nw', 'se', 'sw'].map((dir) => (
                     <div
                         key={dir}
@@ -190,7 +196,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 />}
 
                 <div
-                    className={"area-main-content-wrapper " + areaMainContentWrapper}
+                    className={`area-main-content-wrapper ${areaMainContentWrapper} ${type}`}
                     style={{ opacity: active ? 1 : 0.8 }}
                 >
                     {shouldRenderToolbarTopInside && <Tools
@@ -212,7 +218,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                             height: contentAvailableHeight
                         }}
                     />
-                    {shouldRenderToolbarBottomInside &&<Tools
+                    {shouldRenderToolbarBottomInside && <Tools
                         areaId={id}
                         areaType={type}
                         areaState={state}
@@ -238,35 +244,35 @@ interface AreaContainerProps extends OwnProps {
 }
 
 export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview }) => {
-    
+
     const area = useKarmycStore(state => state.getAreaById(id));
     const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
     const areas = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
 
     // Vérifier si c'est un stack
     const isStack = layout?.type === 'area_row' && layout.orientation === 'stack';
-    
+
     // Vérifier si l'area est un enfant d'une stack
     const isChildOfStack = useKarmycStore(state => {
         const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
         if (!activeScreenLayout) return false;
-        
+
         for (const [layoutId, layoutItem] of Object.entries(activeScreenLayout)) {
-            if (layoutItem.type === 'area_row' && 
-                layoutItem.orientation === 'stack' && 
+            if (layoutItem.type === 'area_row' &&
+                layoutItem.orientation === 'stack' &&
                 layoutItem.areas.some(area => area.id === id)) {
                 return true;
             }
         }
         return false;
     });
-    
+
     // Si c'est un stack, on continue même si l'area n'existe pas directement
     if (!area && !isStack) {
         console.warn(`Area ${id} not found`);
         return null;
     }
-    
+
     const Component = area?.type ? areaRegistry.getComponent(area.type) : null;
     if (!Component && !isStack) {
         console.warn(`No component found for type ${area?.type || 'unknown'}`);
@@ -288,7 +294,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         return null;
     }
 
-    const TAB_BAR_HEIGHT = 32; 
+    const TAB_BAR_HEIGHT = 32;
     const contentViewport = {
         left: 0,
         top: 0,
@@ -327,16 +333,16 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
                     />)
                 }
                 {!isStack && Component &&
-                <AreaComponent
-                    id={activeAreaId}
-                    Component={Component}
-                    state={activeArea?.state || area?.state}
-                    type={(activeArea?.type || area?.type || 'unknown') as AreaTypeValue}
-                    viewport={contentViewport}
-                    raised={!!area?.raised}
-                    setResizePreview={setResizePreview}
-                    isChildOfStack={isChildOfStack}
-                />
+                    <AreaComponent
+                        id={activeAreaId}
+                        Component={Component}
+                        state={activeArea?.state || area?.state}
+                        type={(activeArea?.type || area?.type || 'unknown') as AreaTypeValue}
+                        viewport={contentViewport}
+                        raised={!!area?.raised}
+                        setResizePreview={setResizePreview}
+                        isChildOfStack={isChildOfStack}
+                    />
                 }
             </div>
         </div>
