@@ -2,11 +2,9 @@ import React, { useMemo, useState } from "react";
 
 import { Vec2 } from "../utils";
 import { useKarmycStore } from "../stores/areaStore";
-import { Rect } from "../types";
 import { AreaPreview } from "./AreaPreview";
 import { DropZone } from "./DropZone";
 
-export const AREA_PLACEMENT_TRESHOLD = 0.25;
 
 interface OwnProps {}
 

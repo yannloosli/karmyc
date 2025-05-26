@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useKarmycStore } from "../stores/areaStore";
-import AreaRootStyles from "../styles/AreaRoot.styles";
 import { AreaRowLayout } from "../types/areaTypes";
 import { computeAreaToViewport } from "../utils/areaToViewport";
 import { getAreaRootViewport } from "../utils/getAreaViewport";
-import { compileStylesheetLabelled } from "../utils/stylesheets";
 import { EmptyAreaMessage } from './EmptyAreaMessage';
 import { Area } from "./Area";
 import { AreaRowSeparators } from "./AreaRowSeparators";
@@ -12,8 +10,6 @@ import { AreaToOpenPreview } from "./AreaToOpenPreview";
 import { JoinAreaPreview } from "./JoinAreaPreview";
 import { ContextMenuProvider } from "../providers/ContextMenuProvider";
 import { DetachedWindowCleanup } from './DetachedWindowCleanup';
-
-const s = compileStylesheetLabelled(AreaRootStyles);
 
 interface Rect {
     left: number;
@@ -61,9 +57,6 @@ export const AreaRoot: React.FC = () => {
 
     // Effect for viewport calculation
     useEffect(() => {
-        console.log('[AreaRoot] layout:', layout);
-        console.log('[AreaRoot] rootId:', rootId);
-        console.log('[AreaRoot] viewport:', viewport);
         const layoutSize = Object.keys(layout).length;
         const currentRootItem = rootId ? layout[rootId] : null;
 
@@ -175,17 +168,6 @@ export const AreaRoot: React.FC = () => {
 
     const currentRootItem = rootId ? layout[rootId] : null;
 
-    useEffect(() => {
-        const onDrop = (e: DragEvent) => { console.log('[BODY] NATIVE DROP', e); e};
-        const onDragEnd = (e: DragEvent) => { console.log('[BODY] NATIVE DRAGEND', e); };
-        document.body.addEventListener('drop', onDrop);
-        document.body.addEventListener('dragend', onDragEnd);
-        return () => {
-            document.body.removeEventListener('drop', onDrop);
-            document.body.removeEventListener('dragend', onDragEnd);
-        };
-    }, []);
-
     if (!rootId || !currentRootItem) {
         return <EmptyAreaMessage />;
     }
@@ -193,7 +175,7 @@ export const AreaRoot: React.FC = () => {
     return (
         <ContextMenuProvider>
             <DetachedWindowCleanup />
-            <div className={"area-root " + s('root')}>
+            <div className="area-root">
                 {Object.values(layout).map((item) => {
                     if (item.type === 'area_row') {
                         const rowLayout = item as AreaRowLayout;

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
 import { ScreenSwitcher } from './ScreenSwitcher';
-import { css } from '@emotion/css';
 import { useActiveLayerInfo } from '../hooks/useActiveLayerInfo';
 import { useKarmycStore } from '../stores/areaStore';
 
@@ -138,22 +137,6 @@ interface ToolsProps {
     right?: ToolsBarComponent[];
 }
 
-const toolsBarSection = css`
-    display: flex;
-    align-items: center;
-    flex: 1;
-    gap: 8px;
-`;
-const toolsBarSectionLeft = css`
-    justify-content: flex-start;
-`;
-const toolsBarSectionCenter = css`
-    justify-content: center;
-`;
-const toolsBarSectionRight = css`
-    justify-content: flex-end;
-`;
-
 export const Tools: React.FC<ToolsProps> = ({
     areaId,
     areaType,
@@ -198,8 +181,8 @@ export const Tools: React.FC<ToolsProps> = ({
                     (position.includes('inside')) ||
                     (!isDetached && position.includes('outside'))
                 ) &&
-                <div className={`tools-bar tools-bar-${position} ${toolsBarSection}`} style={style}>
-                    <div className={"tools-bar-section left " + toolsBarSection + " " + toolsBarSectionLeft}>
+                <div className={`tools-bar tools-bar-${position}`} style={style}>
+                    <div className="tools-bar-section tools-bar-section--left">
                         {leftComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -209,7 +192,7 @@ export const Tools: React.FC<ToolsProps> = ({
                             );
                         })}
                     </div>
-                    <div className={"tools-bar-section center " + toolsBarSection + " " + toolsBarSectionCenter}>
+                    <div className="tools-bar-section tools-bar-section--center">
                         {centerComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -219,7 +202,7 @@ export const Tools: React.FC<ToolsProps> = ({
                             );
                         })}
                     </div>
-                    <div className={"tools-bar-section right " + toolsBarSection + " " + toolsBarSectionRight}>
+                    <div className="tools-bar-section tools-bar-section--right">
                         {rightComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -228,7 +211,6 @@ export const Tools: React.FC<ToolsProps> = ({
                                 </div>
                             );
                         })}
-                        {/* Afficher le ScreenSwitcher SEULEMENT si areaType est 'app', position est 'bottom-outside' et l'écran n'est pas détaché */}
                         {areaType === 'app' && position === 'bottom-outside' && <ScreenSwitcher />}
                     </div>
                 </div>}

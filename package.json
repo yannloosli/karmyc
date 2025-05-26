@@ -6,7 +6,8 @@
     "module": "dist/index.esm.js",
     "types": "dist/index.d.ts",
     "files": [
-        "dist"
+        "dist",
+        "style.css"
     ],
     "repository": {
         "type": "git",
@@ -32,36 +33,14 @@
     },
     "license": "MIT",
     "dependencies": {
-        "@emotion/css": "^11.13.5",
-        "@emotion/react": "^11.14.0",
-        "@emotion/styled": "^11.14.0",
-        "@pixi/app": "^7.0.0",
-        "@pixi/unsafe-eval": "^7.0.0",
-        "@pixi/react": "^8.0.0",
-        "@types/svg-parser": "^2.0.1",
-        "bezier-easing": "^2.1.0",
-        "bezier-js": "^4.0.3",
-        "css": "^3.0.0",
-        "emotion": "^11.0.0",
-        "immer": "^10.1.1",
-        "kld-affine": "^2.1.1",
-        "kld-contours": "^0.3.2",
-        "mathjs": "^12.0.0",
-        "pixi.js": "^7.0.0",
-        "shortid": "^2.2.15",
-        "simplepolygon": "^1.2.3",
-        "svg-arc-to-cubic-bezier": "^3.2.0",
-        "svg-parser": "^2.0.4",
-        "svg-path-parser": "^1.1.0",
-        "svgpath": "^2.3.0",
         "zustand": "^5.0.3",
         "@szhsin/react-menu": "^4.4.1",
         "lucide-react": "^0.511.0",
         "react-dnd": "^16.0.1",
         "react-dnd-html5-backend": "^16.0.1",
         "react-modal": "^3.16.3",
-        "react-responsive-modal": "^6.4.2",
         "use-sync-external-store": "^1.5.0"
+
     },
     "devDependencies": {
         "@open-editor/vite": "^0.9.3",
@@ -101,12 +80,6 @@
         "typescript": "^5.0.0",
         "vite": "^5.0.0",
         "@tsconfig/node18": "^18.2.4",
-        "@types/bezier-js": "^4.1.0",
-        "@types/css": "^0.0.33",
-        "@types/mathjs": "^9.4.2",
-        "@types/shortid": "^0.0.29",
-        "@types/svg-path-parser": "^1.1.0",
-        "eslint-config-airbnb-typescript": "^17.0.0",
         "prettier": "^3.5.3"
     },
     "peerDependencies": {

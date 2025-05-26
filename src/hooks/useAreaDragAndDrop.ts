@@ -1,12 +1,10 @@
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
 
 import { useKarmycStore } from '../stores/areaStore';
-import { Vec2, getHoveredAreaId, getAreaRootViewport, computeAreaToViewport } from '../utils';
-import { getAreaToOpenPlacementInViewport, PlaceArea } from '../utils/areaUtils';
+import { Vec2, getHoveredAreaId } from '../utils';
+import { getAreaToOpenPlacementInViewport } from '../utils/areaUtils';
 import { AreaRowLayout } from '../types';
 import { AreaTypeValue } from '../types/actions';
-
-export const AREA_PLACEMENT_TRESHOLD = 0.25;
 
 interface UseAreaDragAndDropParams {
     type?: AreaTypeValue;

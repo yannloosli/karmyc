@@ -1,5 +1,4 @@
 import React, { Dispatch, SetStateAction } from 'react';
-import { css } from '@emotion/css';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './Area';
@@ -29,18 +28,13 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
 
     return (
         <div
-            className={css`
-                position: absolute;
-                left: ${viewport.left}px;
-                top: ${viewport.top}px;
-                width: ${viewport.width}px;
-                height: ${viewport.height}px;
-                background: #1e1e1e;
-                border: 1px solid #404040;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            `}
+            className="area-stack"
+            style={{
+                left: viewport.left,
+                top: viewport.top,
+                width: viewport.width,
+                height: viewport.height
+            }}
             data-areaid={id}
         >
             <AreaTabs
@@ -48,11 +42,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                 row={layout}
                 areas={areas}
             />
-            <div className={css`
-                flex: 1;
-                position: relative;
-                overflow: hidden;
-            `}>
+            <div className="area-stack__content">
                 <AreaComponent
                     isChildOfStack={true}
                     id={activeAreaId}

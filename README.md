@@ -125,6 +125,22 @@ function MyComponent() {
 }
 ```
 
+## Système de Thème
+
+Karmyc inclut un système de thème complet avec support des modes clair et sombre. Le système utilise des variables CSS pour garantir une cohérence visuelle et faciliter la personnalisation.
+
+### Caractéristiques
+
+- Support des modes clair et sombre
+- Variables CSS pour une personnalisation facile
+- Transitions fluides entre les thèmes
+- Respect des préférences système
+- Persistance des préférences utilisateur
+
+### Documentation
+
+Pour plus de détails sur l'utilisation et la personnalisation du système de thème, consultez le [Guide du Système de Thème](./docs/guides/theming.md).
+
 ## Installation
 
 ```bash

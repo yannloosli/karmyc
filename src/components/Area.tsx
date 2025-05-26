@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import React, { Component, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { handleAreaDragFromCorner } from "./handlers/areaDragFromCorner";
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { useToolsSlot, Tools } from './ToolsSlot';
@@ -6,32 +6,22 @@ import { areaRegistry } from "../stores/registries/areaRegistry";
 import { AreaTypeValue, AREA_ROLE } from "../types";
 import { TOOLBAR_HEIGHT } from "../constants";
 import { useKarmycStore } from "../stores/areaStore";
-import styles from "../styles/Area.styles";
 import { AreaComponentProps, ResizePreviewState } from "../types/areaTypes";
 import { Rect } from "../types";
 import { AreaIdContext } from "../utils/AreaIdContext";
-import { compileStylesheet } from "../utils/stylesheets";
 import { useSpaceStore } from "../stores/spaceStore";
-import { css } from '@emotion/css';
-
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
-
-const s = compileStylesheet(styles);
 
 interface OwnProps {
     id: string;
     viewport: Rect;
 }
 
-
-
 interface AreaComponentOwnProps extends AreaComponentProps {
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
     isChildOfStack: boolean;
 }
-
-
 
 export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     id,
@@ -56,16 +46,12 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const active = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId === id);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
 
-
-
     const viewportRef = useRef<HTMLDivElement>(null);
     const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
 
     const area = useKarmycStore(state => state.getAreaById(id));
 
-
     const setActiveSpace = useSpaceStore(state => state.setActiveSpace);
-
 
     useEffect(() => {
         const updateViewport = () => {
@@ -125,16 +111,6 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const statusbarHeight = shouldRenderStatusbar ? TOOLBAR_HEIGHT : 0;
     const contentAvailableHeight = Math.max(0, viewport.height - menubarHeight - statusbarHeight);
 
-    const areaMainContentWrapper = css`
-        flex-grow: 1;
-        height: ${contentAvailableHeight}px;
-        overflow-y: auto;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    `;
-
     // --- Logique de drag pour le bouton de sélection de type d'area ---
     const rafRef = useRef<number | undefined>(undefined);
 
@@ -145,7 +121,6 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             }
         };
     }, []);
-
 
     // Préparation des variables de debug pour FOLLOW
     let lastLeadAreaId = null;
@@ -169,7 +144,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             <div
                 ref={viewportRef}
                 data-areaid={id}
-                className={`area ${s('area', { raised: !!raised })}`}
+                className={`area ${raised ? 'area--raised' : ''}`}
                 style={{
                     left: viewport.left,
                     top: viewport.top,
@@ -181,7 +156,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 {!isDetached && !isChildOfStack && ['ne', 'nw', 'se', 'sw'].map((dir) => (
                     <div
                         key={dir}
-                        className={`area__corner ${s('area__corner', { [dir]: true })}`}
+                        className={`area__corner area__corner--${dir}`}
                         onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as 'ne', id, viewport, setResizePreview, () => { })}
                     />
                 ))}
@@ -196,8 +171,11 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 />}
 
                 <div
-                    className={`area-main-content-wrapper ${areaMainContentWrapper} ${type}`}
-                    style={{ opacity: active ? 1 : 0.8 }}
+                    className={`area-main-content-wrapper ${type}`}
+                    style={{ 
+                        opacity: active ? 1 : 0.8,
+                        height: contentAvailableHeight
+                    }}
                 >
                     {shouldRenderToolbarTopInside && <Tools
                         areaId={id}
@@ -304,25 +282,16 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
 
     return (
         <div
-            className={css`
-                position: absolute;
-                left: ${viewport.left || 0}px;
-                top: ${viewport.top || 0}px;
-                width: ${viewport.width || 0}px;
-                height: ${viewport.height || 0}px;
-                background: #1e1e1e;
-                border: 1px solid #404040;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            `}
+            className="area-container"
+            style={{
+                left: `${viewport.left || 0}px`,
+                top: `${viewport.top || 0}px`,
+                width: `${viewport.width || 0}px`,
+                height: `${viewport.height || 0}px`,
+            }}
             data-areaid={id}
         >
-            <div className={css`
-                flex: 1;
-                position: relative;
-                overflow: hidden;
-            `}>
+            <div className="area-container__content">
                 {isStack &&
                     (<AreaStack
                         id={activeAreaId}

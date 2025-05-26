@@ -4,8 +4,6 @@ import { AreaTypeValue } from "../../types/actions";
 import { useAreaContextMenu } from '../../hooks/useAreaContextMenu';
 import { useContextMenuStore } from '../../stores/contextMenuStore';
 import { useSpaceStore } from "../../stores/spaceStore";
-import { compileStylesheet } from "../../utils/stylesheets";
-import styles from "../../styles/Area.styles";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 
 interface IAreaDragButton {
@@ -14,8 +12,6 @@ interface IAreaDragButton {
     id: string;
     style?: React.CSSProperties;
 }
-
-const s = compileStylesheet(styles);
 
 export const AreaDragButton = ({state, type, id, style}: IAreaDragButton) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -63,7 +59,7 @@ export const AreaDragButton = ({state, type, id, style}: IAreaDragButton) => {
 
     return (
         <button 
-            className={`select-area-button ${s('selectAreaButton')}`}
+            className="select-area-button"
             draggable
             onDragStart={e => { 
                 console.log('[AreaDragButton] NATIVE DRAGSTART', e); 

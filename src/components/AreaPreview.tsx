@@ -1,14 +1,8 @@
 import React from "react";
-import { css } from '@emotion/css';
 import { AreaComponent } from "./Area";
 import { areaRegistry } from "../stores/registries/areaRegistry";
 import { Vec2 } from "../utils";
-import { IArea, AreaToOpen } from "../types/areaTypes";
-import { Rect } from "../types";
-import { compileStylesheetLabelled } from "../utils/stylesheets";
-import AreaRootStyles from "../styles/AreaRoot.styles";
-
-const s = compileStylesheetLabelled(AreaRootStyles);
+import { AreaToOpen } from "../types/areaTypes";
 
 interface AreaPreviewProps {
     areaToOpen: AreaToOpen;
@@ -21,27 +15,13 @@ export const AreaPreview: React.FC<AreaPreviewProps> = React.memo(({ areaToOpen,
         return null;
     }
 
-    const containerStyle: React.CSSProperties = {
-        left: areaToOpen.position.x,
-        top: areaToOpen.position.y,
-        position: 'fixed',
-        zIndex: 1000000,
-        cursor: 'move',
-        pointerEvents: 'none',
-        userSelect: 'none',
-        touchAction: 'none',
-        willChange: 'transform',
-        transform: 'translate(-50%, -50%) scale(0.4)',
-        outline: '3px dashed blue',
-        background: 'rgba(255, 255, 255, 0.5)',
-        borderRadius: '4px',
-        boxShadow: '0 0 10px rgba(0, 0, 0, 0.5)'
-    };
-
     return (
         <div
-            className={css(s("areaToOpenContainer"))}
-            style={containerStyle}
+            className="area-preview"
+            style={{
+                left: areaToOpen.position.x,
+                top: areaToOpen.position.y,
+            }}
         >
             <AreaComponent
                 id="-1"

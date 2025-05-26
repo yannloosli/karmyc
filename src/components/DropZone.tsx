@@ -1,15 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { css } from '@emotion/css';
 import { Vec2 } from "../utils";
 import { TOOLBAR_HEIGHT } from "../constants";
-import { compileStylesheetLabelled } from "../utils/stylesheets";
-import AreaRootStyles from "../styles/AreaRoot.styles";
 import { AreaToOpen } from "../types";
 import { PlaceArea } from "../utils/areaUtils";
 import { useKarmycStore } from "../stores/areaStore";
-import useAreaDragAndDrop, { AREA_PLACEMENT_TRESHOLD } from "../hooks/useAreaDragAndDrop";
-
-const s = compileStylesheetLabelled(AreaRootStyles);
+import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
+import { AREA_PLACEMENT_TRESHOLD } from "../constants";
 
 interface DropZoneProps {
     areaToOpen: AreaToOpen;
@@ -80,27 +76,18 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
     return (
         <>
             <div
-                className={"area-to-open-overlay " + css(s("areaToOpenTargetOverlay"))}
-                style={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9999,
-                    pointerEvents: 'auto'
-                }}
+                className="area-to-open-overlay"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-            //onDragEnd={e => { console.log('[DropZone] NATIVE DRAGEND', e); handleDragEnd(e); }}
             >
                 {areaToOpenTargetViewport && (
                     <svg
                         width={areaToOpenTargetViewport.width}
                         height={areaToOpenTargetViewport.height}
-                        className={css(s("placement"))}
+                        className="area-to-open-overlay__placement"
                         style={{
-                            position: 'absolute',
                             left: areaToOpenTargetViewport.left,
                             top: areaToOpenTargetViewport.top + TOOLBAR_HEIGHT,
-                            pointerEvents: 'none',
                         }}
                     >
                         {placementLinesMemo.lines.map(([p0, p1], i) => (

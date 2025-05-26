@@ -3,11 +3,39 @@ import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { generateDiff, applyDiff, invertDiff } from '../utils/history';
 import { THistoryDiff } from '../types/history';
+import { LayerProps } from '../../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layer/src/types/layer';
 
-// Ajout d'un type minimal pour les calques pour résoudre l'erreur de linter
+// Type pour les calques
 export interface LayerLike {
     id: string;
-    [key: string]: any; // Permet d'autres propriétés
+    type: string;
+    name?: string;
+    visible: boolean;
+    enabled: boolean;
+    zIndex: number;
+    blendMode?: string;
+    opacity: number;
+    locked: boolean;
+    layerStyle?: {
+        filters: {
+            blur?: number;
+            brightness?: number;
+            contrast?: number;
+            dropShadow?: {
+                offsetX: number;
+                offsetY: number;
+                blur: number;
+                color: string;
+            };
+            grayscale?: number;
+            hueRotate?: number;
+            invert?: number;
+            saturate?: number;
+            sepia?: number;
+        };
+        enabled?: boolean;
+    };
+    [key: string]: any;
 }
 
 export interface SpaceSharedState extends Record<string, any> {
