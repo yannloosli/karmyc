@@ -1,5 +1,4 @@
 import React from 'react';
-import { css } from '@emotion/css';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { areaRegistry } from '../stores/registries/areaRegistry';
 import { useKarmycStore } from '../stores/areaStore';
@@ -78,16 +77,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
 
     console.log('AREA TABS', row);
     return (
-        <div className={css`
-            display: flex;
-            background: #2d2d2d;
-            padding: 4px 4px 0;
-            gap: 2px;
-            border-bottom: 1px solid #404040;
-            height: 32px;
-            min-height: 32px;
-            max-height: 32px;
-        `}>
+        <div className="area-tabs">
             {row.areas.map(({ id }) => {
                 const area = areas[id];
                 if (!area) return null;
@@ -98,26 +88,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                 return (
                     <div
                         key={id}
-                        className={css`
-                            display: flex;
-                            align-items: center;
-                            padding: 0 12px 0 0 ;
-                            background: ${isActive ? '#404040' : 'transparent'};
-                            color: ${isActive ? '#fff' : '#aaa'};
-                            border-radius: 0 6px 0 0;
-                            cursor: pointer;
-                            user-select: none;
-                            gap: 8px;
-                            min-width: 100px;
-                            max-width: 200px;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
-
-                            &:hover {
-                                background: ${isActive ? '#404040' : '#353535'};
-                            }
-                        `}
+                        className={`area-tab ${isActive ? 'area-tab--active' : ''}`}
                         onClick={() => handleTabClick(id)}
                         draggable
                         onDragStart={e => { console.log('[AreaTabs] NATIVE DRAGSTART', e); handleTabDragStart(e, id); }}
@@ -129,41 +100,12 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                             id={id}
                             state={area.state}
                             type={area.type}
-                            style={{
-                                position: 'relative',
-                                width: 10,
-                                height: '100%',
-                                borderRadius: '0',
-                                border: 'none',
-                                top: 'unset',
-                                right: 'unset',
-                                padding: '0',
-                            }}
                         />
-                        <span className={css`
-                            flex: 1;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        `}>
+                        <span className="area-tab__title">
                             {displayName}
                         </span>
                         <button
-                            className={css`
-                                background: none;
-                                border: none;
-                                color: #aaa;
-                                padding: 2px;
-                                cursor: pointer;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                border-radius: 4px;
-
-                                &:hover {
-                                    background: #505050;
-                                    color: #fff;
-                                }
-                            `}
+                            className="area-tab__close-button"
                             onClick={(e) => handleTabClose(e, id)}
                         >
                             ×
