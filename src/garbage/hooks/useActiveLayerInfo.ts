@@ -1,4 +1,4 @@
-import { useSpaceStore, LayerLike } from '../stores/spaceStore';
+import { useSpaceStore, LayerLike } from '../../core/data/spaceStore';
 
 interface ActiveLayerInfo {
   activeLayerId: string | null;

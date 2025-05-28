@@ -1,4 +1,4 @@
-import { KarmycAction } from './actions';
+import { IAction } from '../../core/types/actions';
 
 /**
  * Options for the history system
@@ -12,7 +12,7 @@ export interface IHistoryOptions {
     jumpToPastType?: string;
     includeActions?: string[];
     excludeActions?: string[];
-    groupBy?: (action: KarmycAction) => string;
+    groupBy?: (action: IAction) => string;
 }
 
 /**
@@ -97,6 +97,6 @@ export interface HistoryState {
  */
 export interface HistoryConfig<S = any> {
     maxHistorySize?: number;
-    filter?: (action: KarmycAction, currentState: S, previousHistory: any) => boolean;
-    groupBy?: (action: KarmycAction) => string;
+    filter?: (action: IAction, currentState: S, previousHistory: any) => boolean;
+    groupBy?: (action: IAction) => string;
 } 

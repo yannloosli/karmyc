@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { areaRegistry } from '../stores/registries/areaRegistry';
+import { areaRegistry } from '../../core/data/registries/areaRegistry';
 
 /**
  * Hook to register a custom area type

@@ -1,7 +1,7 @@
 import React from 'react';
-import { IArea, AreaRowLayout } from '../types/areaTypes';
-import { areaRegistry } from '../stores/registries/areaRegistry';
-import { useKarmycStore } from '../stores/areaStore';
+import { IArea, AreaRowLayout } from '../../core/types/areaTypes';
+import { areaRegistry } from '../../core/data/registries/areaRegistry';
+import { useKarmycStore } from '../../core/data/areaStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
 
 interface AreaTabsProps {

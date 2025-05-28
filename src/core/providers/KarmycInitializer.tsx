@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 //import { historyPlugin } from '@components/editor/plugins/history/src';
-import { actionRegistry } from '../stores/registries/actionRegistry';
-import { useArea } from '../hooks/useArea';
-import { useKarmycStore } from '../stores/areaStore'; // Utiliser le store principal
+import { actionRegistry } from '../data/registries/actionRegistry';
+import { useArea } from '../../areas/hooks/useArea';
+import { useKarmycStore } from '../data/areaStore'; // Utiliser le store principal
 import { AreaRowLayout } from '../types/areaTypes';
 import { IKarmycOptions } from '../types/karmyc';
 

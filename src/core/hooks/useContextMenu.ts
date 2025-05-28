@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { useContextMenuStore } from '../stores/contextMenuStore';
+import { useContextMenuStore } from '../data/contextMenuStore';
 import { ContextMenuItem } from '../types/contextMenu';
 
 /**

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { type StateCreator, type StoreApi } from 'zustand';
-import { actionRegistry } from '../stores/registries/actionRegistry';
-import { Action, IActionPlugin } from '../types/actions';
+import { actionRegistry } from '../../data/registries/actionRegistry';
+import { Action, IActionPlugin } from '../../types/actions';
 
 // Type de fonction pour les plugins Zustand
 export type ZustandPlugin<T> = {

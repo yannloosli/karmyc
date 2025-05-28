@@ -1,8 +1,8 @@
 import React, { Dispatch, SetStateAction, useRef } from "react";
-import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../constants";
-import { useKarmycStore } from "../stores/areaStore";
-import { AreaRowLayout } from "../types/areaTypes";
-import { Rect } from "../types";
+import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../../core/utils/constants";
+import { useKarmycStore } from "../../core/data/areaStore";
+import { AreaRowLayout } from "../../core/types/areaTypes";
+import { Rect } from "../../core/types";
 import { handleDragAreaResize } from "./handlers/areaDragResize";
 
 

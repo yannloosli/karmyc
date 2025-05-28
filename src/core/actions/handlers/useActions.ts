@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { actionRegistry } from '../stores/registries/actionRegistry';
-import { IActionPlugin } from '../types/actions';
+import { actionRegistry } from '../../data/registries/actionRegistry';
+import { IActionPlugin } from '../../types/actions';
 
 /**
  * Hook to initialize and manage action plugins

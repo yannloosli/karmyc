@@ -1,8 +1,8 @@
 import React from "react";
 import { ControlledMenu, MenuItem, SubMenu } from '@szhsin/react-menu';
 
-import { useContextMenuStore } from '../stores/contextMenuStore';
-import { actionRegistry } from '../stores/registries/actionRegistry';
+import { useContextMenuStore } from '../data/contextMenuStore';
+import { actionRegistry } from '../data/registries/actionRegistry';
 import { ContextMenuItem } from '../types';
 
 import '@szhsin/react-menu/dist/index.css';

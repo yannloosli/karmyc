@@ -1,9 +1,9 @@
 import React, { Dispatch, SetStateAction } from 'react';
-import { IArea, AreaRowLayout } from '../types/areaTypes';
+import { IArea, AreaRowLayout } from '../../core/types/areaTypes';
 import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './Area';
-import { areaRegistry } from '../stores/registries/areaRegistry';
-import { ResizePreviewState } from '../types/areaTypes';
+import { areaRegistry } from '../../core/data/registries/areaRegistry';
+import { ResizePreviewState } from '../../core/types/areaTypes';
 
 interface AreaStackProps {
     id: string;

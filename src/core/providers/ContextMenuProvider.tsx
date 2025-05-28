@@ -1,7 +1,7 @@
 import React from 'react';
-import { ContextMenu } from '../components/ContextMenu';
-import { useRegisterActionHandler } from '../hooks';
-import { useKarmycStore} from '../stores/areaStore';
+import { ContextMenu } from '../ui/ContextMenu';
+import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
+import { useKarmycStore} from '../data/areaStore';
 
 export const ContextMenuProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const removeArea = useKarmycStore((state) => state.removeArea);

@@ -2,7 +2,7 @@ import type { WritableDraft } from 'immer';
 import { create, StateCreator } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { Vec2 } from '../utils';
-import { TOOLBAR_HEIGHT } from '../constants';
+import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { IArea, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
 import { Point, Rect } from '../types';
@@ -12,7 +12,7 @@ import { computeAreaToViewport } from '../utils/areaToViewport';
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from '../utils/areaUtils';
 import { getAreaRootViewport } from '../utils/getAreaViewport';
 import { joinAreas as joinAreasUtil } from '../utils/joinArea';
-import { validateArea } from '../utils/validation';
+import { validateArea } from '../../garbage/utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowBigDown } from 'lucide-react';
-import { CardinalDirection } from "../types";
+import { CardinalDirection } from "../../core/types/directions";
 
 interface Props {
     viewport: { left: number; top: number; width: number; height: number };

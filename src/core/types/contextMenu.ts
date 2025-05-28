@@ -1,4 +1,4 @@
-import { Rect } from '@gamesberry/karmyc-core';
+import { Rect } from './math';
 
 /**
  * Context menu position

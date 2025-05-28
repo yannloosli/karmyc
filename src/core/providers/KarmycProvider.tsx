@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useKarmycStore } from '../stores/areaStore';
+import { useKarmycStore } from '../data/areaStore';
 import { IKarmycProviderProps } from '../types/karmyc';
 import { KarmycInitializer } from './KarmycInitializer';
 

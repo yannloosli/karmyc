@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
-import { ScreenSwitcher } from './ScreenSwitcher';
-import { useActiveLayerInfo } from '../hooks/useActiveLayerInfo';
-import { useKarmycStore } from '../stores/areaStore';
+import { ScreenSwitcher } from '../../core/ui/ScreenSwitcher';
+import { useActiveLayerInfo } from '../../garbage/hooks/useActiveLayerInfo';
+import { useKarmycStore } from '../../core/data/areaStore';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {

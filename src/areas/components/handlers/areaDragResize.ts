@@ -1,12 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
-import { capToRange, interpolate, Vec2 } from "../../utils";
-import { AREA_MIN_CONTENT_WIDTH } from "../../constants";
-import { useKarmycStore } from "../../stores/areaStore";
-import { AreaRowLayout } from "../../types/areaTypes";
-import type { Rect } from "../../types";
-import { computeAreaRowToMinSize } from "../../utils/areaRowToMinSize";
-import { computeAreaToViewport } from "../../utils/areaToViewport";
-import { getAreaRootViewport } from "../../utils/getAreaViewport";
+import { capToRange, interpolate, Vec2 } from "../../../core/utils";
+import { AREA_MIN_CONTENT_WIDTH } from "../../../core/utils/constants";
+import { useKarmycStore } from "../../../core/data/areaStore";
+import { AreaRowLayout } from "../../../core/types/areaTypes";
+import type { Rect } from "../../../core/types";
+import { computeAreaRowToMinSize } from "../../../core/utils/areaRowToMinSize";
+import { computeAreaToViewport } from "../../../core/utils/areaToViewport";
+import { getAreaRootViewport } from "../../../core/utils/getAreaViewport";
 
 interface ResizePreviewState {
     rowId: string;

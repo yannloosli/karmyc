@@ -1,5 +1,5 @@
 import React from "react";
-import { AreaComponentProps } from "../types/areaTypes";
+import { AreaComponentProps } from "../../core/types/areaTypes";
 
 interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;

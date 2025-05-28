@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { AreaTypeValue } from '../types';
-import { useKarmycStore } from '../stores/areaStore';
-import { IArea } from '../types/areaTypes';
+import { AreaTypeValue } from '../../core/types/actions';
+import { useKarmycStore } from '../../core/data/areaStore';
+import { IArea } from '../../core/types/areaTypes';
 
 /**
  * Hook for managing areas

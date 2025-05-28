@@ -1,4 +1,4 @@
-import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../constants";
+import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../utils/constants";
 
 interface Rect {
     top: number;

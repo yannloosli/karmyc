@@ -1,11 +1,11 @@
-import { validatePosition } from '../utils/validation';
+import { validatePosition } from '../../garbage/utils/validation';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import {
     ContextMenuItem,
     IContextMenuPosition,
 } from '../types/contextMenu'; // Assuming types are correctly located
-import { validateContextMenuItem } from '../utils/validation'; // Assuming validation utils are correctly located
+import { validateContextMenuItem } from '../../garbage/utils/validation'; // Assuming validation utils are correctly located
 
 interface ContextMenuState {
     isVisible: boolean;

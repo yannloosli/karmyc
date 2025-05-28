@@ -1,4 +1,4 @@
-import { IActionPlugin } from '../actions/types';
+import { IActionPlugin } from '../types/actions';
 
 /**
  * Configuration du module core

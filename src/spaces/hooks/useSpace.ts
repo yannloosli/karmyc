@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
-import { Space, useSpaceStore } from '../stores/spaceStore';
+import { Space, useSpaceStore } from '../../core/data/spaceStore';
 
 /**
  * Hook for managing spaces using Zustand

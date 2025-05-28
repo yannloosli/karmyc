@@ -1,13 +1,13 @@
 import { Dispatch, SetStateAction } from 'react'; 
-import { capToRange, Vec2 } from "../../utils";
-import { AREA_MIN_CONTENT_WIDTH } from "../../constants";
-import { useKarmycStore } from "../../stores/areaStore"; 
-import { AreaRowLayout } from "../../types/areaTypes";
-import { CardinalDirection, IntercardinalDirection } from "../../types/directions";
-import type { Rect } from "../../types";
-import { computeAreaToParentRow } from "../../utils/areaToParentRow";
-import { computeAreaToViewport } from "../../utils/areaToViewport";
-import { getAreaRootViewport, setAreaResizing } from "../../utils/getAreaViewport";
+import { capToRange, Vec2 } from "../../../core/utils";
+import { AREA_MIN_CONTENT_WIDTH } from "../../../core/utils/constants";
+import { useKarmycStore } from "../../../core/data/areaStore"; 
+import { AreaRowLayout } from "../../../core/types/areaTypes";
+import { CardinalDirection, IntercardinalDirection } from "../../../core/types/directions";
+import type { Rect } from "../../../core/types";
+import { computeAreaToParentRow } from "../../../core/utils/areaToParentRow";
+import { computeAreaToViewport } from "../../../core/utils/areaToViewport";
+import { getAreaRootViewport } from "../../../core/utils/getAreaViewport";
 
 interface ResizePreviewState {
     rowId: string;

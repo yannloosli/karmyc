@@ -1,9 +1,7 @@
 import React from 'react';
-import { useKarmycStore } from '../stores/areaStore';
+import { useKarmycStore } from '../data/areaStore';
 import { useContextMenu } from '../hooks/useContextMenu';
-import { useRegisterActionHandler } from '../hooks/useRegisterActionHandler';
-// Importer les styles si nécessaire, par exemple :
-// import styles from './ScreenSwitcher.module.css';
+import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 
 export const ScreenSwitcher: React.FC = () => {
     // Récupérer les données nécessaires du store

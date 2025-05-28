@@ -1,9 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { generateDiff, applyDiff, invertDiff } from '../utils/history';
-import { THistoryDiff } from '../types/history';
-import { LayerProps } from '../../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layer/src/types/layer';
+import { generateDiff, applyDiff, invertDiff } from '../../garbage/utils/history';
+import { THistoryDiff } from '../../garbage/history/history';
 
 // Type pour les calques
 export interface LayerLike {

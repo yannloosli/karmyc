@@ -1,9 +1,7 @@
 import { useRef, useState } from "react";
-import { useKarmycStore } from "../../stores/areaStore";
-import { AreaTypeValue } from "../../types/actions";
+import { AreaTypeValue, useKarmycStore, useContextMenuStore } from "../../../core";
 import { useAreaContextMenu } from '../../hooks/useAreaContextMenu';
-import { useContextMenuStore } from '../../stores/contextMenuStore';
-import { useSpaceStore } from "../../stores/spaceStore";
+import { useSpaceStore } from "../../../core/data/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 
 interface IAreaDragButton {

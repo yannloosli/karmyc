@@ -1,15 +1,15 @@
-import React, { Component, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { handleAreaDragFromCorner } from "./handlers/areaDragFromCorner";
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
-import { useToolsSlot, Tools } from './ToolsSlot';
-import { areaRegistry } from "../stores/registries/areaRegistry";
-import { AreaTypeValue, AREA_ROLE } from "../types";
-import { TOOLBAR_HEIGHT } from "../constants";
-import { useKarmycStore } from "../stores/areaStore";
-import { AreaComponentProps, ResizePreviewState } from "../types/areaTypes";
-import { Rect } from "../types";
-import { AreaIdContext } from "../utils/AreaIdContext";
-import { useSpaceStore } from "../stores/spaceStore";
+import { useToolsSlot, Tools } from '../../tools/components/ToolsSlot';
+import { areaRegistry } from "../../core/data/registries/areaRegistry";
+import { AreaTypeValue, AREA_ROLE } from "../../core/types";
+import { TOOLBAR_HEIGHT } from "../../core/utils/constants";
+import { useKarmycStore } from "../../core/data/areaStore";
+import { AreaComponentProps, ResizePreviewState } from "../../core/types/areaTypes";
+import { Rect } from "../../core/types";
+import { AreaIdContext } from "../../core/utils/AreaIdContext";
+import { useSpaceStore } from "../../core/data/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 

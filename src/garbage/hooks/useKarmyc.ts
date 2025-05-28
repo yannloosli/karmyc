@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { coreRegistry } from '../stores/registries/coreRegistry';
-import { IKarmycConfig, IKarmycOptions } from '../types/karmyc';
+import { coreRegistry } from '../../core/data/registries/coreRegistry';
+import { IKarmycConfig, IKarmycOptions } from '../../core/types/karmyc';
 
 /**
  * Combined hook that provides both configuration and initialization for the Karmyc system.

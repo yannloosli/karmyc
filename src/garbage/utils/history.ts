@@ -1,4 +1,4 @@
-import { THistoryDiff } from '../types/history';
+import { THistoryDiff } from '../history/history';
 
 export interface IStateDiff {
     path: string[];

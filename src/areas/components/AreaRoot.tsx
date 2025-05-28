@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { useKarmycStore } from "../stores/areaStore";
-import { AreaRowLayout } from "../types/areaTypes";
-import { computeAreaToViewport } from "../utils/areaToViewport";
-import { getAreaRootViewport } from "../utils/getAreaViewport";
+import { useKarmycStore } from "../../core/data/areaStore";
+import { AreaRowLayout } from "../../core/types/areaTypes";
+import { computeAreaToViewport } from "../../core/utils/areaToViewport";
+import { getAreaRootViewport } from "../../core/utils/getAreaViewport";
 import { EmptyAreaMessage } from './EmptyAreaMessage';
 import { Area } from "./Area";
 import { AreaRowSeparators } from "./AreaRowSeparators";
 import { AreaToOpenPreview } from "./AreaToOpenPreview";
 import { JoinAreaPreview } from "./JoinAreaPreview";
-import { ContextMenuProvider } from "../providers/ContextMenuProvider";
-import { DetachedWindowCleanup } from './DetachedWindowCleanup';
+import { ContextMenuProvider } from "../../core/providers/ContextMenuProvider";
+import { DetachedWindowCleanup } from '../../core/ui/DetachedWindowCleanup';
 
 interface Rect {
     left: number;

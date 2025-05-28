@@ -1,4 +1,4 @@
-import { HSLColor, RGBAColor, RGBColor } from "../../../utils/math";
+import { HSLColor, RGBAColor, RGBColor } from "../../types/colorTypes";
 
 export const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
 

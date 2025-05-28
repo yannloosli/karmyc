@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from "react";
-import { Vec2 } from "../utils";
-import { TOOLBAR_HEIGHT } from "../constants";
-import { AreaToOpen } from "../types";
-import { PlaceArea } from "../utils/areaUtils";
-import { useKarmycStore } from "../stores/areaStore";
+import { Vec2 } from "../../core/utils";
+import { TOOLBAR_HEIGHT } from "../../core/utils/constants";
+import { AreaToOpen } from "../../core/types";
+import { PlaceArea } from "../../core/utils/areaUtils";
+import { useKarmycStore } from "../../core/data/areaStore";
 import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
-import { AREA_PLACEMENT_TRESHOLD } from "../constants";
+import { AREA_PLACEMENT_TRESHOLD } from "../../core/utils/constants";
 
 interface DropZoneProps {
     areaToOpen: AreaToOpen;

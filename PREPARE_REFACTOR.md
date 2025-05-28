@@ -17,6 +17,10 @@
 ```
 src/
   ├── core/
+  │   ├── actions/
+  │   │   ├── handlers/     # Gestionnaires d'actions
+  │   │   ├── validators/   # Validateurs
+  │   │   └── extensions/   # Points d'extension pour les plugins
   │   ├── ui/           # Interfaces UI communes
   │   ├── data/         # Interfaces de données communes
   │   ├── events/       # Système d'événements
@@ -41,10 +45,6 @@ src/
   │   ├── sync/         # Synchronisation
   │   └── extensions/   # Points d'extension pour les plugins
   │
-  ├── actions/
-  │   ├── handlers/     # Gestionnaires d'actions
-  │   ├── validators/   # Validateurs
-  │   └── extensions/   # Points d'extension pour les plugins
   │
   └── garbage/          # Code à archiver
       ├── history/      # Ancien système d'historique
