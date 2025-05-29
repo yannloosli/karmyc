@@ -1,7 +1,7 @@
 // Dans karmyc/karmyc/packages/core/src/hooks/useRegisterActionHandler.ts
 
 import { useEffect } from 'react';
-import { actionRegistry } from '../../data/registries/actionRegistry';
+import { actionRegistry } from '../../actions/handlers/actionRegistry';
 
 interface ActionMetadata {
     menuType?: string;

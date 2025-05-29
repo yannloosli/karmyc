@@ -21,6 +21,10 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     const lastScreenCount = useRef<number>(0);
     const lastScreenOrder = useRef<string[]>([]);
 
+    useEffect(() => {
+        document.addEventListener("contextmenu", (e) => e.preventDefault(), false);
+    }, []);
+
     // Effect 1: Read URL on initial load and set active screen
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);

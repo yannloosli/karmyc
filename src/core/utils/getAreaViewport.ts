@@ -19,7 +19,7 @@ export const getAreaRootViewport = () => {
     const currentViewport: Rect = {
         top: 0,  // No offset as it's already handled by the flow
         left: 0,
-        height: Math.floor(window.innerHeight - (TOOLBAR_HEIGHT * 2)),  // Subtract MenuBar and StatusBar
+        height: Math.floor(window.innerHeight),  // Subtract MenuBar and StatusBar
         width: Math.floor(window.innerWidth),
     };
 

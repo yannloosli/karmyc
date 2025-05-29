@@ -87,7 +87,7 @@ graph TD
 Karmyc Core provides a set of React components for building modular layouts:
 
 1. **KarmycProvider**: The main provider component that wraps the application
-2. **AreaRoot**: The container for all areas
+2. **Karmyc**: The container for all areas
 3. **Area**: Individual area components that can be customized
 4. **ContextMenu**: Context menu system
 5. **Toolbar**: Toolbar components

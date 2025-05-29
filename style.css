@@ -512,9 +512,6 @@
     padding: 4px 4px 0;
     gap: 2px;
     border-bottom: 1px solid #404040;
-    height: 32px;
-    min-height: 32px;
-    max-height: 32px;
 }
 
 .area-tab {

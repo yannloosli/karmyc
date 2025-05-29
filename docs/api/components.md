@@ -9,7 +9,7 @@ Karmyc Core exports all its components from the root package, allowing you to im
 ```typescript
 import {
   KarmycProvider,
-  AreaRoot,
+  Karmyc,
   MenuBar,
   StatusBar,
   Area,
@@ -21,7 +21,7 @@ import {
 You can also import from specific sub-modules if needed (advanced usage):
 
 ```typescript
-import { AreaRoot } from '@gamesberry/karmyc-core/components/AreaRoot';
+import { Karmyc } from '@gamesberry/karmyc-core/components/Karmyc';
 ```
 
 ## KarmycProvider
@@ -160,20 +160,20 @@ function MyLayout() {
 }
 ```
 
-## AreaRoot
+## Karmyc
 
-The `AreaRoot` component is the main container for rendering areas in your application.
+The `Karmyc` component is the main container for rendering areas in your application.
 
 ### Example
 
 ```tsx
-import { AreaRoot, MenuBar, StatusBar } from '@gamesberry/karmyc-core';
+import { Karmyc, MenuBar, StatusBar } from '@gamesberry/karmyc-core';
 
 function EditorLayout() {
   return (
     <div className="editor">
       <MenuBar areaId="root" areaState={{}} areaType="app" />
-      <AreaRoot />
+      <Karmyc />
       <StatusBar areaId="root" areaState={{}} areaType="app" />
     </div>
   );
@@ -256,7 +256,7 @@ export const TextNoteArea: React.FC<AreaComponentProps<TextNoteState>> = ({
 ```tsx
 import { 
   KarmycProvider, 
-  AreaRoot, 
+  Karmyc, 
   useArea, 
   MenuBar, 
   StatusBar
@@ -285,7 +285,7 @@ function EditorLayout() {
         Add Timeline
       </button>
       
-      <AreaRoot />
+      <Karmyc />
       <StatusBar areaId="root" areaState={{}} areaType="app" />
     </div>
   );

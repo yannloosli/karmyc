@@ -27,7 +27,7 @@ Here's a minimal setup to get Karmyc running in your React application:
 ```tsx
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { KarmycProvider, AreaRoot, useKarmyc } from '@gamesberry/karmyc-core';
+import { KarmycProvider, Karmyc, useKarmyc } from '@gamesberry/karmyc-core';
 
 function App() {
   // Initialize Karmyc with basic configuration
@@ -40,7 +40,7 @@ function App() {
   return (
     <KarmycProvider options={config}>
       <div style={{ width: '100vw', height: '100vh' }}>
-        <AreaRoot />
+        <Karmyc />
       </div>
     </KarmycProvider>
   );
@@ -73,7 +73,7 @@ function MyEditor() {
   return (
     <div>
       <button onClick={handleAddTextArea}>Add Text Editor</button>
-      <AreaRoot />
+      <Karmyc />
     </div>
   );
 }
@@ -138,7 +138,7 @@ function MyApp() {
         areaState={{}} 
         areaType="app" 
       />
-      <AreaRoot />
+      <Karmyc />
     </div>
   );
 }
@@ -155,7 +155,7 @@ function MyApp() {
   return (
     <div className="app" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div style={{ flex: 1 }}>
-        <AreaRoot />
+        <Karmyc />
       </div>
       <StatusBar 
         areaId="root" 

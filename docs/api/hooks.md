@@ -257,7 +257,7 @@ import React from 'react';
 import { 
   KarmycProvider, 
   useKarmyc,
-  AreaRoot, 
+  Karmyc, 
   useRegisterAreaType, 
   useArea 
 } from '@gamesberry/karmyc-core';
@@ -291,7 +291,7 @@ function AppContent() {
       <button onClick={() => createArea('text-note', { content: 'New note' })}>
         Add Text Note
       </button>
-      <AreaRoot />
+      <Karmyc />
     </div>
   );
 }

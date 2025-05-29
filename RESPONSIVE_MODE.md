@@ -38,7 +38,7 @@ Adapter l'interface de Karmyc pour les appareils mobiles en affichant une seule 
 ### 4. Modifications Requises
 
 #### Composants à Modifier
-1. `AreaRoot.tsx`
+1. `Karmyc.tsx`
    - Ajout de la détection du mode mobile
    - Adaptation du rendu pour n'afficher que l'Area active en mode mobile
    - Intégration de l'icône de navigation
@@ -69,7 +69,7 @@ Adapter l'interface de Karmyc pour les appareils mobiles en affichant une seule 
 ## Plan d'Implémentation
 
 1. Création du hook `useIsMobile`
-2. Modification de `AreaRoot` pour le mode mobile
+2. Modification de `Karmyc` pour le mode mobile
 3. Création du composant `MobileOverlay`
 4. Intégration des animations et transitions
 5. Tests et ajustements

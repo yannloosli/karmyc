@@ -201,7 +201,7 @@ export const computeAreaToViewport = (
 
         // Assign the full viewport to the parent row itself *before* calculating children
         areaToViewport[row.id] = { ...contentArea };
-
+        console.log('areaToViewport', areaToViewport);
         // Check in advance for missing IDs in the layout to avoid problems
         const missingAreaIds = row.areas
             .map(area => area.id)
@@ -368,18 +368,6 @@ export const computeAreaToViewport = (
     if (idsWithoutViewport.length > 0) {
         // Try to calculate again using alternative parent-child relationships
         idsWithoutViewport.forEach(id => {
-            const layoutItem = mutableLayout[id];
-
-            // Check if we can use the parent-child relationship from computeAreaToParentRow
-            // For now, we ignore this case, as parentId doesn't exist in our structure
-            // Note: parentId was removed to avoid linter errors
-            /* 
-            if (layoutItem && layoutItem.parentId && areaToViewport[layoutItem.parentId]) {
-                console.log(`Using parent viewport for ${id} from ${layoutItem.parentId}`);
-                areaToViewport[id] = { ...areaToViewport[layoutItem.parentId] };
-            }
-            */
-
             // If no viewport was calculated, use a default viewport
             if (!areaToViewport[id]) {
                 viewportCalculationHistory.failedIds.add(id);

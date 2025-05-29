@@ -137,21 +137,6 @@ export const handleAreaDragFromCorner = (
             return;
         }
 
-        // Vérifier que la zone parent existe et a une taille valide
-        const parentRow = initialLayout[parentRowId] as AreaRowLayout;
-        if (!parentRow || parentRow.type !== 'area_row') {
-            console.error("Parent row not found or invalid");
-            setAreaResizing(false);
-            return;
-        }
-
-        const sourceArea = parentRow.areas.find(a => a.id === areaId);
-        if (!sourceArea || sourceArea.size < 0.1) { // 10% minimum
-            console.error("Source area not found or too small");
-            setAreaResizing(false);
-            return;
-        }
-
         // Récupérer le type et l'état de la zone source
         const sourceAreaData = useKarmycStore.getState().getAreaById(areaId);
         if (!sourceAreaData) {
@@ -161,7 +146,6 @@ export const handleAreaDragFromCorner = (
         }
 
         // --- Perform State Updates using Zustand (Actions are on root store) ---
-        console.log(`Attempting to split area ${areaId} in parent row ${parentRowId}, horizontal=${horizontal}`);
         const splitResult = useKarmycStore.getState().splitArea({
             areaIdToSplit: areaId,
             parentRowId: parentRowId,
@@ -178,9 +162,8 @@ export const handleAreaDragFromCorner = (
             return;
         }
 
-        console.log(`Split successful: newRowId=${splitResult.newRowId}, separatorIndex=${splitResult.separatorIndex}`);
         const { newRowId, separatorIndex } = splitResult;
-        
+
         // Attendre que le layout soit mis à jour
         const checkLayout = () => {
             const currentActiveScreenStateAfterSplit = getActiveScreenState();
@@ -191,7 +174,6 @@ export const handleAreaDragFromCorner = (
             }
             
             const newRowLayout = currentActiveScreenStateAfterSplit.layout[newRowId] as AreaRowLayout;
-            console.log(`New row layout:`, newRowLayout);
 
             if (!newRowLayout || newRowLayout.type !== 'area_row') {
                 console.error(`Split seemed successful but row ${newRowId} not found or not a row in active screen state.`);

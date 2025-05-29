@@ -30,7 +30,7 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
     return state.screens[state.activeScreenId]?.areas;
 };
 
-export const AreaRoot: React.FC = () => {
+export const Karmyc: React.FC = () => {
     // Selectors for active screen state
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
 
@@ -59,7 +59,7 @@ export const AreaRoot: React.FC = () => {
     useEffect(() => {
         const layoutSize = Object.keys(layout).length;
         const currentRootItem = rootId ? layout[rootId] : null;
-
+        console.log('layoutSize', layoutSize);
         if (resizePreview) {
             return;
         }
@@ -77,13 +77,13 @@ export const AreaRoot: React.FC = () => {
             }
 
         } catch (error) {
-            console.error("[AreaRoot] Erreur lors du calcul du viewportMap:", error);
+            console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);
             setViewportMap({});
         }
     }, [layout, rootId, viewport, resizePreview]);
 
     useEffect(() => {
-        console.log('[AreaRoot] viewportMap:', viewportMap);
+        console.log('[Karmyc] viewportMap:', viewportMap);
         setViewports(viewportMap);
     }, [viewportMap, setViewports]);
 
@@ -166,10 +166,8 @@ export const AreaRoot: React.FC = () => {
         return baseViewport;
     }, [layout, viewportMap, resizePreview]);
 
-    const currentRootItem = rootId ? layout[rootId] : null;
-
-    if (!rootId || !currentRootItem) {
-        return <EmptyAreaMessage />;
+    if (Object.keys(layout).length === 0) {
+        window.location.reload();
     }
 
     return (

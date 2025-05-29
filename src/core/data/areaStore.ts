@@ -2,10 +2,9 @@ import type { WritableDraft } from 'immer';
 import { create, StateCreator } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { Vec2 } from '../utils';
-import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { IArea, AreaLayout, AreaRowLayout } from '../types/areaTypes';
 import { CardinalDirection, IntercardinalDirection } from '../types/directions';
-import { Point, Rect } from '../types';
+import { Point, Rect } from '../types/math';
 import { AreaTypeValue, AREA_ROLE } from '../types/actions';
 import { computeAreaToParentRow } from '../utils/areaToParentRow';
 import { computeAreaToViewport } from '../utils/areaToViewport';
@@ -15,6 +14,7 @@ import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../../garbage/utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
+import { IKarmycOptions } from '../types/karmyc';
 
 
 
@@ -179,6 +179,7 @@ interface RootState {
     activeScreenId: string;
     nextScreenId: number;
     windowId?: string;
+    options: IKarmycOptions;
 
     // --- Screen Management Actions ---
     addScreen: () => void;
@@ -409,6 +410,8 @@ const createAreaSlice: StateCreator<
         },
 
         removeArea: (id) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
+
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (!activeScreenAreas) return;
 
@@ -450,7 +453,7 @@ const createAreaSlice: StateCreator<
                 // If the root was removed, the layout is likely empty or invalid.
                 // Setting rootId to null might be appropriate. Needs defined behavior.
                 activeScreenAreas.rootId = null; // Or find remaining area?
-                console.warn("Removed root area. Layout might be invalid.");
+                loggingEnabled && console.warn("Removed root area. Layout might be invalid.");
             }
 
             // 7. Update active area ID if it was removed
@@ -470,7 +473,7 @@ const createAreaSlice: StateCreator<
                     activeScreenAreas.lastLeadAreaId = id;
                 }
             } else {
-                console.warn(`Attempted to set active area to non-existent ID: ${id}`);
+                loggingEnabled && console.warn(`Attempted to set active area to non-existent ID: ${id}`);
             }
             activeScreenAreas.errors = [];
         }),
@@ -519,21 +522,21 @@ const createAreaSlice: StateCreator<
         }),
 
         finalizeAreaPlacement: (payload) => set((state: WritableDraft<RootState>) => {
-            console.log('[areaStore] finalizeAreaPlacement: Called with payload', payload);
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+            const loggingEnabled = state.options?.enableLogging;
+
             if (!activeScreenAreas || !activeScreenAreas.areaToOpen) {
-                console.warn('[areaStore] finalizeAreaPlacement - No active screen or areaToOpen data. AreaToOpen:', activeScreenAreas?.areaToOpen);
+                loggingEnabled && console.warn('[areaStore] finalizeAreaPlacement - No active screen or areaToOpen data. AreaToOpen:', activeScreenAreas?.areaToOpen);
                 return;
             }
 
             // Work directly on the draft 'activeScreenAreas'
             try {
                 const { position, area } = activeScreenAreas.areaToOpen;
-                console.log('[areaStore] finalizeAreaPlacement: areaToOpen data', { position, area });
                 const sourceAreaId = area.state?.sourceId; // ID of the area being moved (if any)
                 const newAreaId = sourceAreaId || `area-${activeScreenAreas._id + 1}`; // Use screen's counter for new areas
 
-                const adjustedPosition = new Vec2(position.x, position.y - TOOLBAR_HEIGHT);
+                const adjustedPosition = new Vec2(position.x, position.y);
 
                 // 1. Add new area data if it's not a move
                 if (!sourceAreaId) {
@@ -550,7 +553,7 @@ const createAreaSlice: StateCreator<
                 } else if (sourceAreaId !== newAreaId) {
                     // This case (sourceId exists but != newAreaId) should ideally not happen with current ID logic.
                     // If it could, ensure the area data is correctly handled (e.g., update ID? copy data?)
-                    console.warn(`finalizeAreaPlacement: Mismatch sourceAreaId ('${sourceAreaId}') and newAreaId ('${newAreaId}')`);
+                    loggingEnabled && console.warn(`finalizeAreaPlacement: Mismatch sourceAreaId ('${sourceAreaId}') and newAreaId ('${newAreaId}')`);
                 }
 
 
@@ -565,11 +568,8 @@ const createAreaSlice: StateCreator<
 
                 let determinedTargetAreaId = payload?.targetId;
                 let determinedPlacement = payload?.placement;
-                console.log('[areaStore] finalizeAreaPlacement: Initial determinedTargetAreaId from payload', determinedTargetAreaId);
-                console.log('[areaStore] finalizeAreaPlacement: Initial determinedPlacement from payload', determinedPlacement);
 
                 if (!determinedTargetAreaId) {
-                    console.log('[areaStore] finalizeAreaPlacement: No targetId in payload, calculating using getHoveredAreaId...');
                     const detectionDimensions = new Vec2(300, 200);
                     determinedTargetAreaId = getHoveredAreaId(
                         adjustedPosition,
@@ -577,12 +577,11 @@ const createAreaSlice: StateCreator<
                         areaToViewport,
                         detectionDimensions
                     );
-                    console.log('[areaStore] finalizeAreaPlacement: Calculated targetAreaId with getHoveredAreaId', determinedTargetAreaId);
                 }
 
                 // 3. Handle no target / invalid drop
                 if (!determinedTargetAreaId) {
-                    console.warn('[areaStore] finalizeAreaPlacement: No targetAreaId after check/calculation. Cleaning up.');
+                    loggingEnabled && console.warn('[areaStore] finalizeAreaPlacement: No targetAreaId after check/calculation. Cleaning up.');
                     // If a new area was created, clean it up
                     if (!sourceAreaId) {
                         delete activeScreenAreas.areas[newAreaId];
@@ -602,11 +601,8 @@ const createAreaSlice: StateCreator<
                     return;
                 }
                 if (!determinedPlacement) {
-                    console.log('[areaStore] finalizeAreaPlacement: No placement in payload, calculating using getAreaToOpenPlacementInViewport...');
                     determinedPlacement = getAreaToOpenPlacementInViewport(viewport, adjustedPosition);
-                    console.log('[areaStore] finalizeAreaPlacement: Calculated placement', determinedPlacement);
                 }
-                console.log('[areaStore] finalizeAreaPlacement: Final target and placement', { determinedTargetAreaId, determinedPlacement });
                 activeScreenAreas.areaToOpen = null; // Clear state *before* complex logic
 
                 // 5. Handle source area removal (if it was a move)
@@ -639,7 +635,7 @@ const createAreaSlice: StateCreator<
                                 simplifyLayoutNodeIfNeeded(activeScreenAreas, sourceParentRowId);
                             }
                         } else {
-                            console.warn(`finalizeAreaPlacement: Source area ${sourceAreaId} not found in its supposed parent ${sourceParentRowId}`);
+                            loggingEnabled && console.warn(`finalizeAreaPlacement: Source area ${sourceAreaId} not found in its supposed parent ${sourceParentRowId}`);
                         }
                     }
                     // If source area wasn't in a row (e.g., it was root or orphan), remove its direct layout entry if exists
@@ -653,7 +649,7 @@ const createAreaSlice: StateCreator<
                     // Check if root needs update
                     if (activeScreenAreas.rootId === sourceAreaId) {
                         activeScreenAreas.rootId = null; // Layout is likely broken, needs rebuild or clear
-                        console.warn("Moved root area away. Root is now null.");
+                        loggingEnabled && console.warn("Moved root area away. Root is now null.");
                     }
                 }
 
@@ -668,7 +664,7 @@ const createAreaSlice: StateCreator<
                     let replacedRowId: string | null = null;
 
                     // Si la cible est un area_row avec orientation stack, on le traite comme un area simple
-                    if (activeScreenAreas.layout[targetAreaId]?.type === 'area_row' && 
+                    if (activeScreenAreas.layout[targetAreaId]?.type === 'area_row' &&
                         (activeScreenAreas.layout[targetAreaId] as AreaRowLayout).orientation === 'stack') {
                         targetArea = activeScreenAreas.areas[targetAreaId];
                     } else if (!targetArea && activeScreenAreas.layout[targetAreaId]?.type === 'area_row') {
@@ -767,7 +763,7 @@ const createAreaSlice: StateCreator<
                         }
                     } else { // Target is root or an orphan (no parentRow)
                         if (activeScreenAreas.rootId !== determinedTargetAreaId && activeScreenAreas.layout[determinedTargetAreaId]) {
-                            console.warn(`[finalizeAreaPlacement] Target ${determinedTargetAreaId} is not root but has no parent row. This might be an orphaned area or a direct child of a non-row root.`);
+                            loggingEnabled && console.warn(`[finalizeAreaPlacement] Target ${determinedTargetAreaId} is not root but has no parent row. This might be an orphaned area or a direct child of a non-row root.`);
                         }
 
                         activeScreenAreas._id += 1; // Increment for newRowId
@@ -835,7 +831,7 @@ const createAreaSlice: StateCreator<
                     // Ensure total size is close to 1 after setting
                     let totalSize = payload.sizes.reduce((sum, size) => sum + size, 0);
                     if (Math.abs(totalSize - 1.0) > 0.001 && totalSize > 0) { // Normalize if needed
-                        console.warn(`[areaStore] setRowSizes: Normalizing sizes for row ${payload.rowId}`);
+                        loggingEnabled && console.warn(`[areaStore] setRowSizes: Normalizing sizes for row ${payload.rowId}`);
                         const scale = 1.0 / totalSize;
                         typedRowLayout.areas.forEach((areaInfo, index) => {
                             if (areaInfo) areaInfo.size = payload.sizes[index] * scale;
@@ -846,10 +842,10 @@ const createAreaSlice: StateCreator<
                         });
                     }
                 } else {
-                    console.warn(`[areaStore] setRowSizes: Mismatch count for row ${payload.rowId}`);
+                    loggingEnabled && console.warn(`[areaStore] setRowSizes: Mismatch count for row ${payload.rowId}`);
                 }
             } else {
-                console.warn(`[areaStore] setRowSizes: Row ${payload.rowId} not found or not a row.`);
+                loggingEnabled && console.warn(`[areaStore] setRowSizes: Row ${payload.rowId} not found or not a row.`);
             }
         }),
 
@@ -933,9 +929,11 @@ const createAreaSlice: StateCreator<
                 if (activeScreenAreas.areas[newAreaId] || activeScreenAreas.layout[newAreaId]) {
                     console.error(`splitArea: ID conflict for new area ${newAreaId}`); return;
                 }
+                // Correction ici : on prend le type depuis l'objet métier
+                const originalArea = activeScreenAreas.areas[areaIdToSplit];
                 activeScreenAreas.areas[newAreaId] = {
                     id: newAreaId,
-                    type: areaToSplit.type, // Copy type from split area
+                    type: originalArea?.type || areaToSplit.type, // Priorité à l'objet métier
                     state: {}, // Default/empty state for new area
                 };
                 activeScreenAreas.layout[newAreaId] = { type: 'area', id: newAreaId };
@@ -1165,7 +1163,7 @@ const createAreaSlice: StateCreator<
                             // It's a row with a new ID? Should be handled by joinAreasUtil returning correct structure
                             // If joinAreasUtil could return a new row structure, add it here.
                             // activeScreenAreas.layout[resultingLayoutItem.id] = resultingLayoutItem as AreaRowLayout;
-                            console.warn(`[joinOrMoveArea] Resulting item has new row ID ${resultingLayoutItem.id} but wasn't added to layout?`);
+                            loggingEnabled && console.warn(`[joinOrMoveArea] Resulting item has new row ID ${resultingLayoutItem.id} but wasn't added to layout?`);
                         }
                     }
 
@@ -1187,7 +1185,7 @@ const createAreaSlice: StateCreator<
                     } else {
                         // Grandparent doesn't exist or isn't a row, and it wasn't root.
                         // This might indicate an orphaned structure before the join.
-                        console.warn(`[joinOrMoveArea] Row ${originalParentRowId} collapsed but had no valid grandparent and wasn't root.`);
+                        loggingEnabled && console.warn(`[joinOrMoveArea] Row ${originalParentRowId} collapsed but had no valid grandparent and wasn't root.`);
                     }
                 }
 
@@ -1230,7 +1228,7 @@ const createAreaSlice: StateCreator<
         getAreaById: (id) => {
             const state = get();
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
-            return activeScreenAreas ? activeScreenAreas.areas[id] || activeScreenAreas.layout[id] : undefined;
+            return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;
         },
         getAllAreas: () => {
             const state = get();
@@ -1255,12 +1253,12 @@ const createAreaSlice: StateCreator<
 // --- Define the core state logic with immer (structure + area slice) ---
 const rootStoreCreator: StateCreator<
     RootState,
-    // Define middleware signatures: immer -> persist -> devtools
-    [["zustand/immer", never],
+    [
+        ["zustand/immer", never],
         ["zustand/persist", unknown],
-        ["zustand/devtools", never]]
+        ["zustand/devtools", never]
+    ]
 > = (set, get) => {
-
     // --- Create the Area Slice instance ---
     const areaSlice = createAreaSlice(set, get, {} as any);
 
@@ -1272,6 +1270,10 @@ const rootStoreCreator: StateCreator<
         },
         activeScreenId: '1',
         nextScreenId: 2,
+        options: {
+            enableLogging: false,
+            // Ajoutez ici d'autres options par défaut si nécessaire
+        },
 
         // --- Root Level Screen Management Actions ---
         addScreen: () => set((state: WritableDraft<RootState>) => {
@@ -1305,10 +1307,11 @@ const rootStoreCreator: StateCreator<
         }),
 
         switchScreen: (screenId) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
             if (state.screens[screenId]) {
                 state.activeScreenId = screenId;
             } else {
-                console.warn(`Attempted to switch to non-existent screen ID: ${screenId}`);
+                loggingEnabled && console.warn(`Attempted to switch to non-existent screen ID: ${screenId}`);
             }
         }),
 
@@ -1459,12 +1462,11 @@ const rootStoreCreator: StateCreator<
 // Générer un ID unique pour chaque fenêtre
 const windowId = Math.random().toString(36).slice(2);
 export const useKarmycStore = create<RootState>()(
-    devtools( // 3. Apply devtools (outermost for action naming)
-        persist( // 2. Apply persist
-            immer(rootStoreCreator), // 1. Apply immer (innermost)
-            // Persist configuration
+    immer(
+        persist(
+            devtools(rootStoreCreator, { name: 'KarmycRootStore' }),
             {
-                name: 'karmycRootState', // Storage key
+                name: 'karmycRootState',
                 partialize: (state: RootState): Partial<RootState> => {
                     // Persist only essential data
                     const persistedScreens: Record<string, ScreenState> = {};
@@ -1493,7 +1495,8 @@ export const useKarmycStore = create<RootState>()(
                         screens: persistedScreens,
                         activeScreenId: state.activeScreenId,
                         nextScreenId: state.nextScreenId,
-                        windowId // Ajout du windowId à l'objet persisté
+                        windowId,
+                        options: state.options
                     };
                 },
                 onRehydrateStorage: () => (state, error) => {
@@ -1516,100 +1519,37 @@ export const useKarmycStore = create<RootState>()(
                 },
                 skipHydration: false, // Allow default hydration
             }
-        ),
-        { name: 'KarmycRootStore' } // Devtools configuration
+        )
     )
 );
-
-// --- Optional: Migration from old state ---
-// (Keep the tryMigrateOldState function as previously defined)
-const tryMigrateOldState = () => {
-    const oldStateKey = 'areaState';
-    const newStateKey = 'karmycRootState';
-    try {
-        // Vérifier si nous sommes dans un environnement navigateur
-        if (typeof window === 'undefined') {
-            return;
-        }
-
-        const oldStateString = localStorage.getItem(oldStateKey);
-        const newStateString = localStorage.getItem(newStateKey);
-
-        if (oldStateString && !newStateString) {
-            const oldParsed = JSON.parse(oldStateString);
-            const oldStateData = oldParsed?.state;
-
-            if (oldStateData && oldStateData.layout && oldStateData.areas) {
-                // Create the structure expected by the new store
-                const migratedScreen: ScreenState = {
-                    areas: {
-                        _id: oldStateData._id ?? 0,
-                        rootId: oldStateData.rootId ?? null,
-                        layout: oldStateData.layout,
-                        areas: oldStateData.areas,
-                        // Initialize non-persisted fields to defaults
-                        errors: [],
-                        activeAreaId: null,
-                        joinPreview: null,
-                        viewports: {},
-                        areaToOpen: null,
-                        lastSplitResultData: null,
-                    }
-                };
-                // Create the partial root state to be persisted
-                const migratedRootState: Partial<RootState> = {
-                    screens: { '1': migratedScreen },
-                    activeScreenId: '1',
-                    nextScreenId: 2
-                };
-
-                // Set the new state in localStorage (structure matches persist middleware)
-                localStorage.setItem(newStateKey, JSON.stringify({ state: migratedRootState, version: 0 }));
-                // Remove old key? Maybe keep for safety initially.
-                // localStorage.removeItem(oldStateKey);
-
-                // Trigger rehydration (if store is already initialized)
-                useKarmycStore.persist.rehydrate();
-
-            } else {
-                console.warn(`[karmycRootState Migration] Old state '${oldStateKey}' found but invalid. Skipping.`);
-            }
-        }
-    } catch (error) {
-        console.error(`[karmycRootState Migration] Error during migration:`, error);
-    }
-};
-// Run migration attempt on load
-tryMigrateOldState();
 
 // Synchronisation inter-fenêtres : ignorer l'event storage si c'est la même fenêtre
 if (typeof window !== 'undefined') {
     window.addEventListener('storage', (event) => {
-      if (event.key === 'karmycRootState') {
-        const local = localStorage.getItem('karmycRootState');
-        if (!local) return;
-        const parsed = JSON.parse(local);
-        if (parsed?.state?.windowId === windowId) return;
-        
-        // Récupérer l'état actuel du store
-        const currentState = useKarmycStore.getState();
-        const localScreens = parsed?.state?.screens || {};
-        
-        // Vérifier si l'état local est différent de l'état reçu
-        const hasChanges = Object.keys(localScreens).some(screenId => {
-          const localScreen = localScreens[screenId];
-          const currentScreen = currentState.screens[screenId];
-          return !currentScreen || JSON.stringify(localScreen) !== JSON.stringify(currentScreen);
-        });
+        if (event.key === 'karmycRootState') {
+            const local = localStorage.getItem('karmycRootState');
+            if (!local) return;
+            const parsed = JSON.parse(local);
+            if (parsed?.state?.windowId === windowId) return;
 
-        // Ne mettre à jour que si des changements sont détectés
-        if (hasChanges) {
-          useKarmycStore.setState((state) => ({
-            ...state,
-            screens: localScreens
-          }));
+            // Récupérer l'état actuel du store
+            const currentState = useKarmycStore.getState();
+            const localScreens = parsed?.state?.screens || {};
+
+            // Vérifier si l'état local est différent de l'état reçu
+            const hasChanges = Object.keys(localScreens).some(screenId => {
+                const localScreen = localScreens[screenId];
+                const currentScreen = currentState.screens[screenId];
+                return !currentScreen || JSON.stringify(localScreen) !== JSON.stringify(currentScreen);
+            });
+
+            // Ne mettre à jour que si des changements sont détectés
+            if (hasChanges) {
+                useKarmycStore.setState((state) => ({
+                    ...state,
+                    screens: localScreens
+                }));
+            }
         }
-      }
     });
-  }
-  
+}

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { actionRegistry } from '../../data/registries/actionRegistry';
+import { actionRegistry } from '../../actions/handlers/actionRegistry';
 import { IActionPlugin } from '../../types/actions';
 
 /**

@@ -165,7 +165,7 @@ yarn add @gamesberry/karmyc-plugins/context-menu
 import React from 'react';
 import { 
   KarmycProvider, 
-  AreaRoot, 
+  Karmyc, 
   useRegisterAreaType, 
   useArea 
 } from '@gamesberry/karmyc-core';
@@ -198,7 +198,7 @@ function App() {
       <button onClick={() => createArea('text-note', { content: 'New note' })}>
         Add Text Note
       </button>
-      <AreaRoot />
+      <Karmyc />
     </div>
   );
 }
@@ -311,7 +311,7 @@ npm install @gamesberry/karmyc-core
 import React from 'react';
 import { 
   KarmycProvider, 
-  AreaRoot, 
+  Karmyc, 
   useRegisterAreaType, 
   useArea 
 } from '@gamesberry/karmyc-core';
@@ -344,7 +344,7 @@ function App() {
       <button onClick={() => createArea('text-note', { content: 'New note' })}>
         Add Text Note
       </button>
-      <AreaRoot />
+      <Karmyc />
     </div>
   );
 }

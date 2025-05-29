@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 //import { historyPlugin } from '@components/editor/plugins/history/src';
-import { actionRegistry } from '../data/registries/actionRegistry';
+import { actionRegistry } from '../actions/handlers/actionRegistry';
 import { useArea } from '../../areas/hooks/useArea';
 import { useKarmycStore } from '../data/areaStore'; // Utiliser le store principal
 import { AreaRowLayout } from '../types/areaTypes';
@@ -45,6 +45,11 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
         const activeScreenAreasState = storeState.screens[activeScreenId]?.areas;
         // Initialized means having a rootId OR having areas defined
         const isAlreadyInitialized = activeScreenAreasState?.rootId || Object.keys(activeScreenAreasState?.areas || {}).length > 0;
+
+        useKarmycStore.setState(state => {
+            state.options.enableLogging = options.enableLogging;
+            return state;
+        });
 
         if (!isAlreadyInitialized) {
             const areasToInitialize = options.initialAreas || [];

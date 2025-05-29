@@ -1,5 +1,5 @@
 import { IKarmycConfig } from '../../types/karmyc';
-import { actionRegistry } from './actionRegistry';
+import { actionRegistry } from '../../actions/handlers/actionRegistry';
 
 interface ICoreRegistry {
     initialize: (config: IKarmycConfig) => void;

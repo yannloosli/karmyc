@@ -3,6 +3,7 @@ import { IArea, AreaRowLayout } from '../../core/types/areaTypes';
 import { areaRegistry } from '../../core/data/registries/areaRegistry';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
+import { AREA_TAB_HEIGHT } from '../../core/utils/constants';
 
 interface AreaTabsProps {
     rowId: string;
@@ -75,7 +76,6 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
         }
     };
 
-    console.log('AREA TABS', row);
     return (
         <div className="area-tabs">
             {row.areas.map(({ id }) => {
@@ -95,6 +95,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                         onDragOver={e => { console.log('[AreaTabs] NATIVE DRAGOVER', e); handleTabDragOver(e); }}
                         onDrop={e => { console.log('[AreaTabs] NATIVE DROP', e); handleTabDrop(e, id); }}
                         data-areaid={id}
+                        style={{ height: AREA_TAB_HEIGHT }}
                     >
                         <AreaDragButton
                             id={id}

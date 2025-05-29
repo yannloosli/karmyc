@@ -222,10 +222,10 @@ interface AreaContainerProps extends OwnProps {
 }
 
 export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview }) => {
-
     const area = useKarmycStore(state => state.getAreaById(id));
     const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
     const areas = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
+    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
 
     // Vérifier si c'est un stack
     const isStack = layout?.type === 'area_row' && layout.orientation === 'stack';
@@ -247,14 +247,14 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
 
     // Si c'est un stack, on continue même si l'area n'existe pas directement
     if (!area && !isStack) {
-        console.warn(`Area ${id} not found`);
+        loggingEnabled && console.warn(`Area ${id} not found\n\n`);
         return null;
     }
 
     const Component = area?.type ? areaRegistry.getComponent(area.type) : null;
     if (!Component && !isStack) {
-        console.warn(`No component found for type ${area?.type || 'unknown'}`);
-        return <div>Unsupported type: {area?.type || 'unknown'}</div>;
+        loggingEnabled && console.warn(`No component found for type ${area?.type || 'unknown'}`);
+        return null;
     }
 
     let activeAreaId = id;
@@ -272,12 +272,11 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         return null;
     }
 
-    const TAB_BAR_HEIGHT = 32;
     const contentViewport = {
         left: 0,
         top: 0,
         width: viewport.width || 0,
-        height: isStack ? (viewport.height || 0) - TAB_BAR_HEIGHT : (viewport.height || 0)
+        height: viewport.height || 0
     };
 
     return (

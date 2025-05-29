@@ -241,6 +241,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 }
             } else {
                 finalizeAreaPlacementAction({ targetId: targetAreaId, placement: calculatedPlacement });
+                cleanupTemporaryStates();
                 console.log('[DropZone] finalizeAreaPlacementAction called', { targetAreaId, calculatedPlacement });
             }
         } catch (error) {

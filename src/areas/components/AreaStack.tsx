@@ -4,6 +4,7 @@ import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './Area';
 import { areaRegistry } from '../../core/data/registries/areaRegistry';
 import { ResizePreviewState } from '../../core/types/areaTypes';
+import { AREA_TAB_HEIGHT } from '../../core/utils/constants';
 
 interface AreaStackProps {
     id: string;
@@ -53,7 +54,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                         left: 0,
                         top: 0,
                         width: viewport.width,
-                        height: viewport.height - 40 // Hauteur des onglets
+                        height: viewport.height - AREA_TAB_HEIGHT
                     }}
                     setResizePreview={setResizePreview}
                     raised={!!activeArea.raised}
