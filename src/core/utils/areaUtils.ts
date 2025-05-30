@@ -1,7 +1,7 @@
 import { Vec2 } from "./vec2";
 import { AreaReducerState, Rect } from "../types";
 
-export type PlaceArea = "top" | "left" | "right" | "bottom" | "replace";
+export type PlaceArea = "top" | "left" | "right" | "bottom" | "stack";
 
 export const getHoveredAreaId = (
     position: Vec2,
@@ -81,15 +81,18 @@ export function getAreaToOpenPlacementInViewport(
     // Calculate distance to center
     const centerX = viewport.width / 2;
     const centerY = viewport.height / 2;
-    const distanceToCenter = Math.sqrt(
-        Math.pow(relativeX - centerX, 2) +
-        Math.pow(relativeY - centerY, 2)
-    );
 
-    // If close to center, return "replace"
-    const centerThreshold = Math.min(viewport.width, viewport.height) * 0.3; // 30% of the minimum size
-    if (distanceToCenter < centerThreshold) {
-        return "replace";
+    // Calculate independent distances to center
+    const distanceToCenterX = Math.abs(relativeX - centerX);
+    const distanceToCenterY = Math.abs(relativeY - centerY);
+
+    // Define independent thresholds for X and Y
+    const centerThresholdX = viewport.width * 0.3; // 25% of the width
+    const centerThresholdY = viewport.height * 0.3; // 25% of the height
+
+    // Check if the position is within the rectangular central area
+    if (distanceToCenterX < centerThresholdX && distanceToCenterY < centerThresholdY) {
+        return "stack";
     }
 
     // Find minimum distance to edges

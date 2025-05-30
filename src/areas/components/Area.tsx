@@ -12,6 +12,7 @@ import { AreaIdContext } from "../../core/utils/AreaIdContext";
 import { useSpaceStore } from "../../core/data/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
+import { AreaRowLayout } from "../../core/types/areaTypes";
 
 interface OwnProps {
     id: string;
@@ -219,58 +220,77 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
 interface AreaContainerProps extends OwnProps {
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
+    isLeaf?: boolean;
 }
 
-export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview }) => {
-    const area = useKarmycStore(state => state.getAreaById(id));
-    const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
-    const areas = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
+export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview, isLeaf = false }) => {
+    const areaData = useKarmycStore(state => state.getAreaById(id));
+    const layoutData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
+    const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
     const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
+    const allViewports = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
 
-    // Vérifier si c'est un stack
-    const isStack = layout?.type === 'area_row' && layout.orientation === 'stack';
-
-    // Vérifier si l'area est un enfant d'une stack
     const isChildOfStack = useKarmycStore(state => {
         const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
         if (!activeScreenLayout) return false;
 
-        for (const [layoutId, layoutItem] of Object.entries(activeScreenLayout)) {
+        for (const [, layoutItem] of Object.entries(activeScreenLayout)) {
             if (layoutItem.type === 'area_row' &&
                 layoutItem.orientation === 'stack' &&
-                layoutItem.areas.some(area => area.id === id)) {
+                layoutItem.areas.some(areaRef => areaRef.id === id)) {
                 return true;
             }
         }
         return false;
     });
 
-    // Si c'est un stack, on continue même si l'area n'existe pas directement
-    if (!area && !isStack) {
-        loggingEnabled && console.warn(`Area ${id} not found\n\n`);
+    const isLayoutRow = layoutData?.type === 'area_row';
+    const rowLayout = isLayoutRow ? layoutData as AreaRowLayout : null;
+    const isStack = isLayoutRow && rowLayout!.orientation === 'stack';
+    const isHorizontalOrVerticalRow = isLayoutRow && !isStack;
+
+    // Condition de sortie principale: si l'ID n'est ni une area de données valide ni une structure de layout reconnue.
+    if (!areaData && !isLayoutRow) {
+        loggingEnabled && console.warn(`[Area.tsx] ID '${id}' not found in areas data map AND not a recognized layout structure.`);
         return null;
     }
 
-    const Component = area?.type ? areaRegistry.getComponent(area.type) : null;
-    if (!Component && !isStack) {
-        loggingEnabled && console.warn(`No component found for type ${area?.type || 'unknown'}`);
+    const Component = areaData?.type ? areaRegistry.getComponent(areaData.type) : null;
+
+    // Si ce n'est pas une ligne de layout (donc censé être une area de données) mais qu'on n'a pas de composant pour.
+    if (!isLayoutRow && !Component) {
+        loggingEnabled && console.warn(`[Area.tsx] Not a layout row and no component for area data type '${areaData?.type || 'unknown'}' (id: '${id}').`);
         return null;
     }
+    
+    let activeAreaIdForRender = id; // Pour les areas simples ou H/V rows (l'ID de la row elle-même)
+    let dataForRender = areaData;     // Données pour les areas simples
+    let componentForRender = Component; // Composant pour les areas simples
 
-    let activeAreaId = id;
-    if (isStack && layout.activeTabId) {
-        activeAreaId = layout.activeTabId;
+    if (isStack) {
+        if (rowLayout!.activeTabId) {
+            activeAreaIdForRender = rowLayout!.activeTabId;
+            dataForRender = allAreasData?.[activeAreaIdForRender];
+            componentForRender = dataForRender?.type ? areaRegistry.getComponent(dataForRender.type) : null;
+        } else {
+            // Un stack sans activeTabId, AreaStack gérera l'affichage (peut-être un message vide)
+            dataForRender = undefined; 
+            componentForRender = null;
+        }
+        // Si même après avoir cherché l'activeTabId, on ne trouve rien pour un stack (ce qui serait étrange pour un activeTabId valide)
+        if (rowLayout!.activeTabId && (!dataForRender || !componentForRender)) {
+            loggingEnabled && console.warn(`[Area.tsx] Stack '${id}': Active tab '${rowLayout!.activeTabId}' missing data or component.`);
+        }
     }
-    const activeArea = activeAreaId ? areas?.[activeAreaId] : null;
 
-    if (isStack && !activeArea) {
-        console.warn(`Stack ${id} has no active area`);
-        return null;
-    }
-
+    // Si cette instance de <Area> représente un onglet qui est enfant d'un stack,
+    // mais que cette instance n'est PAS le stack lui-même, alors on ne la rend pas ici.
+    // AreaStack s'occupe de rendre son contenu (l'AreaComponent de l'onglet actif).
     if (isChildOfStack && !isStack) {
-        return null;
+        // loggingEnabled && console.log(`[Area.tsx] ID '${id}' is a child of a stack and not the stack itself. Rendering null as AreaStack handles its content.`);
+        return null; 
     }
+
 
     const contentViewport = {
         left: 0,
@@ -278,39 +298,80 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         width: viewport.width || 0,
         height: viewport.height || 0
     };
+    
+    const containerStyle: React.CSSProperties = {
+        position: 'absolute',
+        left: `${viewport.left || 0}px`,
+        top: `${viewport.top || 0}px`,
+        width: `${viewport.width || 0}px`,
+        height: `${viewport.height || 0}px`,
+        boxSizing: 'border-box',
+        overflow: 'hidden', // Empêche les enfants de déborder visuellement du viewport assigné
+    };
+
+    // Le conteneur de contenu interne prendra 100% de la place du containerStyle
+    const innerContentStyle: React.CSSProperties = {
+        width: '100%',
+        height: '100%',
+        position: 'relative', // Pour que les enfants positionnés absolument à l'intérieur soient relatifs à ce conteneur
+    };
 
     return (
         <div
-            className="area-container"
-            style={{
-                left: `${viewport.left || 0}px`,
-                top: `${viewport.top || 0}px`,
-                width: `${viewport.width || 0}px`,
-                height: `${viewport.height || 0}px`,
-            }}
+            className={"area-container " + id}
+            style={containerStyle}
             data-areaid={id}
+            data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
         >
-            <div className="area-container__content">
-                {isStack &&
-                    (<AreaStack
-                        id={activeAreaId}
-                        areas={areas}
-                        layout={layout}
-                        viewport={contentViewport}
+            <div className="area-container__content" style={innerContentStyle}>
+                {isStack && rowLayout &&
+                    (<AreaStack // Pour les lignes de type 'stack'
+                        id={id} // L'ID du stack lui-même
+                        areas={allAreasData} // Toutes les données d'area pour trouver les enfants
+                        layout={rowLayout}   // Le layout du stack
+                        viewport={contentViewport} // Le viewport interne pour le contenu du stack
                         setResizePreview={setResizePreview}
                     />)
                 }
-                {!isStack && Component &&
+                {isLeaf && !isLayoutRow && componentForRender && dataForRender && // Pour les areas de données (feuilles)
                     <AreaComponent
-                        id={activeAreaId}
-                        Component={Component}
-                        state={activeArea?.state || area?.state}
-                        type={(activeArea?.type || area?.type || 'unknown') as AreaTypeValue}
+                        id={dataForRender.id} 
+                        Component={componentForRender}
+                        state={dataForRender.state}
+                        type={dataForRender.type as AreaTypeValue}
                         viewport={contentViewport}
-                        raised={!!area?.raised}
+                        raised={!!dataForRender.raised}
                         setResizePreview={setResizePreview}
-                        isChildOfStack={isChildOfStack}
+                        isChildOfStack={false} // Une AreaComponent rendue ici n'est pas directement un enfant d'un stack *géré par AreaStack*
                     />
+                }
+                {isHorizontalOrVerticalRow && rowLayout && // Pour les lignes horizontales ou verticales
+                    (() => {
+                        // Log pour voir les viewports disponibles au moment du rendu de cette row
+                        loggingEnabled && console.log(`[Area.tsx] Rendering H/V row '${id}'. Available viewports for children:`, JSON.parse(JSON.stringify(allViewports || {})));
+                        return rowLayout.areas.map((childAreaRef) => {
+                            const childId = childAreaRef.id;
+                            const childActualViewport = allViewports?.[childId];
+
+                            if (!childActualViewport) {
+                                loggingEnabled && console.warn(`[Area.tsx] Viewport for child '${childId}' of H/V row '${id}' not found in allViewports map. Rendering placeholder.`);
+                                return <div key={childId} style={{ position: 'absolute', border: '1px dashed red', color: 'red', padding: '5px', width: '100%', height: '100%', boxSizing: 'border-box' }}>Placeholder: Viewport for {childId} missing</div>;
+                            }
+                            console.log('childAreaRef', childAreaRef);
+                            // Chaque enfant est une nouvelle <Area> positionnée absolument selon son propre viewport.
+                            // Le parent (cette instance de <Area> pour la row H/V) fournit juste un cadre.
+                            // La structure flex n'est pas utilisée pour positionner ces enfants <Area> récursifs.
+                            return (
+                                <Area 
+                                    key={childId}
+                                    id={childId}
+                                    viewport={childActualViewport}
+                                    setResizePreview={setResizePreview}
+                                    isLeaf={id.includes('area-')}
+                                />
+                            );
+                        });
+                    })()
                 }
             </div>
         </div>

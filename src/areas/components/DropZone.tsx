@@ -29,7 +29,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
         areaToOpenTargetViewport,
         calculatedPlacement
     } = useAreaDragAndDrop();
-
+    console.log('DropZone', areaToOpenTargetId, areaToOpenTargetViewport);
     // Mettre à jour les dimensions quand la cible change
     useEffect(() => {
         if (!areaToOpenTargetId || !areaToOpenTargetViewport) return;
@@ -58,7 +58,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
         const placementLines: Record<PlaceArea, Vec2[]> = {
             left: [nw_0, nw_1, sw_1, sw_0], top: [nw_0, ne_0, ne_1, nw_1],
             right: [ne_1, ne_0, se_0, se_1], bottom: [sw_0, sw_1, se_1, se_0],
-            replace: [nw_1, ne_1, se_1, sw_1],
+            stack: [nw_1, ne_1, se_1, sw_1],
         };
         return { lines, placementLines };
     }, [areaToOpenTargetViewport]);

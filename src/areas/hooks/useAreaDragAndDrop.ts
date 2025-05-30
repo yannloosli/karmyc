@@ -47,12 +47,13 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [areaToOpenTargetId, areaToViewport]);
 
     const calculatedPlacement = useMemo(() => {
-        if (!areaToOpen || !areaToOpenTargetViewport) return 'replace';
+        if (!areaToOpen || !areaToOpenTargetViewport) return 'stack';
         const position = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
         return getAreaToOpenPlacementInViewport(areaToOpenTargetViewport, position);
     }, [areaToOpenTargetViewport, areaToOpen?.position.x, areaToOpen?.position.y, areaToOpen]);
 
     const updatePosition = useCallback((x: number, y: number) => {
+        console.log('updatePosition', x, y);
         if (isUpdatingRef.current) return;
         isUpdatingRef.current = true;
 
@@ -62,6 +63,11 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         });
     }, [updateAreaToOpenPositionAction]);
 
+    const globalDragOverHandler = useCallback((e: DragEvent) => {
+        e.preventDefault();
+        updatePosition(e.clientX, e.clientY);
+    }, [updatePosition]);
+
     const handleDragStart = useCallback((e: React.DragEvent) => {
         if (!params?.type || !params?.id || !params?.state) {
             console.warn('useAreaDragAndDrop - Missing required params for handleDragStart');
@@ -69,7 +75,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         }
         // Capture params here after the guard. They are now guaranteed to be defined.
         const { type: areaType, id: areaId, state: areaState } = params;
-
+        
         // Empêcher la sélection de texte pendant le drag
         document.body.style.userSelect = 'none';
         
@@ -79,6 +85,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
             startY: e.clientY - rect.top,
             sourceId: areaId
         };
+        console.log('dragRef.current', dragRef.current);
         lastUpdateRef.current = performance.now();
 
         // Create an invisible drag image
@@ -108,8 +115,8 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
             }
             // Initialize areaToOpen with the correct position AFTER dragImage is removed
             setAreaToOpenAction({
-                position: { 
-                    x: e.clientX, 
+                position: {
+                    x: e.clientX,
                     y: e.clientY
                 },
                 area: {
@@ -118,13 +125,15 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 }
             });
         });
-    }, [params, setAreaToOpenAction]);
+
+        // Attach global listener
+        document.addEventListener('dragover', globalDragOverHandler);
+    }, [params, setAreaToOpenAction, globalDragOverHandler]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        updatePosition(e.clientX, e.clientY);
-    }, [updatePosition]);
+    }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -162,9 +171,9 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
 
                 if (potentialTargetId && potentialTargetId !== '-1' && potentialTargetId !== sourceAreaId) {
                     // Vérifier si l'area cible est un enfant d'une stack
-                    const isChildOfStack = Object.values(layout).some(layoutItem => 
-                        layoutItem.type === 'area_row' && 
-                        layoutItem.orientation === 'stack' && 
+                    const isChildOfStack = Object.values(layout).some(layoutItem =>
+                        layoutItem.type === 'area_row' &&
+                        layoutItem.orientation === 'stack' &&
                         layoutItem.areas.some(area => area.id === potentialTargetId)
                     );
                     console.log('[AreaToOpenPreview 0] handleDrop: Valid targetAreaId found', targetAreaId);
@@ -189,32 +198,32 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
             updatePosition(e.clientX, e.clientY);
             console.log('[DropZone] updatePosition called', { x: e.clientX, y: e.clientY });
 
-            // Vérifier si on drop sur une stack en mode replace
-            const isStack = Object.values(layout).some(layoutItem => 
-                layoutItem.type === 'area_row' && 
-                layoutItem.orientation === 'stack' && 
+            // Vérifier si on drop sur une stack en mode stack
+            const isStack = Object.values(layout).some(layoutItem =>
+                layoutItem.type === 'area_row' &&
+                layoutItem.orientation === 'stack' &&
                 layoutItem.id === targetAreaId
             );
 
-            if (isStack && calculatedPlacement === 'replace') {
+            if (isStack && calculatedPlacement === 'stack') {
                 // Ajouter l'area comme un nouvel onglet dans la stack
-                const stackLayout = Object.values(layout).find(layoutItem => 
-                    layoutItem.type === 'area_row' && 
-                    layoutItem.orientation === 'stack' && 
+                const stackLayout = Object.values(layout).find(layoutItem =>
+                    layoutItem.type === 'area_row' &&
+                    layoutItem.orientation === 'stack' &&
                     layoutItem.id === targetAreaId
                 ) as AreaRowLayout;
 
                 if (stackLayout) {
                     // Trouver la zone d'origine dans le layout
-                    const sourceRow = Object.values(layout).find(layoutItem => 
-                        layoutItem.type === 'area_row' && 
+                    const sourceRow = Object.values(layout).find(layoutItem =>
+                        layoutItem.type === 'area_row' &&
                         layoutItem.areas.some(area => area.id === sourceAreaId)
                     ) as AreaRowLayout;
 
                     if (sourceRow) {
                         // Supprimer la zone d'origine de sa rangée
                         const updatedSourceAreas = sourceRow.areas.filter(area => area.id !== sourceAreaId);
-                        
+
                         // Redistribuer les tailles des zones restantes
                         const totalSize = updatedSourceAreas.reduce((sum, area) => sum + area.size, 0);
                         const normalizedAreas = updatedSourceAreas.map(area => ({
@@ -255,7 +264,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         console.log('[useAreaDragAndDrop] handleDragEnd', e);
         // Réactiver la sélection de texte à la fin du drag
         document.body.style.userSelect = '';
-        
+
         if (!dragRef.current) return;
 
         if (rafRef.current) {
@@ -270,7 +279,10 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
 
         dragRef.current = null;
         cleanupTemporaryStates();
-    }, [cleanupTemporaryStates]);
+
+        // Detach global listener
+        document.removeEventListener('dragover', globalDragOverHandler);
+    }, [cleanupTemporaryStates, globalDragOverHandler]);
 
     // Cleanup RAF on unmount
     useEffect(() => {

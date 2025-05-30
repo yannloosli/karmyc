@@ -11,7 +11,7 @@ interface IAreaDragButton {
     style?: React.CSSProperties;
 }
 
-export const AreaDragButton = ({state, type, id, style}: IAreaDragButton) => {
+export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const [isDragging, setIsDragging] = useState(false);
     const {
         handleDragStart,
@@ -56,11 +56,11 @@ export const AreaDragButton = ({state, type, id, style}: IAreaDragButton) => {
     }
 
     return (
-        <button 
+        <button
             className="select-area-button"
             draggable
-            onDragStart={e => { 
-                console.log('[AreaDragButton] NATIVE DRAGSTART', e); 
+            onDragStart={e => {
+                console.log('[AreaDragButton] NATIVE DRAGSTART', e);
                 setIsDragging(true);
                 handleDragStart(e);
                 // Désactiver complètement le bouton pendant le drag, de manière asynchrone
@@ -71,26 +71,22 @@ export const AreaDragButton = ({state, type, id, style}: IAreaDragButton) => {
                     }
                 });
             }}
-            onDragOver={e => { 
+            onDragOver={e => {
+                console.log('[AreaDragButton] NATIVE DRAGOVER', e);
+                handleDragOver(e);
+            }}
+            onDrop={e => {
                 if (!isDragging) {
-                    console.log('[AreaDragButton] NATIVE DRAGOVER', e); 
-                    handleDragOver(e); 
+                    console.log('[AreaDragButton] NATIVE DROP', e);
+                    handleDrop(e);
                 }
             }}
-            onDrop={e => { 
-                if (!isDragging) {
-                    console.log('[AreaDragButton] NATIVE DROP', e); 
-                    handleDrop(e); 
-                }
-            }}
-            onDragEnd={e => { 
-                console.log('[AreaDragButton] NATIVE DRAGEND', e); 
+            onDragEnd={e => {
+                console.log('[AreaDragButton] NATIVE DRAGEND', selectAreaButtonRef.current);
                 setIsDragging(false);
                 // Réactiver le bouton
-                if (selectAreaButtonRef.current) {
-                    selectAreaButtonRef.current.style.pointerEvents = 'auto';
-                    selectAreaButtonRef.current.style.opacity = '1';
-                }
+                selectAreaButtonRef.current!.style.pointerEvents = 'auto';
+                selectAreaButtonRef.current!.style.opacity = '1';
                 handleDragEnd(e);
             }}
             onContextMenu={e => { e.preventDefault(); openSelectArea(e); }}

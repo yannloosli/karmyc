@@ -32,4 +32,4 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((): React.ReactE
             />
         </>
     );
-}, () => true);
+});

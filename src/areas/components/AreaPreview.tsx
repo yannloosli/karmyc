@@ -10,6 +10,7 @@ interface AreaPreviewProps {
 }
 
 export const AreaPreview: React.FC<AreaPreviewProps> = React.memo(({ areaToOpen, dimensions }) => {
+    console.log('AreaPreview', areaToOpen.position);
     const Component = areaRegistry.getComponent(areaToOpen.area.type);
     if (!Component) {
         return null;

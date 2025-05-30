@@ -465,6 +465,7 @@ const createAreaSlice: StateCreator<
         }),
 
         setActiveArea: (id) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (!activeScreenAreas) return;
             if (id === null || activeScreenAreas.areas[id]) {
@@ -529,6 +530,13 @@ const createAreaSlice: StateCreator<
                 loggingEnabled && console.warn('[areaStore] finalizeAreaPlacement - No active screen or areaToOpen data. AreaToOpen:', activeScreenAreas?.areaToOpen);
                 return;
             }
+            console.log('[DEBUG] finalizeAreaPlacement START', {
+                payload,
+                areaToOpen: JSON.parse(JSON.stringify(activeScreenAreas.areaToOpen)),
+                layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                rootId: activeScreenAreas.rootId,
+                areas: JSON.parse(JSON.stringify(activeScreenAreas.areas))
+            });
 
             // Work directly on the draft 'activeScreenAreas'
             try {
@@ -543,13 +551,18 @@ const createAreaSlice: StateCreator<
                     // Ensure ID is unique before adding
                     if (activeScreenAreas.areas[newAreaId]) {
                         console.error(`finalizeAreaPlacement: ID conflict for new area ${newAreaId}`);
-                        // Potentially generate a different ID or handle error
                         activeScreenAreas.areaToOpen = null; // Clear temp state on error
                         return;
                     }
+                    console.log('[DEBUG] finalizeAreaPlacement BEFORE new area data creation', { newAreaId, areaType: area.type, layoutCount: Object.keys(activeScreenAreas.layout).length });
                     activeScreenAreas.areas[newAreaId] = { id: newAreaId, type: area.type, state: area.state };
                     // Layout entry added later based on placement
                     activeScreenAreas._id += 1; // Increment counter *only* for new area data creation
+                    console.log('[DEBUG] finalizeAreaPlacement AFTER new area data creation', {
+                        newArea: JSON.parse(JSON.stringify(activeScreenAreas.areas[newAreaId])),
+                        layoutCount: Object.keys(activeScreenAreas.layout).length,
+                        currentIdCounter: activeScreenAreas._id
+                    });
                 } else if (sourceAreaId !== newAreaId) {
                     // This case (sourceId exists but != newAreaId) should ideally not happen with current ID logic.
                     // If it could, ensure the area data is correctly handled (e.g., update ID? copy data?)
@@ -607,10 +620,19 @@ const createAreaSlice: StateCreator<
 
                 // 5. Handle source area removal (if it was a move)
                 let sourceParentRowIdForCleanup: string | null = null;
+                let survivingChildIdFromSourceSimplification: string | null = null; 
+
                 if (sourceAreaId) {
                     const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
                     const sourceParentRowId = areaToParentRow[sourceAreaId];
                     sourceParentRowIdForCleanup = sourceParentRowId; // Store for potential simplification later
+
+                    console.log('[DEBUG] finalizeAreaPlacement BEFORE source area removal', {
+                        sourceAreaId,
+                        sourceParentRowId,
+                        layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                        rootId: activeScreenAreas.rootId
+                    });
 
                     if (sourceParentRowId && activeScreenAreas.layout[sourceParentRowId]?.type === 'area_row') {
                         const sourceParentRow = activeScreenAreas.layout[sourceParentRowId] as AreaRowLayout;
@@ -618,12 +640,15 @@ const createAreaSlice: StateCreator<
 
                         if (areaIndex !== -1) {
                             sourceParentRow.areas.splice(areaIndex, 1); // Remove source area ref
+                            console.log(`[DEBUG] finalizeAreaPlacement AFTER source removed from parent row ${sourceParentRowId}`, { parentRowAreas: JSON.parse(JSON.stringify(sourceParentRow.areas)) });
 
                             if (sourceParentRow.areas.length === 0) {
                                 // Row is empty, remove it and potentially simplify its parent
                                 delete activeScreenAreas.layout[sourceParentRowId];
                                 const grandParentId = areaToParentRow[sourceParentRowId]; // Parent of the row being deleted
+                                console.log(`[DEBUG] finalizeAreaPlacement Source parent row ${sourceParentRowId} is empty, DELETING it. Grandparent: ${grandParentId}`);
                                 simplifyLayoutNodeIfNeeded(activeScreenAreas, grandParentId);
+                                console.log(`[DEBUG] finalizeAreaPlacement AFTER simplifyLayoutNodeIfNeeded for grandparent ${grandParentId}`, { layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)), rootId: activeScreenAreas.rootId });
                             } else {
                                 // Row not empty, normalize sizes and simplify if needed
                                 const totalSize = sourceParentRow.areas.reduce((acc, a) => acc + (a.size || 0), 0);
@@ -632,7 +657,11 @@ const createAreaSlice: StateCreator<
                                     sourceParentRow.areas.forEach(area => { area.size = (area.size || 0) * factor; });
                                 }
                                 // Check if the row itself needs simplification (e.g., went from 2 to 1 child)
+                                if (sourceParentRow.areas.length === 1) {
+                                    survivingChildIdFromSourceSimplification = sourceParentRow.areas[0].id;
+                                }
                                 simplifyLayoutNodeIfNeeded(activeScreenAreas, sourceParentRowId);
+                                console.log(`[DEBUG] finalizeAreaPlacement AFTER simplifyLayoutNodeIfNeeded for source parent ${sourceParentRowId}`, { layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)), rootId: activeScreenAreas.rootId });
                             }
                         } else {
                             loggingEnabled && console.warn(`finalizeAreaPlacement: Source area ${sourceAreaId} not found in its supposed parent ${sourceParentRowId}`);
@@ -640,29 +669,52 @@ const createAreaSlice: StateCreator<
                     }
                     // If source area wasn't in a row (e.g., it was root or orphan), remove its direct layout entry if exists
                     else if (activeScreenAreas.layout[sourceAreaId]) {
+                        console.log(`[DEBUG] finalizeAreaPlacement Source area ${sourceAreaId} was not in a row, DELETING its layout entry.`);
                         delete activeScreenAreas.layout[sourceAreaId];
                     }
                     // Delete source area *data* only if it's truly a move (source != new ID potentially created)
-                    if (sourceAreaId !== newAreaId) {
+                    if (sourceAreaId !== newAreaId) { // Should always be true if sourceAreaId exists
+                        console.log(`[DEBUG] finalizeAreaPlacement DELETING source area data ${sourceAreaId}.`);
                         delete activeScreenAreas.areas[sourceAreaId];
                     }
                     // Check if root needs update
                     if (activeScreenAreas.rootId === sourceAreaId) {
                         activeScreenAreas.rootId = null; // Layout is likely broken, needs rebuild or clear
+                        console.log(`[DEBUG] finalizeAreaPlacement Moved root area ${sourceAreaId} away. Root is now NULL.`);
                         loggingEnabled && console.warn("Moved root area away. Root is now null.");
                     }
+                    console.log('[DEBUG] finalizeAreaPlacement AFTER all source area removal steps', {
+                        layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                        rootId: activeScreenAreas.rootId,
+                        areas: JSON.parse(JSON.stringify(activeScreenAreas.areas))
+                    });
+                }
+
+                // Update determinedTargetAreaId if it was the source parent and got simplified away
+                if (determinedTargetAreaId &&
+                    determinedTargetAreaId === sourceParentRowIdForCleanup &&
+                    survivingChildIdFromSourceSimplification &&
+                    !activeScreenAreas.layout[determinedTargetAreaId] // Check if it was indeed removed by simplify
+                ) {
+                    loggingEnabled && console.log(`[DEBUG] finalizeAreaPlacement: Original target ${determinedTargetAreaId} (also source parent) was simplified. Updating target to surviving child: ${survivingChildIdFromSourceSimplification}.`);
+                    determinedTargetAreaId = survivingChildIdFromSourceSimplification;
                 }
 
                 // 6. Handle placement logic
-                let orientation: "horizontal" | "vertical" = determinedPlacement === "replace" ? "horizontal" : (determinedPlacement === "top" || determinedPlacement === "bottom" ? "vertical" : "horizontal");
+                let orientation: "horizontal" | "vertical" = determinedPlacement === "stack" ? "horizontal" : (determinedPlacement === "top" || determinedPlacement === "bottom" ? "vertical" : "horizontal");
 
-                if (determinedPlacement === "replace") {
+                if (determinedPlacement === "stack") {
                     // On veut stacker deux areas, pas des rows
                     // Si la cible est un row, on descend jusqu'à la première area enfant
                     let targetAreaId = determinedTargetAreaId;
                     let targetArea = activeScreenAreas.areas[targetAreaId];
                     let replacedRowId: string | null = null;
 
+                    console.log('[DEBUG] finalizeAreaPlacement REPLACE logic START', {
+                        determinedTargetAreaId, newAreaId,
+                        layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                        rootId: activeScreenAreas.rootId
+                    });
                     // Si la cible est un area_row avec orientation stack, on le traite comme un area simple
                     if (activeScreenAreas.layout[targetAreaId]?.type === 'area_row' &&
                         (activeScreenAreas.layout[targetAreaId] as AreaRowLayout).orientation === 'stack') {
@@ -686,6 +738,7 @@ const createAreaSlice: StateCreator<
                     const newStackId = `row-${activeScreenAreas._id + 1}`;
                     activeScreenAreas._id += 1;
 
+                    console.log(`[DEBUG] finalizeAreaPlacement REPLACE: Creating new stack ${newStackId}`);
                     // Créer le nouveau stack dans le layout
                     const newStack: AreaRowLayout = {
                         type: 'area_row',
@@ -720,6 +773,12 @@ const createAreaSlice: StateCreator<
 
                     // Mettre à jour l'area active
                     activeScreenAreas.activeAreaId = targetAreaId;
+                    console.log('[DEBUG] finalizeAreaPlacement REPLACE logic END', {
+                        newStackId,
+                        layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                        rootId: activeScreenAreas.rootId,
+                        activeAreaId: activeScreenAreas.activeAreaId
+                    });
                 } else {
                     // --- Logic for Top/Bottom/Left/Right placement ---
                     const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
@@ -767,6 +826,7 @@ const createAreaSlice: StateCreator<
                         }
 
                         activeScreenAreas._id += 1; // Increment for newRowId
+                        console.log(`[DEBUG] finalizeAreaPlacement SPLIT: Target ${determinedTargetAreaId} is root or orphan. Creating new root row ${newRowId}. Old root: ${activeScreenAreas.rootId}`);
                         const newRootRow: AreaRowLayout = {
                             type: 'area_row',
                             id: newRowId,
@@ -777,11 +837,16 @@ const createAreaSlice: StateCreator<
                         };
                         activeScreenAreas.layout[newRowId] = newRootRow;
                         activeScreenAreas.rootId = newRowId;
+                        console.log(`[DEBUG] finalizeAreaPlacement SPLIT: New root is ${activeScreenAreas.rootId}`);
                         // Ensure the old root (now a child) and newAreaId are in the layout map if they weren't already rows
                         if (!activeScreenAreas.layout[determinedTargetAreaId]) {
                             activeScreenAreas.layout[determinedTargetAreaId] = { type: 'area', id: determinedTargetAreaId };
                         }
                     }
+                    console.log('[DEBUG] finalizeAreaPlacement SPLIT logic END', {
+                        layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                        rootId: activeScreenAreas.rootId
+                    });
                 }
 
                 // Update active area to the new/moved area
@@ -792,11 +857,68 @@ const createAreaSlice: StateCreator<
                     }
                 }
 
+                // RECALCULATE VIEWPORTS HERE, USING THE EXISTING rootViewport from earlier in the function
+                // This 'rootViewport' const is typically defined around line 575 of the original file.
+                if (activeScreenAreas.rootId && rootViewport && rootViewport.width > 0 && rootViewport.height > 0) {
+                    const recalculatedViewports = computeAreaToViewport(
+                        activeScreenAreas.layout,
+                        activeScreenAreas.rootId,
+                        rootViewport // Use the existing rootViewport
+                    );
+                    activeScreenAreas.viewports = recalculatedViewports;
+                    if (loggingEnabled) { // Check loggingEnabled before stringify
+                         console.log('[DEBUG] finalizeAreaPlacement RECALCULATED AND SET VIEWPORTS (END OF TRY)', JSON.parse(JSON.stringify(recalculatedViewports)));
+                    }
+                } else {
+                    if (loggingEnabled) {
+                        console.warn('[DEBUG] finalizeAreaPlacement SKIPPED viewport recalculation (END OF TRY) due to null rootId or invalid rootViewport.', { rootId: activeScreenAreas.rootId, rootViewportVal: rootViewport });
+                    }
+                    activeScreenAreas.viewports = {}; // Clear to avoid stale data
+                }
+
                 console.log('[areaStore] finalizeAreaPlacement: layout after finalize', activeScreenAreas.layout);
                 console.log('[areaStore] finalizeAreaPlacement: areaToOpen after finalize', activeScreenAreas.areaToOpen);
 
+                console.log('[DEBUG] finalizeAreaPlacement CHECKING PROBLEMATIC ROWS AND FULL LAYOUT BEFORE END', {
+                    'full_layout_at_end': JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                    'rootId_at_end': activeScreenAreas.rootId,
+                    'row-14_exists': !!activeScreenAreas.layout['row-14'],
+                    'row-14_content': activeScreenAreas.layout['row-14'] ? JSON.parse(JSON.stringify(activeScreenAreas.layout['row-14'])) : 'DOES NOT EXIST',
+                    'row-28_exists': !!activeScreenAreas.layout['row-28'], 
+                    'row-28_content': activeScreenAreas.layout['row-28'] ? JSON.parse(JSON.stringify(activeScreenAreas.layout['row-28'])) : 'DOES NOT EXIST',
+                    'row-31_exists': !!activeScreenAreas.layout['row-31'], // Assuming row-31 might be an issue from logs
+                    'row-31_content': activeScreenAreas.layout['row-31'] ? JSON.parse(JSON.stringify(activeScreenAreas.layout['row-31'])) : 'DOES NOT EXIST'
+                });
+
+                console.log('[DEBUG] finalizeAreaPlacement END', {
+                    payload,
+                    areaToOpen: JSON.parse(JSON.stringify(activeScreenAreas.areaToOpen)),
+                    layout: JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                    rootId: activeScreenAreas.rootId,
+                    areas: JSON.parse(JSON.stringify(activeScreenAreas.areas))
+                });
+
+                // Log l'état final juste avant de sortir du try
+                const finalRootId = activeScreenAreas.rootId;
+                const finalRootLayout = finalRootId ? activeScreenAreas.layout[finalRootId] : null;
+                console.log('[DEBUG] finalizeAreaPlacement FINAL STATE CHECK', {
+                    'final_rootId': finalRootId,
+                    'final_root_layout_exists': !!finalRootLayout,
+                    'final_root_layout_content': finalRootLayout ? JSON.parse(JSON.stringify(finalRootLayout)) : 'ROOT ID IS NULL OR ROOT LAYOUT NOT FOUND',
+                    'final_full_layout': JSON.parse(JSON.stringify(activeScreenAreas.layout)),
+                    'final_areas_map': JSON.parse(JSON.stringify(activeScreenAreas.areas)),
+                    'final_viewports_map': JSON.parse(JSON.stringify(activeScreenAreas.viewports)), // Log the newly set viewports
+                    'final_active_area_id': state.screens[state.activeScreenId].areas.activeAreaId
+                });
+
             } catch (error) {
                 console.error('[areaStore] Error during finalizeAreaPlacement:', error);
+                console.error('[DEBUG] finalizeAreaPlacement ERROR STATE', {
+                    error,
+                    layout: activeScreenAreas ? JSON.parse(JSON.stringify(activeScreenAreas.layout)) : 'N/A',
+                    rootId: activeScreenAreas ? activeScreenAreas.rootId : 'N/A',
+                    areaToOpen: activeScreenAreas ? JSON.parse(JSON.stringify(activeScreenAreas.areaToOpen)) : 'N/A',
+                });
                 // Attempt to clean up temporary state on error
                 if (activeScreenAreas) {
                     activeScreenAreas.areaToOpen = null;
@@ -822,6 +944,7 @@ const createAreaSlice: StateCreator<
         }),
 
         setRowSizes: (payload) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (!activeScreenAreas) return;
             const rowLayout = activeScreenAreas.layout[payload.rowId];
@@ -1095,6 +1218,7 @@ const createAreaSlice: StateCreator<
         }),
 
         joinOrMoveArea: (payload) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (!activeScreenAreas) return;
 
@@ -1370,6 +1494,7 @@ const rootStoreCreator: StateCreator<
         }),
 
         detachArea: (areaId) => set((state: WritableDraft<RootState>) => {
+            const loggingEnabled = state.options?.enableLogging;
             const area = state.getAreaById(areaId);
             if (!area) {
                 console.warn(`Area ${areaId} not found`);
@@ -1398,9 +1523,25 @@ const rootStoreCreator: StateCreator<
             newScreenAreasState.rootId = areaId;
             newScreenAreasState.activeAreaId = areaId;
 
+            // LOG: Après création du nouvel écran détaché
+            loggingEnabled && console.log('[detachArea] Nouvel écran détaché', {
+                newScreenId,
+                newScreenAreas: { ...newScreenAreasState.areas },
+                newScreenLayout: { ...newScreenAreasState.layout },
+                newScreenRootId: newScreenAreasState.rootId
+            });
+
             // Supprimer l'area du screen d'origine (areas et layout)
             const originScreen = state.screens[state.activeScreenId];
             if (originScreen) {
+                // LOG: Avant détachement
+                loggingEnabled && console.log('[detachArea] Avant détachement', {
+                    activeScreenId: state.activeScreenId,
+                    areaId,
+                    originAreas: { ...originScreen.areas.areas },
+                    originLayout: { ...originScreen.areas.layout },
+                    originRootId: originScreen.areas.rootId
+                });
                 // Supprimer l'area de la map
                 delete originScreen.areas.areas[areaId];
                 // Supprimer la référence dans le layout
@@ -1412,11 +1553,27 @@ const rootStoreCreator: StateCreator<
                 }
                 // Supprimer l'entrée de layout si c'est un node direct
                 delete originScreen.areas.layout[areaId];
+                // LOG: Après suppression de l'area
+                loggingEnabled && console.log('[detachArea] Après suppression de l\'area', {
+                    originAreas: { ...originScreen.areas.areas },
+                    originLayout: { ...originScreen.areas.layout },
+                    originRootId: originScreen.areas.rootId
+                });
                 // Nettoyer le rootId si besoin
                 if (originScreen.areas.rootId === areaId) {
                     originScreen.areas.rootId = null;
                 }
-                // (Optionnel) : simplifier le layout si des rows sont devenues vides
+                // LOG: Après nettoyage rootId
+                loggingEnabled && console.log('[detachArea] Après nettoyage rootId', {
+                    originRootId: originScreen.areas.rootId
+                });
+                // Simplification automatique des rows après détachement
+                for (const key in originScreen.areas.layout) {
+                    const item = originScreen.areas.layout[key];
+                    if (item.type === 'area_row' && item.areas.length === 1) {
+                        simplifyLayoutNodeIfNeeded(originScreen.areas, key);
+                    }
+                }
             }
 
             // Ouvrir dans une nouvelle fenêtre sans navigation

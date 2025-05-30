@@ -35,16 +35,16 @@ export const Karmyc: React.FC = () => {
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
 
     // Memoize the derived state to avoid unnecessary re-renders
-    const rootId = useMemo(() => activeScreenAreas?.rootId, [activeScreenAreas]);
-    const layout = useMemo(() => activeScreenAreas?.layout ?? {}, [activeScreenAreas]);
-    const joinPreview = useMemo(() => activeScreenAreas?.joinPreview, [activeScreenAreas]);
-    const areaToOpen = useMemo(() => activeScreenAreas?.areaToOpen, [activeScreenAreas]);
+    const rootId = useMemo(() => activeScreenAreas?.rootId, [activeScreenAreas?.rootId]);
+    const layout = useMemo(() => activeScreenAreas?.layout ?? {}, [activeScreenAreas?.layout]);
+    const joinPreview = useMemo(() => activeScreenAreas?.joinPreview, [activeScreenAreas?.joinPreview]);
+    const areaToOpen = useMemo(() => activeScreenAreas?.areaToOpen, [activeScreenAreas?.areaToOpen]);
 
-    const [viewportMap, setViewportMap] = useState<{ [areaId: string]: Rect }>({});
     const [viewport, setViewport] = useState(getAreaRootViewport());
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
 
     const setViewports = useKarmycStore(state => state.setViewports);
+    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
 
     // Effect for resize handling (no change)
     useEffect(() => {
@@ -55,40 +55,58 @@ export const Karmyc: React.FC = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Effect for viewport calculation
+    // Effect for viewport calculation and direct store update
     useEffect(() => {
         const layoutSize = Object.keys(layout).length;
         const currentRootItem = rootId ? layout[rootId] : null;
-        console.log('layoutSize', layoutSize);
+        
+        loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Start. layoutSize:', layoutSize, 'rootId:', rootId, 'currentRootItem exists:', !!currentRootItem, 'resizePreview:', resizePreview);
+
+        /*
         if (resizePreview) {
+            loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Bailing due to resizePreview');
             return;
         }
+        */
 
         if (!rootId || !currentRootItem || layoutSize === 0) {
-            if (Object.keys(viewportMap).length > 0) setViewportMap({});
+            loggingEnabled && console.warn('[Karmyc Calculation Effect (Direct to Store)] Condition to clear viewportMap met! rootId:', rootId, 'layoutSize:', layoutSize, 'currentRootItem:', currentRootItem);
+            // Vider les viewports dans le store si le layout est vide/invalide
+            const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
+            if (currentStoreViewports && Object.keys(currentStoreViewports).length > 0) {
+                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Clearing viewports in store due to empty/invalid layout.');
+                setViewports({});
+            } else {
+                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports already empty or condition met without non-empty map.');
+            }
             return;
         }
 
         try {
             const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
+            loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Computed newViewportMap:', JSON.parse(JSON.stringify(newViewportMap)));
 
-            if (JSON.stringify(viewportMap) !== JSON.stringify(newViewportMap)) {
-                setViewportMap(newViewportMap);
+            const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
+            if (JSON.stringify(currentStoreViewports) !== JSON.stringify(newViewportMap)) {
+                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports are different, calling setViewports with new data.');
+                setViewports(newViewportMap);
+            } else {
+                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports are THE SAME as newViewportMap, not calling setViewports.');
             }
 
         } catch (error) {
-            console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);
-            setViewportMap({});
+            console.error("[Karmyc] Erreur lors du calcul du viewportMap (Direct to Store):", error);
+            // Optionnel: vider le store en cas d'erreur de calcul critique
+            // setViewports({}); 
         }
-    }, [layout, rootId, viewport, resizePreview]);
-
-    useEffect(() => {
-        console.log('[Karmyc] viewportMap:', viewportMap);
-        setViewports(viewportMap);
-    }, [viewportMap, setViewports]);
+    }, [layout, rootId, viewport, resizePreview, setViewports, loggingEnabled]);
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
-        const baseViewport = viewportMap[areaId];
+        const state = useKarmycStore.getState();
+        const activeScreen = state.screens[state.activeScreenId];
+        const currentGlobalViewportMap = activeScreen?.areas.viewports || {};
+        
+        const baseViewport = currentGlobalViewportMap[areaId];
 
         if (!baseViewport || !resizePreview) {
             return baseViewport;
@@ -114,12 +132,12 @@ export const Karmyc: React.FC = () => {
             const siblingIndex = areaIndexInRow === sepIndex - 1 ? sepIndex : sepIndex - 1;
             const siblingId = parentRow.areas[siblingIndex]?.id;
             if (!siblingId) return baseViewport;
-            const siblingViewport = viewportMap[siblingId];
+            const siblingViewport = currentGlobalViewportMap[siblingId];
             if (!siblingViewport) return baseViewport;
             const isFirst = areaIndexInRow === sepIndex - 1;
             const t = resizePreview.t;
-            const parentViewport = viewportMap[parentRow.id];
-            if (!parentViewport) return baseViewport;
+            const parentRowViewport = currentGlobalViewportMap[parentRow.id];
+            if (!parentRowViewport) return baseViewport;
 
             const vp0 = isFirst ? baseViewport : siblingViewport;
             const vp1 = isFirst ? siblingViewport : baseViewport;
@@ -164,10 +182,17 @@ export const Karmyc: React.FC = () => {
             }
         }
         return baseViewport;
-    }, [layout, viewportMap, resizePreview]);
+    }, [layout, resizePreview]);
 
-    if (Object.keys(layout).length === 0) {
-        window.location.reload();
+    if (Object.keys(layout).length === 0 && activeScreenAreas?._id !== 0) {
+        // Temporisation pour permettre au store de se mettre à jour après un reset/load
+        // setTimeout(() => {
+        //     const currentLayout = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.layout;
+        //     if (Object.keys(currentLayout || {}).length === 0) {
+        //         console.warn("[Karmyc] Layout is empty after potential update. Forcing reload as a fallback.");
+        //         window.location.reload();
+        //     }
+        // }, 500);
     }
 
     return (
@@ -177,7 +202,8 @@ export const Karmyc: React.FC = () => {
                 {Object.values(layout).map((item) => {
                     if (item.type === 'area_row') {
                         const rowLayout = item as AreaRowLayout;
-                        const areChildrenReady = rowLayout.areas.every(area => viewportMap[area.id]);
+                        const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
+                        const areChildrenReady = rowLayout.areas.every(area => currentGlobalViewportMap[area.id]);
                         if (areChildrenReady) {
                             return (
                                 <AreaRowSeparators
@@ -193,6 +219,9 @@ export const Karmyc: React.FC = () => {
 
                 {Object.entries(layout).map(([id, item]) => {
                     const visualViewport = getAreaVisualViewport(id);
+                    const type = item.type;
+                    console.log('type', type);
+
                     if (visualViewport) {
                         return (
                             <Area
@@ -200,18 +229,25 @@ export const Karmyc: React.FC = () => {
                                 id={id}
                                 viewport={visualViewport}
                                 setResizePreview={setResizePreview}
+                                isLeaf={type !== 'area_row'}
                             />
                         );
                     }
                     return null;
                 })}
 
-                {joinPreview && joinPreview.areaId && viewportMap[joinPreview.areaId] && (
-                    <JoinAreaPreview
-                        viewport={viewportMap[joinPreview.areaId]}
-                        movingInDirection={joinPreview.movingInDirection!}
-                    />
-                )}
+                {joinPreview && joinPreview.areaId && 
+                    (() => {
+                        const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
+                        const joinViewport = currentGlobalViewportMap[joinPreview.areaId!];
+                        return joinViewport ? (
+                            <JoinAreaPreview
+                                viewport={joinViewport}
+                                movingInDirection={joinPreview.movingInDirection!}
+                            />
+                        ) : null;
+                    })()
+                }
                 {areaToOpen && (
                     <AreaToOpenPreview />
                 )}
