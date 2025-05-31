@@ -220,52 +220,41 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
 interface AreaContainerProps extends OwnProps {
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
-    isLeaf?: boolean;
 }
 
-export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview, isLeaf = false }) => {
+export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview }) => {
     const areaData = useKarmycStore(state => state.getAreaById(id));
     const layoutData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
     const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
     const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
     const allViewports = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
 
+    
+    
     const isChildOfStack = useKarmycStore(state => {
         const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
         if (!activeScreenLayout) return false;
-
+        
         for (const [, layoutItem] of Object.entries(activeScreenLayout)) {
             if (layoutItem.type === 'area_row' &&
                 layoutItem.orientation === 'stack' &&
                 layoutItem.areas.some(areaRef => areaRef.id === id)) {
-                return true;
+                    return true;
+                }
             }
-        }
         return false;
     });
-
+    
     const isLayoutRow = layoutData?.type === 'area_row';
     const rowLayout = isLayoutRow ? layoutData as AreaRowLayout : null;
     const isStack = isLayoutRow && rowLayout!.orientation === 'stack';
     const isHorizontalOrVerticalRow = isLayoutRow && !isStack;
-
-    // Condition de sortie principale: si l'ID n'est ni une area de données valide ni une structure de layout reconnue.
-    if (!areaData && !isLayoutRow) {
-        loggingEnabled && console.warn(`[Area.tsx] ID '${id}' not found in areas data map AND not a recognized layout structure.`);
-        return null;
-    }
-
+    
     const Component = areaData?.type ? areaRegistry.getComponent(areaData.type) : null;
 
-    // Si ce n'est pas une ligne de layout (donc censé être une area de données) mais qu'on n'a pas de composant pour.
-    if (!isLayoutRow && !Component) {
-        loggingEnabled && console.warn(`[Area.tsx] Not a layout row and no component for area data type '${areaData?.type || 'unknown'}' (id: '${id}').`);
-        return null;
-    }
-    
-    let activeAreaIdForRender = id; // Pour les areas simples ou H/V rows (l'ID de la row elle-même)
-    let dataForRender = areaData;     // Données pour les areas simples
-    let componentForRender = Component; // Composant pour les areas simples
+    let activeAreaIdForRender = id;
+    let dataForRender = areaData;
+    let componentForRender = Component;
 
     if (isStack) {
         if (rowLayout!.activeTabId) {
@@ -283,11 +272,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         }
     }
 
-    // Si cette instance de <Area> représente un onglet qui est enfant d'un stack,
-    // mais que cette instance n'est PAS le stack lui-même, alors on ne la rend pas ici.
-    // AreaStack s'occupe de rendre son contenu (l'AreaComponent de l'onglet actif).
     if (isChildOfStack && !isStack) {
-        // loggingEnabled && console.log(`[Area.tsx] ID '${id}' is a child of a stack and not the stack itself. Rendering null as AreaStack handles its content.`);
         return null; 
     }
 
@@ -309,21 +294,16 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         overflow: 'hidden', // Empêche les enfants de déborder visuellement du viewport assigné
     };
 
-    // Le conteneur de contenu interne prendra 100% de la place du containerStyle
-    const innerContentStyle: React.CSSProperties = {
-        width: '100%',
-        height: '100%',
-        position: 'relative', // Pour que les enfants positionnés absolument à l'intérieur soient relatifs à ce conteneur
-    };
 
     return (
-        <div
+        (!id.includes('row-') || isStack) &&
+        (<div
             className={"area-container " + id}
             style={containerStyle}
             data-areaid={id}
             data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
         >
-            <div className="area-container__content" style={innerContentStyle}>
+            <div className="area-container__content">
                 {isStack && rowLayout &&
                     (<AreaStack // Pour les lignes de type 'stack'
                         id={id} // L'ID du stack lui-même
@@ -333,7 +313,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
                         setResizePreview={setResizePreview}
                     />)
                 }
-                {isLeaf && !isLayoutRow && componentForRender && dataForRender && // Pour les areas de données (feuilles)
+                {!isLayoutRow && componentForRender && dataForRender && // Pour les areas de données (feuilles)
                     <AreaComponent
                         id={dataForRender.id} 
                         Component={componentForRender}
@@ -342,14 +322,12 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
                         viewport={contentViewport}
                         raised={!!dataForRender.raised}
                         setResizePreview={setResizePreview}
-                        isChildOfStack={false} // Une AreaComponent rendue ici n'est pas directement un enfant d'un stack *géré par AreaStack*
+                        isChildOfStack={false}
                     />
                 }
-                {isHorizontalOrVerticalRow && rowLayout && // Pour les lignes horizontales ou verticales
+              {/*   {((isHorizontalOrVerticalRow && rowLayout) || (id === 'root')) &&  // Pour les lignes horizontales ou verticales
                     (() => {
-                        // Log pour voir les viewports disponibles au moment du rendu de cette row
-                        loggingEnabled && console.log(`[Area.tsx] Rendering H/V row '${id}'. Available viewports for children:`, JSON.parse(JSON.stringify(allViewports || {})));
-                        return rowLayout.areas.map((childAreaRef) => {
+                        return rowLayout?.areas.map((childAreaRef) => {
                             const childId = childAreaRef.id;
                             const childActualViewport = allViewports?.[childId];
 
@@ -357,23 +335,19 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
                                 loggingEnabled && console.warn(`[Area.tsx] Viewport for child '${childId}' of H/V row '${id}' not found in allViewports map. Rendering placeholder.`);
                                 return <div key={childId} style={{ position: 'absolute', border: '1px dashed red', color: 'red', padding: '5px', width: '100%', height: '100%', boxSizing: 'border-box' }}>Placeholder: Viewport for {childId} missing</div>;
                             }
-                            console.log('childAreaRef', childAreaRef);
-                            // Chaque enfant est une nouvelle <Area> positionnée absolument selon son propre viewport.
-                            // Le parent (cette instance de <Area> pour la row H/V) fournit juste un cadre.
-                            // La structure flex n'est pas utilisée pour positionner ces enfants <Area> récursifs.
+                            
                             return (
                                 <Area 
                                     key={childId}
                                     id={childId}
                                     viewport={childActualViewport}
                                     setResizePreview={setResizePreview}
-                                    isLeaf={id.includes('area-')}
                                 />
                             );
                         });
                     })()
-                }
+                } */}
             </div>
-        </div>
+        </div>)
     );
 }); 

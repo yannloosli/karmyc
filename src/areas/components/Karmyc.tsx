@@ -10,6 +10,7 @@ import { AreaToOpenPreview } from "./AreaToOpenPreview";
 import { JoinAreaPreview } from "./JoinAreaPreview";
 import { ContextMenuProvider } from "../../core/providers/ContextMenuProvider";
 import { DetachedWindowCleanup } from '../../core/ui/DetachedWindowCleanup';
+import { areViewportMapsEqual } from "../../core/utils/objectEquality";
 
 interface Rect {
     left: number;
@@ -59,22 +60,11 @@ export const Karmyc: React.FC = () => {
     useEffect(() => {
         const layoutSize = Object.keys(layout).length;
         const currentRootItem = rootId ? layout[rootId] : null;
-        
-        loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Start. layoutSize:', layoutSize, 'rootId:', rootId, 'currentRootItem exists:', !!currentRootItem, 'resizePreview:', resizePreview);
-
-        /*
-        if (resizePreview) {
-            loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Bailing due to resizePreview');
-            return;
-        }
-        */
 
         if (!rootId || !currentRootItem || layoutSize === 0) {
             loggingEnabled && console.warn('[Karmyc Calculation Effect (Direct to Store)] Condition to clear viewportMap met! rootId:', rootId, 'layoutSize:', layoutSize, 'currentRootItem:', currentRootItem);
-            // Vider les viewports dans le store si le layout est vide/invalide
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
             if (currentStoreViewports && Object.keys(currentStoreViewports).length > 0) {
-                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Clearing viewports in store due to empty/invalid layout.');
                 setViewports({});
             } else {
                 loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports already empty or condition met without non-empty map.');
@@ -84,15 +74,13 @@ export const Karmyc: React.FC = () => {
 
         try {
             const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
-            loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Computed newViewportMap:', JSON.parse(JSON.stringify(newViewportMap)));
 
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
-            if (JSON.stringify(currentStoreViewports) !== JSON.stringify(newViewportMap)) {
-                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports are different, calling setViewports with new data.');
+            if (!areViewportMapsEqual(currentStoreViewports, newViewportMap)) {
                 setViewports(newViewportMap);
-            } else {
+            } /* else {
                 loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports are THE SAME as newViewportMap, not calling setViewports.');
-            }
+            } */
 
         } catch (error) {
             console.error("[Karmyc] Erreur lors du calcul du viewportMap (Direct to Store):", error);
@@ -105,7 +93,7 @@ export const Karmyc: React.FC = () => {
         const state = useKarmycStore.getState();
         const activeScreen = state.screens[state.activeScreenId];
         const currentGlobalViewportMap = activeScreen?.areas.viewports || {};
-        
+
         const baseViewport = currentGlobalViewportMap[areaId];
 
         if (!baseViewport || !resizePreview) {
@@ -184,17 +172,6 @@ export const Karmyc: React.FC = () => {
         return baseViewport;
     }, [layout, resizePreview]);
 
-    if (Object.keys(layout).length === 0 && activeScreenAreas?._id !== 0) {
-        // Temporisation pour permettre au store de se mettre à jour après un reset/load
-        // setTimeout(() => {
-        //     const currentLayout = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.layout;
-        //     if (Object.keys(currentLayout || {}).length === 0) {
-        //         console.warn("[Karmyc] Layout is empty after potential update. Forcing reload as a fallback.");
-        //         window.location.reload();
-        //     }
-        // }, 500);
-    }
-
     return (
         <ContextMenuProvider>
             <DetachedWindowCleanup />
@@ -229,14 +206,13 @@ export const Karmyc: React.FC = () => {
                                 id={id}
                                 viewport={visualViewport}
                                 setResizePreview={setResizePreview}
-                                isLeaf={type !== 'area_row'}
                             />
                         );
                     }
                     return null;
                 })}
 
-                {joinPreview && joinPreview.areaId && 
+                {joinPreview && joinPreview.areaId &&
                     (() => {
                         const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
                         const joinViewport = currentGlobalViewportMap[joinPreview.areaId!];

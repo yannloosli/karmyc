@@ -60,7 +60,6 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
             className="select-area-button"
             draggable
             onDragStart={e => {
-                console.log('[AreaDragButton] NATIVE DRAGSTART', e);
                 setIsDragging(true);
                 handleDragStart(e);
                 // Désactiver complètement le bouton pendant le drag, de manière asynchrone
@@ -72,17 +71,14 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                 });
             }}
             onDragOver={e => {
-                console.log('[AreaDragButton] NATIVE DRAGOVER', e);
                 handleDragOver(e);
             }}
             onDrop={e => {
                 if (!isDragging) {
-                    console.log('[AreaDragButton] NATIVE DROP', e);
                     handleDrop(e);
                 }
             }}
             onDragEnd={e => {
-                console.log('[AreaDragButton] NATIVE DRAGEND', selectAreaButtonRef.current);
                 setIsDragging(false);
                 // Réactiver le bouton
                 selectAreaButtonRef.current!.style.pointerEvents = 'auto';
