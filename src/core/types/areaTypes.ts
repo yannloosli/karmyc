@@ -23,6 +23,7 @@ export interface IArea<T extends AreaTypeValue = AreaTypeValue> {
     role?: AreaRole;
     zoom?: number;
     pan?: { x: number; y: number };
+    isLocked?: boolean;
 }
 
 export interface AreaLayout {

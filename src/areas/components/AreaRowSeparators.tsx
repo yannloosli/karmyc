@@ -4,6 +4,7 @@ import { useKarmycStore } from "../../core/data/areaStore";
 import { AreaRowLayout } from "../../core/types/areaTypes";
 import { Rect } from "../../core/types";
 import { handleDragAreaResize } from "./handlers/areaDragResize";
+import { Ellipsis, EllipsisVertical } from 'lucide-react';
 
 
 interface ResizePreviewState {
@@ -26,6 +27,11 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
     const viewportsRef = useRef(areaToViewport);
+
+    // Do not render separators for stacked rows
+    if (row.orientation === 'stack') {
+        return null;
+    }
 
     // Basic validation before continuing
     if (!row || !row.areas || row.areas.length <= 1 || !layout || !rootId) {
@@ -101,9 +107,16 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
                 className={`area-separator ${horizontal ? 'area-separator--horizontal' : ''}`}
-                style={separatorRect}
+                style={{ ...separatorRect, flexDirection: !horizontal ? 'row' : 'column' }}
                 onMouseDown={handleMouseDown}
-            />
+            >
+                {!horizontal ?
+                    <><Ellipsis size={32} /><Ellipsis size={32} /></>
+                    :
+                    <><EllipsisVertical size={32} /><EllipsisVertical size={32} />
+                    </>
+                }
+            </div>
         );
     }
 

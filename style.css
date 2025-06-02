@@ -64,9 +64,9 @@
     --z-index-context-menu: 501;
 
     /* Opacités pour les couleurs primaires */
-    --primary-700-07: rgba(75, 171, 255, 0.07);
-    --primary-700-15: rgba(75, 171, 255, 0.15);
-    --primary-700-30: rgba(75, 171, 255, 0.3);
+    --primary-700-07: rgba(144, 75, 255, 0.07);
+    --primary-700-15: rgba(144, 75, 255, 0.15);
+    --primary-700-30: rgba(144, 75, 255, 0.3);
 }
 
 /* Styles de la barre de défilement */
@@ -118,7 +118,7 @@
     align-items: center;
 }
 
-.area__content > div {
+.area__content>div {
     width: 100%;
     height: 100%;
 }
@@ -144,82 +144,117 @@
 }
 
 .area__corner {
-    width: 15px;
-    height: 15px;
+    width: 25px;
+    height: 25px;
     position: absolute;
     z-index: 2;
     cursor: crosshair;
     background: var(--space-color);
-    border-radius: 2px;
+    border-radius: 0;
+    opacity: 0;
+    transition: all 0.2s ease;
+    box-shadow: 0;
+
+    &:hover {
+        opacity: 0.5;
+    }
 }
 
 .area__corner--nw {
     top: 0;
     left: 0;
-    border-top-left-radius: 4px;
+    border-bottom-right-radius: 100%;
 }
 
 .area__corner--ne {
     top: 0;
     right: 0;
-    border-top-right-radius: 4px;
+    border-top-left-radius: 100%;
 }
 
 .area__corner--sw {
     bottom: 0;
     left: 0;
-    border-bottom-left-radius: 4px;
+    border-top-right-radius: 100%;
 }
 
 .area__corner--se {
     bottom: 0;
     right: 0;
-    border-bottom-right-radius: 4px;
+    border-top-left-radius: 100%;
 }
 
 .select-area-button {
-    position: absolute;
-    display: inline-block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+    width: 100%;
+    background: gray;
+    cursor: grab;
+    z-index: 1000;
+    padding: 0 20px;
+    min-width: 120px;
+
+    :drag {
+        cursor: grabbing;
+    }
+}
+
+.select-area-button__main {
+    display: flex;
+    align-items: center;
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 5px;
+}
+
+.select-area-button__name {
+    color: white;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 8px;
+}
+
+.select-area-icons {
     width: 20px;
     height: 20px;
-    border-radius: 100%;
-    background: radial-gradient(circle at bottom, color-mix(in srgb, var(--space-color), white 50%), color-mix(in srgb, var(--space-color), white 20%) 10%, color-mix(in srgb, var(--space-color), black 50%) 80%, color-mix(in srgb, var(--space-color), black 90%) 100%);
-    border: 2px outset var(--space-color);
-    box-shadow: -1px -1px 5px 0 rgba(0, 0, 0, 0.5);
-    cursor: grab;
-    right: 5px;
-    z-index: 1000;
-    top: 5px;
+    background-color: transparent;
+    border: none;
+    color: white;
+
+    & svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    +.select-area-icons {
+        margin-left: 10px;
+    }
+
+    &:hover {
+        cursor: pointer;
+    }
+
 }
 
-.select-area-button::before {
-    content: "";
-    position: absolute;
-    top: 1%;
-    left: 5%;
+.select-area-button__lock-icon {
+    width: 25px;
+    height: 25px;
     border-radius: 100%;
-    filter: blur(3px);
-    z-index: 2;
-    height: 80%;
-    width: 40%;
-    background: radial-gradient(circle at 130% 130%, rgba(255, 255, 255, 0) 0, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0.8) 58%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0) 100%);
-    transform: translateX(131%) translateY(58%) rotateZ(168deg) rotateX(10deg);
+    border: 1px solid white;
+    padding: 3px;
+
+    & svg {
+        width: 15px;
+        height: 15px;
+    }
 }
 
-.select-area-button::after {
-    display: block;
-    background: radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0) 74%, white 80%, white 84%, rgba(255, 255, 255, 0) 100%);
-    content: "";
-    position: absolute;
-    top: 5%;
-    left: 10%;
-    width: 80%;
-    height: 80%;
-    border-radius: 100%;
-    filter: blur(1px);
-    z-index: 2;
-    transform: rotateZ(-30deg);
-}
+
 
 .selectArea {
     position: absolute;
@@ -261,17 +296,17 @@
 
 .area-container {
     position: absolute;
-    background: #1e1e1e;
-    border: 1px solid #404040;
+    border: 6px solid gray;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .area-container__content {
-    flex: 1;
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
 .area-preview {
@@ -291,7 +326,6 @@
 
 .area-stack {
     position: absolute;
-    background: #1e1e1e;
     border: 1px solid #404040;
     display: flex;
     flex-direction: column;
@@ -336,6 +370,14 @@
 
 .tools-bar-section--right {
     justify-content: flex-end;
+}
+
+.tools-bar-top-outer {
+    background-color: gray;
+}
+
+.tools-bar-bottom-outer {
+    background-color: gray;
 }
 
 .join-area-preview {
@@ -416,12 +458,23 @@
 .area-to-open-overlay__placement {
     position: absolute;
     pointer-events: none;
+    fill: var(--primary-700-15);
+    stroke: var(--primary-700-30);
 }
 
 .area-separator {
     position: absolute;
     z-index: var(--z-index-area-separator);
     cursor: ns-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    & svg {
+        color: rgba(0, 0, 0, 0.5);
+        margin: -2px
+    }
+
 }
 
 .area-separator--horizontal {
@@ -462,7 +515,7 @@
     touch-action: none;
 }
 
-.area-to-open-container > * {
+.area-to-open-container>* {
     pointer-events: all;
 }
 
@@ -500,43 +553,56 @@
 }
 
 @keyframes area-to-open-container-animation {
-    0% { transform: scale(0.25); opacity: .3 }
-    50% { transform: scale(0.52); opacity: .8; }
-    100% { transform: scale(0.5); }
+    0% {
+        transform: scale(0.25);
+        opacity: .3
+    }
+
+    50% {
+        transform: scale(0.52);
+        opacity: .8;
+    }
+
+    100% {
+        transform: scale(0.5);
+    }
 }
 
 /* Styles pour AreaTabs */
 .area-tabs {
     display: flex;
-    background: #2d2d2d;
-    padding: 4px 4px 0;
-    gap: 2px;
-    border-bottom: 1px solid #404040;
+    gap: 1px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-500) var(--dark-500);
+    min-height: 32px;
+    border-bottom: 1px solid gray;
 }
 
 .area-tab {
     display: flex;
     align-items: center;
-    padding: 0 12px 0 0;
+    min-width: 120px;
+    flex: 0 0 auto;
+    padding: 0;
     background: transparent;
-    color: #aaa;
     border-radius: 0 6px 0 0;
     cursor: pointer;
     user-select: none;
-    gap: 8px;
-    min-width: 100px;
-    max-width: 200px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    position: relative;
+    transition: opacity 0.2s ease-in-out, margin-left 0.2s ease-in-out, margin-right 0.2s ease-in-out;
 }
 
-.area-tab:hover {
+.area-tab .select-area-button:hover {
     background: #353535;
 }
 
 .area-tab--active {
-    background: #404040;
+    background: darkgray;
     color: #fff;
 }
 
@@ -544,36 +610,47 @@
     background: #404040;
 }
 
-.area-tab__title {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.area-tab.drop-indicator-before::before,
+.area-tab.drop-indicator-after::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 123, 255, 0.1);
+    border: 1px dashed #007bff;
+    z-index: 10;
+    width: 0;
+    opacity: 0;
+    transition: width 0.1s ease-out, opacity 0.1s ease-out;
 }
 
-.area-tab__close-button {
-    background: none;
-    border: none;
-    color: #aaa;
-    padding: 2px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
+.area-tab.drop-indicator-before::before {
+    left: -2px;
+    width: 70px;
+    opacity: 1;
 }
 
-.area-tab__close-button:hover {
-    background: #505050;
-    color: #fff;
+.area-tab.drop-indicator-after::after {
+    right: -2px;
+    width: 70px;
+    opacity: 1;
 }
 
-.area-tab__drag-button {
-    position: relative;
+.area-tab:not(.drop-indicator-before):not(.drop-indicator-after)::before,
+.area-tab:not(.drop-indicator-before):not(.drop-indicator-after)::after {
+    opacity: 0;
+}
+
+.area-tab.is-dragging-source {
+    opacity: 0.3;
     width: 10px;
-    height: 100%;
-    border-radius: 0;
-    border: none;
-    top: unset;
-    right: unset;
-    padding: 0;
-} 
+    overflow: hidden;
+}
+
+.area-tab.drop-indicator-before {
+    margin-left: 50px;
+}
+
+.area-tab.drop-indicator-after {
+    margin-right: 50px;
+}

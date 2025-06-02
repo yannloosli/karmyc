@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useLayoutEffect, useRef } from "react";
 import { useKarmycStore } from "../../core/data/areaStore";
 import { AreaRowLayout } from "../../core/types/areaTypes";
 import { computeAreaToViewport } from "../../core/utils/areaToViewport";
 import { getAreaRootViewport } from "../../core/utils/getAreaViewport";
-import { EmptyAreaMessage } from './EmptyAreaMessage';
 import { Area } from "./Area";
 import { AreaRowSeparators } from "./AreaRowSeparators";
 import { AreaToOpenPreview } from "./AreaToOpenPreview";
@@ -34,6 +33,7 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
 export const Karmyc: React.FC = () => {
     // Selectors for active screen state
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
+    const isDetached = useKarmycStore(state => state.screens[state.activeScreenId]?.isDetached);
 
     // Memoize the derived state to avoid unnecessary re-renders
     const rootId = useMemo(() => activeScreenAreas?.rootId, [activeScreenAreas?.rootId]);
@@ -41,20 +41,76 @@ export const Karmyc: React.FC = () => {
     const joinPreview = useMemo(() => activeScreenAreas?.joinPreview, [activeScreenAreas?.joinPreview]);
     const areaToOpen = useMemo(() => activeScreenAreas?.areaToOpen, [activeScreenAreas?.areaToOpen]);
 
-    const [viewport, setViewport] = useState(getAreaRootViewport());
+    // Utiliser useRef pour stocker le dernier viewport calculé
+    const lastViewportRef = useRef<Rect | null>(null);
+    const [viewport, setViewport] = useState(() => {
+        if (isDetached) {
+            return {
+                left: 0,
+                top: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+        }
+        return getAreaRootViewport();
+    });
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
 
     const setViewports = useKarmycStore(state => state.setViewports);
-    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
 
-    // Effect for resize handling (no change)
+    // Effect pour initialiser le viewport après le montage
+    useEffect(() => {
+        if (!isDetached) {
+            const areaRoot = document.querySelector('.area-root');
+            if (areaRoot) {
+                const rect = areaRoot.getBoundingClientRect();
+                setViewport({
+                    left: 0,
+                    top: 0,
+                    width: rect.width,
+                    height: rect.height
+                });
+            }
+        }
+    }, [isDetached]);
+
+    // Ne mettre à jour le viewport que si nécessaire
     useEffect(() => {
         const handleResize = () => {
-            setViewport(getAreaRootViewport());
+            if (isDetached) {
+                const newViewport = {
+                    left: 0,
+                    top: 0,
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                };
+                if (!lastViewportRef.current || 
+                    newViewport.width !== lastViewportRef.current.width || 
+                    newViewport.height !== lastViewportRef.current.height) {
+                    setViewport(newViewport);
+                }
+            } else {
+                const areaRoot = document.querySelector('.area-root');
+                if (areaRoot) {
+                    const rect = areaRoot.getBoundingClientRect();
+                    const newViewport = {
+                        left: 0,
+                        top: 0,
+                        width: rect.width,
+                        height: rect.height
+                    };
+                    if (!lastViewportRef.current || 
+                        newViewport.width !== lastViewportRef.current.width || 
+                        newViewport.height !== lastViewportRef.current.height) {
+                        setViewport(newViewport);
+                    }
+                }
+            }
         };
+
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [isDetached]);
 
     // Effect for viewport calculation and direct store update
     useEffect(() => {
@@ -62,32 +118,30 @@ export const Karmyc: React.FC = () => {
         const currentRootItem = rootId ? layout[rootId] : null;
 
         if (!rootId || !currentRootItem || layoutSize === 0) {
-            loggingEnabled && console.warn('[Karmyc Calculation Effect (Direct to Store)] Condition to clear viewportMap met! rootId:', rootId, 'layoutSize:', layoutSize, 'currentRootItem:', currentRootItem);
-            const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
-            if (currentStoreViewports && Object.keys(currentStoreViewports).length > 0) {
+            if (lastViewportRef.current !== null) {
+                lastViewportRef.current = null;
                 setViewports({});
-            } else {
-                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports already empty or condition met without non-empty map.');
             }
+            return;
+        }
+
+        // Vérifier que le viewport a des dimensions valides
+        if (!viewport || viewport.width <= 0 || viewport.height <= 0) {
             return;
         }
 
         try {
             const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
-
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
-            if (!areViewportMapsEqual(currentStoreViewports, newViewportMap)) {
-                setViewports(newViewportMap);
-            } /* else {
-                loggingEnabled && console.log('[Karmyc Calculation Effect (Direct to Store)] Store viewports are THE SAME as newViewportMap, not calling setViewports.');
-            } */
 
+            if (!areViewportMapsEqual(currentStoreViewports, newViewportMap)) {
+                lastViewportRef.current = viewport;
+                setViewports(newViewportMap);
+            }
         } catch (error) {
-            console.error("[Karmyc] Erreur lors du calcul du viewportMap (Direct to Store):", error);
-            // Optionnel: vider le store en cas d'erreur de calcul critique
-            // setViewports({}); 
+            console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);
         }
-    }, [layout, rootId, viewport, resizePreview, setViewports, loggingEnabled]);
+    }, [layout, rootId, viewport, resizePreview, setViewports]);
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
         const state = useKarmycStore.getState();
@@ -96,7 +150,19 @@ export const Karmyc: React.FC = () => {
 
         const baseViewport = currentGlobalViewportMap[areaId];
 
-        if (!baseViewport || !resizePreview) {
+        // Si l'écran est détaché, retourner le viewport de base avec les dimensions de la fenêtre
+        if (activeScreen?.isDetached) {
+            return {
+                ...baseViewport,
+                left: 0,
+                top: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+        }
+
+        // Si pas de resizePreview, retourner le viewport de base
+        if (!resizePreview) {
             return baseViewport;
         }
 
@@ -197,7 +263,6 @@ export const Karmyc: React.FC = () => {
                 {Object.entries(layout).map(([id, item]) => {
                     const visualViewport = getAreaVisualViewport(id);
                     const type = item.type;
-                    console.log('type', type);
 
                     if (visualViewport) {
                         return (

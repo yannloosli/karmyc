@@ -6,6 +6,7 @@ import { PlaceArea } from "../../core/utils/areaUtils";
 import { useKarmycStore } from "../../core/data/areaStore";
 import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../../core/utils/constants";
+import { useToolsSlot } from "../..";
 
 interface DropZoneProps {
     areaToOpen: AreaToOpen;
@@ -20,6 +21,12 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
 }) => {
     const setViewports = useKarmycStore(state => state.setViewports);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
+    
+    const { getComponents: getRootMenu } = useToolsSlot('app', 'root', 'top-outer');
+
+    console.log('TEST', areaToViewport[areaToOpen.area.state.sourceId]);
+
+
 
     const {
         handleDragOver,
@@ -29,8 +36,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
         areaToOpenTargetViewport,
         calculatedPlacement
     } = useAreaDragAndDrop();
-    console.log('DropZone', areaToOpenTargetId, areaToOpenTargetViewport);
-    // Mettre à jour les dimensions quand la cible change
+
     useEffect(() => {
         if (!areaToOpenTargetId || !areaToOpenTargetViewport) return;
         const newDimensions = Vec2.new(areaToOpenTargetViewport.width, areaToOpenTargetViewport.height);
@@ -87,7 +93,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
                         className="area-to-open-overlay__placement"
                         style={{
                             left: areaToOpenTargetViewport.left,
-                            top: areaToOpenTargetViewport.top + TOOLBAR_HEIGHT,
+                            top: areaToOpenTargetViewport.top + getRootMenu().length * TOOLBAR_HEIGHT,
                         }}
                     >
                         {placementLinesMemo.lines.map(([p0, p1], i) => (

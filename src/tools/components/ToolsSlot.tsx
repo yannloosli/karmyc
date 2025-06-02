@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { ScreenSwitcher } from '../../core/ui/ScreenSwitcher';
 import { useActiveLayerInfo } from '../../garbage/hooks/useActiveLayerInfo';
 import { useKarmycStore } from '../../core/data/areaStore';
+import { TOOLBAR_HEIGHT } from '../../core/utils/constants';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {
@@ -14,10 +15,11 @@ export type ToolsBarAlignment = 'left' | 'center' | 'right';
 
 // Positionnement de la barre
 export type ToolsBarPosition =
-    | 'top-outside'
-    | 'top-inside'
-    | 'bottom-outside'
-    | 'bottom-inside';
+    | 'top-outer'
+    | 'top-inner'
+    | 'bottom-outer'
+    | 'bottom-inner'
+    | string;
 
 // Structure d'un composant enregistré
 interface ToolsBarComponent {
@@ -45,13 +47,11 @@ function notifyToolsRegistryChange() {
  * @param areaType Type d'area
  * @param areaId ID de l'area
  * @param position Position de la barre
- * @param cleanupOnUnmount Si true (défaut), nettoie le registre à l'unmount. Sinon, garde les composants enregistrés.
  */
 export function useToolsSlot(
     areaType: string,
     areaId: string,
     position: ToolsBarPosition,
-    cleanupOnUnmount: boolean = false
 ) {
     const registryKey = `${areaType}:${areaId}:${position}`;
 
@@ -98,15 +98,6 @@ export function useToolsSlot(
         return toolsBarRegistry[registryKey] || [];
     }, [registryKey]);
 
-    // Nettoyage à l'unmount (optionnel)
-    useEffect(() => {
-        if (!cleanupOnUnmount) return;
-        return () => {
-            delete toolsBarRegistry[registryKey];
-            notifyToolsRegistryChange();
-        };
-    }, [registryKey, cleanupOnUnmount]);
-
     return {
         registerComponent,
         getComponents
@@ -129,59 +120,68 @@ interface ToolsProps {
     areaId: string;
     areaType: string;
     areaState: any;
-    position: ToolsBarPosition;
+    children: React.ReactNode;
     style?: React.CSSProperties;
-    forceRender?: boolean;
-    left?: ToolsBarComponent[];
-    center?: ToolsBarComponent[];
-    right?: ToolsBarComponent[];
 }
 
 export const Tools: React.FC<ToolsProps> = ({
-    areaId,
-    areaType,
-    areaState,
-    position,
-    style,
-    forceRender = false,
-    left = [],
-    center = [],
-    right = []
+    areaId = 'root',
+    areaType = 'app',
+    areaState = {},
+    children,
+    style = {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%',
+    },
 }) => {
     useToolsRegistrySubscription();
-    const { getComponents } = useToolsSlot(areaType, areaId, position);
-    const components = getComponents();
+    const { getComponents: getMenuComponents } = useToolsSlot(areaType, areaId, 'top-outer');
+    const { getComponents: getStatusComponents } = useToolsSlot(areaType, areaId, 'bottom-outer');
+    const { getComponents: getToolbarTopInner } = useToolsSlot(areaType, areaId, 'top-inner');
+    const { getComponents: getToolbarBottomInner } = useToolsSlot(areaType, areaId, 'bottom-inner');
+
+    const menuComponents = getMenuComponents();
+    const statusComponents = getStatusComponents();
+    const toolbarTopInnerComponents = getToolbarTopInner();
+    const toolbarBottomInnerComponents = getToolbarBottomInner();
+
     const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
 
-    // NOUVEAU: Fonction de filtrage des composants
+    // Calculer les hauteurs des toolbars
+    const hasTopOuter = menuComponents.length > 0;
+    const hasBottomOuter = statusComponents.length > 0;
+
+    const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
+    const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
+
+    // Fonction de filtrage des composants
     const filterComponentsByLayerType = (comps: ToolsBarComponent[]): ToolsBarComponent[] => {
         return comps.filter(comp => {
             if (!comp.allowedLayerTypes || comp.allowedLayerTypes.length === 0) {
-                return true; // Toujours afficher si non spécifié
+                return true;
             }
             return activeLayerType ? comp.allowedLayerTypes.includes(activeLayerType) : false;
         });
     };
 
-    // Organiser par alignement et filtrer
-    const leftComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'left'));
-    const centerComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'center'));
-    const rightComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'right'));
+    // Organiser par alignement et filtrer pour chaque position
+    const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {
+        const leftComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'left'));
+        const centerComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'center'));
+        const rightComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'right'));
 
-    // Ne rien rendre si vide, sauf si forceRender
-    if (!forceRender && leftComponents.length === 0 && centerComponents.length === 0 && rightComponents.length === 0) {
-        return null;
-    }
-    return (
-        <>
-            {
-                (
-                    (position.includes('inside')) ||
-                    (!isDetached && position.includes('outside'))
-                ) &&
-                <div className={`tools-bar tools-bar-${position}`} style={style}>
+        if (leftComponents.length === 0 && centerComponents.length === 0 && rightComponents.length === 0) {
+            return null;
+        }
+
+        if ((position.includes('inner')) || (!isDetached && position.includes('outer'))) {
+            return (
+                <div className={`tools-bar tools-bar-${position}`} style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}>
                     <div className="tools-bar-section tools-bar-section--left">
                         {leftComponents.map((item, idx) => {
                             const Component = item.component;
@@ -211,9 +211,39 @@ export const Tools: React.FC<ToolsProps> = ({
                                 </div>
                             );
                         })}
-                        {areaType === 'app' && position === 'bottom-outside' && <ScreenSwitcher />}
+                        {areaType === 'app' && position === 'bottom-outer' && <ScreenSwitcher />}
                     </div>
-                </div>}
-        </>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div
+            className="tools-container"
+            style={style}>
+            {renderToolbar(menuComponents, 'top-outer')}
+            <div
+                className="tools-content"
+                style={{
+                    height: `calc(${style?.height}${typeof style?.height === 'string' ? '' : 'px'} - ${isDetached ? 0 : (topOuterHeight + bottomOuterHeight)}px)`,
+                    position: 'relative'
+                }}
+            >
+                {renderToolbar(toolbarTopInnerComponents, 'top-inner')}
+                <div
+                    style={{
+                        height: `100%`,
+                        position: 'relative',
+                        overflow: 'auto'
+                    }}
+                >
+                    {children}
+                </div>
+                {renderToolbar(toolbarBottomInnerComponents, 'bottom-inner')}
+            </div>
+            {renderToolbar(statusComponents, 'bottom-outer')}
+        </div>
     );
 }; 

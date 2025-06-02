@@ -11,7 +11,6 @@ interface OwnProps {}
 export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((): React.ReactElement | null => {
     // Lire chaque partie de l'état séparément pour éviter les problèmes de référence d'objet
     const areaToOpen = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areaToOpen);
-
     const initialDimensions = useMemo(() => Vec2.new(100, 100), []);
     const [areaToOpenDimensions, setAreaToOpenDimensions] = useState(initialDimensions);
     

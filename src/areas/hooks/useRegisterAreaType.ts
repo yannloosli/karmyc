@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { areaRegistry } from '../../core/data/registries/areaRegistry';
+import { AreaRole } from '../../core/types/karmyc';
 
 /**
  * Hook to register a custom area type
@@ -13,7 +14,7 @@ export function useRegisterAreaType<T = any>(
         icon?: React.ComponentType;
         defaultSize?: { width: number, height: number };
         supportedActions?: string[];
-        role?: string;
+        role?: AreaRole;
     }
 ): void {
     useEffect(() => {

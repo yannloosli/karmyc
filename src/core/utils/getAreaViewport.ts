@@ -19,8 +19,8 @@ export const getAreaRootViewport = () => {
     const currentViewport: Rect = {
         top: 0,  // No offset as it's already handled by the flow
         left: 0,
-        height: Math.floor(window.innerHeight),  // Subtract MenuBar and StatusBar
-        width: Math.floor(window.innerWidth),
+        height: Math.floor(window.document.querySelector('.area-root')?.getBoundingClientRect().height || 0),  // Subtract MenuBar and StatusBar
+        width: Math.floor(window.document.querySelector('.area-root')?.getBoundingClientRect().width || 0),
     };
 
     const now = Date.now();

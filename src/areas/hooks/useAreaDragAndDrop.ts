@@ -53,7 +53,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [areaToOpenTargetViewport, areaToOpen?.position.x, areaToOpen?.position.y, areaToOpen]);
 
     const updatePosition = useCallback((x: number, y: number) => {
-        console.log('updatePosition', x, y);
         if (isUpdatingRef.current) return;
         isUpdatingRef.current = true;
 
@@ -131,24 +130,49 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [params, setAreaToOpenAction, globalDragOverHandler]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
+        // Si c'est un onglet en cours de réorganisation, on laisse AreaTabs.tsx gérer.
+        if (e.dataTransfer.types.includes('karmyc/tab-drag-source')) {
+            // Ne pas appeler e.preventDefault() ici pour permettre à l'événement de "remonter"
+            // à AreaTabs si nécessaire, ou d'être ignoré par cet élément.
+            return;
+        }
+        // Pour tous les autres types de drag (ex: une nouvelle area depuis la menubar),
+        // on gère le dragOver comme d'habitude.
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
     }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
+        // Si la source du drag est un onglet (pour réorganisation), AreaTabs.tsx devrait le gérer.
+        // On arrête le traitement ici pour éviter les conflits ou la duplication.
+        // On vérifie d'abord si e.dataTransfer.getData a été appelé sans erreur.
         let sourceData;
         try {
-            sourceData = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const dataString = e.dataTransfer.getData('text/plain');
+            if (dataString) {
+                sourceData = JSON.parse(dataString);
+            }
         } catch (error) {
+            // Ignorer l'erreur si getData échoue (ex: type de fichier natif glissé)
+            console.warn('[DropZone] handleDrop - Could not parse drag data', error);
             cleanupTemporaryStates();
             return;
         }
 
+        if (sourceData && sourceData.type === 'tab') {
+            console.warn('[DropZone] handleDrop - Received "tab" type drag, assuming handled by AreaTabs. Aborting here.');
+            // Il est important de ne PAS appeler e.preventDefault() ou e.stopPropagation() ici,
+            // pour s'assurer que le handleDrop de AreaTabs.tsx puisse s'exécuter.
+            cleanupTemporaryStates(); // Nettoyer au cas où areaToOpen aurait été activé par erreur.
+            return;
+        }
+
+        // Le reste de la logique de handleDrop pour les autres types de données...
+        e.preventDefault();
+        e.stopPropagation();
+
         if (!sourceData) {
-            console.warn('[DropZone] handleDrop - Invalid or missing source data type', sourceData?.type);
+            console.warn('[DropZone] handleDrop - Invalid or missing source data type after tab check');
             cleanupTemporaryStates();
             return;
         }
@@ -196,7 +220,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
 
         try {
             updatePosition(e.clientX, e.clientY);
-            console.log('[DropZone] updatePosition called', { x: e.clientX, y: e.clientY });
 
             // Vérifier si on drop sur une stack en mode stack
             const isStack = Object.values(layout).some(layoutItem =>
@@ -244,11 +267,18 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                         areas: [...stackLayout.areas, { id: sourceAreaId, size: 1 }]
                     };
                     updateLayout(updatedLayout);
+                    // Verrouiller l'area qui vient d'être déposée dans la stack
+                    useKarmycStore.getState().updateArea({ id: sourceAreaId, isLocked: true });
                     console.log('[DropZone] updateLayout called for stack');
                     cleanupTemporaryStates();
                     console.log('[DropZone] cleanupTemporaryStates called (stack)');
                 }
             } else {
+                // Si on crée une nouvelle stack, on verrouille les deux areas
+                if (calculatedPlacement === 'stack') {
+                    useKarmycStore.getState().updateArea({ id: sourceAreaId, isLocked: true });
+                    useKarmycStore.getState().updateArea({ id: targetAreaId, isLocked: true });
+                }
                 finalizeAreaPlacementAction({ targetId: targetAreaId, placement: calculatedPlacement });
                 cleanupTemporaryStates();
                 console.log('[DropZone] finalizeAreaPlacementAction called', { targetAreaId, calculatedPlacement });

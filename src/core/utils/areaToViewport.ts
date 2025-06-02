@@ -76,7 +76,6 @@ export const computeAreaToViewport = (
     viewport: { left: number; top: number; width: number; height: number }
 ) => {
     const functionCallId = Math.random().toString(36).substring(2, 7);
-    console.log(`[CV START ${functionCallId}] computeAreaToViewport called. rootId:`, rootId, "Layout keys:", Object.keys(layout).join(', '));
 
     // If rootId is null, return an empty object
     if (!rootId) {
@@ -130,7 +129,6 @@ export const computeAreaToViewport = (
     // List of already reported problematic layouts to avoid duplicate logs
     const reportedProblems = viewportCalculationHistory.reportedProblems;
 
-    console.log(`[CV DETAIL ${functionCallId}] Initial areaToViewport map (should be empty):`, JSON.parse(JSON.stringify(areaToViewport)));
 
     // Check the structure of areas
     Object.entries(mutableLayout).forEach(([id, area]) => {
@@ -142,8 +140,6 @@ export const computeAreaToViewport = (
     });
 
     function computeArea(area: AreaLayout, contentArea: { left: number; top: number; width: number; height: number }) {
-        console.log(`[CV DETAIL ${functionCallId}] computeArea entered for area '${area.id}', type: '${area.type}'. contentArea:`, JSON.parse(JSON.stringify(contentArea)));
-
         if (!area || !contentArea) {
             console.error("Invalid area or contentArea in computeArea", { area, contentArea });
             return;
@@ -168,12 +164,10 @@ export const computeAreaToViewport = (
         }
 
         visitedIds.add(area.id);
-        console.log(`[CV DETAIL ${functionCallId}] computeArea (Leaf): Setting viewport for area '${area.id}'`, JSON.parse(JSON.stringify(contentArea)));
         areaToViewport[area.id] = { ...contentArea };
     }
 
     function computeRow(row: AreaRowLayout, contentArea: { left: number; top: number; width: number; height: number }) {
-        console.log(`[CV DETAIL ${functionCallId}] computeRow entered for row '${row.id}', orientation: '${row.orientation}'. contentArea:`, JSON.parse(JSON.stringify(contentArea)));
 
         if (!row || !contentArea || visitedIds.has(row.id)) {
             // Simplified initial checks
@@ -209,9 +203,7 @@ export const computeAreaToViewport = (
         }
 
         // Assign the full viewport to the parent row itself *before* calculating children
-        console.log(`[CV DETAIL ${functionCallId}] computeRow: Setting viewport for PARENT ROW '${row.id}'`, JSON.parse(JSON.stringify(contentArea)));
         areaToViewport[row.id] = { ...contentArea };
-        // console.log('[CV STATE ${functionCallId}] areaToViewport after setting for row ${row.id}: ', JSON.parse(JSON.stringify(areaToViewport)));
 
         // Check in advance for missing IDs in the layout to avoid problems
         const missingAreaIds = row.areas
@@ -347,10 +339,8 @@ export const computeAreaToViewport = (
             // Recursive call
             try {
                 if (layoutItem.type === "area") {
-                    console.log(`[CV DETAIL ${functionCallId}] computeRow ('${row.id}'): Recursing for child area '${areaId}'`);
                     computeArea(layoutItem, nextAreaViewport);
                 } else if (layoutItem.type === "area_row") {
-                    console.log(`[CV DETAIL ${functionCallId}] computeRow ('${row.id}'): Recursing for child row '${layoutItem.id}'`);
                     computeRow(layoutItem, nextAreaViewport);
                 }
             } catch (error) {
@@ -369,10 +359,8 @@ export const computeAreaToViewport = (
     // Calculate the initial viewport for the root
     const rootLayoutItem = mutableLayout[rootId];
     if (rootLayoutItem.type === "area") {
-        console.log(`[CV DETAIL ${functionCallId}] computeAreaToViewport: Calculating viewport for root area '${rootId}'`);
         computeArea(rootLayoutItem, viewport);
     } else if (rootLayoutItem.type === "area_row") {
-        console.log(`[CV DETAIL ${functionCallId}] computeAreaToViewport: Calculating viewport for root row '${rootId}'`);
         computeRow(rootLayoutItem, viewport);
     }
 
@@ -396,6 +384,5 @@ export const computeAreaToViewport = (
         });
     }
 
-    console.log(`[CV END ${functionCallId}] computeAreaToViewport: FINAL map to be returned:`, JSON.parse(JSON.stringify(areaToViewport)));
     return areaToViewport;
 }; 

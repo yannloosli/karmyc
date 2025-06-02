@@ -1,17 +1,16 @@
-import React from 'react';
-import { Karmyc, KarmycProvider, useKarmyc } from '../src';
+import * as React from 'react';
+import { Karmyc, KarmycProvider, useKarmyc, Tools, AREA_ROLE } from '../src';
 import '../style.css';
 import { AreaInitializer } from './AreaInitializer';
 
 const App: React.FC = () => {
-
     const karmycConfig = {
         enableLogging: true,
         plugins: [],
         initialAreas: [
-            { id: 'area-1', type: 'demo-area-1', state: {} },
-            { id: 'area-2', type: 'demo-area-2', state: {} },
-            { id: 'area-3', type: 'demo-area-1', state: {} },
+            { id: 'area-1', type: 'demo-area-1', state: {}, role: AREA_ROLE.LEAD },
+            { id: 'area-2', type: 'demo-area-2', state: {}, role: AREA_ROLE.SELF },
+            { id: 'area-3', type: 'demo-area-1', state: {}, role: AREA_ROLE.LEAD },
         ],
         keyboardShortcutsEnabled: false,
         initialLayout: {
@@ -32,7 +31,9 @@ const App: React.FC = () => {
         <div style={{ width: '100vw', height: '100vh' }}>
             <KarmycProvider options={config}>
                 <AreaInitializer />
-                <Karmyc />
+                <Tools>
+                    <Karmyc />
+                </Tools>
             </KarmycProvider>
         </div>
     );

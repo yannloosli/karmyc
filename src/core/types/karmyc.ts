@@ -1,4 +1,4 @@
-import { IActionPlugin } from '../types/actions';
+import { AreaRole, IActionPlugin } from '../types/actions';
 
 /**
  * Configuration du module core
@@ -28,6 +28,7 @@ export interface IKarmycOptions {
         type: string;
         state?: any;
         position?: { x: number; y: number };
+        role?: AreaRole;
     }>;
     customReducers?: Record<string, any>;
     keyboardShortcutsEnabled?: boolean;

@@ -14,25 +14,6 @@ interface ResizePreviewState {
     t: number;
 }
 
-// --- Simple Debounce Implementation ---
-function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    waitFor: number
-): (...args: Parameters<T>) => void {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    return (...args: Parameters<T>): void => {
-        if (timeoutId !== null) {
-            clearTimeout(timeoutId);
-        }
-        timeoutId = setTimeout(() => {
-            timeoutId = null; // Clear timeoutId *before* calling func
-            func(...args);
-        }, waitFor);
-    };
-}
-// --- Fin Debounce ---
-
 function simpleDragHandler(
     onDrag: (e: MouseEvent) => void,
     onDragEnd: () => void
@@ -157,110 +138,100 @@ export const handleDragAreaResize = (
         return;
     }
 
-    // Stocker la DERNIERE valeur de t et les derniers pourcentages
     let lastT = 0.5; // Initialiser
-    let latestFinalPercentages: number[] | null = null;
 
-    let lastVec = Vec2.fromEvent(initialEvent);
-
-    // --- Gestion du Debounce sans Hooks ---
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const debounceDelay = 75; // ms
+    let lastUpdateTime = 0;
+    const minUpdateInterval = 16; // ~60fps
+    let animationFrameId: number | null = null;
+    let lastMousePosition: Vec2 | null = null;
 
     const performGlobalUpdate = (sizes: number[]) => {
-        console.log("[Debounced Update] Updating global state with sizes:", sizes);
+        const now = performance.now();
+        if (now - lastUpdateTime < minUpdateInterval) {
+            return;
+        }
+        lastUpdateTime = now;
         useKarmycStore.getState().setRowSizes({ rowId: row.id, sizes });
     };
 
-    const triggerDebouncedUpdate = (sizes: number[]) => {
-        if (timeoutId !== null) {
-            clearTimeout(timeoutId);
+    const updateFromMousePosition = (vec: Vec2) => {
+        if (!lastMousePosition) {
+            lastMousePosition = vec;
+            return;
         }
-        timeoutId = setTimeout(() => {
-            timeoutId = null;
-            performGlobalUpdate(sizes);
-        }, debounceDelay);
+
+        const t0 = horizontal ? sharedViewport.left : sharedViewport.top;
+        const t1 = horizontal
+            ? sharedViewport.left + sharedViewport.width
+            : sharedViewport.top + sharedViewport.height;
+        const val = horizontal ? vec.x : vec.y;
+        const t = capToRange(tMin0, 1 - tMin1, (val - t0) / (t1 - t0));
+
+        // Mettre à jour la prévisualisation locale IMMÉDIATEMENT
+        setResizePreview({
+            rowId: row.id,
+            separatorIndex: areaIndex,
+            t: t
+        });
+
+        // Stocker la dernière valeur de t
+        lastT = t;
+
+        // Calculer les pourcentages
+        const tempFinalSizes = [t, 1 - t].map((v) => interpolate(0, sizeToShare, v));
+        if (!tempFinalSizes.some(s => isNaN(s) || s < 0)) {
+            const latestFinalPercentages = row.areas.map((area, i) => {
+                if (i === areaIndex - 1) return tempFinalSizes[0];
+                if (i === areaIndex) return tempFinalSizes[1];
+                const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;
+                return initialRowState?.areas?.[i]?.size || 0;
+            });
+            const sum = latestFinalPercentages.reduce((a, b) => a + b, 0);
+            if (sum > 0 && Math.abs(sum - 1.0) > 0.001) {
+                const normalizedPercentages = latestFinalPercentages.map(s => s / sum);
+                performGlobalUpdate(normalizedPercentages);
+            } else {
+                performGlobalUpdate(latestFinalPercentages);
+            }
+        }
+    };
+
+    const animate = () => {
+        if (lastMousePosition) {
+            updateFromMousePosition(lastMousePosition);
+        }
+        animationFrameId = requestAnimationFrame(animate);
+    };
+
+    const triggerDebouncedUpdate = (vec: Vec2) => {
+        lastMousePosition = vec;
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(animate);
+        }
     };
 
     const cancelDebouncedUpdate = () => {
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
             timeoutId = null;
-            console.log("[Debounced Update] Cancelled pending update.");
         }
+        if (animationFrameId !== null) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        lastMousePosition = null;
     };
-    // --- Fin Gestion Debounce ---
 
     simpleDragHandler(
         // onDrag (mousemove)
         (e) => {
             const vec = Vec2.fromEvent(e);
-            if (Math.abs(vec.x - lastVec.x) < 1 && Math.abs(vec.y - lastVec.y) < 1) return;
-            lastVec = vec;
-
-            const t0 = horizontal ? sharedViewport.left : sharedViewport.top;
-            const t1 = horizontal
-                ? sharedViewport.left + sharedViewport.width
-                : sharedViewport.top + sharedViewport.height;
-            const val = horizontal ? vec.x : vec.y;
-            const t = capToRange(tMin0, 1 - tMin1, (val - t0) / (t1 - t0));
-
-            // Mettre à jour la prévisualisation locale IMMÉDIATEMENT
-            setResizePreview({
-                rowId: row.id,
-                separatorIndex: areaIndex,
-                t: t
-            });
-
-            // Stocker la dernière valeur de t
-            lastT = t;
-
-            // Calculer les pourcentages pour le debounce
-            const tempFinalSizes = [t, 1 - t].map((v) => interpolate(0, sizeToShare, v));
-            if (!tempFinalSizes.some(s => isNaN(s) || s < 0)) {
-                latestFinalPercentages = row.areas.map((area, i) => {
-                    if (i === areaIndex - 1) return tempFinalSizes[0];
-                    if (i === areaIndex) return tempFinalSizes[1];
-                    const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;
-                    return initialRowState?.areas?.[i]?.size || 0;
-                });
-                const sum = latestFinalPercentages.reduce((a, b) => a + b, 0);
-                if (sum > 0 && Math.abs(sum - 1.0) > 0.001) {
-                    latestFinalPercentages = latestFinalPercentages.map(s => s / sum);
-                }
-                // Déclencher la mise à jour globale débouncée
-                triggerDebouncedUpdate(latestFinalPercentages);
-            } else {
-                console.error("Invalid calculated sizes during move, skipping debounce trigger:", tempFinalSizes);
-            }
+            triggerDebouncedUpdate(vec);
         },
         // onDragEnd (mouseup)
         () => {
-            console.log("Drag resize finished");
             cancelDebouncedUpdate();
-
-            // 2. Calculer les pourcentages FINALS basés sur lastT
-            const finalCalculatedSizes = [lastT, 1 - lastT].map((v) => interpolate(0, sizeToShare, v));
-            if (finalCalculatedSizes.some(s => isNaN(s) || s < 0)) {
-                console.error("Invalid final calculated sizes on mouseup:", finalCalculatedSizes);
-                setTimeout(() => setResizePreview(null), 0);
-                return;
-            }
-            let finalPercentages = row.areas.map((area, i) => {
-                if (i === areaIndex - 1) return finalCalculatedSizes[0];
-                if (i === areaIndex) return finalCalculatedSizes[1];
-                const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;
-                return initialRowState?.areas?.[i]?.size || 0;
-            });
-            const finalSum = finalPercentages.reduce((a, b) => a + b, 0);
-            if (finalSum > 0 && Math.abs(finalSum - 1.0) > 0.001) {
-                finalPercentages = finalPercentages.map(s => s / finalSum);
-            }
-
-            // 3. Mettre à jour l'état global IMMÉDIATEMENT
-            performGlobalUpdate(finalPercentages);
-
-            // Nettoyer l'état de prévisualisation APRÈS un délai minimal
             setTimeout(() => setResizePreview(null), 0);
         }
     );

@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
-import { AreaTypeValue, useKarmycStore, useContextMenuStore } from "../../../core";
+import { AreaTypeValue, useKarmycStore, useContextMenuStore, TOOLBAR_HEIGHT, areaRegistry } from "../../../core";
 import { useAreaContextMenu } from '../../hooks/useAreaContextMenu';
 import { useSpaceStore } from "../../../core/data/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
+import { CopyIcon, LockIcon, LockOpenIcon, XIcon } from "lucide-react";
 
 interface IAreaDragButton {
     state: any;
@@ -13,6 +14,8 @@ interface IAreaDragButton {
 
 export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const [isDragging, setIsDragging] = useState(false);
+    const isLocked = useKarmycStore.getState().getAreaById(id)?.isLocked || false;
+
     const {
         handleDragStart,
         handleDragOver,
@@ -24,7 +27,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
 
     // Ref pour le bouton
-    const selectAreaButtonRef = useRef<HTMLButtonElement>(null);
+    const selectAreaButtonRef = useRef<HTMLDivElement>(null);
     const openSelectArea = (_: React.MouseEvent) => {
         if (selectAreaButtonRef.current) {
             const rect = selectAreaButtonRef.current.getBoundingClientRect();
@@ -55,10 +58,20 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         }
     }
 
+    const handleDetach = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        useKarmycStore.getState().detachArea(id);
+    };
+
+    const handleClose = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        useKarmycStore.getState().removeArea(id);
+    };
+
     return (
-        <button
+        <div
             className="select-area-button"
-            draggable
+            draggable={!isLocked}
             onDragStart={e => {
                 setIsDragging(true);
                 handleDragStart(e);
@@ -80,20 +93,47 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
             }}
             onDragEnd={e => {
                 setIsDragging(false);
-                // Réactiver le bouton
                 selectAreaButtonRef.current!.style.pointerEvents = 'auto';
                 selectAreaButtonRef.current!.style.opacity = '1';
                 handleDragEnd(e);
             }}
             onContextMenu={e => { e.preventDefault(); openSelectArea(e); }}
             style={{
-                cursor: 'grab',
+                cursor: isLocked ? 'default' : isDragging ? 'grabbing' : 'grab',
                 '--space-color': spaceColor,
                 pointerEvents: 'auto',
+                height: TOOLBAR_HEIGHT + 'px',
                 ...style
             } as React.CSSProperties}
             ref={selectAreaButtonRef}
-        />
+        >
+            <div className="select-area-button__main">
+                <button
+                    className="select-area-icons select-area-button__lock-icon"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        useKarmycStore.getState().updateArea({ id, isLocked: !isLocked });
+                    }}
+                >
+                    {isLocked ? <LockIcon /> : <LockOpenIcon />}
+                </button>
+                <div className="select-area-button__name">
+                    {areaRegistry.getDisplayName(type)}
+                </div>
+            </div>
+            {!isLocked && <div className="select-area-button__action-icons">
+                <button
+                    className="select-area-icons select-area-button__detach"
+                    onClick={handleDetach}>
+                    <CopyIcon />
+                </button>
+                <button
+                    className="select-area-icons select-area-button__close"
+                    onClick={handleClose}>
+                    <XIcon />
+                </button>
+            </div>}
+        </div>
     );
 };
 
