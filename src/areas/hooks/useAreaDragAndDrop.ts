@@ -187,11 +187,9 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 continue;
             }
             const areaElement = element.closest<HTMLElement>('[data-areaid]');
-            console.log('[AreaToOpenPreview] handleDrop: Current element in loop', element, 'Closest areaElement', areaElement);
 
             if (areaElement) {
                 const potentialTargetId = areaElement.dataset.areaid;
-                console.log('[AreaToOpenPreview] handleDrop: potentialTargetId', potentialTargetId, 'sourceAreaId', sourceAreaId);
 
                 if (potentialTargetId && potentialTargetId !== '-1' && potentialTargetId !== sourceAreaId) {
                     // Vérifier si l'area cible est un enfant d'une stack

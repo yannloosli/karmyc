@@ -368,7 +368,6 @@ export const handleAreaDragFromCorner = (
         };
 
         currentOnMouseUp = () => {
-            console.log("Resize finished after split.");
             // 1. Cancel any pending debounced update
             cancelDebouncedUpdate();
 
@@ -419,8 +418,6 @@ export const handleAreaDragFromCorner = (
 
     // --- Function: setupJoinMoveHandlers (If Split Fails or Area too Small) ---
     function setupJoinMoveHandlers() {
-        console.log("Setting up join/move handlers for area:", areaId);
-
         // Find the parent row of the source area ONCE
         const initialParentRow = parentRowId ? initialLayout[parentRowId] as AreaRowLayout : null;
         if (!initialParentRow || initialParentRow.type !== 'area_row') {
@@ -447,8 +444,6 @@ export const handleAreaDragFromCorner = (
         const leftSiblingId = sourceAreaIndex > 0 ? initialParentRow.areas[sourceAreaIndex - 1].id : null;
         const rightSiblingId = sourceAreaIndex < initialParentRow.areas.length - 1 ? initialParentRow.areas[sourceAreaIndex + 1].id : null;
         const immediateSiblings = [leftSiblingId, rightSiblingId].filter(id => id !== null) as string[];
-
-        console.log("Eligible siblings for join:", actualEligibleAreaIds, "Immediate siblings:", immediateSiblings);
 
         currentOnMove = (vec: Vec2) => {
             const currentActiveState = getActiveScreenState(); // Use helper
@@ -511,12 +506,8 @@ export const handleAreaDragFromCorner = (
 
             // Check if the PREVIEW state contains a valid IMMEDIATE sibling target when mouse is released
             if (preview && preview.areaId && preview.movingInDirection && immediateSiblings.includes(preview.areaId)) {
-                console.log(`Triggering final join/move action: source=${areaId}, target=${preview.areaId}, direction=${preview.movingInDirection}`);
                 useKarmycStore.getState().joinOrMoveArea({ sourceAreaId: areaId, targetAreaId: preview.areaId, direction: preview.movingInDirection });
-            } else {
-                console.log("MouseUp but no valid join target in preview state. Cancelling join.");
-                // No action needed here, preview is cleared below anyway
-            }
+            } 
 
             // Clear preview regardless of whether the action was triggered
             if (getActiveScreenState()?.joinPreview !== null) {
@@ -538,8 +529,6 @@ export const handleAreaDragFromCorner = (
 
         const dist = delta.length();
 
-        console.log(`InternalMouseMove: dist=${dist.toFixed(1)}, corner=${corner}, moveVec=(${delta.x.toFixed(1)}, ${delta.y.toFixed(1)})`);
-
         if (dist < 10) { // Threshold
             return; // Not moved enough
         }
@@ -549,7 +538,6 @@ export const handleAreaDragFromCorner = (
         window.removeEventListener("mouseup", handleMouseUp);
 
         // *** LOG before determination ***
-        console.log(`---> Determining direction: corner=${corner}, moveVec.x=${delta.x}, moveVec.y=${delta.y}`);
         const isMovingInwards = determineIfMovingInwards(corner, delta);
         
         // Déterminer si le mouvement est principalement horizontal ou vertical
@@ -557,15 +545,11 @@ export const handleAreaDragFromCorner = (
         const absY = Math.abs(delta.y);
         const horizontalSplit = absX > absY;
 
-        console.log(`Initial direction determined: ${isMovingInwards ? 'Inward' : 'Outward'} (Split - Horizontal: ${horizontalSplit})`);
-
         if (isMovingInwards) {
             // Si le mouvement est vers l'intérieur, créer une nouvelle zone (division)
-            console.log(`Initial direction determined: Inward (Split - Horizontal: ${horizontalSplit})`);
             createNewArea(horizontalSplit);
         } else {
             // Si le mouvement est vers l'extérieur, initier join/move
-            console.log(`Initial direction determined: Outward (Join/Move)`);
             setupJoinMoveHandlers();
         }
 
@@ -589,12 +573,10 @@ export const handleAreaDragFromCorner = (
     };
 
     const handleMouseUp = (upEvent: MouseEvent) => {
-        console.log("Global Mouse Up");
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
 
         if (!initialDirectionDetermined) {
-            console.log("Mouse up before initial direction determined.");
             setAreaResizing(false);
             // Ensure join preview is cleared if mouseup happens early
             if (getActiveScreenState()?.joinPreview !== null) {

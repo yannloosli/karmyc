@@ -1,7 +1,7 @@
-import { IArea } from '../../core/types/areaTypes';
-import { ContextMenuItem } from '../../core/types/contextMenu';
-import { IDiff } from '../history/diff';
-import { IState } from '../../core/types/state';
+import { IArea } from '../types/areaTypes';
+import { ContextMenuItem } from '../types/contextMenu';
+import { IDiff } from '../../spaces/history/diff';
+import { IState } from '../types/state';
 import { IToolbarItem } from '../../tools/types/toolbar';
 
 // All validation functions commented out as they are unused according to ts-prune

@@ -16,12 +16,13 @@ interface ResizePreviewState {
 interface OwnProps {
     row: AreaRowLayout;
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
+    offset: number;
 }
 
 type Props = OwnProps;
 
 export const AreaRowSeparators: React.FC<Props> = props => {
-    const { row, setResizePreview } = props;
+    const { row, setResizePreview, offset } = props;
     const setRowSizes = useKarmycStore(state => state.setRowSizes);
     const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout ?? {});
     const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
@@ -77,14 +78,14 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         if (horizontal) {
             separatorRect = {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
-                top: nextViewport.top + AREA_BORDER_WIDTH * 2 + TOOLBAR_HEIGHT,
+                top: nextViewport.top + AREA_BORDER_WIDTH * 2 + TOOLBAR_HEIGHT - offset,
                 width: AREA_BORDER_WIDTH * 2,
-                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT * 2, 5)
+                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT, 5)
             };
         } else {
             separatorRect = {
                 left: nextViewport.left + AREA_BORDER_WIDTH * 2,
-                top: nextViewport.top - AREA_BORDER_WIDTH,
+                top: nextViewport.top - AREA_BORDER_WIDTH - offset,
                 width: Math.max(nextViewport.width - AREA_BORDER_WIDTH * 4, 5),
                 height: AREA_BORDER_WIDTH * 2
             };

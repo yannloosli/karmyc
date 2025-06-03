@@ -20,6 +20,7 @@ export const useContextMenu = () => {
         items: ContextMenuItem[];
         targetId?: string;
         metadata?: Record<string, any>;
+        menuClassName?: string;
     }) => {
         openAction(params);
     }, [openAction]);

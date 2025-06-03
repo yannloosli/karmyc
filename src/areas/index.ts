@@ -1,6 +1,5 @@
 // Hooks
 export * from './hooks/useArea';
-export * from './hooks/useAreaContextMenu';
 export * from './hooks/useAreaDragAndDrop';
 export * from './hooks/useRegisterAreaType';
 

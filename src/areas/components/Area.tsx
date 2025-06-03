@@ -9,7 +9,7 @@ import { useKarmycStore } from "../../core/data/areaStore";
 import { AreaComponentProps, ResizePreviewState } from "../../core/types/areaTypes";
 import { Rect } from "../../core/types";
 import { AreaIdContext } from "../../core/utils/AreaIdContext";
-import { useSpaceStore } from "../../core/data/spaceStore";
+import { useSpaceStore } from "../../spaces/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 import { AreaRowLayout } from "../../core/types/areaTypes";
@@ -94,12 +94,12 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     };
 
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
-    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached);
-
+    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
+    
     return (
         <AreaIdContext.Provider value={id}>
+            {(!isDetached && !isChildOfStack) && <AreaDragButton id={id} state={state} type={type} />}
             <Tools
-                areaId={id}
                 areaType={type}
                 areaState={state}
                 style={{
@@ -128,13 +128,12 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                         />
                     ))}
 
-                    {(!isDetached && !isChildOfStack) && <AreaDragButton id={id} state={state} type={type} />}
 
                     <div
                         className={`area-main-content-wrapper ${type}`}
                         style={{
-                            opacity: active ? 1 : 0.8,
-                            height: `calc(100% - ${TOOLBAR_HEIGHT}px)`,
+                            opacity: active ? 1 : 0.9,
+                            height: '100%',
                         }}
                     >
                         <AreaErrorBoundary
@@ -166,7 +165,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
     const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
-    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached);
+    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
 
     const isChildOfStack = useKarmycStore(state => {
         const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
@@ -210,8 +209,8 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     }
 
     // Récupérer les toolbars du parent
-    const { getComponents: getParentMenuComponents } = useToolsSlot(dataForRender?.type || '', id, 'top-outer');
-    const { getComponents: getParentStatusComponents } = useToolsSlot(dataForRender?.type || '', id, 'bottom-outer');
+    const { getComponents: getParentMenuComponents } = useToolsSlot(dataForRender?.type || '', 'top-outer');
+    const { getComponents: getParentStatusComponents } = useToolsSlot(dataForRender?.type || '', 'bottom-outer');
     const parentMenuComponents = getParentMenuComponents();
     const parentStatusComponents = getParentStatusComponents();
 
@@ -226,12 +225,14 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         if (isDetached) {
             return viewport;
         }
-        return {
+        const newViewport = {
             ...viewport,
-            top: viewport.top + parentTopOuterHeight,
+            top: viewport.top,
             height: viewport.height - (parentTopOuterHeight + parentBottomOuterHeight)
         };
-    }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight]);
+        
+        return newViewport;
+    }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight, id, loggingEnabled]);
 
     const contentViewport = useMemo(() => ({
         left: 0,

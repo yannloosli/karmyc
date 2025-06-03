@@ -1,1 +1,3 @@
-export * from './hooks/useSpace'; 
+export * from './useSpace'; 
+export * from './spaceStore';
+export * from './types';

@@ -28,6 +28,7 @@ function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: stri
         disabled={item.disabled}
         onClick={() => handleAction(item.actionId, item.metadata, item)}
       >
+        {item.icon && React.createElement(item.icon)}
         {item.label}
       </MenuItem>
     );
@@ -35,11 +36,12 @@ function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: stri
 }
 
 export const ContextMenu: React.FC = () => {
-  const isVisible = useContextMenuStore((state) => state.isVisible);
+  const isVisible = useContextMenuStore((state) => state.isVisible && state.menuType === 'default');
   const items = useContextMenuStore((state) => state.items);
   const position = useContextMenuStore((state) => state.position);
   const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
   const metadata = useContextMenuStore((state) => state.metadata);
+  const menuClassName = useContextMenuStore((state) => state.menuClassName);
 
   // À adapter selon la logique métier pour déclencher l'action
   const handleAction = (actionId: string, itemMetadata?: Record<string, any>, option?: ContextMenuItem) => {
@@ -56,6 +58,7 @@ export const ContextMenu: React.FC = () => {
       onClose={closeContextMenu}
       transition
       direction="right"
+      menuClassName={menuClassName}
     >
       {renderMenuItems(items, handleAction)}
     </ControlledMenu>

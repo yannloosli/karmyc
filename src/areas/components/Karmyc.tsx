@@ -30,7 +30,7 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
     return state.screens[state.activeScreenId]?.areas;
 };
 
-export const Karmyc: React.FC = () => {
+export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     // Selectors for active screen state
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
     const isDetached = useKarmycStore(state => state.screens[state.activeScreenId]?.isDetached);
@@ -131,7 +131,7 @@ export const Karmyc: React.FC = () => {
         }
 
         try {
-            const newViewportMap = computeAreaToViewport(layout, rootId, viewport);
+            const newViewportMap = computeAreaToViewport(layout, rootId, {...viewport, top: viewport.top + offset});
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
 
             if (!areViewportMapsEqual(currentStoreViewports, newViewportMap)) {
@@ -250,6 +250,7 @@ export const Karmyc: React.FC = () => {
                         if (areChildrenReady) {
                             return (
                                 <AreaRowSeparators
+                                    offset={offset}
                                     key={item.id}
                                     row={rowLayout}
                                     setResizePreview={setResizePreview}
@@ -260,16 +261,14 @@ export const Karmyc: React.FC = () => {
                     return null;
                 })}
 
-                {Object.entries(layout).map(([id, item]) => {
+                {Object.entries(layout).map(([id]) => {
                     const visualViewport = getAreaVisualViewport(id);
-                    const type = item.type;
-
                     if (visualViewport) {
                         return (
                             <Area
                                 key={id}
                                 id={id}
-                                viewport={visualViewport}
+                                viewport={{...visualViewport, top: visualViewport.top - offset}}
                                 setResizePreview={setResizePreview}
                             />
                         );

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from 'react';
 import { ScreenSwitcher } from '../../core/ui/ScreenSwitcher';
-import { useActiveLayerInfo } from '../../garbage/hooks/useActiveLayerInfo';
+import { useActiveLayerInfo } from '../../../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layeredWorkspace/hools/useActiveLayerInfo';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { TOOLBAR_HEIGHT } from '../../core/utils/constants';
 
@@ -45,15 +45,14 @@ function notifyToolsRegistryChange() {
 /**
  * Hook pour enregistrer dynamiquement des composants dans une barre Tools.
  * @param areaType Type d'area
- * @param areaId ID de l'area
  * @param position Position de la barre
  */
 export function useToolsSlot(
     areaType: string,
-    areaId: string,
     position: ToolsBarPosition,
 ) {
-    const registryKey = `${areaType}:${areaId}:${position}`;
+    // Utiliser uniquement le type d'area et la position comme clé
+    const registryKey = `${areaType}:${position}`;
 
     // Enregistrer un composant dans la barre
     const registerComponent = useCallback(
@@ -117,7 +116,6 @@ function useToolsRegistrySubscription() {
 
 // Props du composant Tools
 interface ToolsProps {
-    areaId: string;
     areaType: string;
     areaState: any;
     children: React.ReactNode;
@@ -125,7 +123,6 @@ interface ToolsProps {
 }
 
 export const Tools: React.FC<ToolsProps> = ({
-    areaId = 'root',
     areaType = 'app',
     areaState = {},
     children,
@@ -138,10 +135,10 @@ export const Tools: React.FC<ToolsProps> = ({
     },
 }) => {
     useToolsRegistrySubscription();
-    const { getComponents: getMenuComponents } = useToolsSlot(areaType, areaId, 'top-outer');
-    const { getComponents: getStatusComponents } = useToolsSlot(areaType, areaId, 'bottom-outer');
-    const { getComponents: getToolbarTopInner } = useToolsSlot(areaType, areaId, 'top-inner');
-    const { getComponents: getToolbarBottomInner } = useToolsSlot(areaType, areaId, 'bottom-inner');
+    const { getComponents: getMenuComponents } = useToolsSlot(areaType, 'top-outer');
+    const { getComponents: getStatusComponents } = useToolsSlot(areaType, 'bottom-outer');
+    const { getComponents: getToolbarTopInner } = useToolsSlot(areaType, 'top-inner');
+    const { getComponents: getToolbarBottomInner } = useToolsSlot(areaType, 'bottom-inner');
 
     const menuComponents = getMenuComponents();
     const statusComponents = getStatusComponents();
@@ -151,6 +148,7 @@ export const Tools: React.FC<ToolsProps> = ({
     const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
+    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
 
     // Calculer les hauteurs des toolbars
     const hasTopOuter = menuComponents.length > 0;
@@ -186,9 +184,7 @@ export const Tools: React.FC<ToolsProps> = ({
                         {leftComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                    <Component areaId={areaId} areaState={areaState} />
-                                </div>
+                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
                             );
                         })}
                     </div>
@@ -196,9 +192,7 @@ export const Tools: React.FC<ToolsProps> = ({
                         {centerComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                    <Component areaId={areaId} areaState={areaState} />
-                                </div>
+                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
                             );
                         })}
                     </div>
@@ -206,9 +200,7 @@ export const Tools: React.FC<ToolsProps> = ({
                         {rightComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <div key={`${item.identifier.type}-${item.identifier.name}-${idx}`} style={{ width: item.width }}>
-                                    <Component areaId={areaId} areaState={areaState} />
-                                </div>
+                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
                             );
                         })}
                         {areaType === 'app' && position === 'bottom-outer' && <ScreenSwitcher />}
@@ -232,15 +224,7 @@ export const Tools: React.FC<ToolsProps> = ({
                 }}
             >
                 {renderToolbar(toolbarTopInnerComponents, 'top-inner')}
-                <div
-                    style={{
-                        height: `100%`,
-                        position: 'relative',
-                        overflow: 'auto'
-                    }}
-                >
-                    {children}
-                </div>
+                {children}
                 {renderToolbar(toolbarBottomInnerComponents, 'bottom-inner')}
             </div>
             {renderToolbar(statusComponents, 'bottom-outer')}

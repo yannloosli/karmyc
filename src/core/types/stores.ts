@@ -4,6 +4,12 @@ export interface IContextMenuStore {
         items: any[];
         targetId?: string;
         metadata?: Record<string, any>;
+        menuClassName?: string;
+    }) => void;
+    openCustomContextMenu: (payload: {
+        position: { x: number; y: number };
+        component: React.ReactNode;
+        menuClassName?: string;
     }) => void;
     closeContextMenu: () => void;
 }

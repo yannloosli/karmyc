@@ -1,11 +1,12 @@
-import { validatePosition } from '../../garbage/utils/validation';
+import { validatePosition } from '../utils/validation';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import {
     ContextMenuItem,
     IContextMenuPosition,
 } from '../types/contextMenu'; // Assuming types are correctly located
-import { validateContextMenuItem } from '../../garbage/utils/validation'; // Assuming validation utils are correctly located
+import { validateContextMenuItem } from '../utils/validation'; // Assuming validation utils are correctly located
+import React from 'react';
 
 interface ContextMenuState {
     isVisible: boolean;
@@ -14,7 +15,9 @@ interface ContextMenuState {
     errors: string[];
     targetId?: string;
     metadata?: Record<string, any>;
-
+    menuClassName?: string;
+    customContextMenuContent?: React.ReactNode;
+    menuType?: 'default' | 'switchType' | 'custom';
     // Actions
     openContextMenu: (payload: {
         position: IContextMenuPosition;
@@ -22,10 +25,22 @@ interface ContextMenuState {
         targetId?: string;
         metadata?: Record<string, any>;
     }) => void;
+    openCustomContextMenu: (payload: {
+        position: IContextMenuPosition;
+        targetId?: string;
+        metadata?: Record<string, any>;
+        component: React.ReactNode;
+    }) => void;
     closeContextMenu: () => void;
     updateContextMenuPosition: (position: IContextMenuPosition) => void;
     updateContextMenuItems: (items: ContextMenuItem[]) => void;
     clearErrors: () => void;
+    openSwitchTypeContextMenu?: (payload: {
+        position: IContextMenuPosition;
+        targetId?: string;
+        metadata?: Record<string, any>;
+        menuClassName?: string;
+    }) => void;
 }
 
 const initialState = {
@@ -33,9 +48,11 @@ const initialState = {
     position: { x: 0, y: 0 },
     items: [],
     errors: [],
-    customContextMenu: null,
     targetId: undefined,
     metadata: undefined,
+    menuClassName: 'menu',
+    customContextMenuContent: null,
+    menuType: undefined
 };
 
 export const useContextMenuStore = create<ContextMenuState>()(
@@ -45,6 +62,7 @@ export const useContextMenuStore = create<ContextMenuState>()(
         openContextMenu: (payload) =>
             set((state) => {
                 const { position, items, targetId, metadata } = payload;
+                const menuClassName = (payload as any).menuClassName;
 
                 // Validation
                 const positionValidation = validatePosition(position);
@@ -58,7 +76,6 @@ export const useContextMenuStore = create<ContextMenuState>()(
                 const invalidItems = itemsValidation.filter((validation) => !validation.isValid);
                 if (invalidItems.length > 0) {
                     console.warn('Items validation failed:', invalidItems);
-                    // Type assertion needed if validation result doesn't explicitly have errors property
                     state.errors = invalidItems.flatMap(
                         (validation: any) => validation.errors || ['Unknown item validation error']
                     );
@@ -71,21 +88,44 @@ export const useContextMenuStore = create<ContextMenuState>()(
                 state.items = items;
                 state.targetId = targetId;
                 state.metadata = metadata;
+                state.menuClassName = menuClassName || state.menuClassName || 'menu';
                 state.errors = [];
+                state.menuType = 'default';
             }),
 
-        openCustomContextMenu: (options) =>
+        openCustomContextMenu: (payload) =>
             set((state) => {
+                const { position, targetId, metadata, component } = payload;
+                const menuClassName = (payload as any).menuClassName;
+
+                // Vérification de la présence de position
+                if (!position) {
+                    console.warn('Aucune position fournie à openCustomContextMenu');
+                    state.errors = ['Aucune position fournie au menu contextuel'];
+                    return;
+                }
+
+                // Validation
+                const positionValidation = validatePosition(position);
+                if (!positionValidation.isValid) {
+                    console.warn('Position validation failed:', positionValidation.errors);
+                    state.errors = positionValidation.errors;
+                    return;
+                }
                 state.isVisible = true;
-                state.items = []; // Reset standard items
-                state.targetId = undefined;
-                state.metadata = undefined;
+                state.position = position;
+                state.targetId = targetId;
+                state.metadata = metadata;
                 state.errors = [];
+                state.menuClassName = menuClassName + ' menu';
+                state.customContextMenuContent = component;
+                state.menuType = 'custom';
             }),
 
         closeContextMenu: () =>
             set((state) => {
                 Object.assign(state, initialState); // Reset to initial state
+                state.menuType = undefined;
             }),
 
         updateContextMenuPosition: (position) =>

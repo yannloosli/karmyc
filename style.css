@@ -1,36 +1,7 @@
 :root {
-    /* Couleurs primaires */
-    --primary-300: #2840bb;
-    --primary-400: #355dd4;
-    --primary-500: #3074f3;
-    --primary-600: #418dff;
-    --primary-700: #4babff;
-
-    /* Couleurs rouges */
-    --red-300: #B4281E;
-    --red-500: #c21f13;
-
-    /* Couleurs blanches et claires */
-    --white-500: #f3f3f3;
-    --light-500: #adadad;
-    --light-400: #989898;
-    --light-300: #777;
-    --light-200: #676767;
-
-    /* Couleurs grises */
-    --gray-800: #666666;
-    --gray-700: #555555;
-    --gray-600: #444444;
-    --gray-500: #3d3d3d;
-    --gray-400: #353535;
-
-    /* Couleurs sombres */
-    --dark-800: #333333;
-    --dark-700: #2d2d2d;
-    --dark-600: #272727;
-    --dark-500: #222222;
-    --dark-400: #191919;
-    --dark-300: #111111;
+    --lighter-bg: #7e748a;
+    --normal-bg: #3f3a44;
+    --darker-bg: #2e1f35;
 
     /* Dimensions et polices */
     --toolbar-height: 40px;
@@ -40,7 +11,6 @@
     --space-color: var(--primary-700);
 
     /* Z-index */
-    --z-index-graph-editor-pan-target: 50;
     --z-index-graph-editor-zoom-target: 55;
     --z-index-flow-editor-connections: 500;
     --z-index-flow-editor-nodes: 1000;
@@ -69,9 +39,45 @@
     --primary-700-30: rgba(144, 75, 255, 0.3);
 }
 
+.screen-switcher-menu {
+    background: var(--normal-bg);
+    border: 1px solid var(--darker-bg);
+    color: white;
+    padding: 0;
+}
+
+.screen-switcher-menu .szh-menu__item {
+
+    &:hover {
+        background: var(--darker-bg);
+    }
+}
+
+.screen-switcher-menu .szh-menu__item svg {
+    width: 12px;
+    height: 12px;
+    margin-right: 8px;
+}
+
+.switch-area-type-context-menu {
+    background: #222;
+    color: #fff;
+    display: flex;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    min-width: 400px;
+    padding: 8px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+}
+
+
+
 /* Styles de la barre de défilement */
 .dark-scrollbar {
-    scrollbar-color: var(--gray-500) var(--dark-500);
+    scrollbar-color: var(--normal-bg) var(--darker-bg);
     scrollbar-width: thin;
 }
 
@@ -81,17 +87,17 @@
 }
 
 .dark-scrollbar::-webkit-scrollbar-track {
-    background: var(--dark-500);
+    background: var(--darker-bg);
     border-radius: 4px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--gray-500);
+    background: var(--normal-bg);
     border-radius: 4px;
 }
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-500);
+    background: var(--normal-bg);
 }
 
 .area {
@@ -105,7 +111,7 @@
 
 .area__content {
     border-radius: 8px;
-    background: var(--gray-500);
+    background: var(--normal-bg)
     position: absolute;
     z-index: 1;
     top: var(--area-border-width);
@@ -125,7 +131,7 @@
 
 .area__structured {
     border-radius: 8px;
-    background: var(--gray-500);
+    background: var(--normal-bg);
     position: absolute;
     z-index: 1;
     top: var(--area-border-width);
@@ -190,7 +196,7 @@
     justify-content: space-between;
     flex-direction: row;
     width: 100%;
-    background: gray;
+    background: var(--normal-bg);
     cursor: grab;
     z-index: 1000;
     padding: 0 20px;
@@ -266,8 +272,8 @@
 }
 
 .selectArea__inner {
-    border: 1px solid var(--gray-800);
-    background: var(--dark-800);
+    border: 1px solid var(--darker-bg);
+    background: var(--darker-bg);
 }
 
 .selectArea__item {
@@ -275,14 +281,18 @@
     border: none;
     border-radius: 4px;
     padding: 0 24px;
-    background: var(--dark-800);
+    background: var(--darker-bg);
     display: block;
     width: 128px;
 }
 
-.tools-bar {
-    padding-inline: 10px;
-    display: flex;
+.tools-container {
+    overflow: hidden;
+}
+
+.tools-content {
+    position: absolute;
+    width: 100%;
 }
 
 .area-main-content-wrapper {
@@ -292,11 +302,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    background: var(--lighter-bg);
 }
 
 .area-container {
     position: absolute;
-    border: 6px solid gray;
+    border: 6px solid var(--normal-bg);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -373,11 +384,11 @@
 }
 
 .tools-bar-top-outer {
-    background-color: gray;
+    background-color: var(--normal-bg);
 }
 
 .tools-bar-bottom-outer {
-    background-color: gray;
+    background-color: var(--normal-bg);
 }
 
 .join-area-preview {
@@ -575,9 +586,10 @@
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
-    scrollbar-color: var(--gray-500) var(--dark-500);
+    scrollbar-color: var(--normal-bg) var(--darker-bg);
     min-height: 32px;
-    border-bottom: 1px solid gray;
+    border-bottom: 1px solid var(--normal-bg);
+    background: var(--darker-bg);
 }
 
 .area-tab {

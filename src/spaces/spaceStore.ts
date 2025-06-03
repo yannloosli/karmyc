@@ -1,41 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { generateDiff, applyDiff, invertDiff } from '../../garbage/utils/history';
-import { THistoryDiff } from '../../garbage/history/history';
-
-// Type pour les calques
-export interface LayerLike {
-    id: string;
-    type: string;
-    name?: string;
-    visible: boolean;
-    enabled: boolean;
-    zIndex: number;
-    blendMode?: string;
-    opacity: number;
-    locked: boolean;
-    layerStyle?: {
-        filters: {
-            blur?: number;
-            brightness?: number;
-            contrast?: number;
-            dropShadow?: {
-                offsetX: number;
-                offsetY: number;
-                blur: number;
-                color: string;
-            };
-            grayscale?: number;
-            hueRotate?: number;
-            invert?: number;
-            saturate?: number;
-            sepia?: number;
-        };
-        enabled?: boolean;
-    };
-    [key: string]: any;
-}
+import { generateDiff, applyDiff, invertDiff } from './history';
+import { THistoryDiff } from './history/history';
 
 export interface SpaceSharedState extends Record<string, any> {
     lines: any[];
@@ -43,8 +10,6 @@ export interface SpaceSharedState extends Record<string, any> {
     color: string;
     pastDiffs: THistoryDiff[];
     futureDiffs: THistoryDiff[];
-    layers: LayerLike[]; // Utilisation du type LayerLike
-    activeLayerId?: string | null; // Nouveau champ pour l'ID du calque actif
     zoom: number;
     pan: { x: number; y: number };
 }
@@ -71,7 +36,6 @@ export interface SpaceState {
     setActiveSpace: (id: string | null) => void;
     updateSpace: (spaceData: Partial<Space> & { id: string }) => void;
     updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => void;
-    setActiveLayerId: (payload: { spaceId: string; layerId: string | null }) => void;
     clearErrors: () => void;
     // New history actions for spaces
     undoSharedState: (spaceId: string) => void;
@@ -232,25 +196,6 @@ const immerConfig = immer<SpaceState>((set, get) => {
                     }
                 });
             }
-        },
-        setActiveLayerId: (payload) => {
-            const { spaceId, layerId } = payload;
-            set(state => {
-                const space = state.spaces[spaceId];
-                if (space) {
-                    // Vérifier si le layerId existe dans la liste des layers du space (optionnel mais recommandé)
-                    const layerExists = space.sharedState.layers.some((l: LayerLike) => l.id === layerId); // type `l`
-                    if (layerId === null || layerExists) {
-                        space.sharedState.activeLayerId = layerId;
-                    } else {
-                        console.warn(`Attempted to set active layer to non-existent ID: ${layerId} in space ${spaceId}`);
-                        // Optionnel : ne pas changer activeLayerId ou le mettre à null
-                        // space.sharedState.activeLayerId = null;
-                    }
-                } else {
-                    console.warn(`Attempted to set active layer for non-existent space ID: ${spaceId}`);
-                }
-            });
         },
         clearErrors: () => {
             set(state => {

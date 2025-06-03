@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Karmyc, KarmycProvider, useKarmyc, Tools, AREA_ROLE } from '../src';
+import { Karmyc, KarmycProvider, useKarmyc, Tools, AREA_ROLE, TOOLBAR_HEIGHT } from '../src';
 import '../style.css';
 import { AreaInitializer } from './AreaInitializer';
 
@@ -8,9 +8,9 @@ const App: React.FC = () => {
         enableLogging: true,
         plugins: [],
         initialAreas: [
-            { id: 'area-1', type: 'demo-area-1', state: {}, role: AREA_ROLE.LEAD },
-            { id: 'area-2', type: 'demo-area-2', state: {}, role: AREA_ROLE.SELF },
-            { id: 'area-3', type: 'demo-area-1', state: {}, role: AREA_ROLE.LEAD },
+            { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
+            { id: 'area-2', type: 'logo-karmyc', state: {}, role: AREA_ROLE.SELF },
+            { id: 'area-3', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
         ],
         keyboardShortcutsEnabled: false,
         initialLayout: {
@@ -31,8 +31,10 @@ const App: React.FC = () => {
         <div style={{ width: '100vw', height: '100vh' }}>
             <KarmycProvider options={config}>
                 <AreaInitializer />
-                <Tools>
-                    <Karmyc />
+                <Tools  areaType="apptitle">
+                    <Tools>
+                        <Karmyc offset={TOOLBAR_HEIGHT  * 2}/>
+                    </Tools>
                 </Tools>
             </KarmycProvider>
         </div>

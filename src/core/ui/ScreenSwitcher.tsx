@@ -2,6 +2,7 @@ import React from 'react';
 import { useKarmycStore } from '../data/areaStore';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
+import { PlusIcon, CopyIcon, AppWindow, ExternalLinkIcon, TrashIcon } from 'lucide-react';
 
 export const ScreenSwitcher: React.FC = () => {
     // Récupérer les données nécessaires du store
@@ -16,7 +17,7 @@ export const ScreenSwitcher: React.FC = () => {
     // Enregistrer les actions du menu contextuel
     useRegisterActionHandler('open-new-window', (params) => {
         if (params?.screenId) {
-            window.open(`?screen=${params.screenId}`, '_blank');
+            window.open(`?screen=${params.screenId}`, '_blank', 'noopener,noreferrer');
         }
     });
 
@@ -56,37 +57,43 @@ export const ScreenSwitcher: React.FC = () => {
         e.preventDefault();
         open({
             position: { x: e.clientX, y: e.clientY },
+            menuClassName: 'screen-switcher-menu',
             items: [
                 {
+                    id: 'add',
+                    label: 'Add',
+                    icon: PlusIcon,
+                    actionId: 'add-screen',
+                    metadata: {}
+                },
+                {
+                    id: 'duplicate',
+                    label: 'Duplicate',
+                    icon: CopyIcon,
+                    actionId: 'duplicate-screen',
+                    metadata: { screenId: id }
+                },
+                {
                     id: 'open-new-window',
-                    label: 'Ouvrir dans une nouvelle fenêtre',
+                    label: 'Open in new window',
+                    icon: AppWindow,
                     actionId: 'open-new-window',
                     metadata: { screenId: id }
                 },
                 {
                     id: 'open-new-tab',
-                    label: 'Ouvrir dans un nouvel onglet',
+                    label: 'Open in new tab',
+                    icon: ExternalLinkIcon,
                     actionId: 'open-new-tab',
                     metadata: { screenId: id }
                 },
                 {
-                    id: 'delete',
-                    label: 'Supprimer',
+                    id: 'delete',   
+                    label: 'Delete',
+                    icon: TrashIcon,
                     actionId: 'delete-screen',
                     metadata: { screenId: id },
                     disabled: Object.keys(screens).length <= 1 // Désactiver si c'est le dernier écran
-                },
-                {
-                    id: 'duplicate',
-                    label: 'Dupliquer',
-                    actionId: 'duplicate-screen',
-                    metadata: { screenId: id }
-                },
-                {
-                    id: 'add',
-                    label: 'Ajouter',
-                    actionId: 'add-screen',
-                    metadata: {}
                 }
             ],
             targetId: id

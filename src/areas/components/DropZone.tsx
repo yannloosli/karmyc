@@ -22,12 +22,6 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
     const setViewports = useKarmycStore(state => state.setViewports);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
     
-    const { getComponents: getRootMenu } = useToolsSlot('app', 'root', 'top-outer');
-
-    console.log('TEST', areaToViewport[areaToOpen.area.state.sourceId]);
-
-
-
     const {
         handleDragOver,
         handleDrop,
@@ -93,7 +87,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
                         className="area-to-open-overlay__placement"
                         style={{
                             left: areaToOpenTargetViewport.left,
-                            top: areaToOpenTargetViewport.top + getRootMenu().length * TOOLBAR_HEIGHT,
+                            top: areaToOpenTargetViewport.top,
                         }}
                     >
                         {placementLinesMemo.lines.map(([p0, p1], i) => (

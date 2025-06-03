@@ -11,7 +11,7 @@ import { computeAreaToViewport } from '../utils/areaToViewport';
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId, PlaceArea } from '../utils/areaUtils';
 import { getAreaRootViewport } from '../utils/getAreaViewport';
 import { joinAreas as joinAreasUtil } from '../utils/joinArea';
-import { validateArea } from '../../garbage/utils/validation';
+import { validateArea } from '../utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
 import { IKarmycOptions } from '../types/karmyc';

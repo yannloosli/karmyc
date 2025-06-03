@@ -1,9 +1,9 @@
 import { useRef, useState } from "react";
 import { AreaTypeValue, useKarmycStore, useContextMenuStore, TOOLBAR_HEIGHT, areaRegistry } from "../../../core";
-import { useAreaContextMenu } from '../../hooks/useAreaContextMenu';
-import { useSpaceStore } from "../../../core/data/spaceStore";
+import { useSpaceStore } from "../../../spaces/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon } from "lucide-react";
+import { SwitchAreaTypeContextMenu } from '../../../core/ui';
 
 interface IAreaDragButton {
     state: any;
@@ -23,18 +23,19 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         handleDragEnd
     } = useAreaDragAndDrop({ type, id, state });
 
-    const contextMenuItems = useAreaContextMenu(id);
-    const openContextMenuAction = useContextMenuStore((state) => state.openContextMenu);
+    const openCustomContextMenu = useContextMenuStore((state) => state.openCustomContextMenu);
 
     // Ref pour le bouton
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);
-    const openSelectArea = (_: React.MouseEvent) => {
+    const openSelectArea = (e: React.MouseEvent) => {
         if (selectAreaButtonRef.current) {
             const rect = selectAreaButtonRef.current.getBoundingClientRect();
-            openContextMenuAction({
-                position: { x: rect.left + rect.width / 2, y: rect.top + rect.height },
-                items: contextMenuItems,
-                metadata: { areaId: id }
+            openCustomContextMenu({
+                targetId: id,
+                position: { x: rect.left, y: rect.top },
+                component: (
+                    <SwitchAreaTypeContextMenu />
+                )
             });
         }
     };
