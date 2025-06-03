@@ -6,6 +6,12 @@ export interface KeyboardShortcut {
     optionalModifierKeys?: string[];
     history?: boolean;
     shouldAddToStack?: (areaId: string, prevState: any, nextState: any) => boolean;
+    isGlobal?: boolean;
+    /**
+     * Le type d'aire auquel ce raccourci est associé
+     * Requis pour les raccourcis non-globaux
+     */
+    areaType?: string;
 }
 
 
@@ -22,6 +28,9 @@ interface KeyboardShortcutRegistry {
     // Simplified methods for direct usage
     register: (shortcut: KeyboardShortcut) => string; // Returns a unique ID
     remove: (id: string) => boolean; // Returns true if the shortcut was found and removed
+
+    // New method to get all shortcuts
+    getAllShortcuts: () => KeyboardShortcut[];
 }
 
 // In-memory storage of shortcuts by area type
@@ -58,5 +67,22 @@ export const keyboardShortcutRegistry: KeyboardShortcutRegistry = {
     // Removing a shortcut by ID
     remove: (id) => {
         return globalShortcuts.delete(id);
+    },
+
+    // New method to get all shortcuts
+    getAllShortcuts: () => {
+        const allShortcuts: KeyboardShortcut[] = [];
+        
+        // Ajouter les raccourcis par type d'aire
+        for (const shortcuts of shortcutsStorage.values()) {
+            allShortcuts.push(...shortcuts);
+        }
+        
+        // Ajouter les raccourcis globaux
+        for (const shortcut of globalShortcuts.values()) {
+            allShortcuts.push(shortcut);
+        }
+        
+        return allShortcuts;
     }
 }; 

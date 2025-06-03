@@ -1,5 +1,5 @@
-import { keyboardShortcutRegistry } from "../actions/keyboardShortcutRegistry";
-import { KeyboardShortcut } from "../../../../core/src/types";
+import { keyboardShortcutRegistry, KeyboardShortcut } from "../actions/keyboardShortcutRegistry";
+import { useKarmycStore } from "../../../data/areaStore";
 
 /**
  * List of supported modifier keys
@@ -67,28 +67,18 @@ export function isKeyDown(key: string): boolean {
  * Checks if we should prevent the browser's default behavior
  * for the given key combination
  */
-function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey>): boolean {
-    // Shortcuts to intercept
-    const shortcutsToIntercept = [
-        { key: 'R', modifiers: ['Control'] },  // Ctrl+R (Refresh)
-        { key: 'S', modifiers: ['Control'] },  // Ctrl+S (Save)
-        { key: 'P', modifiers: ['Control'] },  // Ctrl+P (Print)
-        { key: 'F', modifiers: ['Control'] },  // Ctrl+F (Find)
-    ];
-
-    // Convert key and modifiers for case-insensitive comparison
-    const lowerKey = key.toLowerCase();
-
-    // Check if the combination matches a shortcut to intercept
-    for (const shortcut of shortcutsToIntercept) {
-        // Compare keys case-insensitively
-        if (key === shortcut.key || lowerKey === shortcut.key.toLowerCase()) {
-
-            // Check if all required modifiers are active
-            const requiredModifiers = new Set(shortcut.modifiers);
+export function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey>): boolean {
+    // Obtenir tous les raccourcis enregistrés
+    const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
+    
+    // Vérifier si la combinaison correspond à un raccourci enregistré
+    for (const shortcut of allShortcuts) {
+        if (shortcut.key === key) {
+            // Vérifier les modificateurs
+            const requiredModifiers = new Set(shortcut.modifierKeys || []);
             let allModifiersMatch = true;
 
-            // Verify that all required modifiers are active
+            // Vérifier que tous les modificateurs requis sont actifs
             for (const modKey of requiredModifiers) {
                 if (!activeModifiers.has(modKey as ModifierKey)) {
                     allModifiersMatch = false;
@@ -96,10 +86,56 @@ function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey
                 }
             }
 
-            // Check that there are no additional modifiers
+            // Vérifier qu'il n'y a pas de modificateurs supplémentaires non autorisés
             if (allModifiersMatch) {
-                // Allow additional modifiers if needed
-                // (e.g. Ctrl+Shift+S should also be intercepted if we want to intercept Ctrl+S)
+                const optionalModifiers = new Set(shortcut.optionalModifierKeys || []);
+                for (const activeMod of activeModifiers) {
+                    if (!requiredModifiers.has(activeMod) && !optionalModifiers.has(activeMod)) {
+                        allModifiersMatch = false;
+                        break;
+                    }
+                }
+            }
+
+            // Si tous les modificateurs correspondent, empêcher le comportement par défaut
+            if (allModifiersMatch) {
+                return true;
+            }
+        }
+    }
+
+    // Liste des raccourcis système à toujours intercepter
+    const systemShortcuts = [
+        { key: 'R', modifiers: ['Control'] },  // Ctrl+R (Refresh)
+        { key: 'S', modifiers: ['Control'] },  // Ctrl+S (Save)
+        { key: 'P', modifiers: ['Control'] },  // Ctrl+P (Print)
+        { key: 'F', modifiers: ['Control'] },  // Ctrl+F (Find)
+        { key: 'L', modifiers: ['Control'] },  // Ctrl+L (Focus URL)
+        { key: 'U', modifiers: ['Control'] },  // Ctrl+U (View Source)
+        { key: 'I', modifiers: ['Control'] },  // Ctrl+I (DevTools)
+        { key: 'J', modifiers: ['Control'] },  // Ctrl+J (Downloads)
+        { key: 'K', modifiers: ['Control'] },  // Ctrl+K (Search)
+        { key: 'N', modifiers: ['Control'] },  // Ctrl+N (New Window)
+        { key: 'T', modifiers: ['Control'] },  // Ctrl+T (New Tab)
+        { key: 'W', modifiers: ['Control'] },  // Ctrl+W (Close Tab)
+    ];
+
+    // Vérifier les raccourcis système
+    for (const shortcut of systemShortcuts) {
+        if (key === shortcut.key) {
+            const requiredModifiers = new Set(shortcut.modifiers);
+            let allModifiersMatch = true;
+
+            // Vérifier que tous les modificateurs requis sont actifs
+            for (const modKey of requiredModifiers) {
+                if (!activeModifiers.has(modKey as ModifierKey)) {
+                    allModifiersMatch = false;
+                    break;
+                }
+            }
+
+            // Vérifier qu'il n'y a pas de modificateurs supplémentaires
+            if (allModifiersMatch && activeModifiers.size === requiredModifiers.size) {
                 return true;
             }
         }
@@ -111,7 +147,7 @@ function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey
 /**
  * Checks and executes keyboard shortcuts matching the pressed key
  */
-function checkAndExecuteShortcuts(key: string): void {
+export function checkAndExecuteShortcuts(key: string): void {
     // Get active modifiers
     const activeModifiers = new Set<ModifierKey>();
     for (const modKey of modifierKeys) {
@@ -120,27 +156,10 @@ function checkAndExecuteShortcuts(key: string): void {
         }
     }
 
-    // Get the active area ID
-    let activeAreaId = null;
-    let activeAreaType = null;
-
-    try {
-        // Try to access the store to get the active area
-        const store = (window as any).store;
-        if (store && store.getState) {
-            const state = store.getState();
-            if (state && state.area) {
-                activeAreaId = state.area.activeAreaId;
-                if (activeAreaId && state.area.areas[activeAreaId]) {
-                    activeAreaType = state.area.areas[activeAreaId].type;
-                }
-            }
-        } else {
-            console.warn("Store not available for keyboard shortcuts");
-        }
-    } catch (error) {
-        console.error("Error accessing active area:", error);
-    }
+    // Get the active area ID using useKarmycStore
+    const store = useKarmycStore.getState();
+    const activeAreaId = store.screens[store.activeScreenId]?.areas.activeAreaId;
+    const activeAreaType = activeAreaId ? store.getAreaById(activeAreaId)?.type : null;
 
     if (!activeAreaId || !activeAreaType) {
         return;
@@ -148,8 +167,6 @@ function checkAndExecuteShortcuts(key: string): void {
 
     // Get shortcuts for this area type
     const shortcuts = keyboardShortcutRegistry.getShortcuts(activeAreaType);
-
-    shortcuts ? shortcuts.map(s => `${s.key} (${s.modifierKeys?.join('+') || ''})`) : "None";
 
     if (!shortcuts || shortcuts.length === 0) {
         return;

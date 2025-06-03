@@ -1,16 +1,6 @@
 import { useEffect } from "react";
-import { keyboardShortcutRegistry } from "../actions/keyboardShortcutRegistry";
+import { KeyboardShortcut, keyboardShortcutRegistry } from "../actions/keyboardShortcutRegistry";
 
-/**
- * Type for defining a keyboard shortcut
- */
-interface KeyboardShortcut {
-    key: string;
-    modifierKeys?: string[];
-    name: string;
-    fn: (areaId: string, params: any) => void;
-    history?: boolean;
-}
 
 /**
  * Hook to register keyboard shortcuts for an area type
@@ -20,10 +10,16 @@ export function useAreaKeyboardShortcuts(
     shortcuts: KeyboardShortcut[]
 ): void {
     useEffect(() => {
-        // Register shortcuts in the global registry
-        keyboardShortcutRegistry.registerShortcuts(areaType, shortcuts);
+        // Ajouter le areaType à chaque raccourci
+        const shortcutsWithAreaType = shortcuts.map(shortcut => ({
+            ...shortcut,
+            areaType: shortcut.isGlobal ? undefined : areaType
+        }));
 
-        // Clean up shortcuts on unmount
+        // Enregistrer les raccourcis
+        keyboardShortcutRegistry.registerShortcuts(areaType, shortcutsWithAreaType);
+
+        // Nettoyer lors du démontage
         return () => {
             keyboardShortcutRegistry.unregisterShortcuts(areaType);
         };

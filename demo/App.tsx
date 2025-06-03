@@ -12,7 +12,7 @@ const App: React.FC = () => {
             { id: 'area-2', type: 'logo-karmyc', state: {}, role: AREA_ROLE.SELF },
             { id: 'area-3', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
         ],
-        keyboardShortcutsEnabled: false,
+        keyboardShortcutsEnabled: true,
         initialLayout: {
             type: 'area_row',
             id: 'root',

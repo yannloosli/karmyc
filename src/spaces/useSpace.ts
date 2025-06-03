@@ -14,7 +14,7 @@ export function useSpace() {
         useSpaceStore,
         state => state.spaces,
         shallow
-    ) as Record<string, Space>; // Cast might still be needed depending on selector result type
+    ) as Record<string, Space>;
 
     const activeSpaceId = useStoreWithEqualityFn(
         useSpaceStore,
@@ -22,10 +22,18 @@ export function useSpace() {
         shallow
     );
 
+    const openSpaceIds = useStoreWithEqualityFn(
+        useSpaceStore,
+        state => state.openSpaceIds,
+        shallow
+    );
+
     // Select actions individually (references should be stable)
     const addSpaceAction = useSpaceStore(state => state.addSpace);
     const removeSpaceAction = useSpaceStore(state => state.removeSpace);
     const setActiveSpaceAction = useSpaceStore(state => state.setActiveSpace);
+    const openSpaceAction = useSpaceStore(state => state.openSpace);
+    const closeSpaceAction = useSpaceStore(state => state.closeSpace);
     const updateSpaceAction = useSpaceStore(state => state.updateSpace);
     const updateSpaceGenericSharedStateAction = useSpaceStore(state => state.updateSpaceGenericSharedState);
 
@@ -33,6 +41,13 @@ export function useSpace() {
     const spaceList = useMemo(() => {
         return Object.entries(spaces).map(([id, space]) => ({ id, name: space.name }));
     }, [spaces]);
+
+    // Memoize the list of open spaces
+    const openSpaces = useMemo(() => {
+        return openSpaceIds
+            .map(id => spaces[id])
+            .filter((space): space is Space => space !== undefined);
+    }, [spaces, openSpaceIds]);
 
     // Define actions using useCallback with stable action references
     const createSpace = useCallback((name: string, initialSharedState = {}) => {
@@ -46,6 +61,14 @@ export function useSpace() {
     const setActive = useCallback((id: string | null) => {
         setActiveSpaceAction(id);
     }, [setActiveSpaceAction]);
+
+    const openSpace = useCallback((id: string) => {
+        openSpaceAction(id);
+    }, [openSpaceAction]);
+
+    const closeSpace = useCallback((id: string) => {
+        closeSpaceAction(id);
+    }, [closeSpaceAction]);
 
     const updateSharedState = useCallback((spaceId: string, changes: Partial<Record<string, any>>) => {
         updateSpaceGenericSharedStateAction({ spaceId, changes });
@@ -63,11 +86,15 @@ export function useSpace() {
         // State
         spaceList,
         activeSpaceId,
+        openSpaces,
+        openSpaceIds,
 
-        // Actions (return the useCallback-wrapped functions)
+        // Actions
         createSpace,
         deleteSpace,
         setActive,
+        openSpace,
+        closeSpace,
         updateSharedState,
         updateSpaceProperties,
         getSpaceById

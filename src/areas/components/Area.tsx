@@ -13,6 +13,7 @@ import { useSpaceStore } from "../../spaces/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 import { AreaRowLayout } from "../../core/types/areaTypes";
+import { checkAndExecuteShortcuts } from "../../core/plugins/keyboard/utils/keyboard";
 
 interface OwnProps {
     id: string;
@@ -49,6 +50,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
     const viewportRef = useRef<HTMLDivElement>(null);
     const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
+    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
     const area = useKarmycStore(state => state.getAreaById(id));
 
@@ -83,6 +85,38 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             resizeObserver.disconnect();
         };
     }, []);
+
+    // Ajouter l'effet pour suivre la position de la souris
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            setMousePosition({ x: e.clientX, y: e.clientY });
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, []);
+
+    // Ajouter l'effet pour les raccourcis clavier
+    useEffect(() => {
+        if (!keyboardViewport.width || !keyboardViewport.height) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (mousePosition.x >= keyboardViewport.left && 
+                mousePosition.x <= keyboardViewport.left + keyboardViewport.width &&
+                mousePosition.y >= keyboardViewport.top && 
+                mousePosition.y <= keyboardViewport.top + keyboardViewport.height) {
+                // La souris est dans la zone, on peut déclencher les raccourcis
+                checkAndExecuteShortcuts(e.key);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [keyboardViewport, id, mousePosition]);
 
     const onActivate = () => {
         if (!active) {

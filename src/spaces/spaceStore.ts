@@ -3,6 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { generateDiff, applyDiff, invertDiff } from './history';
 import { THistoryDiff } from './history/history';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface SpaceSharedState extends Record<string, any> {
     lines: any[];
@@ -25,15 +26,17 @@ export interface Space {
 }
 
 export interface SpaceState {
-    _idCounter: number;
     spaces: Record<string, Space>;
     activeSpaceId: string | null;
+    openSpaceIds: string[]; // Liste des IDs des espaces ouverts
     errors: string[];
 
     // Actions
     addSpace: (spaceData: { name: string; description?: string; sharedState?: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => string | undefined;
     removeSpace: (id: string) => void;
     setActiveSpace: (id: string | null) => void;
+    openSpace: (id: string) => void; // Nouvelle action pour ouvrir un space
+    closeSpace: (id: string) => void; // Nouvelle action pour fermer un space
     updateSpace: (spaceData: Partial<Space> & { id: string }) => void;
     updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => void;
     clearErrors: () => void;
@@ -46,6 +49,7 @@ export interface SpaceState {
     getAllSpaces: () => Record<string, Space>;
     getActiveSpace: () => Space | null;
     getActiveSpaceId: () => string | null;
+    getOpenSpaces: () => Space[]; // Nouveau sélecteur pour obtenir la liste des espaces ouverts
     getSpaceErrors: () => string[];
 }
 
@@ -60,9 +64,9 @@ export interface SpaceState {
 // Define the core state logic with immer first
 const immerConfig = immer<SpaceState>((set, get) => {
     return {
-        _idCounter: 0,
         spaces: {},
         activeSpaceId: null,
+        openSpaceIds: [], // Initialiser la liste des espaces ouverts
         errors: [],
 
         // Actions with logs
@@ -74,7 +78,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 console.error("Validation failed for space:", get().errors);
                 return undefined;
             }
-            const newId = `space-${get()._idCounter + 1}`;
+            const newId = uuidv4();
             const newSpace: Space = {
                 id: newId,
                 name: spaceData.name,
@@ -94,7 +98,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
             };
             set(state => {
                 state.spaces[newId] = newSpace;
-                state._idCounter += 1;
+                state.openSpaceIds.push(newId); // Ajouter le nouvel espace à la liste des espaces ouverts
                 state.errors = [];
             });
             return newId;
@@ -105,6 +109,8 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 if (state.activeSpaceId === id) {
                     state.activeSpaceId = null;
                 }
+                // Retirer l'espace de la liste des espaces ouverts
+                state.openSpaceIds = state.openSpaceIds.filter(spaceId => spaceId !== id);
                 state.errors = [];
             });
         },
@@ -116,6 +122,22 @@ const immerConfig = immer<SpaceState>((set, get) => {
                     console.warn(`Attempted to set active space to non-existent ID: ${id}`);
                 }
                 state.errors = [];
+            });
+        },
+        openSpace: (id) => {
+            set(state => {
+                if (state.spaces[id] && !state.openSpaceIds.includes(id)) {
+                    state.openSpaceIds.push(id);
+                }
+            });
+        },
+        closeSpace: (id) => {
+            set(state => {
+                state.openSpaceIds = state.openSpaceIds.filter(spaceId => spaceId !== id);
+                if (state.activeSpaceId === id) {
+                    // Si on ferme l'espace actif, on active le dernier espace ouvert
+                    state.activeSpaceId = state.openSpaceIds[state.openSpaceIds.length - 1] || null;
+                }
             });
         },
         updateSpace: (spaceData) => {
@@ -245,6 +267,12 @@ const immerConfig = immer<SpaceState>((set, get) => {
             return state.activeSpaceId ? state.spaces[state.activeSpaceId] : null;
         },
         getActiveSpaceId: () => get().activeSpaceId,
+        getOpenSpaces: () => {
+            const state = get();
+            return state.openSpaceIds
+                .map(id => state.spaces[id])
+                .filter((space): space is Space => space !== undefined);
+        },
         getSpaceErrors: () => get().errors
     };
 });
@@ -262,8 +290,8 @@ const persistConfig = persist(immerConfig, {
                 sharedState: restOfSharedState
             };
         }
-        const { _idCounter, activeSpaceId } = state;
-        const result = { _idCounter, spaces: spacesToPersist, activeSpaceId };
+        const { activeSpaceId } = state;
+        const result = { spaces: spacesToPersist, activeSpaceId };
         return result;
     },
     merge: (persistedState: unknown, currentState: SpaceState): SpaceState => {
@@ -311,7 +339,6 @@ const persistConfig = persist(immerConfig, {
         // Return the fully merged state, prioritizing loaded simple values
         const finalState = {
             ...currentState, // Start with current state (functions, initial structure)
-            _idCounter: loadedState?._idCounter ?? currentState._idCounter,
             activeSpaceId: loadedState?.activeSpaceId ?? currentState.activeSpaceId,
             spaces: validatedSpaces, // Use the carefully merged spaces
             errors: [], // Always reset errors on load

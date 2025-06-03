@@ -9,7 +9,11 @@ import {
     EmptyAreaMessage,
     AREA_ROLE
 } from '..';
-import { CircleSlash, Link } from 'lucide-react';
+import { useAreaKeyboardShortcuts } from '../src/core/plugins/keyboard/hooks/useAreaKeyboardShortcuts';
+import { CircleSlash, Link, Keyboard } from 'lucide-react';
+import KeyboardShortcutsViewer from '../src/core/ui/KeyboardShortcutsViewer';
+import { SpaceMenu } from '../src/core/ui/SpaceMenu';
+import { useSpace } from '../src/spaces/useSpace';
 
 export const AreaInitializer: FC<{}> = ({ }) => {
     const { updateArea } = useKarmycStore.getState();
@@ -20,6 +24,54 @@ export const AreaInitializer: FC<{}> = ({ }) => {
     const { registerComponent: registerRootStatusComponent } = useToolsSlot('app', 'bottom-outer');
     const { registerComponent: registerRootMenuDemoArea } = useToolsSlot('demo-area', 'top-inner');
 
+    // Définir les raccourcis clavier pour demo-area
+    useAreaKeyboardShortcuts('demo-area', [
+        {
+            key: 'S',
+            modifierKeys: ['Control'],
+            name: 'Save Demo Area',
+            fn: (areaId: string) => {
+                console.log(`Saving demo area ${areaId}`);
+                // Implémentation de la sauvegarde
+            },
+            history: true,
+            isGlobal: true
+        },
+        {
+            key: 'R',
+            name: 'Reset Demo Area',
+            fn: (areaId: string) => {
+                console.log(`Resetting demo area ${areaId}`);
+                updateArea({
+                    id: areaId,
+                    type: 'demo-area',
+                    state: areaRegistry.getInitialState('demo-area')
+                });
+            }
+        }
+    ]);
+
+    // Définir les raccourcis clavier pour logo-karmyc
+    useAreaKeyboardShortcuts('logo-karmyc', [
+        {
+            key: 'L',
+            modifierKeys: ['Control'],
+            name: 'Toggle Logo Size',
+            fn: (areaId: string) => {
+                console.log(`Toggling logo size for area ${areaId}`);
+                // Implémentation du changement de taille
+            }
+        },
+        {
+            key: 'H',
+            name: 'Hide/Show Logo',
+            fn: (areaId: string) => {
+                console.log(`Toggling logo visibility for area ${areaId}`);
+                // Implémentation de la visibilité
+            }
+        }
+    ]);
+
     useMemo(() => {
         registerRootStatusComponent(
             () => <div style={{ color: 'white', padding: '8px' }}>Screen management 💪==&gt;</div>,
@@ -27,9 +79,9 @@ export const AreaInitializer: FC<{}> = ({ }) => {
             { order: 990, alignment: 'right', width: 'auto' }
         );
         registerRootMenuComponent(
-            () => <div style={{ color: 'white', padding: '8px' }}>Top outer left slot</div>,
+            () => <SpaceMenu />,
             { name: 'topOuterLeftSlot', type: 'menu' },
-            { order: 990, width: 'auto', alignment: 'center' }
+            { order: 990, width: 'auto', alignment: 'left' }
         );
         registerRootMenuDemoArea(
             () => <div>Top Demo Area center slot</div>,
@@ -37,17 +89,28 @@ export const AreaInitializer: FC<{}> = ({ }) => {
             { order: 990, width: 'auto', alignment: 'center' }
         );
         registerTitleComponent(
-            () => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
-                    <img
-                        src="/assets/brand/icon.svg"
-                        style={{ width: '28px', height: '28px' }}
-                    />
-                    <strong>
-                        Karmyc core Demo
-                    </strong>
-                </div>
-            ),
+            () => {
+                const activeScreenId = useKarmycStore(state => state.activeScreenId);
+                const { activeSpaceId, getSpaceById } = useSpace();
+                const activeSpace = activeSpaceId ? getSpaceById(activeSpaceId) : null;
+
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
+                        <img
+                            src="/assets/brand/icon.svg"
+                            style={{ width: '28px', height: '28px' }}
+                        />
+                        <strong>
+                            Karmyc core Demo
+                        </strong>
+                        {activeSpace && (
+                            <span style={{ marginLeft: '8px', opacity: 0.7 }}>
+                                {activeSpace.name}
+                            </span>
+                        )}
+                    </div>
+                );
+            },
             { name: 'topOuterLeftSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'left' }
         );
@@ -106,11 +169,19 @@ export const AreaInitializer: FC<{}> = ({ }) => {
         }
     );
 
+    useRegisterAreaType(
+        'keyboard-shortcuts',
+        KeyboardShortcutsViewer,
+        {},
+        {
+            displayName: 'Raccourcis Clavier',
+            defaultSize: { width: 400, height: 600 },
+            role: AREA_ROLE.SELF,
+            icon: Keyboard
+        }
+    );
 
-
-
-
-    // Action handlers for area creation (utilisation de updateArea Zustand)
+    // Action handlers for area creation
     const handleDemoArea = (params: any) => {
         const areaId = params.areaId || params.itemMetadata?.areaId;
         if (areaId) {
@@ -133,17 +204,28 @@ export const AreaInitializer: FC<{}> = ({ }) => {
         }
     };
 
-
+    const handleKeyboardShortcuts = (params: any) => {
+        const areaId = params.areaId || params.itemMetadata?.areaId;
+        if (areaId) {
+            updateArea({
+                id: areaId,
+                type: 'keyboard-shortcuts',
+                state: areaRegistry.getInitialState('keyboard-shortcuts')
+            });
+        }
+    };
 
     // Register action handlers
     useEffect(() => {
         actionRegistry.registerActionHandler('area.create-demo-area', handleDemoArea);
         actionRegistry.registerActionHandler('area.create-logo-karmyc', handleLogoKarmyc);
+        actionRegistry.registerActionHandler('area.create-keyboard-shortcuts', handleKeyboardShortcuts);
 
         // Cleanup on unmount
         return () => {
             actionRegistry.unregisterActionHandler('area.create-demo-area');
             actionRegistry.unregisterActionHandler('area.create-logo-karmyc');
+            actionRegistry.unregisterActionHandler('area.create-keyboard-shortcuts');
         };
     }, [updateArea]);
 
@@ -152,6 +234,7 @@ export const AreaInitializer: FC<{}> = ({ }) => {
         return () => {
             areaRegistry.unregisterAreaType('demo-area');
             areaRegistry.unregisterAreaType('logo-karmyc');
+            areaRegistry.unregisterAreaType('keyboard-shortcuts');
         };
     }, []);
 
