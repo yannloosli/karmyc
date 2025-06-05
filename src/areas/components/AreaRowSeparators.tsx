@@ -78,15 +78,15 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         if (horizontal) {
             separatorRect = {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
-                top: nextViewport.top + AREA_BORDER_WIDTH * 2 + TOOLBAR_HEIGHT - offset,
+                top: nextViewport.top + TOOLBAR_HEIGHT - offset,
                 width: AREA_BORDER_WIDTH * 2,
-                height: Math.max(nextViewport.height - AREA_BORDER_WIDTH * 4 - TOOLBAR_HEIGHT, 5)
+                height: Math.max(nextViewport.height - TOOLBAR_HEIGHT, 5)
             };
         } else {
             separatorRect = {
-                left: nextViewport.left + AREA_BORDER_WIDTH * 2,
+                left: nextViewport.left,
                 top: nextViewport.top - AREA_BORDER_WIDTH - offset,
-                width: Math.max(nextViewport.width - AREA_BORDER_WIDTH * 4, 5),
+                width: Math.max(nextViewport.width, 5),
                 height: AREA_BORDER_WIDTH * 2
             };
         }
@@ -108,7 +108,11 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
                 className={`area-separator ${horizontal ? 'area-separator--horizontal' : ''}`}
-                style={{ ...separatorRect, flexDirection: !horizontal ? 'row' : 'column' }}
+                style={{ 
+                    ...separatorRect,
+                    flexDirection: !horizontal ? 'row' : 'column',
+                    zIndex: horizontal ? 2001 : 2000
+                }}
                 onMouseDown={handleMouseDown}
             >
                 {!horizontal ?

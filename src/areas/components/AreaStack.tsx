@@ -54,7 +54,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                         left: 0,
                         top: 0,
                         width: viewport.width,
-                        height: viewport.height - AREA_TAB_HEIGHT
+                        height: viewport.height
                     }}
                     setResizePreview={setResizePreview}
                     raised={!!activeArea.raised}

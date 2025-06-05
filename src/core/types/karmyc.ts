@@ -18,7 +18,6 @@ export interface IKarmycConfig {
 }
 
 export interface IKarmycOptions {
-    enableLogging?: boolean;
     plugins?: IActionPlugin[];
     validators?: Array<{
         actionType: string;
@@ -30,7 +29,6 @@ export interface IKarmycOptions {
         position?: { x: number; y: number };
         role?: AreaRole;
     }>;
-    customReducers?: Record<string, any>;
     keyboardShortcutsEnabled?: boolean;
 }
 

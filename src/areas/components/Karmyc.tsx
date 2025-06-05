@@ -134,9 +134,24 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
             const newViewportMap = computeAreaToViewport(layout, rootId, {...viewport, top: viewport.top + offset});
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
 
+            // Ne mettre à jour que si les viewports ont réellement changé
             if (!areViewportMapsEqual(currentStoreViewports, newViewportMap)) {
-                lastViewportRef.current = viewport;
-                setViewports(newViewportMap);
+                // Vérifier si le changement est significatif
+                const hasSignificantChange = Object.keys(newViewportMap).some(key => {
+                    const oldViewport = currentStoreViewports?.[key];
+                    const newViewport = newViewportMap[key];
+                    if (!oldViewport) return true;
+                    
+                    return Math.abs(oldViewport.left - newViewport.left) > 1 ||
+                           Math.abs(oldViewport.top - newViewport.top) > 1 ||
+                           Math.abs(oldViewport.width - newViewport.width) > 1 ||
+                           Math.abs(oldViewport.height - newViewport.height) > 1;
+                });
+
+                if (hasSignificantChange) {
+                    lastViewportRef.current = viewport;
+                    setViewports(newViewportMap);
+                }
             }
         } catch (error) {
             console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);

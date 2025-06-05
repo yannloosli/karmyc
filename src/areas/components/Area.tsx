@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useRef, useState, useMemo } from "react";
+import React, { Dispatch, SetStateAction, useRef, useMemo } from "react";
 import { handleAreaDragFromCorner } from "./handlers/areaDragFromCorner";
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { useToolsSlot, Tools } from '../../tools/components/ToolsSlot';
@@ -13,7 +13,6 @@ import { useSpaceStore } from "../../spaces/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 import { AreaRowLayout } from "../../core/types/areaTypes";
-import { checkAndExecuteShortcuts } from "../../core/plugins/keyboard/utils/keyboard";
 
 interface OwnProps {
     id: string;
@@ -47,76 +46,10 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
     const active = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId === id);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
-
     const viewportRef = useRef<HTMLDivElement>(null);
-    const [keyboardViewport, setKeyboardViewport] = useState<Rect>({ left: 0, top: 0, width: 0, height: 0 });
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
     const area = useKarmycStore(state => state.getAreaById(id));
-
     const setActiveSpace = useSpaceStore(state => state.setActiveSpace);
 
-    useEffect(() => {
-        const updateViewport = () => {
-            if (viewportRef.current) {
-                const rect = viewportRef.current.getBoundingClientRect();
-                const newViewport = {
-                    left: rect.left,
-                    top: rect.top,
-                    width: rect.width,
-                    height: rect.height
-                };
-                
-                // Ne mettre à jour que si les dimensions ont réellement changé
-                if (newViewport.width !== keyboardViewport.width || 
-                    newViewport.height !== keyboardViewport.height ||
-                    newViewport.left !== keyboardViewport.left ||
-                    newViewport.top !== keyboardViewport.top) {
-                    setKeyboardViewport(newViewport);
-                }
-            }
-        };
-        updateViewport();
-        const resizeObserver = new ResizeObserver(updateViewport);
-        if (viewportRef.current) {
-            resizeObserver.observe(viewportRef.current);
-        }
-        return () => {
-            resizeObserver.disconnect();
-        };
-    }, []);
-
-    // Ajouter l'effet pour suivre la position de la souris
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, []);
-
-    // Ajouter l'effet pour les raccourcis clavier
-    useEffect(() => {
-        if (!keyboardViewport.width || !keyboardViewport.height) return;
-
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (mousePosition.x >= keyboardViewport.left && 
-                mousePosition.x <= keyboardViewport.left + keyboardViewport.width &&
-                mousePosition.y >= keyboardViewport.top && 
-                mousePosition.y <= keyboardViewport.top + keyboardViewport.height) {
-                // La souris est dans la zone, on peut déclencher les raccourcis
-                checkAndExecuteShortcuts(e.key);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [keyboardViewport, id, mousePosition]);
 
     const onActivate = () => {
         if (!active) {
@@ -136,12 +69,9 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
             <Tools
                 areaType={type}
                 areaState={state}
-                style={{
-                    position: 'absolute',
-                    left: viewport.left,
-                    top: viewport.top,
-                    width: viewport.width,
-                    height: viewport.height,
+                viewport={{
+                    ...viewport,
+                    height: viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
                 }}
             >
                 <div
@@ -150,7 +80,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     className={`area ${raised ? 'area--raised' : ''}`}
                     style={{
                         width: '100%',
-                        height: '100%',
+                        height: isDetached ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
                     }}
                     onClick={onActivate}
                 >
@@ -197,7 +127,6 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const areaData = useKarmycStore(state => state.getAreaById(id));
     const layoutData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
     const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
-    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
 
@@ -236,10 +165,6 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
             dataForRender = undefined;
             componentForRender = null;
         }
-        // Si même après avoir cherché l'activeTabId, on ne trouve rien pour un stack (ce qui serait étrange pour un activeTabId valide)
-        if (rowLayout!.activeTabId && (!dataForRender || !componentForRender)) {
-            loggingEnabled && console.warn(`[Area.tsx] Stack '${id}': Active tab '${rowLayout!.activeTabId}' missing data or component.`);
-        }
     }
 
     // Récupérer les toolbars du parent
@@ -266,7 +191,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         };
         
         return newViewport;
-    }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight, id, loggingEnabled]);
+    }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight, id]);
 
     const contentViewport = useMemo(() => ({
         left: 0,
@@ -278,9 +203,9 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const containerStyle: React.CSSProperties = {
         position: 'absolute',
         left: `${viewport.left || 0}px`,
-        top: `${adjustedViewport.top || 0}px`,
+        top: isDetached ? '0px' : `${adjustedViewport.top || 0}px`,
         width: `${viewport.width || 0}px`,
-        height: `${adjustedViewport.height || 0}px`,
+        height: isDetached ? '100%' : `${adjustedViewport.height || 0}px`,
         boxSizing: 'border-box',
         overflow: 'hidden',
     };

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useKarmycStore } from '../data/areaStore';
+import { useKarmycStore, initializeKarmycStore } from '../data/areaStore';
 import { IKarmycProviderProps } from '../types/karmyc';
 import { KarmycInitializer } from './KarmycInitializer';
 import { keyboardShortcutRegistry } from '../plugins/keyboard/actions/keyboardShortcutRegistry';
@@ -22,6 +22,11 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     const lastActiveScreenId = useRef<string | null>(null);
     const lastScreenCount = useRef<number>(0);
     const lastScreenOrder = useRef<string[]>([]);
+
+    // Initialiser le store explicitement
+    useEffect(() => {
+        initializeKarmycStore();
+    }, []);
 
     useEffect(() => {
         document.addEventListener("contextmenu", (e) => e.preventDefault(), false);

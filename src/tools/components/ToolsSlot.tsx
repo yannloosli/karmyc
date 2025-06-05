@@ -3,6 +3,7 @@ import { ScreenSwitcher } from '../../core/ui/ScreenSwitcher';
 import { useActiveLayerInfo } from '../../../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layeredWorkspace/hools/useActiveLayerInfo';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { TOOLBAR_HEIGHT } from '../../core/utils/constants';
+import { Rect } from '../../core/types/math';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {
@@ -120,19 +121,19 @@ interface ToolsProps {
     areaState: any;
     children: React.ReactNode;
     style?: React.CSSProperties;
+    viewport?: Rect;
 }
 
 export const Tools: React.FC<ToolsProps> = ({
     areaType = 'app',
     areaState = {},
     children,
-    style = {
-        position: 'absolute',
-        left: 0,
+    viewport = {
         top: 0,
+        left: 0,
         width: '100%',
-        height: '100%',
-    },
+        height: '100%'
+    }
 }) => {
     useToolsRegistrySubscription();
     const { getComponents: getMenuComponents } = useToolsSlot(areaType, 'top-outer');
@@ -148,7 +149,6 @@ export const Tools: React.FC<ToolsProps> = ({
     const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
-    const loggingEnabled = useKarmycStore(state => state.options?.enableLogging);
 
     // Calculer les hauteurs des toolbars
     const hasTopOuter = menuComponents.length > 0;
@@ -214,13 +214,17 @@ export const Tools: React.FC<ToolsProps> = ({
     return (
         <div
             className="tools-container"
-            style={style}>
+            style={{
+                top: viewport.top,
+                left: viewport.left,
+                width: viewport.width,
+                height: isDetached ? '100%' : `calc(${viewport.height})`,
+            }}>
             {renderToolbar(menuComponents, 'top-outer')}
             <div
                 className="tools-content"
                 style={{
-                    height: `calc(${style?.height}${typeof style?.height === 'string' ? '' : 'px'} - ${isDetached ? 0 : (topOuterHeight + bottomOuterHeight)}px)`,
-                    position: 'relative'
+                    height:isDetached ? '100%' : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${bottomOuterHeight + topOuterHeight}px)`,
                 }}
             >
                 {renderToolbar(toolbarTopInnerComponents, 'top-inner')}

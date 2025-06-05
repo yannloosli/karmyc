@@ -7,7 +7,6 @@ import { IActionPlugin } from '../../types/actions';
  */
 export function useActions(
     plugins: IActionPlugin[] = [],
-    options: { enableLogging?: boolean } = {}
 ) {
     useEffect(() => {
         // Register plugins
@@ -17,16 +16,11 @@ export function useActions(
             pluginIds.push(plugin.id);
         });
 
-        // Activate logging if requested
-        if (options.enableLogging) {
-            console.log('Action plugins registered:', pluginIds);
-        }
-
         // Clean up when component unmounts
         return () => {
             pluginIds.forEach(id => {
                 actionRegistry.unregisterPlugin(id);
             });
         };
-    }, [plugins, options.enableLogging]);
+    }, [plugins]);
 } 

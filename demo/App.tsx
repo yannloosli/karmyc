@@ -1,16 +1,15 @@
 import * as React from 'react';
 import { Karmyc, KarmycProvider, useKarmyc, Tools, AREA_ROLE, TOOLBAR_HEIGHT } from '../src';
 import '../style.css';
-import { AreaInitializer } from './AreaInitializer';
+import { AreaInitializer } from './config/AreaInitializer';
 
 const App: React.FC = () => {
     const karmycConfig = {
-        enableLogging: true,
         plugins: [],
         initialAreas: [
             { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
-            { id: 'area-2', type: 'logo-karmyc', state: {}, role: AREA_ROLE.SELF },
-            { id: 'area-3', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
+            { id: 'area-2', type: 'logo-karmyc-area', state: {}, role: AREA_ROLE.SELF },
+            { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF },
         ],
         keyboardShortcutsEnabled: true,
         initialLayout: {
@@ -28,16 +27,14 @@ const App: React.FC = () => {
     const config = useKarmyc(karmycConfig);
 
     return (
-        <div style={{ width: '100vw', height: '100vh' }}>
-            <KarmycProvider options={config}>
-                <AreaInitializer />
-                <Tools  areaType="apptitle">
-                    <Tools>
-                        <Karmyc offset={TOOLBAR_HEIGHT  * 2}/>
-                    </Tools>
+        <KarmycProvider options={config}>
+            <AreaInitializer />
+            <Tools areaType="apptitle">
+                <Tools>
+                    <Karmyc offset={TOOLBAR_HEIGHT * 2} />
                 </Tools>
-            </KarmycProvider>
-        </div>
+            </Tools>
+        </KarmycProvider>
     );
 };
 

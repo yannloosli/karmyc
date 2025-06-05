@@ -42,11 +42,6 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
         const activeScreenAreasState = storeState.screens[activeScreenId]?.areas;
         const isAlreadyInitialized = activeScreenAreasState?.rootId || Object.keys(activeScreenAreasState?.areas || {}).length > 0;
 
-        useKarmycStore.setState(state => {
-            state.options.enableLogging = options.enableLogging;
-            return state;
-        });
-
         if (!isAlreadyInitialized) {
             const areasToInitialize = options.initialAreas || [];
             const newAreaIds: string[] = [];
@@ -106,26 +101,7 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
 
             } else {
                 console.warn("[KarmycInitializer] No areas were successfully created (newAreaIds is empty). Skipping layout creation.");
-                if (options.enableLogging) {
-                    console.log("[KarmycInitializer] No default areas specified or created.");
-                }
             }
-        }
-
-        if (options.enableLogging) {
-            const finalStateForLogging = useKarmycStore.getState();
-            const finalActiveScreenAreasState = finalStateForLogging.screens[finalStateForLogging.activeScreenId]?.areas;
-            // Utiliser pluginIds qui est déjà disponible dans cette portée
-            console.log('[KarmycInitializer] Initialization summary:', {
-                plugins: pluginIds,
-                validators: options.validators?.length || 0,
-                initialAreasStatus: isAlreadyInitialized ? 'skipped (loaded from storage)' : (`attempted: ${options.initialAreas?.length || 0}, created: ${finalActiveScreenAreasState?.rootId ? Object.keys(finalActiveScreenAreasState.areas || {}).length : 0}`),
-                customReducers: options.customReducers ? Object.keys(options.customReducers).length : 0,
-                keyboardShortcutsEnabled: options.keyboardShortcutsEnabled || false,
-                finalRootId: finalActiveScreenAreasState?.rootId,
-                finalLayoutKeys: Object.keys(finalActiveScreenAreasState?.layout || {}).length,
-                finalAreasKeys: Object.keys(finalActiveScreenAreasState?.areas || {}).length
-            });
         }
 
         // Cleanup

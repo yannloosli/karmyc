@@ -33,7 +33,6 @@ class ActionRegistry implements IActionRegistry {
 
     constructor(options: IActionRegistryOptions = {}) {
         this.options = {
-            enableLogging: false,
             ...options
         };
 
@@ -52,10 +51,6 @@ class ActionRegistry implements IActionRegistry {
         if (plugin.onRegister) {
             plugin.onRegister();
         }
-
-        if (this.options.enableLogging) {
-            console.log(`Action plugin registered: ${plugin.id} with priority ${plugin.priority}`);
-        }
     }
 
     /**
@@ -69,10 +64,6 @@ class ActionRegistry implements IActionRegistry {
         }
 
         this.plugins.delete(id);
-
-        if (this.options.enableLogging) {
-            console.log(`Action plugin unregistered: ${id}`);
-        }
     }
 
     /**
@@ -81,10 +72,6 @@ class ActionRegistry implements IActionRegistry {
     registerValidator(actionType: string, validator: TActionValidator): void {
         const existing = this.validators.get(actionType) || [];
         this.validators.set(actionType, [...existing, validator]);
-
-        if (this.options.enableLogging) {
-            console.log(`Validator registered for action type: ${actionType}`);
-        }
     }
 
     /**
@@ -92,10 +79,6 @@ class ActionRegistry implements IActionRegistry {
      */
     unregisterValidators(actionType: string): void {
         this.validators.delete(actionType);
-
-        if (this.options.enableLogging) {
-            console.log(`Validators unregistered for action type: ${actionType}`);
-        }
     }
 
     /**
@@ -137,9 +120,6 @@ class ActionRegistry implements IActionRegistry {
         for (const validator of validators) {
             const result = validator(action);
             if (!result.valid) {
-                if (this.options.enableLogging) {
-                    console.warn(`Action validation failed: ${result.message}`);
-                }
                 return result;
             }
         }

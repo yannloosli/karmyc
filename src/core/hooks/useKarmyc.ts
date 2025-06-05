@@ -9,19 +9,15 @@ export function useKarmyc(options: IKarmycOptions = {}) {
     const config = useMemo(() => {
         return {
             // Default values
-            enableLogging: options.enableLogging ?? false,
             plugins: options.plugins ?? [],
             validators: options.validators ?? [],
             initialAreas: options.initialAreas ?? [],
-            customReducers: options.customReducers ?? {},
             keyboardShortcutsEnabled: options.keyboardShortcutsEnabled ?? true,
         };
     }, [
-        options.enableLogging,
         options.plugins,
         options.validators,
         options.initialAreas,
-        options.customReducers,
         options.keyboardShortcutsEnabled
     ]);
 

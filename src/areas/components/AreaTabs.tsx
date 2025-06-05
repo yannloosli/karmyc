@@ -14,7 +14,7 @@ interface AreaTabsProps {
 export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas }) => {
     const updateLayout = useKarmycStore(state => state.updateLayout);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
-    const state = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
+    const activeAreaId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId);
 
     // État pour l'indicateur de position de dépôt
     const [dragIndicator, setDragIndicator] = useState<{ targetId: string | null, position: 'before' | 'after' | null }>({ targetId: null, position: null });
@@ -22,10 +22,11 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
     const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
 
     const handleTabClick = (areaId: string) => {
-        setActiveArea(areaId);
+        // Mettre à jour d'abord le layout pour changer l'onglet actif
         updateLayout({ id: rowId, activeTabId: areaId });
+        // Puis mettre à jour l'aire active
+        setActiveArea(areaId);
     };
-
 
     // Drag & drop pour réorganiser les onglets
     const handleTabDragStart = (e: React.DragEvent, areaId: string) => {
@@ -175,7 +176,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                         onDragEnd={handleTabDragEnd} // Ajouter le gestionnaire onDragEnd
                         data-areaid={id}
                     >
-                        <AreaDragButton id={id} state={state} type={area.type} />
+                        <AreaDragButton id={id} state={area.state} type={area.type} />
                     </div>
                 );
             })}

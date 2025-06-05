@@ -48,7 +48,6 @@ export interface IActionRegistry {
  * Action registry options
  */
 export interface IActionRegistryOptions {
-    enableLogging?: boolean;
     defaultValidators?: Record<string, TActionValidator[]>;
 }
 

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { createElement, useRef, useState } from "react";
 import { AreaTypeValue, useKarmycStore, useContextMenuStore, TOOLBAR_HEIGHT, areaRegistry } from "../../../core";
 import { useSpaceStore } from "../../../spaces/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
@@ -14,7 +14,8 @@ interface IAreaDragButton {
 
 export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const [isDragging, setIsDragging] = useState(false);
-    const isLocked = useKarmycStore.getState().getAreaById(id)?.isLocked || false;
+    const updateArea = useKarmycStore(state => state.updateArea);
+    const isLocked = useKarmycStore(state => state.getAreaById(id)?.isLocked || false);
 
     const {
         handleDragStart,
@@ -109,32 +110,35 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
             ref={selectAreaButtonRef}
         >
             <div className="select-area-button__main">
-                <button
-                    className="select-area-icons select-area-button__lock-icon"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        useKarmycStore.getState().updateArea({ id, isLocked: !isLocked });
-                    }}
-                >
-                    {isLocked ? <LockIcon /> : <LockOpenIcon />}
-                </button>
-                <div className="select-area-button__name">
-                    {areaRegistry.getDisplayName(type)}
-                </div>
+                {createElement(areaRegistry.getIcon(type), { className: 'select-area-button__icon', style: { color: spaceColor } })}
+                {areaRegistry.getDisplayName(type)}
             </div>
-            {!isLocked && <div className="select-area-button__action-icons">
-                <button
-                    className="select-area-icons select-area-button__detach"
-                    onClick={handleDetach}>
-                    <CopyIcon />
-                </button>
-                <button
-                    className="select-area-icons select-area-button__close"
-                    onClick={handleClose}>
-                    <XIcon />
-                </button>
-            </div>}
-        </div>
+                <div className="select-area-button__action-icons">
+            {!isLocked &&
+                <>
+                    <button
+                        className="select-area-icons select-area-button__detach"
+                        onClick={handleDetach}>
+                        <CopyIcon />
+                    </button>
+                    <button
+                        className="select-area-icons select-area-button__close"
+                        onClick={handleClose}>
+                        <XIcon />
+                    </button>
+                            </>
+                }
+                    <button
+                        className={`select-area-icons select-area-button__lock-icon ${isLocked ? 'locked' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            updateArea({ id, isLocked: !isLocked });
+                        }}
+                    >
+                        {isLocked ? <LockIcon /> : <LockOpenIcon />}
+                    </button>
+                </div>
+        </div >
     );
 };
 
