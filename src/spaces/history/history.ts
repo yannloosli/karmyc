@@ -1,102 +1,91 @@
-import { IAction } from '../../core/types/actions';
+import { THistoryDiff } from './history/historyTypes';
 
-/**
- * Options for the history system
- */
-export interface IHistoryOptions {
-    limit?: number;
-    undoType?: string;
-    redoType?: string;
-    clearHistoryType?: string;
-    jumpToFutureType?: string;
-    jumpToPastType?: string;
-    includeActions?: string[];
-    excludeActions?: string[];
-    groupBy?: (action: IAction) => string;
-}
-
-/**
- * State with history
- */
-export interface THistoryState<T> {
-    past: T[];
-    present: T;
-    future: T[];
-}
-
-/**
- * Change in history with path
- */
-export interface THistoryChange {
+export interface IStateDiff {
     path: string[];
-    oldValue: any;
-    newValue: any;
+    oldValue: unknown;
+    newValue: unknown;
 }
 
-/**
- * Difference between two states
- */
-export interface THistoryDiff {
-    timestamp: number;
-    actionType: string;
-    changes: THistoryChange[];
+export function generateDiff(prevState: any, nextState: any): IStateDiff[] {
+    const diffs: IStateDiff[] = [];
+
+    function compareValues(path: string[], prev: unknown, next: unknown) {
+        if (prev === next) return;
+
+        if (typeof prev !== typeof next) {
+            diffs.push({ path, oldValue: prev, newValue: next });
+            return;
+        }
+
+        if (typeof prev === 'object' && prev !== null && next !== null) {
+            // Ensure prev and next are non-null objects before using Object.keys
+            const prevObj = prev as Record<string, unknown>;
+            const nextObj = next as Record<string, unknown>;
+
+            const prevKeys = Object.keys(prevObj);
+            const nextKeys = Object.keys(nextObj);
+
+            // Check removed keys
+            prevKeys.forEach(key => {
+                if (!nextKeys.includes(key)) {
+                    diffs.push({
+                        path: [...path, key],
+                        oldValue: prevObj[key],
+                        newValue: undefined,
+                    });
+                }
+            });
+
+            // Check added or modified keys
+            nextKeys.forEach(key => {
+                if (!prevKeys.includes(key)) {
+                    diffs.push({
+                        path: [...path, key],
+                        oldValue: undefined,
+                        newValue: nextObj[key],
+                    });
+                } else {
+                    compareValues(
+                        [...path, key],
+                        prevObj[key],
+                        nextObj[key]
+                    );
+                }
+            });
+        } else {
+            diffs.push({ path, oldValue: prev, newValue: next });
+        }
+    }
+
+    compareValues([], prevState, nextState);
+    return diffs;
 }
 
-/**
- * History action with metadata
- */
-export interface THistoryAction {
-    id: string;
-    type: string;
-    timestamp: number;
-    diffs: THistoryChange[];
-    metadata?: Record<string, any>;
+export function getValueAtPath(state: any, path: string[]): unknown {
+    return path.reduce((obj, key) => (obj as Record<string, unknown>)[key], state);
 }
 
-/**
- * History system state
- */
-export interface IHistoryState {
-    actions: THistoryAction[];
-    currentIndex: number;
-    isUndoing: boolean;
-    isRedoing: boolean;
+// Applique un diff à un état (version simplifiée)
+export function applyDiff<T>(state: T, diff: THistoryDiff): T {
+    let newState = { ...state } as any;
+    diff.changes.forEach(change => {
+        let obj = newState;
+        for (let i = 0; i < change.path.length - 1; i++) {
+            obj = obj[change.path[i]];
+        }
+        obj[change.path[change.path.length - 1]] = change.oldValue;
+    });
+    return newState;
 }
 
-/**
- * Options for the undoable reducer
- */
-export type TUndoableOptions = Omit<IHistoryOptions, 'groupBy'>;
-
-export interface HistoryAction {
-    id: string;
-    type: string;
-    timestamp: number;
-    diffs: Array<{
-        path: string[];
-        oldValue: any;
-        newValue: any;
-    }>;
-    metadata?: {
-        areaId?: string;
-        projectId?: string;
-        userId?: string;
-        duration?: number;
+// Inverse un diff (version simplifiée)
+export function invertDiff(diff: THistoryDiff): THistoryDiff {
+    return {
+        ...diff,
+        changes: diff.changes.map(change => ({
+            ...change,
+            oldValue: change.newValue,
+            newValue: change.oldValue,
+        })),
     };
-}
-
-export interface HistoryState {
-    actions: HistoryAction[];
-    currentIndex: number;
-    isUndoing: boolean;
-    isRedoing: boolean;
-}
-
-/**
- * Configuration de l'historique
- */
-export interface HistoryConfig<S = any> {
-    maxHistorySize?: number;
-    filter?: (action: IAction, currentState: S, previousHistory: any) => boolean;
-    groupBy?: (action: IAction) => string;
 } 

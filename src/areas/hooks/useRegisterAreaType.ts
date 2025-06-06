@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { areaRegistry } from '../../core/data/registries/areaRegistry';
-import { AreaRole } from '../../core/types/karmyc';
+import { AreaRole } from '../../core/types/actions';
 
 /**
  * Hook to register a custom area type
@@ -36,8 +36,6 @@ export function useRegisterAreaType<T = any>(
 
             if (options.defaultSize) {
                 areaRegistry.registerDefaultSize(areaType, options.defaultSize);
-            } else if (process.env.NODE_ENV === 'development') {
-                console.log(`DefaultSize is not yet supported for ${areaType}`);
             }
 
             if (options.supportedActions) {
@@ -53,9 +51,7 @@ export function useRegisterAreaType<T = any>(
 
                 if (defaultActions[areaType]) {
                     areaRegistry.registerSupportedActions(areaType, defaultActions[areaType]);
-                } else if (process.env.NODE_ENV === 'development') {
-                    console.log(`SupportedActions is not yet supported for ${areaType}`);
-                }
+                } 
             }
 
             // Ajout du rôle dans le registre si fourni

@@ -2,12 +2,10 @@ import { useMemo } from "react";
 import { useKarmycStore } from "../../../src/core/data/areaStore";
 import { areaRegistry } from "../../../src/core/data/registries/areaRegistry";
 import { useRegisterActionHandler } from "../../../src/core/actions";
-import { useAreaKeyboardShortcuts } from "../../../src/core/plugins/keyboard/hooks/useAreaKeyboardShortcuts";
 import { useToolsSlot } from "../../../src/tools/components/ToolsSlot";
-import { EmptyAreaMessage } from "../../../src/areas/components/EmptyAreaMessage";
 import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
-import { CircleSlash, Keyboard } from "lucide-react";
+import { Keyboard } from "lucide-react";
 import KeyboardShortcutsViewer from "../../../src/core/ui/KeyboardShortcutsViewer";
 
 export const KeyboardShortcutsArea = () => {
@@ -15,7 +13,7 @@ export const KeyboardShortcutsArea = () => {
     const { registerComponent: registerRootMenuDemoArea } = useToolsSlot('demo-area', 'top-inner');
 
     const handleKeyboardShortcutsArea = (params: any) => {
-        const areaId = params.areaId || params.itemMetadata?.areaId;
+        const areaId = params.areaId;
         if (areaId) {
             updateArea({
                 id: areaId,

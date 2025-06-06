@@ -46,7 +46,6 @@ export const handleDragAreaResize = (
     // Vérifier si nous sommes dans une fenêtre détachée
     const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.isDetached;
     if (isDetached) {
-        console.log("Redimensionnement désactivé dans une fenêtre détachée");
         return;
     }
 

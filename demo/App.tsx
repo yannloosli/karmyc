@@ -22,6 +22,18 @@ const App: React.FC = () => {
                 { id: 'area-3', size: 0.3 }
             ]
         },
+        options: {
+            // 06/06/2025: to be implemented
+            translateFct: (value: string) => {
+                return value;
+            },
+            // 06/06/2025: to be implemented
+            resizableAreas: true,
+            // 06/06/2025: to be implemented
+            manageableAreas: true,
+            // 06/06/2025: to be implemented
+            multiScreen: true,
+        }
     };
 
     const config = useKarmyc(karmycConfig);

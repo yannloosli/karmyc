@@ -21,13 +21,11 @@ const KeyboardShortcutsViewer: React.FC = () => {
 
     return (
         <div style={{ 
-            padding: '20px',
+            padding: '15px',
             color: 'white',
             height: '100%',
             overflow: 'auto'
         }}>
-            <h2 style={{ marginBottom: '20px' }}>Raccourcis Clavier</h2>
-            
             {/* Raccourcis Globaux */}
             <div style={{ marginBottom: '30px' }}>
                 <h3 style={{ 
@@ -37,7 +35,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                 }}>
                     Raccourcis Globaux
                 </h3>
-                <div style={{ display: 'grid', gap: '10px' }}>
+                <div style={{ display: 'grid', gap: '5px' }}>
                     {globalShortcuts.map((shortcut, index) => (
                         <div key={index} style={{
                             display: 'flex',

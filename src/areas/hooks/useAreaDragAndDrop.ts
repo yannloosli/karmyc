@@ -84,7 +84,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
             startY: e.clientY - rect.top,
             sourceId: areaId
         };
-        console.log('dragRef.current', dragRef.current);
         lastUpdateRef.current = performance.now();
 
         // Create an invisible drag image
@@ -198,12 +197,9 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                         layoutItem.orientation === 'stack' &&
                         layoutItem.areas.some(area => area.id === potentialTargetId)
                     );
-                    console.log('[AreaToOpenPreview 0] handleDrop: Valid targetAreaId found', targetAreaId);
 
                     if (!isChildOfStack) {
                         targetAreaId = potentialTargetId;
-                        console.log('[AreaToOpenPreview 1] handleDrop: Valid targetAreaId found', targetAreaId);
-
                         break;
                     }
                 }
@@ -267,9 +263,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                     updateLayout(updatedLayout);
                     // Verrouiller l'area qui vient d'être déposée dans la stack
                     useKarmycStore.getState().updateArea({ id: sourceAreaId, isLocked: true });
-                    console.log('[DropZone] updateLayout called for stack');
                     cleanupTemporaryStates();
-                    console.log('[DropZone] cleanupTemporaryStates called (stack)');
                 }
             } else {
                 // Si on crée une nouvelle stack, on verrouille les deux areas
@@ -279,7 +273,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 }
                 finalizeAreaPlacementAction({ targetId: targetAreaId, placement: calculatedPlacement });
                 cleanupTemporaryStates();
-                console.log('[DropZone] finalizeAreaPlacementAction called', { targetAreaId, calculatedPlacement });
             }
         } catch (error) {
             console.error('[DropZone] handleDrop - Error during finalization:', error);
@@ -289,7 +282,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [cleanupTemporaryStates, finalizeAreaPlacementAction, updatePosition, calculatedPlacement, layout, updateLayout]);
 
     const handleDragEnd = useCallback((e: React.DragEvent) => {
-        console.log('[useAreaDragAndDrop] handleDragEnd', e);
         // Réactiver la sélection de texte à la fin du drag
         document.body.style.userSelect = '';
 

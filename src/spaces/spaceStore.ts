@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { generateDiff, applyDiff, invertDiff } from './history';
-import { THistoryDiff } from './history/history';
+import { generateDiff, applyDiff, invertDiff } from './history/history';
+import { THistoryDiff } from './history/historyTypes';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SpaceSharedState extends Record<string, any> {
@@ -30,11 +30,13 @@ export interface SpaceState {
     activeSpaceId: string | null;
     openSpaceIds: string[]; // Liste des IDs des espaces ouverts
     errors: string[];
+    pilotMode: 'MANUAL' | 'AUTO'; // Nouveau champ pour le mode de pilotage
 
     // Actions
     addSpace: (spaceData: { name: string; description?: string; sharedState?: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => string | undefined;
     removeSpace: (id: string) => void;
     setActiveSpace: (id: string | null) => void;
+    setPilotMode: (mode: 'MANUAL' | 'AUTO') => void; // Nouvelle action
     openSpace: (id: string) => void; // Nouvelle action pour ouvrir un space
     closeSpace: (id: string) => void; // Nouvelle action pour fermer un space
     updateSpace: (spaceData: Partial<Space> & { id: string }) => void;
@@ -51,6 +53,7 @@ export interface SpaceState {
     getActiveSpaceId: () => string | null;
     getOpenSpaces: () => Space[]; // Nouveau sélecteur pour obtenir la liste des espaces ouverts
     getSpaceErrors: () => string[];
+    getPilotMode: () => 'MANUAL' | 'AUTO'; // Nouveau sélecteur
 }
 
 // Helper function for validation (optional, implement if needed)
@@ -68,6 +71,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
         activeSpaceId: null,
         openSpaceIds: [], // Initialiser la liste des espaces ouverts
         errors: [],
+        pilotMode: 'AUTO', // Mode par défaut
 
         // Actions with logs
         addSpace: (spaceData) => {
@@ -89,8 +93,6 @@ const immerConfig = immer<SpaceState>((set, get) => {
                     color: spaceData.sharedState?.color ?? '#ff0000',
                     pastDiffs: [],
                     futureDiffs: [],
-                    layers: spaceData.sharedState?.layers ?? [],
-                    activeLayerId: spaceData.sharedState?.activeLayerId ?? null,
                     zoom: spaceData.sharedState?.zoom ?? 1,
                     pan: spaceData.sharedState?.pan ?? { x: 0, y: 0 },
                     ...(spaceData.sharedState || {}),
@@ -122,6 +124,11 @@ const immerConfig = immer<SpaceState>((set, get) => {
                     console.warn(`Attempted to set active space to non-existent ID: ${id}`);
                 }
                 state.errors = [];
+            });
+        },
+        setPilotMode: (mode) => {
+            set(state => {
+                state.pilotMode = mode;
             });
         },
         openSpace: (id) => {
@@ -170,31 +177,17 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 return;
             }
 
-            // Garde-fou : layers ne doit contenir que des objets valides
-            if (Array.isArray(changes.layers)) {
-                changes.layers = [...changes.layers.filter((l: LayerLike) => !!l)]; // force un nouveau tableau et type `l`
-                // Si la liste des calques est modifiée, et que activeLayerId n'est plus dans la liste, le réinitialiser.
-                // Note: on suppose que les `changes.layers` sont la nouvelle liste complète des calques.
-                // Si `changes.layers` est une mise à jour partielle, cette logique devra être ajustée.
-                const currentActiveLayerId = space.sharedState.activeLayerId;
-                if (currentActiveLayerId && changes.layers.findIndex((l: LayerLike) => l.id === currentActiveLayerId) === -1) { // type `l`
-                    changes.activeLayerId = null;
-                }
-            }
-
             const prevState = space.sharedState;
-
-            console.log('[STORE] updateSpaceGenericSharedState appelé avec :', { spaceId, changes });
+            const actionType = changes.actionType || 'UPDATE_SHARED_STATE';
+            const actionPayload = changes.payload || {};
 
             set(state => {
                 const currentSpace = state.spaces[spaceId];
                 if (currentSpace) {
-                    currentSpace.sharedState = { ...currentSpace.sharedState, ...changes };
+                    // Supprimer actionType et payload des changements avant de les appliquer
+                    const { actionType, payload, ...actualChanges } = changes;
+                    currentSpace.sharedState = { ...currentSpace.sharedState, ...actualChanges };
                     state.errors = [];
-                    // Log l'ordre des layers après update
-                    if (Array.isArray(currentSpace.sharedState.layers)) {
-                        console.log('[STORE] Nouvelle ordre layers:', currentSpace.sharedState.layers.map(l => l.id));
-                    }
                 }
             });
             const nextState = get().spaces[spaceId]?.sharedState;
@@ -211,7 +204,8 @@ const immerConfig = immer<SpaceState>((set, get) => {
                         if (!currentSpace.sharedState.pastDiffs) currentSpace.sharedState.pastDiffs = [];
                         currentSpace.sharedState.pastDiffs.push({
                             timestamp: Date.now(),
-                            actionType: 'UPDATE_SHARED_STATE',
+                            actionType,
+                            payload: actionPayload,
                             changes: diff,
                         });
                         currentSpace.sharedState.futureDiffs = [];
@@ -273,7 +267,8 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 .map(id => state.spaces[id])
                 .filter((space): space is Space => space !== undefined);
         },
-        getSpaceErrors: () => get().errors
+        getSpaceErrors: () => get().errors,
+        getPilotMode: () => get().pilotMode,
     };
 });
 
@@ -322,7 +317,6 @@ const persistConfig = persist(immerConfig, {
                 sharedState: {
                     ...baseShared,
                     ...loadedShared,
-                    layers: loadedShared.layers ?? baseShared.layers ?? [], // Priorité au localStorage
                     pastDiffs: [],
                     futureDiffs: [],
                     zoom: loadedShared.zoom ?? baseShared.zoom ?? 1,

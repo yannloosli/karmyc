@@ -142,15 +142,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                 return;
             }
 
-            console.log('KeyDown event:', {
-                key: e.key,
-                code: e.code,
-                ctrlKey: e.ctrlKey,
-                altKey: e.altKey,
-                shiftKey: e.shiftKey,
-                metaKey: e.metaKey
-            });
-
             // Obtenir les modificateurs actifs directement depuis l'événement
             const activeModifiers = new Set<ModifierKey>();
             if (e.ctrlKey) activeModifiers.add('Control');
@@ -158,18 +149,13 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
             if (e.shiftKey) activeModifiers.add('Shift');
             if (e.metaKey) activeModifiers.add('Command');
 
-            console.log('Active modifiers:', Array.from(activeModifiers));
-
             // Obtenir l'aire active
             const store = useKarmycStore.getState();
             const activeAreaId = store.screens[store.activeScreenId]?.areas.activeAreaId;
             const activeAreaType = activeAreaId ? store.getAreaById(activeAreaId)?.type : null;
 
-            console.log('Active area:', { activeAreaId, activeAreaType });
-
             // Vérifier d'abord les raccourcis globaux
             const globalShortcuts = keyboardShortcutRegistry.getAllShortcuts().filter(s => s.isGlobal);
-            console.log('Global shortcuts:', globalShortcuts);
 
             for (const shortcut of globalShortcuts) {
                 if (shortcut.key.toUpperCase() === e.key.toUpperCase()) {
@@ -197,12 +183,10 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
                     // Si c'est un raccourci valide, empêcher le comportement par défaut et exécuter
                     if (allModifiersMatch) {
-                        console.log('Executing global shortcut:', shortcut.name);
                         e.preventDefault();
                         e.stopPropagation();
                         try {
                             shortcut.fn(activeAreaId || '', {});
-                            console.log('Global shortcut executed successfully');
                         } catch (error) {
                             console.error(`Error executing global shortcut ${shortcut.name}:`, error);
                         }
@@ -213,24 +197,15 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
             // Si aucune aire n'est active, on s'arrête là
             if (!activeAreaId || !activeAreaType) {
-                console.log('No active area found');
                 return;
             }
 
             // Vérifier les raccourcis spécifiques à l'aire
             const shortcuts = keyboardShortcutRegistry.getShortcuts(activeAreaType);
-            console.log('Area shortcuts:', shortcuts);
             
             for (const shortcut of shortcuts) {
                 // Ignorer les raccourcis globaux déjà vérifiés
                 if (shortcut.isGlobal) continue;
-
-                console.log('Checking shortcut:', {
-                    shortcutKey: shortcut.key,
-                    eventKey: e.key,
-                    requiredModifiers: shortcut.modifierKeys,
-                    activeModifiers: Array.from(activeModifiers)
-                });
 
                 if (shortcut.key.toUpperCase() === e.key.toUpperCase()) {
                     const requiredModifiers = new Set(shortcut.modifierKeys || []);
@@ -240,7 +215,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                     for (const modKey of requiredModifiers) {
                         if (!activeModifiers.has(modKey as ModifierKey)) {
                             allModifiersMatch = false;
-                            console.log('Missing required modifier:', modKey);
                             break;
                         }
                     }
@@ -251,7 +225,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         for (const activeMod of activeModifiers) {
                             if (!requiredModifiers.has(activeMod) && !optionalModifiers.has(activeMod)) {
                                 allModifiersMatch = false;
-                                console.log('Extra modifier not allowed:', activeMod);
                                 break;
                             }
                         }
@@ -259,12 +232,10 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
                     // Si c'est un raccourci valide, empêcher le comportement par défaut et exécuter
                     if (allModifiersMatch) {
-                        console.log('Executing area shortcut:', shortcut.name);
                         e.preventDefault();
                         e.stopPropagation();
                         try {
                             shortcut.fn(activeAreaId, {});
-                            console.log('Area shortcut executed successfully');
                         } catch (error) {
                             console.error(`Error executing area shortcut ${shortcut.name}:`, error);
                         }
@@ -275,7 +246,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
             // Vérifier les raccourcis système
             if (checkShouldPreventDefault(e.key, activeModifiers)) {
-                console.log('Preventing default for system shortcut');
                 e.preventDefault();
                 e.stopPropagation();
             }

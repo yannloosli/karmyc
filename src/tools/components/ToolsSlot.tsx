@@ -180,7 +180,7 @@ export const Tools: React.FC<ToolsProps> = ({
         if ((position.includes('inner')) || (!isDetached && position.includes('outer'))) {
             return (
                 <div className={`tools-bar tools-bar-${position}`} style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}>
-                    <div className="tools-bar-section tools-bar-section--left">
+                    <div className="tools-bar-section tools-bar-section--left" style={{ display: leftComponents.length > 0 ? 'flex' : 'none'}}>
                         {leftComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -188,7 +188,7 @@ export const Tools: React.FC<ToolsProps> = ({
                             );
                         })}
                     </div>
-                    <div className="tools-bar-section tools-bar-section--center">
+                    <div className="tools-bar-section tools-bar-section--center" style={{ display: centerComponents.length > 0 ? 'flex' : 'none'}}>
                         {centerComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -196,7 +196,7 @@ export const Tools: React.FC<ToolsProps> = ({
                             );
                         })}
                     </div>
-                    <div className="tools-bar-section tools-bar-section--right">
+                    <div className="tools-bar-section tools-bar-section--right" style={{ display: rightComponents.length > 0 ? 'flex' : 'none'}}>
                         {rightComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
@@ -224,7 +224,7 @@ export const Tools: React.FC<ToolsProps> = ({
             <div
                 className="tools-content"
                 style={{
-                    height:isDetached ? '100%' : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${bottomOuterHeight + topOuterHeight}px)`,
+                    height:isDetached ? '100%' : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${topOuterHeight}px - ${bottomOuterHeight}px)`,
                 }}
             >
                 {renderToolbar(toolbarTopInnerComponents, 'top-inner')}

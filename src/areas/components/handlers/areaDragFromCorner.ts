@@ -81,7 +81,6 @@ export const handleAreaDragFromCorner = (
     // Vérifier si nous sommes dans une fenêtre détachée
     const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.isDetached;
     if (isDetached) {
-        console.log("Manipulations désactivées dans une fenêtre détachée");
         return;
     }
 
@@ -122,14 +121,10 @@ export const handleAreaDragFromCorner = (
 
     // --- Function: createNewArea (Initiate Split) ---
     function createNewArea(horizontal: boolean) {
-        console.log(`Creating new area with horizontal=${horizontal}, corner=${corner}`);
-        
         const currentViewportSize = horizontal ? viewport.width : viewport.height;
         const minRequiredSize = AREA_MIN_CONTENT_WIDTH * 2;
-        console.log(`Current viewport size: ${currentViewportSize}, minimum required: ${minRequiredSize}`);
         
         if (currentViewportSize < minRequiredSize) {
-            console.log(`Viewport too small for split (${currentViewportSize} < ${minRequiredSize}), falling back to join/move`);
             setupJoinMoveHandlers();
             if (currentOnMove) {
                 currentOnMove(lastMousePosition);
@@ -500,7 +495,6 @@ export const handleAreaDragFromCorner = (
         };
 
         currentOnMouseUp = () => {
-            console.log("Join/Move finished.");
             const state = getActiveScreenState();
             const preview = state?.joinPreview;
 

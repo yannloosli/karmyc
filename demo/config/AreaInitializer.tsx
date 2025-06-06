@@ -5,6 +5,11 @@ import { DemoArea } from './areas/demo-area';
 import { KarmycLogoArea } from './areas/karmyc-logo-area';
 import { KeyboardShortcutsArea } from './areas/keyboard-shortcuts-area';
 import { useToolsSlot } from '../../src/tools/components/ToolsSlot';
+import { HistoryArea } from './areas/history-area';
+import { DrawArea } from './areas/draw-area';
+import { SpaceManagerArea } from './areas/space-manager-area';
+import { ColorPickerArea } from './areas/color-picker-area';
+import { DebugArea } from './areas/debug-area';
 
 export const AreaInitializer: FC<{}> = ({ }) => {
     const { registerComponent: registerTitleComponent } = useToolsSlot('apptitle', 'top-outer');
@@ -67,12 +72,17 @@ export const AreaInitializer: FC<{}> = ({ }) => {
         );
     }, [registerRootStatusComponent, registerRootMenuComponent, registerTitleComponent]);
 
-   
+
     return (
         <>
             <DemoArea />
             <KarmycLogoArea />
             <KeyboardShortcutsArea />
+            <ColorPickerArea />
+            <DebugArea />
+            <HistoryArea />
+            <DrawArea />
+            <SpaceManagerArea />
         </>
     );
 };

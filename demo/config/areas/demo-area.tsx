@@ -14,7 +14,7 @@ export const DemoArea = () => {
     const { registerComponent: registerRootMenuDemoArea } = useToolsSlot('demo-area', 'top-inner');
 
     const handleDemoArea = (params: any) => {
-        const areaId = params.areaId || params.itemMetadata?.areaId;
+        const areaId = params.areaId;
         if (areaId) {
             updateArea({
                 id: areaId,

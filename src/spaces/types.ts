@@ -15,7 +15,15 @@ const HISTORY_ACTION_TYPES = [
     'composition/removeElement',
     'composition/updateElement',
     'project/update',
-    // Autres types d'actions à inclure dans l'historique
+    // Actions de dessin
+    'draw/addLine',
+    'draw/updateLine',
+    'draw/removeLine',
+    'draw/updateStrokeWidth',
+    'draw/updateColor',
+    'draw/updateZoom',
+    'draw/updatePan',
+    'draw/clearCanvas'
 ];
 
 /**
@@ -41,10 +49,6 @@ export const historyPlugin: IActionPlugin = {
             timestamp: Date.now(),
             description: getActionDescription(type, payload)
         };
-
-        // Ajouter l'entrée à la pile d'historique (sera fait par le middleware d'historique)
-        // Cette implémentation sera complétée une fois le middleware d'historique en place
-        console.log('Action enregistrée dans l\'historique:', historyEntry);
     }
 };
 
@@ -52,7 +56,7 @@ export const historyPlugin: IActionPlugin = {
  * Génère une description lisible par l'humain pour une action
  * Utilisé pour afficher des messages dans l'UI d'historique
  */
-function getActionDescription(type: string, payload: any): string {
+export function getActionDescription(type: string, payload: any): string {
     switch (type) {
     case 'area/addArea':
         return `Ajout d'une zone ${payload.type || ''}`;
@@ -70,6 +74,23 @@ function getActionDescription(type: string, payload: any): string {
         return `Suppression d'un élément`;
     case 'composition/updateElement':
         return `Mise à jour d'un élément`;
+    // Actions de dessin
+    case 'draw/addLine':
+        return `Ajout d'une ligne`;
+    case 'draw/updateLine':
+        return `Modification d'une ligne`;
+    case 'draw/removeLine':
+        return `Suppression d'une ligne`;
+    case 'draw/updateStrokeWidth':
+        return `Modification de l'épaisseur du trait : ${payload.oldValue} → ${payload.newValue}`;
+    case 'draw/updateColor':
+        return `Modification de la couleur : ${payload.oldValue} → ${payload.newValue}`;
+    case 'draw/updateZoom':
+        return `Modification du zoom : ${payload.oldValue} → ${payload.newValue}`;
+    case 'draw/updatePan':
+        return `Déplacement de la vue : (${payload.oldValue.x}, ${payload.oldValue.y}) → (${payload.newValue.x}, ${payload.newValue.y})`;
+    case 'draw/clearCanvas':
+        return `Effacement du dessin`;
     default:
         return `Action ${type}`;
     }

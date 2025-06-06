@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
-import { AreaTypeValue } from '../../core/types/actions';
+import { AreaTypeValue, AREA_ROLE } from '../../core/types/actions';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { IArea } from '../../core/types/areaTypes';
+import { useSpaceStore } from '../../spaces/spaceStore';
+import { areaRegistry } from '../../core/data/registries/areaRegistry';
 
 /**
  * Hook for managing areas
@@ -26,6 +28,28 @@ export function useArea() {
             state,
             position
         };
+
+        // Si c'est une area LEAD, on s'assure qu'elle a un espace
+        const roleMap = (areaRegistry as any)._roleMap || {};
+        if (roleMap[type] === AREA_ROLE.LEAD) {
+            const spaces = useSpaceStore.getState().spaces;
+            const existingSpaces = Object.keys(spaces);
+            if (existingSpaces.length > 0) {
+                // Utiliser le dernier espace actif ou le premier disponible
+                const activeSpaceId = useSpaceStore.getState().activeSpaceId;
+                area.spaceId = activeSpaceId || existingSpaces[0];
+            } else {
+                // Créer un nouvel espace seulement s'il n'y en a aucun
+                const newSpaceId = useSpaceStore.getState().addSpace({
+                    name: `Space for ${type}`,
+                    sharedState: {}
+                });
+                if (newSpaceId) {
+                    area.spaceId = newSpaceId;
+                }
+            }
+        }
+
         return addArea(area);
     }, [addArea]);
 

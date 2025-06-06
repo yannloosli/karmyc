@@ -237,15 +237,15 @@
 }
 
 .select-area-icons {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     background-color: transparent;
     border: none;
     color: white;
 
     & svg {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
     }
 
     +.select-area-icons {
@@ -259,8 +259,8 @@
 }
 
 .select-area-button__lock-icon {
-    width: 25px;
-    height: 25px;
+    width: 20px;
+    height: 20px;
     
     &.locked {
         color: var(--lighter-bg);
@@ -272,10 +272,9 @@
         }
     }
 
-
     & svg {
-        width: 20px;
-        height: 20px;
+        width: 16px;
+        height: 16px;
 
         & rect {
             fill: white;
@@ -402,6 +401,7 @@
     display: flex;
     flex-direction: row;
     padding: 5px 10px;
+    line-height: 1em;
 }
 
 .tools-bar-section {
@@ -424,7 +424,7 @@
 }
 
 .tools-bar-bottom-inner {
-    bottom: 105px;
+    bottom: 10px;
 }
 
 .tools-bar-top-outer {

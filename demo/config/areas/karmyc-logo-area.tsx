@@ -10,7 +10,7 @@ export const KarmycLogoArea = () => {
     const { updateArea } = useKarmycStore.getState();
 
     const handleLogoKarmycArea = (params: any) => {
-        const areaId = params.areaId || params.itemMetadata?.areaId;
+        const areaId = params.areaId;
         if (areaId) {
             updateArea({
                 id: areaId,

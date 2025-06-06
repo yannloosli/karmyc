@@ -28,6 +28,12 @@ export function useSpace() {
         shallow
     );
 
+    const pilotMode = useStoreWithEqualityFn(
+        useSpaceStore,
+        state => state.pilotMode,
+        shallow
+    );
+
     // Select actions individually (references should be stable)
     const addSpaceAction = useSpaceStore(state => state.addSpace);
     const removeSpaceAction = useSpaceStore(state => state.removeSpace);
@@ -82,17 +88,23 @@ export function useSpace() {
         return useSpaceStore.getState().spaces[id];
     }, []);
 
+    const setPilotMode = useCallback((mode: 'MANUAL' | 'AUTO') => {
+        useSpaceStore.getState().setPilotMode(mode);
+    }, []);
+
     return {
         // State
         spaceList,
         activeSpaceId,
         openSpaces,
         openSpaceIds,
+        pilotMode,
 
         // Actions
         createSpace,
         deleteSpace,
         setActive,
+        setPilotMode,
         openSpace,
         closeSpace,
         updateSharedState,

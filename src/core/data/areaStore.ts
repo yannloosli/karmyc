@@ -14,9 +14,10 @@ import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
-import { IKarmycOptions } from '../types/karmyc';
+// import { IKarmycOptions } from '../types/karmyc'; // <-- SUPPRIMÉ car redéfini localement
 import { v4 as uuidv4 } from 'uuid';
 import { createJSONStorage } from 'zustand/middleware';
+import { useSpaceStore } from '../../spaces/spaceStore';
 
 
 
@@ -178,6 +179,11 @@ const createInitialScreenState = (): ScreenState => {
 
 
 // --- Define the New Root State Structure ---
+interface IKarmycOptions {
+    allowStackMixedRoles?: boolean;
+    // ... autres options éventuelles ...
+}
+
 interface RootState {
     screens: Record<string, ScreenState>;
     activeScreenId: string;
@@ -403,6 +409,27 @@ const createAreaSlice: StateCreator<
                     zoom: area.zoom ?? 1,
                     pan: area.pan ?? { x: 0, y: 0 },
                 };
+
+                // Si c'est une area LEAD sans espace, on lui en assigne un
+                if (role === AREA_ROLE.LEAD && !areaWithId.spaceId) {
+                    const spaces = useSpaceStore.getState().spaces;
+                    const existingSpaces = Object.keys(spaces);
+                    if (existingSpaces.length > 0) {
+                        // Utiliser le dernier espace actif ou le premier disponible
+                        const activeSpaceId = useSpaceStore.getState().activeSpaceId;
+                        areaWithId.spaceId = activeSpaceId || existingSpaces[0];
+                    } else {
+                        // Créer un nouvel espace seulement s'il n'y en a aucun
+                        const newSpaceId = useSpaceStore.getState().addSpace({
+                            name: `Space for ${area.type}`,
+                            sharedState: {}
+                        });
+                        if (newSpaceId) {
+                            areaWithId.spaceId = newSpaceId;
+                        }
+                    }
+                }
+
                 const validation = validateArea(areaWithId);
                 if (!validation.isValid) {
                     activeScreenAreas.errors = validation.errors;
@@ -443,8 +470,39 @@ const createAreaSlice: StateCreator<
                     const areaIndex = row.areas.findIndex(a => a.id === id);
                     if (areaIndex !== -1) {
                         row.areas.splice(areaIndex, 1);
-                        // Si le row est vide, le supprimer
-                        if (row.areas.length === 0) {
+                        // --- Correction spécifique pour les stacks ---
+                        if (row.orientation === 'stack') {
+                            // Si l'area supprimée était l'activeTabId, choisir un nouvel onglet actif
+                            if (row.activeTabId === id) {
+                                row.activeTabId = row.areas[0]?.id || undefined;
+                            }
+                            // Si le stack est vide, le supprimer
+                            if (row.areas.length === 0) {
+                                delete activeScreenAreas.layout[layoutId];
+                            }
+                            // Si le stack n'a plus qu'une seule area, le "déstacker"
+                            else if (row.areas.length === 1) {
+                                const parentRowId = Object.keys(activeScreenAreas.layout).find(parentId => {
+                                    const parent = activeScreenAreas.layout[parentId];
+                                    return parent.type === 'area_row' && (parent as AreaRowLayout).areas.some(a => a.id === layoutId);
+                                });
+                                if (parentRowId) {
+                                    const parent = activeScreenAreas.layout[parentRowId] as AreaRowLayout;
+                                    const idx = parent.areas.findIndex(a => a.id === layoutId);
+                                    if (idx !== -1) {
+                                        // Remplacer le stack par l'unique area restante
+                                        parent.areas[idx] = { ...row.areas[0] };
+                                    }
+                                    delete activeScreenAreas.layout[layoutId];
+                                } else if (activeScreenAreas.rootId === layoutId) {
+                                    // Si le stack est root, remplacer rootId par l'unique area
+                                    activeScreenAreas.rootId = row.areas[0].id;
+                                    delete activeScreenAreas.layout[layoutId];
+                                }
+                            }
+                        }
+                        // Si le row est vide (non stack), le supprimer
+                        else if (row.areas.length === 0) {
                             delete activeScreenAreas.layout[layoutId];
                         }
                     }
@@ -703,6 +761,18 @@ const createAreaSlice: StateCreator<
                         console.error(`[finalizeAreaPlacement] Stack creation failed: Source or target area not found.`);
                         return;
                     }
+
+                    // --- CONTRÔLE DES RÔLES ---
+                    const allowMixed = get().options?.allowStackMixedRoles !== false;
+                    if (!allowMixed) {
+                        const sourceRole = sourceData.role || (sourceData.type && (areaRegistry as any)._roleMap?.[sourceData.type]);
+                        const targetRole = targetArea.role || (targetArea.type && (areaRegistry as any)._roleMap?.[targetArea.type]);
+                        if (sourceRole && targetRole && sourceRole !== targetRole) {
+                            activeScreenAreas.errors = ["Impossible de stacker des areas de rôles différents (option de configuration)"];
+                            return;
+                        }
+                    }
+                    // --- FIN CONTRÔLE DES RÔLES ---
 
                     // Créer le nouveau stack
                     const newStackId = `row-${activeScreenAreas._id + 1}`;
@@ -979,7 +1049,8 @@ const createAreaSlice: StateCreator<
                 activeScreenAreas.areas[newAreaId] = {
                     id: newAreaId,
                     type: originalArea?.type || areaToSplit.type, // Priorité à l'objet métier
-                    state: {}, // Default/empty state for new area
+                    state: { ...originalArea?.state }, // Copier l'état de l'area source
+                    spaceId: originalArea?.spaceId // Hériter de l'espace de l'area source
                 };
                 activeScreenAreas.layout[newAreaId] = { type: 'area', id: newAreaId };
 
@@ -1312,7 +1383,7 @@ const rootStoreCreator: StateCreator<
         },
         activeScreenId: '1',
         nextScreenId: 2,
-        options: {},
+        options: { allowStackMixedRoles: true },
         lastUpdated: Date.now(), // Initialisation
 
         // --- Root Level Screen Management Actions ---
@@ -1517,30 +1588,17 @@ export const useKarmycStore = create<RootState>()(
             devtools(rootStoreCreator, { name: 'KarmycRootStore' }),
             {
                 name: 'karmycRootState',
-                partialize: (state: RootState): Partial<RootState> => {
-                    // Persist only essential data
-                    const persistedScreens: Record<string, ScreenState> = {};
-                    for (const screenId in state.screens) {
-                        const screen = state.screens[screenId];
-                        if (screen) {
-                            persistedScreens[screenId] = {
-                                areas: screen.areas,
-                                isDetached: screen.isDetached,
-                                detachedFromAreaId: screen.detachedFromAreaId
-                            };
-                        }
-                    }
-                    return {
-                        screens: persistedScreens,
-                        activeScreenId: state.activeScreenId,
-                        nextScreenId: state.nextScreenId,
-                        lastUpdated: state.lastUpdated
-                    };
-                },
+                partialize: (state) => ({
+                    screens: state.screens,
+                    activeScreenId: state.activeScreenId,
+                    nextScreenId: state.nextScreenId,
+                    lastUpdated: state.lastUpdated,
+                    options: state.options
+                }),
                 storage: createJSONStorage(() => localStorage),
-                skipHydration: true,
-                onRehydrateStorage: () => (state: Partial<RootState> | undefined) => {
-                    if (state && (!state.screens || Object.keys(state.screens).length === 0)) {
+                skipHydration: false,
+                onRehydrateStorage: () => (state) => {
+                    if (!state) {
                         console.warn('[KarmycStore] État invalide après hydratation, réinitialisation...');
                         useKarmycStore.setState({
                             screens: {
@@ -1548,7 +1606,8 @@ export const useKarmycStore = create<RootState>()(
                             },
                             activeScreenId: '1',
                             nextScreenId: 2,
-                            lastUpdated: Date.now()
+                            lastUpdated: Date.now(),
+                            options: { allowStackMixedRoles: true }
                         });
                     }
                 }

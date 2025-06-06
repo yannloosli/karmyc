@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useRef, useMemo } from "react";
+import React, { Dispatch, SetStateAction, useRef, useMemo, useEffect } from "react";
 import { handleAreaDragFromCorner } from "./handlers/areaDragFromCorner";
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { useToolsSlot, Tools } from '../../tools/components/ToolsSlot';
@@ -49,30 +49,74 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const viewportRef = useRef<HTMLDivElement>(null);
     const area = useKarmycStore(state => state.getAreaById(id));
     const setActiveSpace = useSpaceStore(state => state.setActiveSpace);
+    const activeSpaceId = useSpaceStore(state => state.activeSpaceId);
+    const pilotMode = useSpaceStore(state => state.pilotMode);
+    const spaces = useSpaceStore(state => state.spaces);
 
+    // Effet pour mettre à jour les zones FOLLOW quand l'espace actif change
+    useEffect(() => {
+        if (activeSpaceId) {
+            // En mode AUTO, les areas FOLLOW suivent toujours le LEAD
+            if (pilotMode === 'AUTO' && area?.role === AREA_ROLE.FOLLOW) {
+                const activeScreenId = useKarmycStore.getState().activeScreenId;
+                const lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
+                const allAreas = useKarmycStore.getState().screens[activeScreenId]?.areas.areas || {};
+                const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+                
+                if (leadArea && leadArea.spaceId === activeSpaceId) {
+                    setActiveArea(leadArea.id);
+                }
+            }
+            // En mode MANUAL, toutes les areas suivent l'espace actif
+            else if (pilotMode === 'MANUAL') {
+                if (area?.spaceId !== activeSpaceId) {
+                    useKarmycStore.getState().updateArea({ id, spaceId: activeSpaceId });
+                }
+            }
+        }
+    }, [activeSpaceId, area?.role, pilotMode]);
 
     const onActivate = () => {
         if (!active) {
             setActiveArea(id);
-            if (area?.role === AREA_ROLE.LEAD && area.spaceId) {
-                setActiveSpace(area.spaceId);
+            // Si c'est une area LEAD, on met à jour l'espace actif seulement si on n'est pas en mode MANUAL
+            if (area?.role === AREA_ROLE.LEAD && pilotMode !== 'MANUAL') {
+                if (area.spaceId) {
+                    setActiveSpace(area.spaceId);
+                } else {
+                    // Si pas d'espace défini, on utilise le dernier espace actif ou on en crée un nouveau
+                    const existingSpaces = Object.keys(spaces);
+                    if (existingSpaces.length > 0) {
+                        // Utiliser le dernier espace actif ou le premier disponible
+                        const spaceToUse = activeSpaceId || existingSpaces[0];
+                        useKarmycStore.getState().updateArea({ id, spaceId: spaceToUse });
+                        setActiveSpace(spaceToUse);
+                    } else {
+                        // Créer un nouvel espace seulement s'il n'y en a aucun
+                        const newSpaceId = useSpaceStore.getState().addSpace({
+                            name: `Space for ${area.type}`,
+                            sharedState: {}
+                        });
+                        if (newSpaceId) {
+                            useKarmycStore.getState().updateArea({ id, spaceId: newSpaceId });
+                            setActiveSpace(newSpaceId);
+                        }
+                    }
+                }
             }
         }
     };
 
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
-    
+
     return (
         <AreaIdContext.Provider value={id}>
             {(!isDetached && !isChildOfStack) && <AreaDragButton id={id} state={state} type={type} />}
             <Tools
                 areaType={type}
                 areaState={state}
-                viewport={{
-                    ...viewport,
-                    height: viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
-                }}
+                viewport={viewport}
             >
                 <div
                     ref={viewportRef}
@@ -205,7 +249,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         left: `${viewport.left || 0}px`,
         top: isDetached ? '0px' : `${adjustedViewport.top || 0}px`,
         width: `${viewport.width || 0}px`,
-        height: isDetached ? '100%' : `${adjustedViewport.height || 0}px`,
+        height: isDetached ? '100%' : `${viewport.height || 0}px`,
         boxSizing: 'border-box',
         overflow: 'hidden',
     };

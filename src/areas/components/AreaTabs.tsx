@@ -4,6 +4,7 @@ import { areaRegistry } from '../../core/data/registries/areaRegistry';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
 import { AREA_TAB_HEIGHT } from '../../core/utils/constants';
+import { useSpaceStore } from '../../spaces/spaceStore';
 
 interface AreaTabsProps {
     rowId: string;
@@ -22,10 +23,18 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
     const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
 
     const handleTabClick = (areaId: string) => {
+        const area = areas[areaId];
+        if (!area) return;
+
         // Mettre à jour d'abord le layout pour changer l'onglet actif
         updateLayout({ id: rowId, activeTabId: areaId });
         // Puis mettre à jour l'aire active
         setActiveArea(areaId);
+
+        // Si l'area a un espace, passer en mode MANUAL et mettre à jour l'espace actif
+        if (area.spaceId) {
+            useSpaceStore.getState().setActiveSpace(area.spaceId);
+        }
     };
 
     // Drag & drop pour réorganiser les onglets
