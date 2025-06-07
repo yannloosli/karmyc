@@ -11,6 +11,7 @@ import { DrawArea } from './areas/draw-area';
 import { SpaceManagerArea } from './areas/space-manager-area';
 import { ColorPickerArea } from './areas/color-picker-area';
 import { DebugArea } from './areas/debug-area';
+import iconSvg from '../assets/brand/icon.svg';
 
 export const AreaInitializer: FC<{}> = ({ }) => {
     const { registerComponent: registerTitleComponent } = useToolsSlot('apptitle', 'top-outer');
@@ -41,7 +42,7 @@ export const AreaInitializer: FC<{}> = ({ }) => {
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'white' }}>
                         <img
-                            src="/assets/brand/icon.svg"
+                            src={iconSvg}
                             style={{ width: '28px', height: '28px' }}
                         />
                         <strong>
