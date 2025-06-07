@@ -37,7 +37,7 @@ export const KarmycLogoArea = () => {
             key: 'H',
             name: 'Hide/Show Logo',
             fn: (areaId: string) => {
-                console.log(`Toggling logo visibility for area ${areaId}  in Karmyc Core DEMO!!`);
+                console.log(`Toggling logo visibility for area ${areaId}  in Karmyc Core DEMO 2!!`);
                 // Implémentation de la visibilité
             }
         }
