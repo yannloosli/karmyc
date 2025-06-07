@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
 import { ScreenSwitcher } from '../../core/ui/ScreenSwitcher';
-import { useActiveLayerInfo } from '../../../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layeredWorkspace/hools/useActiveLayerInfo';
 import { useKarmycStore } from '../../core/data/areaStore';
 import { TOOLBAR_HEIGHT } from '../../core/utils/constants';
 import { Rect } from '../../core/types/math';
@@ -146,7 +145,6 @@ export const Tools: React.FC<ToolsProps> = ({
     const toolbarTopInnerComponents = getToolbarTopInner();
     const toolbarBottomInnerComponents = getToolbarBottomInner();
 
-    const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
     const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
@@ -158,21 +156,11 @@ export const Tools: React.FC<ToolsProps> = ({
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
 
-    // Fonction de filtrage des composants
-    const filterComponentsByLayerType = (comps: ToolsBarComponent[]): ToolsBarComponent[] => {
-        return comps.filter(comp => {
-            if (!comp.allowedLayerTypes || comp.allowedLayerTypes.length === 0) {
-                return true;
-            }
-            return activeLayerType ? comp.allowedLayerTypes.includes(activeLayerType) : false;
-        });
-    };
-
     // Organiser par alignement et filtrer pour chaque position
     const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {
-        const leftComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'left'));
-        const centerComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'center'));
-        const rightComponents = filterComponentsByLayerType(components.filter(c => c.alignment === 'right'));
+        const leftComponents = components.filter(c => c.alignment === 'left');
+        const centerComponents = components.filter(c => c.alignment === 'center');
+        const rightComponents = components.filter(c => c.alignment === 'right');
 
         if (leftComponents.length === 0 && centerComponents.length === 0 && rightComponents.length === 0) {
             return null;
