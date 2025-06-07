@@ -5,6 +5,7 @@ import { useAreaKeyboardShortcuts } from "../../../src/core/plugins/keyboard/hoo
 import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { Link } from "lucide-react";
+import logoSvg from '../../assets/brand/karmyc_logo.svg';
 
 export const KarmycLogoArea = () => {
     const { updateArea } = useKarmycStore.getState();
@@ -47,7 +48,7 @@ export const KarmycLogoArea = () => {
         'logo-karmyc-area',
         () => <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px', width: '100%', height: '100%' }}>
             <img
-                src="../assets/brand/karmyc_logo.svg"
+                src={logoSvg}
                 style={{ width: '75%' }}
             />
             <strong>
