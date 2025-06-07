@@ -6,6 +6,9 @@ on:
     paths:
       - 'demo/**'
       - 'src/**'
+      - 'assets/**'
+      - 'index.html'
+      - 'style.css'
       - 'package.json'
       - 'yarn.lock'
 
@@ -26,7 +29,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build demo
-        run: yarn build:demo
+        run: yarn demo:build
 
       - name: Configure Git
         run: |
