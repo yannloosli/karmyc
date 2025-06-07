@@ -21,8 +21,6 @@ export interface IArea<T extends AreaTypeValue = AreaTypeValue> {
     size?: { width: number; height: number };
     raised?: boolean;
     role?: AreaRole;
-    zoom?: number;
-    pan?: { x: number; y: number };
     isLocked?: boolean;
 }
 

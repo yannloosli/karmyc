@@ -52,6 +52,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     const activeSpaceId = useSpaceStore(state => state.activeSpaceId);
     const pilotMode = useSpaceStore(state => state.pilotMode);
     const spaces = useSpaceStore(state => state.spaces);
+    const resizableAreas = useKarmycStore(state => state.options?.resizableAreas ?? true);
+    const manageableAreas = useKarmycStore(state => state.options?.manageableAreas ?? true);
 
     // Effet pour mettre à jour les zones FOLLOW quand l'espace actif change
     useEffect(() => {
@@ -128,14 +130,13 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     }}
                     onClick={onActivate}
                 >
-                    {!isDetached && !isChildOfStack && ['ne', 'nw', 'se', 'sw'].map((dir) => (
+                    {!isDetached && !isChildOfStack && resizableAreas && manageableAreas && ['ne', 'nw', 'se', 'sw'].map((dir) => (
                         <div
                             key={dir}
                             className={`area__corner area__corner--${dir}`}
                             onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as 'ne', id, viewport, setResizePreview, () => { })}
                         />
                     ))}
-
 
                     <div
                         className={`area-main-content-wrapper ${type}`}

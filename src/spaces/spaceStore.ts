@@ -6,13 +6,9 @@ import { THistoryDiff } from './history/historyTypes';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface SpaceSharedState extends Record<string, any> {
-    lines: any[];
-    strokeWidth: number;
     color: string;
     pastDiffs: THistoryDiff[];
     futureDiffs: THistoryDiff[];
-    zoom: number;
-    pan: { x: number; y: number };
 }
 
 export interface Space {
@@ -88,13 +84,9 @@ const immerConfig = immer<SpaceState>((set, get) => {
                 name: spaceData.name,
                 description: spaceData.description ?? '',
                 sharedState: {
-                    lines: spaceData.sharedState?.lines ?? [],
-                    strokeWidth: spaceData.sharedState?.strokeWidth ?? 3,
                     color: spaceData.sharedState?.color ?? '#ff0000',
                     pastDiffs: [],
                     futureDiffs: [],
-                    zoom: spaceData.sharedState?.zoom ?? 1,
-                    pan: spaceData.sharedState?.pan ?? { x: 0, y: 0 },
                     ...(spaceData.sharedState || {}),
                 },
             };
@@ -319,15 +311,9 @@ const persistConfig = persist(immerConfig, {
                     ...loadedShared,
                     pastDiffs: [],
                     futureDiffs: [],
-                    zoom: loadedShared.zoom ?? baseShared.zoom ?? 1,
-                    pan: loadedShared.pan ?? baseShared.pan ?? { x: 0, y: 0 },
                 },
             };
-            if (!validatedSpaces[spaceId].sharedState.lines) validatedSpaces[spaceId].sharedState.lines = [];
-            if (validatedSpaces[spaceId].sharedState.strokeWidth === undefined) validatedSpaces[spaceId].sharedState.strokeWidth = 3;
             if (!validatedSpaces[spaceId].sharedState.color) validatedSpaces[spaceId].sharedState.color = '#000000';
-            if (validatedSpaces[spaceId].sharedState.zoom === undefined) validatedSpaces[spaceId].sharedState.zoom = 1;
-            if (!validatedSpaces[spaceId].sharedState.pan) validatedSpaces[spaceId].sharedState.pan = { x: 0, y: 0 };
         }
 
         // Return the fully merged state, prioritizing loaded simple values

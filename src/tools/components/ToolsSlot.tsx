@@ -149,6 +149,7 @@ export const Tools: React.FC<ToolsProps> = ({
     const { activeLayerType } = useActiveLayerInfo();
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
+    const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
 
     // Calculer les hauteurs des toolbars
     const hasTopOuter = menuComponents.length > 0;
@@ -203,7 +204,7 @@ export const Tools: React.FC<ToolsProps> = ({
                                 <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
                             );
                         })}
-                        {areaType === 'app' && position === 'bottom-outer' && <ScreenSwitcher />}
+                        {multiScreen && areaType === 'app' && position === 'bottom-outer' && <ScreenSwitcher />}
                     </div>
                 </div>
             );

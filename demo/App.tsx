@@ -12,28 +12,96 @@ const App: React.FC = () => {
             { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF },
         ],
         keyboardShortcutsEnabled: true,
-        initialLayout: {
-            type: 'area_row',
-            id: 'root',
-            orientation: 'horizontal',
-            areas: [
-                { id: 'area-1', size: 0.3 },
-                { id: 'area-2', size: 0.4 },
-                { id: 'area-3', size: 0.3 }
-            ]
-        },
-        options: {
-            // 06/06/2025: to be implemented
-            translateFct: (value: string) => {
-                return value;
+        builtInLayouts: [
+            {
+                id: 'default',
+                name: 'Layout par défaut',
+                config: {
+                    _id: 0,
+                    rootId: 'root',
+                    errors: [],
+                    activeAreaId: 'area-1',
+                    joinPreview: null,
+                    layout: {
+                        root: {
+                            id: 'root',
+                            type: 'area_row',
+                            orientation: 'horizontal',
+                            areas: [
+                                { id: 'area-1', size: 0.3 },
+                                { id: 'area-2', size: 0.4 },
+                                { id: 'area-3', size: 0.3 }
+                            ]
+                        },
+                        'area-1': {
+                            type: 'area',
+                            id: 'area-1'
+                        },
+                        'area-2': {
+                            type: 'area',
+                            id: 'area-2'
+                        },
+                        'area-3': {
+                            type: 'area',
+                            id: 'area-3'
+                        }
+                    },
+                    areas: {
+                        'area-1': { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
+                        'area-2': { id: 'area-2', type: 'logo-karmyc-area', state: {}, role: AREA_ROLE.SELF },
+                        'area-3': { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF }
+                    },
+                    viewports: {},
+                    areaToOpen: null,
+                    lastSplitResultData: null,
+                    lastLeadAreaId: 'area-1'
+                },
+                isBuiltIn: true
             },
-            // 06/06/2025: to be implemented
-            resizableAreas: true,
-            // 06/06/2025: to be implemented
-            manageableAreas: true,
-            // 06/06/2025: to be implemented
-            multiScreen: true,
-        }
+            {
+                id: 'minimal',
+                name: 'Layout minimal',
+                config: {
+                    _id: 0,
+                    rootId: 'root',
+                    errors: [],
+                    activeAreaId: 'area-1',
+                    joinPreview: null,
+                    layout: {
+                        root: {
+                            id: 'root',
+                            type: 'area_row',
+                            orientation: 'vertical',
+                            areas: [
+                                { id: 'area-1', size: 0.7 },
+                                { id: 'area-2', size: 0.3 }
+                            ]
+                        },
+                        'area-1': {
+                            type: 'area',
+                            id: 'area-1'
+                        },
+                        'area-2': {
+                            type: 'area',
+                            id: 'area-2'
+                        }
+                    },
+                    areas: {
+                        'area-1': { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
+                        'area-2': { id: 'area-2', type: 'logo-karmyc-area', state: {}, role: AREA_ROLE.SELF }
+                    },
+                    viewports: {},
+                    areaToOpen: null,
+                    lastSplitResultData: null,
+                    lastLeadAreaId: 'area-1'
+                },
+                isBuiltIn: true
+            }
+        ],
+        initialLayout: 'default',
+        resizableAreas: true,
+        manageableAreas: true,
+        multiScreen: true,
     };
 
     const config = useKarmyc(karmycConfig);

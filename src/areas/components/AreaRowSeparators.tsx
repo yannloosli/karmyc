@@ -27,9 +27,9 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout ?? {});
     const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
-    const viewportsRef = useRef(areaToViewport);
+    const resizableAreas = useKarmycStore(state => state.options?.resizableAreas ?? true);
 
-    // Do not render separators for stacked rows
+    // Do not render separators for stacked rows or if resizableAreas is false
     if (row.orientation === 'stack') {
         return null;
     }
@@ -108,19 +108,22 @@ export const AreaRowSeparators: React.FC<Props> = props => {
             <div
                 key={`sep-${currentArea.id}-${nextArea.id}`}
                 className={`area-separator ${horizontal ? 'area-separator--horizontal' : ''}`}
-                style={{ 
+                style={{
                     ...separatorRect,
                     flexDirection: !horizontal ? 'row' : 'column',
-                    zIndex: horizontal ? 2001 : 2000
+                    zIndex: horizontal ? 2001 : 2000,
+                    cursor: resizableAreas ? undefined : 'default'
                 }}
-                onMouseDown={handleMouseDown}
+                onMouseDown={resizableAreas ? handleMouseDown : undefined}
             >
-                {!horizontal ?
-                    <><Ellipsis size={32} /><Ellipsis size={32} /></>
-                    :
-                    <><EllipsisVertical size={32} /><EllipsisVertical size={32} />
-                    </>
-                }
+                {resizableAreas && (
+                    !horizontal ?
+                        <><Ellipsis size={32} /><Ellipsis size={32} /></>
+                        :
+                        <><EllipsisVertical size={32} /><EllipsisVertical size={32} />
+                        </>
+
+                )}
             </div>
         );
     }

@@ -31,8 +31,6 @@ const defaultSelectedSpaceHistoryState: SelectedSpaceHistoryState = {
         color: '#000000',
         pastDiffs: [],
         futureDiffs: [],
-        zoom: 1,
-        pan: { x: 0, y: 0 }
     },
     canUndoSpace: false,
     canRedoSpace: false,

@@ -19,7 +19,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { createJSONStorage } from 'zustand/middleware';
 import { useSpaceStore } from '../../spaces/spaceStore';
 
-
+interface LayoutPreset {
+    id: string;
+    name: string;
+    config: any;
+    isBuiltIn: boolean;
+}
 
 // --- Define Join Preview State Type (kept for AreaSliceStateData) ---
 export interface JoinPreviewState {
@@ -181,6 +186,10 @@ const createInitialScreenState = (): ScreenState => {
 // --- Define the New Root State Structure ---
 interface IKarmycOptions {
     allowStackMixedRoles?: boolean;
+    resizableAreas?: boolean;
+    manageableAreas?: boolean;
+    multiScreen?: boolean;
+    builtInLayouts?: LayoutPreset[];
     // ... autres options éventuelles ...
 }
 
@@ -191,6 +200,7 @@ interface RootState {
     windowId?: string;
     options: IKarmycOptions;
     lastUpdated: number; // Ajouté pour la gestion de version
+    layout_preset: LayoutPreset[];
 
     // --- Screen Management Actions ---
     addScreen: () => void;
@@ -406,8 +416,6 @@ const createAreaSlice: StateCreator<
                     ...area,
                     id: areaId,
                     role,
-                    zoom: area.zoom ?? 1,
-                    pan: area.pan ?? { x: 0, y: 0 },
                 };
 
                 // Si c'est une area LEAD sans espace, on lui en assigne un
@@ -1385,6 +1393,7 @@ const rootStoreCreator: StateCreator<
         nextScreenId: 2,
         options: { allowStackMixedRoles: true },
         lastUpdated: Date.now(), // Initialisation
+        layout_preset: [],
 
         // --- Root Level Screen Management Actions ---
         addScreen: () => set((state: WritableDraft<RootState>) => {
@@ -1593,7 +1602,8 @@ export const useKarmycStore = create<RootState>()(
                     activeScreenId: state.activeScreenId,
                     nextScreenId: state.nextScreenId,
                     lastUpdated: state.lastUpdated,
-                    options: state.options
+                    options: state.options,
+                    layout_preset: state.layout_preset
                 }),
                 storage: createJSONStorage(() => localStorage),
                 skipHydration: false,
@@ -1617,8 +1627,12 @@ export const useKarmycStore = create<RootState>()(
 );
 
 // Ajouter une fonction d'initialisation explicite
-export const initializeKarmycStore = () => {
+export const initializeKarmycStore = (optionsParam: Partial<IKarmycOptions> = {}) => {
     const state = useKarmycStore.getState();
+    const mergedOptions = {
+        ...state.options,
+        ...optionsParam
+    };
     if (!state.screens || Object.keys(state.screens).length === 0) {
         useKarmycStore.setState({
             screens: {
@@ -1626,7 +1640,13 @@ export const initializeKarmycStore = () => {
             },
             activeScreenId: '1',
             nextScreenId: 2,
-            lastUpdated: Date.now()
+            lastUpdated: Date.now(),
+            options: mergedOptions
+        });
+    } else {
+        // Toujours mettre à jour les options avec priorité à la config
+        useKarmycStore.setState({
+            options: mergedOptions
         });
     }
 };

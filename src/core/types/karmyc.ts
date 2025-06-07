@@ -17,6 +17,31 @@ export interface IKarmycConfig {
     };
 }
 
+export interface LayoutPreset {
+    id: string;
+    name: string;
+    config: {
+        _id: number;
+        rootId: string | null;
+        errors: string[];
+        activeAreaId: string | null;
+        joinPreview: any | null;
+        layout: {
+            [key: string]: any;
+        };
+        areas: {
+            [key: string]: any;
+        };
+        viewports: {
+            [key: string]: any;
+        };
+        areaToOpen: any | null;
+        lastSplitResultData: any | null;
+        lastLeadAreaId: string | null;
+    };
+    isBuiltIn: boolean;
+}
+
 export interface IKarmycOptions {
     plugins?: IActionPlugin[];
     validators?: Array<{
@@ -30,6 +55,12 @@ export interface IKarmycOptions {
         role?: AreaRole;
     }>;
     keyboardShortcutsEnabled?: boolean;
+    resizableAreas?: boolean;
+    manageableAreas?: boolean;
+    multiScreen?: boolean;
+    allowStackMixedRoles?: boolean;
+    builtInLayouts?: LayoutPreset[];
+    initialLayout?: string;
 }
 
 export interface IKarmycProviderProps {

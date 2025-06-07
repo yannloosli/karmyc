@@ -17,6 +17,8 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     children,
     options = {}
 }) => {
+    console.log('KarmycProvider - options:', options);
+
     const isInitialLoad = useRef(true);
     const isUpdatingUrl = useRef(false);
     const lastActiveScreenId = useRef<string | null>(null);
@@ -25,8 +27,8 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
     // Initialiser le store explicitement
     useEffect(() => {
-        initializeKarmycStore();
-    }, []);
+        initializeKarmycStore(options);
+    }, [options]);
 
     useEffect(() => {
         document.addEventListener("contextmenu", (e) => e.preventDefault(), false);

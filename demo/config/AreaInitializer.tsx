@@ -1,5 +1,6 @@
 import { useMemo, FC } from 'react';
 import { SpaceMenu } from '../../src/core/ui/SpaceMenu';
+import { LayoutMenu } from '../../src/core/ui/LayoutMenu';
 import { useSpace } from '../../src/spaces/useSpace';
 import { DemoArea } from './areas/demo-area';
 import { KarmycLogoArea } from './areas/karmyc-logo-area';
@@ -26,6 +27,11 @@ export const AreaInitializer: FC<{}> = ({ }) => {
             () => <SpaceMenu />,
             { name: 'topOuterLeftSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'left' }
+        );
+        registerRootMenuComponent(
+            () => <LayoutMenu />,
+            { name: 'topOuterLayoutSlot', type: 'menu' },
+            { order: 991, width: 'auto', alignment: 'left' }
         );
         registerTitleComponent(
             () => {

@@ -85,10 +85,6 @@ export function getActionDescription(type: string, payload: any): string {
         return `Modification de l'épaisseur du trait : ${payload.oldValue} → ${payload.newValue}`;
     case 'draw/updateColor':
         return `Modification de la couleur : ${payload.oldValue} → ${payload.newValue}`;
-    case 'draw/updateZoom':
-        return `Modification du zoom : ${payload.oldValue} → ${payload.newValue}`;
-    case 'draw/updatePan':
-        return `Déplacement de la vue : (${payload.oldValue.x}, ${payload.oldValue.y}) → (${payload.newValue.x}, ${payload.newValue.y})`;
     case 'draw/clearCanvas':
         return `Effacement du dessin`;
     default:
