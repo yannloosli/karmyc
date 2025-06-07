@@ -1,13 +1,13 @@
 import { useMemo } from "react";
-import { useKarmycStore } from "../../../src/core/data/areaStore";
-import { areaRegistry } from "../../../src/core/data/registries/areaRegistry";
-import { useRegisterActionHandler } from "../../../src/core/actions";
-import { useToolsSlot } from "../../../src/tools/components/ToolsSlot";
-import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
-import { AREA_ROLE } from "../../../src/core/types/actions";
+import { useKarmycStore } from "../../../src/store/areaStore";
+import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useRegisterActionHandler } from "../../../src/actions";
+import { useToolsSlot } from "../../../src/components/ToolsSlot";
+import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
+import { AREA_ROLE } from "../../../src/types/actions";
 import { FolderOpenDot } from "lucide-react";
 import { SpaceManager } from "../components/SpaceManager";
-import { useSpaceStore } from "../../../src/core/data";
+import { useSpaceStore } from "../../../src/store/spaceStore";
 
 export const SpaceManagerArea = () => {
     const { updateArea } = useKarmycStore.getState();

@@ -1,11 +1,11 @@
 import { useMemo, FC } from 'react';
-import { SpaceMenu } from '../../src/core/ui/SpaceMenu';
-import { LayoutMenu } from '../../src/core/ui/LayoutMenu';
-import { useSpace } from '../../src/spaces/useSpace';
+import { SpaceMenu } from '../../src/components/menus/SpaceMenu';
+import { LayoutMenu } from '../../src/components/menus/LayoutMenu';
+import { useSpace } from '../../src/hooks/useSpace';
 import { DemoArea } from './areas/demo-area';
 import { KarmycLogoArea } from './areas/karmyc-logo-area';
 import { KeyboardShortcutsArea } from './areas/keyboard-shortcuts-area';
-import { useToolsSlot } from '../../src/tools/components/ToolsSlot';
+import { useToolsSlot } from '../../src/components/ToolsSlot';
 import { HistoryArea } from './areas/history-area';
 import { DrawArea } from './areas/draw-area';
 import { SpaceManagerArea } from './areas/space-manager-area';

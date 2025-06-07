@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useKarmycStore, useSpace, useSpaceStore } from '../../../src';
+import { useKarmycStore } from '../../../src/store/areaStore';
+import { useSpace } from '../../../src/hooks';
+import { useSpaceStore } from '../../../src/store/spaceStore';
 
 interface DebugAreaProps {
     id: string;

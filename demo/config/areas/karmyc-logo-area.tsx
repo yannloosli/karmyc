@@ -1,9 +1,9 @@
-import { useKarmycStore } from "../../../src/core/data/areaStore";
-import { areaRegistry } from "../../../src/core/data/registries/areaRegistry";
-import { useRegisterActionHandler } from "../../../src/core/actions";
-import { useAreaKeyboardShortcuts } from "../../../src/core/plugins/keyboard/hooks/useAreaKeyboardShortcuts";
-import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
-import { AREA_ROLE } from "../../../src/core/types/actions";
+import { useKarmycStore } from "../../../src/store/areaStore";
+import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useRegisterActionHandler } from "../../../src/actions";
+import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
+import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
+import { AREA_ROLE } from "../../../src/types/actions";
 import { Link } from "lucide-react";
 import logoSvg from '../../assets/brand/karmyc_logo.svg';
 

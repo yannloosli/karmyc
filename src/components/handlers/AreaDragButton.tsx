@@ -1,0 +1,163 @@
+import { createElement, useRef, useState } from "react";
+import { AreaTypeValue } from "../../types/actions";
+import { useKarmycStore } from "../../store/areaStore";
+import { useContextMenuStore } from "../../store/contextMenuStore";
+import { TOOLBAR_HEIGHT } from "../../utils/constants";
+import { areaRegistry } from "../../store/registries/areaRegistry";
+import { useSpaceStore } from "../../store/spaceStore";
+import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
+import { CopyIcon, LockIcon, LockOpenIcon, XIcon } from "lucide-react";
+import { SwitchAreaTypeContextMenu } from '../SwitchAreatypeContextMenu';
+
+interface IAreaDragButton {
+    state: any;
+    type: AreaTypeValue;
+    id: string;
+    style?: React.CSSProperties;
+}
+
+export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
+    const [isDragging, setIsDragging] = useState(false);
+    const updateArea = useKarmycStore(state => state.updateArea);
+    const isLocked = useKarmycStore(state => state.getAreaById(id)?.isLocked || false);
+    const manageableAreas = useKarmycStore(state => state.options?.manageableAreas ?? true);
+
+    const {
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd
+    } = useAreaDragAndDrop({ type, id, state });
+
+    const openCustomContextMenu = useContextMenuStore((state) => state.openCustomContextMenu);
+
+    // Ref pour le bouton
+    const selectAreaButtonRef = useRef<HTMLDivElement>(null);
+    const openSelectArea = (e: React.MouseEvent) => {
+        if (!manageableAreas) return;
+        if (selectAreaButtonRef.current) {
+            const rect = selectAreaButtonRef.current.getBoundingClientRect();
+            openCustomContextMenu({
+                targetId: id,
+                position: { x: rect.left, y: rect.top },
+                component: (
+                    <SwitchAreaTypeContextMenu />
+                )
+            });
+        }
+    };
+
+    const area = useKarmycStore(state => state.getAreaById(id));
+    const space = useSpaceStore(state => state.getSpaceById(area?.spaceId || ''));
+
+    // Si FOLLOW, on prend la couleur du space du dernier LEAD sélectionné
+    let spaceColor = space?.sharedState?.color || '#0000ff';
+    if (area?.role === 'FOLLOW') {
+        const activeScreenId = useKarmycStore.getState().activeScreenId;
+        const lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
+        const allAreas = useKarmycStore.getState().screens[activeScreenId]?.areas.areas || {};
+        const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+        const leadSpaceId = leadArea?.spaceId;
+        if (leadSpaceId) {
+            const leadSpace = useSpaceStore.getState().spaces[leadSpaceId];
+            if (leadSpace && leadSpace.sharedState?.color) {
+                spaceColor = leadSpace.sharedState.color;
+            }
+        }
+    }
+
+    const handleDetach = (e: React.MouseEvent) => {
+        if (!manageableAreas) return;
+        e.stopPropagation();
+        useKarmycStore.getState().detachArea(id);
+    };
+
+    const handleClose = (e: React.MouseEvent) => {
+        if (!manageableAreas) return;
+        e.stopPropagation();
+        useKarmycStore.getState().removeArea(id);
+    };
+
+    return (
+        <div
+            className="select-area-button"
+            draggable={manageableAreas && !isLocked}
+            onDragStart={e => {
+                if (!manageableAreas) return;
+                setIsDragging(true);
+                handleDragStart(e);
+                // Désactiver complètement le bouton pendant le drag, de manière asynchrone
+                requestAnimationFrame(() => {
+                    if (selectAreaButtonRef.current) {
+                        selectAreaButtonRef.current.style.pointerEvents = 'none';
+                        selectAreaButtonRef.current.style.opacity = '0.5';
+                    }
+                });
+            }}
+            onDragOver={e => {
+                if (!manageableAreas) return;
+                handleDragOver(e);
+            }}
+            onDrop={e => {
+                if (!manageableAreas) return;
+                if (!isDragging) {
+                    handleDrop(e);
+                }
+            }}
+            onDragEnd={e => {
+                if (!manageableAreas) return;
+                setIsDragging(false);
+                selectAreaButtonRef.current!.style.pointerEvents = 'auto';
+                selectAreaButtonRef.current!.style.opacity = '1';
+                handleDragEnd(e);
+            }}
+            onContextMenu={e => { 
+                if (!manageableAreas) return;
+                e.preventDefault(); 
+                openSelectArea(e); 
+            }}
+            style={{
+                cursor: !manageableAreas ? 'default' : isLocked ? 'default' : isDragging ? 'grabbing' : 'grab',
+                '--space-color': spaceColor,
+                pointerEvents: 'auto',
+                height: TOOLBAR_HEIGHT + 'px',
+                ...style
+            } as React.CSSProperties}
+            ref={selectAreaButtonRef}
+        >
+            <div className="select-area-button__main">
+                {createElement(areaRegistry.getIcon(type), { className: 'select-area-button__icon', style: { color: spaceColor } })}
+                {areaRegistry.getDisplayName(type)}
+            </div>
+            <div className="select-area-button__action-icons">
+                {manageableAreas && !isLocked &&
+                    <>
+                        <button
+                            className="select-area-icons select-area-button__detach"
+                            onClick={handleDetach}>
+                            <CopyIcon />
+                        </button>
+                        <button
+                            className="select-area-icons select-area-button__close"
+                            onClick={handleClose}>
+                            <XIcon />
+                        </button>
+                    </>
+                }
+                {manageableAreas &&
+                    <button
+                        className={`select-area-icons select-area-button__lock-icon ${isLocked ? 'locked' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            updateArea({ id, isLocked: !isLocked });
+                        }}
+                    >
+                        {isLocked ? <LockIcon /> : <LockOpenIcon />}
+                    </button>
+                }
+            </div>
+        </div>
+    );
+};
+
+export default AreaDragButton;

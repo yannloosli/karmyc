@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { useKarmycStore } from "../../../src/core/data/areaStore";
-import { areaRegistry } from "../../../src/core/data/registries/areaRegistry";
-import { useRegisterActionHandler } from "../../../src/core/actions";
-import { useAreaKeyboardShortcuts } from "../../../src/core/plugins/keyboard/hooks/useAreaKeyboardShortcuts";
-import { useToolsSlot } from "../../../src/tools/components/ToolsSlot";
-import { EmptyAreaMessage } from "../../../src/areas/components/EmptyAreaMessage";
-import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
-import { AREA_ROLE } from "../../../src/core/types/actions";
+import { useKarmycStore } from "../../../src/store/areaStore";
+import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useRegisterActionHandler } from "../../../src/actions";
+import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
+import { useToolsSlot } from "../../../src/components/ToolsSlot";
+import { EmptyAreaMessage } from "../../../src/components/EmptyAreaMessage";
+import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
+import { AREA_ROLE } from "../../../src/types/actions";
 import { CircleSlash } from "lucide-react";
 
 export const DemoArea = () => {

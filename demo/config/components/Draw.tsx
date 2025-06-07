@@ -1,11 +1,13 @@
-import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
-import { AreaComponentProps, useSpace, useKarmycStore, SpaceSharedState, SpaceState, useSpaceStore, useToolsSlot } from '../../../src';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { shallow } from 'zustand/shallow';
-import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { useSpaceHistory } from '../../../src/spaces/hooks/useSpaceHistory';
-import { useRegisterActionHandler } from '../../../src/core/actions/handlers/useRegisterActionHandler';
-import { actionRegistry } from '../../../src/core/actions/handlers/actionRegistry';
+import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
+import { AreaComponentProps } from '../../../src/types/areaTypes';
+import { useSpace } from '../../../src/hooks';
+import { useKarmycStore } from '../../../src/store/areaStore';
+import { useSpaceStore, SpaceSharedState, SpaceState } from '../../../src/store/spaceStore';
+import { useToolsSlot } from '../../../src/components/ToolsSlot';
+import { useSpaceHistory } from '../../../src/hooks/useSpaceHistory';
+import { useRegisterActionHandler } from '../../../src/actions/handlers/useRegisterActionHandler';
+import { actionRegistry } from '../../../src/actions/handlers/actionRegistry';
 
 interface DrawingState { }
 

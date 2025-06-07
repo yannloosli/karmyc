@@ -1,7 +1,10 @@
 import { useMemo, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
-import { AreaComponentProps, useSpace, useKarmycStore, useSpaceStore } from '@gamesberry/karmyc-core';
+import { AreaComponentProps } from '../../../src/types/areaTypes';
+import { useSpace } from '../../../src/hooks/useSpace';
+import { useKarmycStore } from '../../../src/store/areaStore';
+import { useSpaceStore } from '../../../src/store/spaceStore';
 
 interface SpaceType {
     id: string;

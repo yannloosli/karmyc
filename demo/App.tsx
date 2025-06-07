@@ -1,7 +1,13 @@
 import * as React from 'react';
-import { Karmyc, KarmycProvider, useKarmyc, Tools, AREA_ROLE, TOOLBAR_HEIGHT } from '../src';
+import { AREA_ROLE } from '../src/types/actions';
+import { useKarmyc } from '../src/hooks/useKarmyc';
+import { KarmycProvider } from '../src/providers/KarmycProvider';
+import { Tools } from '../src/components/ToolsSlot';
+import { TOOLBAR_HEIGHT } from '../src/utils/constants';
+
 import '../style.css';
 import { AreaInitializer } from './config/AreaInitializer';
+import { Karmyc } from '../src/components/Karmyc';
 
 const App: React.FC = () => {
     const karmycConfig = {
@@ -17,7 +23,7 @@ const App: React.FC = () => {
                 id: 'default',
                 name: 'Layout par défaut',
                 config: {
-                    _id: 0,
+                    _id: 10,
                     rootId: 'root',
                     errors: [],
                     activeAreaId: 'area-1',
@@ -62,7 +68,7 @@ const App: React.FC = () => {
                 id: 'minimal',
                 name: 'Layout minimal',
                 config: {
-                    _id: 0,
+                    _id: 10,
                     rootId: 'root',
                     errors: [],
                     activeAreaId: 'area-1',

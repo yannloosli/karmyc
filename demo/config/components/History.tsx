@@ -1,9 +1,9 @@
-import { AreaComponentProps } from '../../../src';
-import { useSpace } from '../../../src/spaces/useSpace';
-import { useSpaceHistory } from '../../../src/spaces/hooks/useSpaceHistory';
+import { AreaComponentProps } from '../../../src/types/areaTypes';
+import { useSpace } from '../../../src/hooks/useSpace';
+import { useSpaceHistory } from '../../../src/hooks/useSpaceHistory';
 import { useCallback } from 'react';
 import { Clock, RotateCcw, RotateCw } from 'lucide-react';
-import { getActionDescription } from '../../../src/spaces/types';
+import { getActionDescription } from '../../../src/types/spaceTypes';
 
 interface HistoryState {}
 

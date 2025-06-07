@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useArea, useKarmycStore, AREA_ROLE, useSpace, useSpaceStore } from '../../../src';
+import { useEffect, useState } from 'react';
+import { useSpace } from '../../../src/hooks';
+import { useKarmycStore } from '../../../src/store/areaStore';
+import { useSpaceStore } from '../../../src/store/spaceStore';
 
 // Type pour l'état du composant
 interface ColorPickerAreaState {

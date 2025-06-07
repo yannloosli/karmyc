@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { useKarmycStore } from "../../../src/core/data/areaStore";
-import { areaRegistry } from "../../../src/core/data/registries/areaRegistry";
-import { useRegisterActionHandler } from "../../../src/core/actions";
-import { useToolsSlot } from "../../../src/tools/components/ToolsSlot";
-import { useRegisterAreaType } from "../../../src/areas/hooks/useRegisterAreaType";
-import { AREA_ROLE } from "../../../src/core/types/actions";
+import { useKarmycStore } from "../../../src/store/areaStore";
+import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useRegisterActionHandler } from "../../../src/actions";
+import { useToolsSlot } from "../../../src/components/ToolsSlot";
+import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
+import { AREA_ROLE } from "../../../src/types/actions";
 import { Keyboard } from "lucide-react";
-import KeyboardShortcutsViewer from "../../../src/core/ui/KeyboardShortcutsViewer";
+import KeyboardShortcutsViewer from "../../../src/components/KeyboardShortcutsViewer";
 
 export const KeyboardShortcutsArea = () => {
     const { updateArea } = useKarmycStore.getState();
