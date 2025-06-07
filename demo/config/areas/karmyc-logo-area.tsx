@@ -47,7 +47,7 @@ export const KarmycLogoArea = () => {
         'logo-karmyc-area',
         () => <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '8px', width: '100%', height: '100%' }}>
             <img
-                src="/assets/brand/karmyc_logo.svg"
+                src="../assets/brand/karmyc_logo.svg"
                 style={{ width: '75%' }}
             />
             <strong>
