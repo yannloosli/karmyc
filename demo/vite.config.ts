@@ -12,6 +12,16 @@ export default defineConfig({
       '@gamesberry/karmyc-core/assets': path.resolve(__dirname, '../assets'),
     },
   },
+  build: {
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: 'assets/[name][extname]',
+        chunkFileNames: 'assets/[name].js',
+        entryFileNames: 'assets/[name].js',
+      },
+    },
+  },
   server: {
     port: 3000,
     open: true,
