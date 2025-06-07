@@ -29,7 +29,7 @@ export const KarmycLogoArea = () => {
             modifierKeys: ['Control'],
             name: 'Toggle Logo Size',
             fn: (areaId: string) => {
-                console.log(`Toggling logo size for area ${areaId}`);
+                console.log(`Toggling logo size for area ${areaId} in Karmyc Core DEMO!!`);
                 // Implémentation du changement de taille
             }
         },
