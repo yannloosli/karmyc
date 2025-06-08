@@ -1,8 +1,8 @@
-<div align="center" style="display:flex;flex-direction:column;">
-  <img style="margin-bottom:-40px; font-size:100px;font-weight:bold" src="./demo/assets/brand/karmyc_logo.svg" alt="🔗Karmyc" />
-  <span style="font-size:30px;">core</h3>
-  <p style="font-size:12px;font-style:italic">A flexible and powerful layout management system for React applications.</p>
-</div>
+<p align="center">
+  <img style="width:50%;" src="./demo/assets/brand/karmyc_logo.svg" alt="🔗Karmyc" />
+</p>
+<p align="center"><strong>CORE</strong></p>
+<p align="center"><em>A flexible and powerful layout management system for React applications</em></p>
 
 ---
 [![npm version](https://img.shields.io/npm/v/@gamesberry/karmyc-core.svg)](https://www.npmjs.com/package/@gamesberry/karmyc-core)
