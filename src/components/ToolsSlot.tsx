@@ -3,6 +3,7 @@ import { ScreenSwitcher } from './ScreenSwitcher';
 import { useKarmycStore } from '../store/areaStore';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
+import { useSpaceStore } from '../store/spaceStore';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {
@@ -44,15 +45,15 @@ function notifyToolsRegistryChange() {
 // Hook d'enregistrement
 /**
  * Hook pour enregistrer dynamiquement des composants dans une barre Tools.
- * @param areaType Type d'area
+ * @param key ID de l'area ou type d'area
  * @param position Position de la barre
  */
 export function useToolsSlot(
-    areaType: string,
+    key: string,
     position: ToolsBarPosition,
 ) {
-    // Utiliser uniquement le type d'area et la position comme clé
-    const registryKey = `${areaType}:${position}`;
+    // Utiliser la clé (ID ou type) et la position comme clé de registre
+    const registryKey = `${key}:${position}`;
 
     // Enregistrer un composant dans la barre
     const registerComponent = useCallback(
@@ -116,14 +117,16 @@ function useToolsRegistrySubscription() {
 
 // Props du composant Tools
 interface ToolsProps {
-    areaType: string;
-    areaState: any;
+    areaId?: string;
+    areaType?: string;
+    areaState?: any;
     children: React.ReactNode;
     style?: React.CSSProperties;
     viewport?: Rect;
 }
 
 export const Tools: React.FC<ToolsProps> = ({
+    areaId,
     areaType = 'app',
     areaState = {},
     children,
@@ -134,11 +137,12 @@ export const Tools: React.FC<ToolsProps> = ({
         height: '100%'
     }
 }) => {
+    const key = areaId || areaType;
     useToolsRegistrySubscription();
-    const { getComponents: getMenuComponents } = useToolsSlot(areaType, 'top-outer');
-    const { getComponents: getStatusComponents } = useToolsSlot(areaType, 'bottom-outer');
-    const { getComponents: getToolbarTopInner } = useToolsSlot(areaType, 'top-inner');
-    const { getComponents: getToolbarBottomInner } = useToolsSlot(areaType, 'bottom-inner');
+    const { getComponents: getMenuComponents } = useToolsSlot(key, 'top-outer');
+    const { getComponents: getStatusComponents } = useToolsSlot(key, 'bottom-outer');
+    const { getComponents: getToolbarTopInner } = useToolsSlot(key, 'top-inner');
+    const { getComponents: getToolbarBottomInner } = useToolsSlot(key, 'bottom-inner');
 
     const menuComponents = getMenuComponents();
     const statusComponents = getStatusComponents();
@@ -149,12 +153,30 @@ export const Tools: React.FC<ToolsProps> = ({
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
     const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
 
+    // Récupérer l'ID de l'area et son espace associé
+    const currentArea = useKarmycStore(state => {
+        const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+        if (!activeScreenAreas) return undefined;
+        // L'activation de l'espace par focus ne s'applique qu'aux areas avec un ID
+        return areaId ? Object.values(activeScreenAreas.areas).find(area => area.id === areaId) : undefined;
+    });
+    const currentSpaceId = currentArea?.spaceId;
+
+    // Gestionnaire de focus pour activer l'espace
+    const handleFocus = useCallback(() => {
+        if (currentSpaceId) {
+            useSpaceStore.getState().setActiveSpace(currentSpaceId);
+        }
+    }, [currentSpaceId]);
+
     // Calculer les hauteurs des toolbars
     const hasTopOuter = menuComponents.length > 0;
     const hasBottomOuter = statusComponents.length > 0;
 
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
+
+    const isFullscreen = currentArea?.enableFullscreen ?? false;
 
     // Organiser par alignement et filtrer pour chaque position
     const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {
@@ -168,12 +190,21 @@ export const Tools: React.FC<ToolsProps> = ({
 
         if ((position.includes('inner')) || (!isDetached && position.includes('outer'))) {
             return (
-                <div className={`tools-bar tools-bar-${position}`} style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}>
+                <div 
+                    className={`tools-bar tools-bar-${position}`} 
+                    style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+                    onFocusCapture={handleFocus}
+                    tabIndex={0}
+                >
                     <div className="tools-bar-section tools-bar-section--left" style={{ display: leftComponents.length > 0 ? 'flex' : 'none'}}>
                         {leftComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
+                                <Component 
+                                    key={`${item.identifier.type}-${item.identifier.name}-${idx}`} 
+                                    areaState={areaState}
+                                    onFocusCapture={handleFocus}
+                                />
                             );
                         })}
                     </div>
@@ -181,7 +212,11 @@ export const Tools: React.FC<ToolsProps> = ({
                         {centerComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
+                                <Component 
+                                    key={`${item.identifier.type}-${item.identifier.name}-${idx}`} 
+                                    areaState={areaState}
+                                    onFocusCapture={handleFocus}
+                                />
                             );
                         })}
                     </div>
@@ -189,7 +224,11 @@ export const Tools: React.FC<ToolsProps> = ({
                         {rightComponents.map((item, idx) => {
                             const Component = item.component;
                             return (
-                                <Component key={`${item.identifier.type}-${item.identifier.name}-${idx}`} areaState={areaState} />
+                                <Component 
+                                    key={`${item.identifier.type}-${item.identifier.name}-${idx}`} 
+                                    areaState={areaState}
+                                    onFocusCapture={handleFocus}
+                                />
                             );
                         })}
                         {multiScreen && areaType === 'app' && position === 'bottom-outer' && <ScreenSwitcher />}
@@ -206,14 +245,17 @@ export const Tools: React.FC<ToolsProps> = ({
             style={{
                 top: viewport.top,
                 left: viewport.left,
-                width: viewport.width,
-                height: isDetached ? '100%' : `calc(${viewport.height})`,
-            }}>
+                //width: viewport.width,
+                height: isDetached || isFullscreen ? '100%' : `calc(${viewport.height})`,
+            }}
+            onFocusCapture={handleFocus}
+            tabIndex={0}
+        >
             {renderToolbar(menuComponents, 'top-outer')}
             <div
                 className="tools-content"
                 style={{
-                    height:isDetached ? '100%' : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${topOuterHeight}px - ${bottomOuterHeight}px)`,
+                    height:isDetached || isFullscreen ? `calc(100% - ${bottomOuterHeight}px)` : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${topOuterHeight}px - ${bottomOuterHeight}px)`,
                 }}
             >
                 {renderToolbar(toolbarTopInnerComponents, 'top-inner')}

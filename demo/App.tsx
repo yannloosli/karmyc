@@ -116,7 +116,7 @@ const App: React.FC = () => {
         <KarmycProvider options={config}>
             <AreaInitializer />
             <Tools areaType="apptitle">
-                <Tools>
+                <Tools areaType="app">
                     <Karmyc offset={TOOLBAR_HEIGHT * 2} />
                 </Tools>
             </Tools>

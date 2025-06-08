@@ -116,6 +116,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
         <AreaIdContext.Provider value={id}>
             {(!isDetached && !isChildOfStack) && <AreaDragButton id={id} state={state} type={type} />}
             <Tools
+                areaId={id}
                 areaType={type}
                 areaState={state}
                 viewport={viewport}
@@ -126,7 +127,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     className={`area ${raised ? 'area--raised' : ''}`}
                     style={{
                         width: '100%',
-                        height: isDetached ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
+                        height: isDetached || area?.enableFullscreen ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
                     }}
                     onClick={onActivate}
                 >
@@ -143,6 +144,11 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                         style={{
                             opacity: active ? 1 : 0.9,
                             height: '100%',
+                            width: area?.enableFullscreen ? '100vw' : '100%',
+                            //position: area?.enableFullscreen ? 'fixed' : 'relative',
+                            top: area?.enableFullscreen ? 0 : 'auto',
+                            left: area?.enableFullscreen ? 0 : 'auto',
+                            zIndex: area?.enableFullscreen ? 9999 : 'auto'
                         }}
                     >
                         <AreaErrorBoundary
@@ -153,8 +159,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                             viewport={{
                                 left: 0,
                                 top: 0,
-                                width: viewport.width,
-                                height: viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
+                                width: area?.enableFullscreen ? window.innerWidth : viewport.width,
+                                height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
                             }}
                         />
                     </div>

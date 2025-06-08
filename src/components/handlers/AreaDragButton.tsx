@@ -6,7 +6,7 @@ import { TOOLBAR_HEIGHT } from "../../utils/constants";
 import { areaRegistry } from "../../store/registries/areaRegistry";
 import { useSpaceStore } from "../../store/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
-import { CopyIcon, LockIcon, LockOpenIcon, XIcon } from "lucide-react";
+import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { SwitchAreaTypeContextMenu } from '../SwitchAreatypeContextMenu';
 
 interface IAreaDragButton {
@@ -21,6 +21,11 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const updateArea = useKarmycStore(state => state.updateArea);
     const isLocked = useKarmycStore(state => state.getAreaById(id)?.isLocked || false);
     const manageableAreas = useKarmycStore(state => state.options?.manageableAreas ?? true);
+    const area = useKarmycStore(state => state.getAreaById(id));
+    const isFullscreen = area?.enableFullscreen ?? false;
+    const supportsFullscreen = (areaRegistry as any)._supportFullscreenMap?.[type] ?? false;
+    const updateLayout = useKarmycStore(state => state.updateLayout);
+    const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
 
     const {
         handleDragStart,
@@ -33,6 +38,9 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
 
     // Ref pour le bouton
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);
+    // Ref pour l'élément parent qui contient l'area
+    const areaContainerRef = useRef<HTMLDivElement>(null);
+
     const openSelectArea = (e: React.MouseEvent) => {
         if (!manageableAreas) return;
         if (selectAreaButtonRef.current) {
@@ -47,7 +55,6 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         }
     };
 
-    const area = useKarmycStore(state => state.getAreaById(id));
     const space = useSpaceStore(state => state.getSpaceById(area?.spaceId || ''));
 
     // Si FOLLOW, on prend la couleur du space du dernier LEAD sélectionné
@@ -78,12 +85,84 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         useKarmycStore.getState().removeArea(id);
     };
 
+    const handleToggleFullscreen = (e: React.MouseEvent) => {
+        if (!manageableAreas) return;
+        e.stopPropagation();
+
+        // Trouver l'élément parent qui contient l'area
+        const areaContainer = document.querySelector(`[data-areaid="${id}"]`);
+        if (!areaContainer) return;
+
+        if (!isFullscreen) {
+            // Sauvegarder l'état actuel avant de passer en plein écran
+            const currentLayout = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.layout;
+            const currentRootId = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.rootId;
+            
+            // Mettre à jour l'area avec l'état précédent
+            updateArea({ 
+                id, 
+                enableFullscreen: true,
+                previousLayout: currentLayout,
+                previousRootId: currentRootId
+            });
+
+            // Passer en mode plein écran
+            if (areaContainer.requestFullscreen) {
+                areaContainer.requestFullscreen();
+            } else if ((areaContainer as any).webkitRequestFullscreen) {
+                (areaContainer as any).webkitRequestFullscreen();
+            } else if ((areaContainer as any).msRequestFullscreen) {
+                (areaContainer as any).msRequestFullscreen();
+            }
+
+            // Ajouter un écouteur pour la sortie du mode plein écran
+            const handleFullscreenChange = () => {
+                if (!document.fullscreenElement && 
+                    !(document as any).webkitFullscreenElement && 
+                    !(document as any).msFullscreenElement) {
+                    // Mettre à jour l'area
+                    updateArea({ 
+                        id, 
+                        enableFullscreen: false,
+                        previousLayout: undefined,
+                        previousRootId: undefined
+                    });
+                    // Nettoyer l'écouteur
+                    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+                    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+                    document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+                }
+            };
+
+            document.addEventListener('fullscreenchange', handleFullscreenChange);
+            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.addEventListener('msfullscreenchange', handleFullscreenChange);
+        } else {
+            // Sortir du mode plein écran
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if ((document as any).webkitExitFullscreen) {
+                (document as any).webkitExitFullscreen();
+            } else if ((document as any).msExitFullscreen) {
+                (document as any).msExitFullscreen();
+            }
+
+            // Mettre à jour l'area
+            updateArea({ 
+                id, 
+                enableFullscreen: false,
+                previousLayout: undefined,
+                previousRootId: undefined
+            });
+        }
+    };
+
     return (
         <div
             className="select-area-button"
-            draggable={manageableAreas && !isLocked}
+            draggable={manageableAreas && !isLocked && !isFullscreen}
             onDragStart={e => {
-                if (!manageableAreas) return;
+                if (!manageableAreas || isFullscreen) return;
                 setIsDragging(true);
                 handleDragStart(e);
                 // Désactiver complètement le bouton pendant le drag, de manière asynchrone
@@ -95,29 +174,29 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                 });
             }}
             onDragOver={e => {
-                if (!manageableAreas) return;
+                if (!manageableAreas || isFullscreen) return;
                 handleDragOver(e);
             }}
             onDrop={e => {
-                if (!manageableAreas) return;
+                if (!manageableAreas || isFullscreen) return;
                 if (!isDragging) {
                     handleDrop(e);
                 }
             }}
             onDragEnd={e => {
-                if (!manageableAreas) return;
+                if (!manageableAreas || isFullscreen) return;
                 setIsDragging(false);
                 selectAreaButtonRef.current!.style.pointerEvents = 'auto';
                 selectAreaButtonRef.current!.style.opacity = '1';
                 handleDragEnd(e);
             }}
             onContextMenu={e => { 
-                if (!manageableAreas) return;
+                if (!manageableAreas || isFullscreen) return;
                 e.preventDefault(); 
                 openSelectArea(e); 
             }}
             style={{
-                cursor: !manageableAreas ? 'default' : isLocked ? 'default' : isDragging ? 'grabbing' : 'grab',
+                cursor: !manageableAreas || isFullscreen ? 'default' : isLocked ? 'default' : isDragging ? 'grabbing' : 'grab',
                 '--space-color': spaceColor,
                 pointerEvents: 'auto',
                 height: TOOLBAR_HEIGHT + 'px',
@@ -145,15 +224,25 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                     </>
                 }
                 {manageableAreas &&
-                    <button
-                        className={`select-area-icons select-area-button__lock-icon ${isLocked ? 'locked' : ''}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            updateArea({ id, isLocked: !isLocked });
-                        }}
-                    >
-                        {isLocked ? <LockIcon /> : <LockOpenIcon />}
-                    </button>
+                    <>
+                        {supportsFullscreen && (
+                            <button
+                                className="select-area-icons select-area-button__fullscreen"
+                                onClick={handleToggleFullscreen}
+                            >
+                                {isFullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
+                            </button>
+                        )}
+                        <button
+                            className={`select-area-icons select-area-button__lock-icon ${isLocked ? 'locked' : ''}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateArea({ id, isLocked: !isLocked });
+                            }}
+                        >
+                            {isLocked ? <LockIcon /> : <LockOpenIcon />}
+                        </button>
+                    </>
                 }
             </div>
         </div>

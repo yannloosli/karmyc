@@ -20,8 +20,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     children,
     options = {}
 }) => {
-    console.log('KarmycProvider - options:', options);
-
     const isInitialLoad = useRef(true);
     const isUpdatingUrl = useRef(false);
     const lastActiveScreenId = useRef<string | null>(null);

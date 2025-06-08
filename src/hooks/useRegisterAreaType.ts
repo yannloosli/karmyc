@@ -15,6 +15,7 @@ export function useRegisterAreaType<T = any>(
         defaultSize?: { width: number, height: number };
         supportedActions?: string[];
         role?: AreaRole;
+        supportFullscreen?: boolean;
     }
 ): void {
     useEffect(() => {
@@ -40,25 +41,18 @@ export function useRegisterAreaType<T = any>(
 
             if (options.supportedActions) {
                 areaRegistry.registerSupportedActions(areaType, options.supportedActions);
-            } else {
-                // Default actions supported for each type
-                const defaultActions: Record<string, string[]> = {
-                    'text-note': ['edit', 'delete', 'move', 'resize'],
-                    'color-picker': ['pick', 'delete', 'move', 'resize'],
-                    'image-viewer': ['view', 'delete', 'move', 'resize'],
-                    'images-gallery': ['view', 'delete', 'move', 'resize', 'add']
-                };
-
-                if (defaultActions[areaType]) {
-                    areaRegistry.registerSupportedActions(areaType, defaultActions[areaType]);
-                } 
-            }
-
+            } 
             // Ajout du rôle dans le registre si fourni
             if (options.role) {
                 // fallback temporaire : stocker dans areaRegistry (sera utilisé plus tard)
                 (areaRegistry as any)._roleMap = (areaRegistry as any)._roleMap || {};
                 (areaRegistry as any)._roleMap[areaType] = options.role;
+            }
+
+            // Enregistrement de l'option supportFullscreen
+            if (options.supportFullscreen !== undefined) {
+                (areaRegistry as any)._supportFullscreenMap = (areaRegistry as any)._supportFullscreenMap || {};
+                (areaRegistry as any)._supportFullscreenMap[areaType] = options.supportFullscreen;
             }
         }
 
@@ -75,6 +69,7 @@ export function useRegisterAreaType<T = any>(
         options?.defaultSize,
         options?.supportedActions,
         options?.icon,
-        options?.role
+        options?.role,
+        options?.supportFullscreen
     ]);
 } 

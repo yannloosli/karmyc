@@ -37,7 +37,6 @@ export const LayoutMenu: React.FC = () => {
 
     // Mémoriser les presets pour éviter les re-renders inutiles
     const allPresets = useMemo(() => {
-        console.log('Computing all presets:', { builtInLayouts, userPresets });
         return [...builtInLayouts, ...userPresets];
     }, [builtInLayouts, userPresets]);
 

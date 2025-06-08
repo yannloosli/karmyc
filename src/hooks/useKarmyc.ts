@@ -22,8 +22,6 @@ interface IKarmycConfigWithLayouts {
  * Combined hook that provides both configuration and initialization for the Karmyc system.
  */
 export function useKarmyc(options: IKarmycOptions = {}): IKarmycConfigWithLayouts {
-    console.log('useKarmyc - input options:', options);
-
     const config = useMemo(() => {
         const config = {
             // Default values
@@ -41,7 +39,6 @@ export function useKarmyc(options: IKarmycOptions = {}): IKarmycConfigWithLayout
             }
         };
 
-        console.log('useKarmyc - computed config:', config);
         return config;
     }, [
         options.plugins,

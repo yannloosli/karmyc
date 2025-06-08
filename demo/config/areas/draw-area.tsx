@@ -31,7 +31,8 @@ export const DrawArea = () => {
             displayName: 'Simple draw',
             defaultSize: { width: 300, height: 200 },
             role: AREA_ROLE.LEAD,
-            icon: CircleSlash
+            icon: CircleSlash,
+            supportFullscreen: true
         }
     );
 

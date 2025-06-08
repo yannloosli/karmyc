@@ -22,6 +22,9 @@ export interface IArea<T extends AreaTypeValue = AreaTypeValue> {
     raised?: boolean;
     role?: AreaRole;
     isLocked?: boolean;
+    enableFullscreen?: boolean;
+    previousLayout?: { [key: string]: AreaLayout | AreaRowLayout };
+    previousRootId?: string | null;
 }
 
 export interface AreaLayout {
