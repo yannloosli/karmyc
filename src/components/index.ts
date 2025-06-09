@@ -6,7 +6,6 @@ export * from './Karmyc';
 export { AreaRowSeparators } from './AreaRowSeparators';
 export { AreaTabs } from './AreaTabs';
 export { AreaToOpenPreview } from './AreaToOpenPreview';
-export { EmptyAreaMessage } from './EmptyAreaMessage';
 export { JoinAreaPreview } from './JoinAreaPreview';
 export { DropZone } from './DropZone'; 
 export * from './ContextMenu';
