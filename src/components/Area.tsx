@@ -141,6 +141,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
 
                     <div
                         className={`area-main-content-wrapper ${type}`}
+                        data-areatype={type}
                         style={{
                             opacity: active ? 1 : 0.9,
                             height: '100%',

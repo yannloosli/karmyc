@@ -1,5 +1,6 @@
 import React from "react";
 import { AreaComponentProps } from "../types/areaTypes";
+import { useTranslation } from '../hooks/useTranslation';
 
 interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;
@@ -50,7 +51,7 @@ export class AreaErrorBoundary extends React.Component<Props, State> {
                         color: "#c53030",
                     }}
                 >
-                    <h3>Une erreur est survenue dans la zone</h3>
+                    <h3>{useTranslation().t('area.error.title', 'Une erreur est survenue dans la zone')}</h3>
                     <p>{this.state.error?.message}</p>
                 </div>
             );
@@ -58,13 +59,15 @@ export class AreaErrorBoundary extends React.Component<Props, State> {
 
         const Component = this.props.component;
         return (
-            <Component
-                id={this.props.areaId}
-                state={this.props.areaState}
-                type={this.props.type}
-                viewport={this.props.viewport}
-                Component={Component}
-            />
+            <div data-areatype={this.props.type}>
+                <Component
+                    id={this.props.areaId}
+                    state={this.props.areaState}
+                    type={this.props.type}
+                    viewport={this.props.viewport}
+                    Component={Component}
+                />
+            </div>
         );
     }
 } 

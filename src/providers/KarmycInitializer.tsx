@@ -8,9 +8,10 @@ import { IKarmycOptions } from '../types/karmyc';
 
 interface IKarmycInitializerProps {
     options?: IKarmycOptions;
+    children?: React.ReactNode;
 }
 
-export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {} }) => {
+export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {}, children }) => {
     const initialized = useRef(false);
     const { createArea } = useArea();
 
@@ -112,5 +113,5 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
         };
     }, []); // Keep dependencies empty to run only once
 
-    return null;
+    return <>{children}</>;
 }; 

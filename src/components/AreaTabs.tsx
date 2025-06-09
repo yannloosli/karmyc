@@ -3,6 +3,7 @@ import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { useKarmycStore } from '../store/areaStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
 import { useSpaceStore } from '../store/spaceStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface AreaTabsProps {
     rowId: string;
@@ -14,6 +15,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
     const updateLayout = useKarmycStore(state => state.updateLayout);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
     const activeAreaId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId);
+    const { t } = useTranslation();
 
     // État pour l'indicateur de position de dépôt
     const [dragIndicator, setDragIndicator] = useState<{ targetId: string | null, position: 'before' | 'after' | null }>({ targetId: null, position: null });
@@ -183,7 +185,19 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                         onDragEnd={handleTabDragEnd} // Ajouter le gestionnaire onDragEnd
                         data-areaid={id}
                     >
-                        <AreaDragButton id={id} state={area.state} type={area.type} />
+                        <span className="area-tab-label">
+                            {t(`area.tab.${area.type}`, `Area: ${area.type}`)}
+                        </span>
+                        <button
+                            className="area-tab-close"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleTabClick(id);
+                            }}
+                            title={t('area.tab.close', 'Close')}
+                        >
+                            ×
+                        </button>
                     </div>
                 );
             })}

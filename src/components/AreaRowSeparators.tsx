@@ -5,6 +5,7 @@ import { AreaRowLayout } from "../types/areaTypes";
 import { Rect } from "../types";
 import { handleDragAreaResize } from "./handlers/areaDragResize";
 import { Ellipsis, EllipsisVertical } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 
 interface ResizePreviewState {
@@ -28,6 +29,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
     const resizableAreas = useKarmycStore(state => state.options?.resizableAreas ?? true);
+    const { t } = useTranslation();
 
     // Do not render separators for stacked rows or if resizableAreas is false
     if (row.orientation === 'stack') {
@@ -115,6 +117,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
                     cursor: resizableAreas ? undefined : 'default'
                 }}
                 onMouseDown={resizableAreas ? handleMouseDown : undefined}
+                title={t('area.separator.resize', 'Resize')}
             >
                 {resizableAreas && (
                     !horizontal ?

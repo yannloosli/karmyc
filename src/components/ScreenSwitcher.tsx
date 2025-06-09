@@ -3,8 +3,10 @@ import { useKarmycStore } from '../store/areaStore';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 import { PlusIcon, CopyIcon, AppWindow, ExternalLinkIcon, TrashIcon } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const ScreenSwitcher: React.FC = () => {
+    const { t } = useTranslation();
     // Récupérer les données nécessaires du store
     const screens = useKarmycStore((state) => state.screens);
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
@@ -61,39 +63,39 @@ export const ScreenSwitcher: React.FC = () => {
             items: [
                 {
                     id: 'add',
-                    label: 'Add',
+                    label: t('screen.menu.add', 'Add'),
                     icon: PlusIcon,
                     actionId: 'add-screen',
                     metadata: {}
                 },
                 {
                     id: 'duplicate',
-                    label: 'Duplicate',
+                    label: t('screen.menu.duplicate', 'Duplicate'),
                     icon: CopyIcon,
                     actionId: 'duplicate-screen',
                     metadata: { screenId: id }
                 },
                 {
                     id: 'open-new-window',
-                    label: 'Open in new window',
+                    label: t('screen.menu.openNewWindow', 'Open in new window'),
                     icon: AppWindow,
                     actionId: 'open-new-window',
                     metadata: { screenId: id }
                 },
                 {
                     id: 'open-new-tab',
-                    label: 'Open in new tab',
+                    label: t('screen.menu.openNewTab', 'Open in new tab'),
                     icon: ExternalLinkIcon,
                     actionId: 'open-new-tab',
                     metadata: { screenId: id }
                 },
                 {
                     id: 'delete',   
-                    label: 'Delete',
+                    label: t('screen.menu.delete', 'Delete'),
                     icon: TrashIcon,
                     actionId: 'delete-screen',
                     metadata: { screenId: id },
-                    disabled: Object.keys(screens).length <= 1 // Désactiver si c'est le dernier écran
+                    disabled: Object.keys(screens).length <= 1
                 }
             ],
             targetId: id

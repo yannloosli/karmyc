@@ -1,8 +1,10 @@
 import React from 'react';
 import { keyboardShortcutRegistry } from '../store/registries/keyboardShortcutRegistry';
 import { KeyboardShortcut } from '../store/registries/keyboardShortcutRegistry';
+import { useTranslation } from '../hooks/useTranslation';
 
 const KeyboardShortcutsViewer: React.FC = () => {
+    const { t } = useTranslation();
     const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
     
     // Séparer les raccourcis globaux et par type d'aire
@@ -33,7 +35,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                     paddingBottom: '10px',
                     marginBottom: '15px'
                 }}>
-                    Raccourcis Globaux
+                    {t('shortcuts.global.title', 'Raccourcis Globaux')}
                 </h3>
                 <div style={{ display: 'grid', gap: '5px' }}>
                     {globalShortcuts.map((shortcut, index) => (
@@ -44,7 +46,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                             backgroundColor: 'rgba(255,255,255,0.1)',
                             borderRadius: '4px'
                         }}>
-                            <span>{shortcut.name}</span>
+                            <span>{t(`shortcuts.${shortcut.name}`, shortcut.name)}</span>
                             <span style={{ 
                                 backgroundColor: 'rgba(255,255,255,0.2)',
                                 padding: '2px 8px',
@@ -66,7 +68,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                         paddingBottom: '10px',
                         marginBottom: '15px'
                     }}>
-                        {areaType}
+                        {t(`shortcuts.area.${areaType}`, areaType)}
                     </h3>
                     <div style={{ display: 'grid', gap: '10px' }}>
                         {shortcuts.map((shortcut, index) => (
@@ -77,7 +79,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                                 backgroundColor: 'rgba(255,255,255,0.1)',
                                 borderRadius: '4px'
                             }}>
-                                <span>{shortcut.name}</span>
+                                <span>{t(`shortcuts.${shortcut.name}`, shortcut.name)}</span>
                                 <span style={{ 
                                     backgroundColor: 'rgba(255,255,255,0.2)',
                                     padding: '2px 8px',

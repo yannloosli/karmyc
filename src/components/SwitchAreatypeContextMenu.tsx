@@ -4,11 +4,16 @@ import { AreaTypeValue, AREA_ROLE } from '../types/actions';
 import { ControlledMenu } from '@szhsin/react-menu';
 import { useContextMenuStore } from '../store/contextMenuStore';
 import { useSpaceStore } from '../store/spaceStore';
+import { useContextMenu } from '../hooks/useContextMenu';
+import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Récupère la map des rôles
 const getRoleMap = () => (areaRegistry as any)._roleMap || {};
 
 export const SwitchAreaTypeContextMenu: React.FC = () => {
+    const { t } = useTranslation();
+    const { open } = useContextMenu();
     const isVisible = useContextMenuStore((state) => state.isVisible && state.menuType === 'custom');
     const position = useContextMenuStore((state) => state.position);
     const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
@@ -21,9 +26,9 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
 
     // Regroupe les types par rôle
     const columns = [
-        { role: AREA_ROLE.LEAD, title: 'LEAD', items: [] as string[] },
-        { role: AREA_ROLE.FOLLOW, title: 'FOLLOW', items: [] as string[] },
-        { role: AREA_ROLE.SELF, title: 'SELF', items: [] as string[] },
+        { role: AREA_ROLE.LEAD, title: t('area.role.lead', 'LEAD'), items: [] as string[] },
+        { role: AREA_ROLE.FOLLOW, title: t('area.role.follow', 'FOLLOW'), items: [] as string[] },
+        { role: AREA_ROLE.SELF, title: t('area.role.self', 'SELF'), items: [] as string[] },
     ];
     registeredTypes.forEach(type => {
         const role = roleMap[type] || AREA_ROLE.SELF;
@@ -39,6 +44,30 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
     const handleSetSpace = (spaceId: string) => {
         useKarmycStore.getState().updateArea({ id: targetId, spaceId });
         if (closeContextMenu) closeContextMenu();
+    };
+
+    useRegisterActionHandler('switch-area-type', (params) => {
+        if (params?.areaId && params?.newType) {
+            // Logique de changement de type d'aire
+            console.log(t('area.switch.log', `Switching area ${params.areaId} to type ${params.newType}`));
+        }
+    });
+
+    const handleContextMenu = (e: React.MouseEvent, areaId: string) => {
+        e.preventDefault();
+        const areaTypes = Array.from(areaRegistry.getRegisteredTypes());
+        
+        open({
+            position: { x: e.clientX, y: e.clientY },
+            menuClassName: 'switch-area-type-menu',
+            items: areaTypes.map((type: string) => ({
+                id: `switch-to-${type}`,
+                label: t(`area.type.${type}`, type),
+                actionId: 'switch-area-type',
+                metadata: { areaId, newType: type }
+            })),
+            targetId: areaId
+        });
     };
 
     return (
@@ -63,13 +92,13 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
                                 onMouseDown={e => e.preventDefault()}
                             >
                                 <Icon style={{ width: 16, height: 16 }} />
-                                {areaRegistry.getDisplayName(type)}
+                                {t(`area.type.${type}`, areaRegistry.getDisplayName(type))}
                             </div>
                         )
                     })}
                     {col.role === AREA_ROLE.LEAD && (
                         <>
-                            <div style={{ padding: '4px 0 16px', marginTop: 16, marginBottom: 8, textAlign: 'left', borderBottom: '2px ridge #444', paddingBottom: 4 }}>SPACES</div>
+                            <div style={{ padding: '4px 0 16px', marginTop: 16, marginBottom: 8, textAlign: 'left', borderBottom: '2px ridge #444', paddingBottom: 4 }}>{t('area.spaces.title', 'SPACES')}</div>
                             {Object.entries(spaces).map(([spaceId, space]) => (
                                 <div
                                     key={spaceId}
@@ -92,7 +121,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
                                         borderRadius: '50%', 
                                         backgroundColor: space.sharedState?.color || '#666' 
                                     }} />
-                                    {space.name}
+                                    {t(`space.${spaceId}.name`, space.name)}
                                 </div>
                             ))}
                         </>

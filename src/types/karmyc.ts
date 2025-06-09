@@ -61,6 +61,13 @@ export interface IKarmycOptions {
     allowStackMixedRoles?: boolean;
     builtInLayouts?: LayoutPreset[];
     initialLayout?: string;
+    /**
+     * Fonction de traduction personnalisée
+     * @param key - Clé de traduction
+     * @param fallback - Texte par défaut si la traduction n'est pas trouvée
+     * @returns La traduction ou le texte par défaut
+     */
+    t?: (key: string, fallback: string) => string;
 }
 
 export interface IKarmycProviderProps {

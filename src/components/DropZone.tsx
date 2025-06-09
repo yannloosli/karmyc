@@ -5,6 +5,7 @@ import { PlaceArea } from "../utils/areaUtils";
 import { useKarmycStore } from "../store/areaStore";
 import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../utils/constants";
+import { useTranslation } from '../hooks/useTranslation';
 
 interface DropZoneProps {
     areaToOpen: AreaToOpen;
@@ -19,6 +20,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
 }) => {
     const setViewports = useKarmycStore(state => state.setViewports);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
+    const { t } = useTranslation();
     
     const {
         handleDragOver,
@@ -72,29 +74,30 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
     }
 
     return (
-        <>
-            <div
-                className="area-to-open-overlay"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-            >
-                {areaToOpenTargetViewport && (
-                    <svg
-                        width={areaToOpenTargetViewport.width}
-                        height={areaToOpenTargetViewport.height}
-                        className="area-to-open-overlay__placement"
-                        style={{
-                            left: areaToOpenTargetViewport.left,
-                            top: areaToOpenTargetViewport.top,
-                        }}
-                    >
-                        {placementLinesMemo.lines.map(([p0, p1], i) => (
-                            <line key={i} x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} />
-                        ))}
-                        <path d={pathData} />
-                    </svg>
-                )}
+        <div
+            className={`drop-zone ${areaToOpenTargetViewport ? 'active' : ''}`}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
+            <div className="drop-zone-content">
+                {t('dropzone.message', 'Drop here')}
             </div>
-        </>
+            {areaToOpenTargetViewport && (
+                <svg
+                    width={areaToOpenTargetViewport.width}
+                    height={areaToOpenTargetViewport.height}
+                    className="area-to-open-overlay__placement"
+                    style={{
+                        left: areaToOpenTargetViewport.left,
+                        top: areaToOpenTargetViewport.top,
+                    }}
+                >
+                    {placementLinesMemo.lines.map(([p0, p1], i) => (
+                        <line key={i} x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} />
+                    ))}
+                    <path d={pathData} />
+                </svg>
+            )}
+        </div>
     );
 }); 

@@ -3,6 +3,7 @@ import { AreaComponent } from "./Area";
 import { areaRegistry } from "../store/registries/areaRegistry";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
+import { useTranslation } from '../hooks/useTranslation';
 
 interface AreaPreviewProps {
     areaToOpen: AreaToOpen;
@@ -10,6 +11,7 @@ interface AreaPreviewProps {
 }
 
 export const AreaPreview: React.FC<AreaPreviewProps> = React.memo(({ areaToOpen, dimensions }) => {
+    const { t } = useTranslation();
     const Component = areaRegistry.getComponent(areaToOpen.area.type);
     if (!Component) {
         return null;
@@ -38,6 +40,9 @@ export const AreaPreview: React.FC<AreaPreviewProps> = React.memo(({ areaToOpen,
                 }}
                 setResizePreview={() => { }}
             />
+            <div className="area-preview-content">
+                {t(`area.preview.${areaToOpen.area.type}`, `Preview of ${areaToOpen.area.type}`)}
+            </div>
         </div>
     );
 }); 

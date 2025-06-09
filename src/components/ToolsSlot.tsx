@@ -4,6 +4,7 @@ import { useKarmycStore } from '../store/areaStore';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
 import { useSpaceStore } from '../store/spaceStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Type pour identifier un composant de façon unique
 export type ComponentIdentifier = {
@@ -137,6 +138,7 @@ export const Tools: React.FC<ToolsProps> = ({
         height: '100%'
     }
 }) => {
+    const { t } = useTranslation();
     const key = areaId || areaType;
     useToolsRegistrySubscription();
     const { getComponents: getMenuComponents } = useToolsSlot(key, 'top-outer');

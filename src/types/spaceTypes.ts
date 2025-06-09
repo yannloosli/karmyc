@@ -1,4 +1,5 @@
 import { Action, ActionPriority, IActionPlugin } from '../types/actions';
+import { useTranslation } from '../hooks/useTranslation';
 
 /**
  * Liste des types d'actions qui doivent être enregistrés dans l'historique
@@ -57,37 +58,39 @@ export const historyPlugin: IActionPlugin = {
  * Utilisé pour afficher des messages dans l'UI d'historique
  */
 export function getActionDescription(type: string, payload: any): string {
+    const { t } = useTranslation();
+    
     switch (type) {
     case 'area/addArea':
-        return `Ajout d'une zone ${payload.type || ''}`;
+        return t('action.area.add', `Ajout d'une zone ${payload.type || ''}`);
     case 'area/removeArea':
-        return `Suppression d'une zone`;
+        return t('action.area.remove', 'Suppression d\'une zone');
     case 'area/updateArea':
-        return `Mise à jour d'une zone`;
+        return t('action.area.update', 'Mise à jour d\'une zone');
     case 'area/moveArea':
-        return `Déplacement d'une zone`;
+        return t('action.area.move', 'Déplacement d\'une zone');
     case 'area/resizeArea':
-        return `Redimensionnement d'une zone`;
+        return t('action.area.resize', 'Redimensionnement d\'une zone');
     case 'composition/addElement':
-        return `Ajout d'un élément ${payload.elementType || ''}`;
+        return t('action.composition.add', `Ajout d'un élément ${payload.elementType || ''}`);
     case 'composition/removeElement':
-        return `Suppression d'un élément`;
+        return t('action.composition.remove', 'Suppression d\'un élément');
     case 'composition/updateElement':
-        return `Mise à jour d'un élément`;
+        return t('action.composition.update', 'Mise à jour d\'un élément');
     // Actions de dessin
     case 'draw/addLine':
-        return `Ajout d'une ligne`;
+        return t('action.draw.addLine', 'Ajout d\'une ligne');
     case 'draw/updateLine':
-        return `Modification d'une ligne`;
+        return t('action.draw.updateLine', 'Modification d\'une ligne');
     case 'draw/removeLine':
-        return `Suppression d'une ligne`;
+        return t('action.draw.removeLine', 'Suppression d\'une ligne');
     case 'draw/updateStrokeWidth':
-        return `Modification de l'épaisseur du trait : ${payload.oldValue} → ${payload.newValue}`;
+        return t('action.draw.updateStrokeWidth', `Modification de l'épaisseur du trait : ${payload.oldValue} → ${payload.newValue}`);
     case 'draw/updateColor':
-        return `Modification de la couleur : ${payload.oldValue} → ${payload.newValue}`;
+        return t('action.draw.updateColor', `Modification de la couleur : ${payload.oldValue} → ${payload.newValue}`);
     case 'draw/clearCanvas':
-        return `Effacement du dessin`;
+        return t('action.draw.clearCanvas', 'Effacement du dessin');
     default:
-        return `Action ${type}`;
+        return t('action.unknown', `Action ${type}`);
     }
 } 

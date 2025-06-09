@@ -4,14 +4,17 @@ import { ControlledMenu, MenuItem, SubMenu } from '@szhsin/react-menu';
 import { useContextMenuStore } from '../store/contextMenuStore';
 import { actionRegistry } from '../actions/handlers/actionRegistry';
 import { ContextMenuItem } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 
 // Fonction utilitaire récursive pour générer les items et sous-menus
 function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: string, metadata?: Record<string, any>, option?: ContextMenuItem) => void) {
+  const { t } = useTranslation();
+  
   return items.map((item) => {
     if (item.children && item.children.length > 0) {
       return (
-        <SubMenu key={item.id} label={item.label} disabled={item.disabled}>
+        <SubMenu key={item.id} label={t(`menu.${item.id}.label`, item.label)} disabled={item.disabled}>
           {renderMenuItems(item.children, handleAction)}
         </SubMenu>
       );
@@ -27,7 +30,7 @@ function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: stri
         onClick={() => handleAction(item.actionId, item.metadata, item)}
       >
         {item.icon && React.createElement(item.icon)}
-        {item.label}
+        {t(`menu.${item.id}.label`, item.label)}
       </MenuItem>
     );
   });

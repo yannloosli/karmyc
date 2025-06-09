@@ -1,12 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, createContext } from 'react';
 import { useKarmycStore, initializeKarmycStore } from '../store/areaStore';
-import { IKarmycProviderProps } from '../types/karmyc';
+import { IKarmycProviderProps, IKarmycOptions } from '../types/karmyc';
 import { KarmycInitializer } from './KarmycInitializer';
 import { keyboardShortcutRegistry } from '../store/registries/keyboardShortcutRegistry';
 import { checkShouldPreventDefault, ModifierKey } from '../utils/keyboard';
 
 import '@szhsin/react-menu/dist/index.css';
 import '@szhsin/react-menu/dist/transitions/zoom.css';
+
+interface KarmycContextType {
+    options: IKarmycOptions;
+}
+
+export const KarmycContext = createContext<KarmycContextType>({ options: {} });
 
 /**
  * Main component that provides the global context for the layout system
@@ -260,9 +266,10 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     }, []);
 
     return (
-        <>
-            <KarmycInitializer options={options} />
-            {children}
-        </>
+        <KarmycContext.Provider value={{ options }}>
+            <KarmycInitializer options={options}>
+                {children}
+            </KarmycInitializer>
+        </KarmycContext.Provider>
     );
 }; 
