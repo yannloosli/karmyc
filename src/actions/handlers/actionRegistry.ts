@@ -10,7 +10,7 @@ import {
 // Definition of action handler type
 type ActionHandler = (params: any) => void;
 
-// Interface pour les métadonnées du menu contextuel
+// Interface for context menu metadata
 interface ActionMetadata {
     menuType?: string;
     label?: string;
@@ -183,5 +183,5 @@ class ActionRegistry implements IActionRegistry {
 // Export une instance singleton
 export const actionRegistry = new ActionRegistry();
 
-// Export la classe pour permettre des instances personnalisées
+// Export the class to allow custom instances
 export { ActionRegistry };

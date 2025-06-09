@@ -4,6 +4,7 @@ import { useSpaceHistory } from '../../../src/hooks/useSpaceHistory';
 import { useCallback } from 'react';
 import { Clock, RotateCcw, RotateCw } from 'lucide-react';
 import { getActionDescription } from '../../../src/types/spaceTypes';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 interface HistoryState {}
 
@@ -11,6 +12,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
     id,
     viewport
 }) => {
+    const { t } = useTranslation();
     const { activeSpaceId } = useSpace();
     const { 
         pastDiffs, 
@@ -46,12 +48,13 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
             }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Clock size={20} />
-                    Historique
+                    {t('history.title', 'Historique')}
                 </h3>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <button 
                         onClick={undo} 
                         disabled={!canUndo}
+                        title={t('history.undo', 'Annuler la dernière action')}
                         style={{
                             padding: '4px 8px',
                             background: canUndo ? '#333' : '#222',
@@ -65,11 +68,11 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                         }}
                     >
                         <RotateCcw size={16} />
-                        Annuler
                     </button>
                     <button 
                         onClick={redo} 
                         disabled={!canRedo}
+                        title={t('history.redo', 'Rétablir la dernière action annulée')}
                         style={{
                             padding: '4px 8px',
                             background: canRedo ? '#333' : '#222',
@@ -83,7 +86,6 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                         }}
                     >
                         <RotateCw size={16} />
-                        Rétablir
                     </button>
                 </div>
             </div>
@@ -95,10 +97,10 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                 flexDirection: 'column',
                 gap: '8px'
             }}>
-                {/* Historique futur (en haut) */}
+                {/* Future history (top) */}
                 {futureDiffs.length > 0 && (
                     <div style={{ marginBottom: '16px' }}>
-                        <h4 style={{ color: '#666', margin: '0 0 8px 0' }}>Actions futures</h4>
+                        <h4 style={{ color: '#666', margin: '0 0 8px 0' }}>{t('history.futureActions', 'Actions futures')}</h4>
                         {futureDiffs.map((diff, index) => (
                             <div
                                 key={`future-${diff.timestamp}`}
@@ -111,14 +113,14 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                             >
                                 <div style={{ color: '#888' }}>{formatTimestamp(diff.timestamp)}</div>
                                 <div style={{ marginTop: '4px' }}>
-                                    {getActionDescription(diff.actionType, diff.payload)}
+                                    {getActionDescription(diff.actionType, {})}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* Historique passé (en bas) */}
+                {/* Past history (bottom) */}
                 {pastDiffs.length > 0 ? (
                     pastDiffs.map((diff, index) => (
                         <div
@@ -139,10 +141,11 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                             onClick={() => {
                                 // On pourrait implémenter un "jump to" ici
                             }}
+                            title={t('history.jumpTo', 'Aller à cette action')}
                         >
                             <div style={{ color: '#888' }}>{formatTimestamp(diff.timestamp)}</div>
                             <div style={{ marginTop: '4px' }}>
-                                {getActionDescription(diff.actionType, diff.payload)}
+                                {getActionDescription(diff.actionType, {})}
                             </div>
                         </div>
                     ))
@@ -154,7 +157,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                         background: '#222',
                         borderRadius: '4px'
                     }}>
-                        Aucune action dans l'historique
+                        {t('history.empty', 'Aucune action dans l\'historique')}
                     </div>
                 )}
             </div>

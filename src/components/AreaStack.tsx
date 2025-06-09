@@ -1,9 +1,10 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './Area';
 import { areaRegistry } from '../store/registries/areaRegistry';
 import { ResizePreviewState } from '../types/areaTypes';
+import { TOOLBAR_HEIGHT } from '../utils/constants';
 
 interface AreaStackProps {
     id: string;
@@ -16,13 +17,25 @@ interface AreaStackProps {
 export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, areas, viewport, setResizePreview }) => {
     const activeAreaId = layout.activeTabId || layout.areas[0]?.id;
     const activeArea = activeAreaId ? areas[activeAreaId] : null;
+    const [isComponentReady, setIsComponentReady] = useState(false);
 
-    if (!activeArea) {
-        return null;
-    }
+    useEffect(() => {
+        if (activeArea?.type) {
+            const checkComponent = () => {
+                const component = areaRegistry.getComponent(activeArea.type);
+                if (component) {
+                    setIsComponentReady(true);
+                } else {
+                    // Si le composant n'est pas encore disponible, on réessaie après un court délai
+                    setTimeout(checkComponent, 25);
+                }
+            };
+            checkComponent();
+        }
+    }, [activeArea?.type]);
 
-    const Component = areaRegistry.getComponent(activeArea.type);
-    if (!Component) {
+    const Component = activeArea?.type ? areaRegistry.getComponent(activeArea.type) : null;
+    if (!Component || !isComponentReady) {
         return null;
     }
 
@@ -33,7 +46,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                 left: viewport.left,
                 top: viewport.top,
                 width: viewport.width,
-                height: viewport.height
+                height: viewport.height + TOOLBAR_HEIGHT
             }}
             data-areaid={id}
         >
@@ -47,8 +60,8 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                     isChildOfStack={true}
                     id={activeAreaId}
                     Component={Component}
-                    state={activeArea.state}
-                    type={activeArea.type}
+                    state={activeArea?.state}
+                    type={activeArea?.type || ''}
                     viewport={{
                         left: 0,
                         top: 0,
@@ -56,7 +69,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                         height: viewport.height
                     }}
                     setResizePreview={setResizePreview}
-                    raised={!!activeArea.raised}
+                    raised={!!activeArea?.raised}
                 />
             </div>
         </div>

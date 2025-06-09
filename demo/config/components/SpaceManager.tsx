@@ -5,6 +5,8 @@ import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks/useSpace';
 import { useKarmycStore } from '../../../src/store/areaStore';
 import { useSpaceStore } from '../../../src/store/spaceStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
+import { Plus, Trash2, Settings } from 'lucide-react';
 
 interface SpaceType {
     id: string;
@@ -48,6 +50,7 @@ interface AreasMap { [key: string]: AreaType }
 export const SpaceManager: React.FC<AreaComponentProps> = ({
     viewport
 }) => {
+    const { t } = useTranslation();
     // Get actions and activeId from the hook
     const { activeSpaceId, createSpace, deleteSpace, setActive, updateSharedState, pilotMode, setPilotMode } = useSpace();
 
@@ -148,23 +151,28 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                         <span>Pilot mode:</span>
                         <button
                             onClick={() => setPilotMode(pilotMode === 'MANUAL' ? 'AUTO' : 'MANUAL')}
+                            title={t('space.pilotMode', 'Change pilot mode')}
                             style={{
                                 padding: '0.25rem 0.5rem',
                                 borderRadius: '4px',
                                 border: '1px solid #ccc',
                                 background: pilotMode === 'MANUAL' ? '#1890ff' : 'white',
                                 color: pilotMode === 'MANUAL' ? 'white' : 'black',
-                                cursor: 'pointer'
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
                             }}
                         >
-                            {pilotMode === 'MANUAL' ? 'Manuel' : 'Automatique'}
+                            <Settings size={16} />
+                            {pilotMode === 'MANUAL' ? 'Manual' : 'Automatic'}
                         </button>
                     </div>
                 </div>
 
                 {spacesData.length === 0 && (
                     <p style={{ color: '#999', fontStyle: 'italic' }}>
-                        No space created. Create your first space below.
+                        {t('space.empty', 'No space created. Create your first space below.')}
                     </p>
                 )}
 
@@ -184,6 +192,7 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                             setActive(spaceId);
                             setPilotMode('MANUAL');
                         }}
+                        title={t('space.select', `Select space ${space.name}`)}
                     >
                         <div style={{
                             display: 'flex',
@@ -197,6 +206,7 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                                     type="color"
                                     value={space.sharedState.color || '#1890ff'}
                                     onChange={(e) => handleColorChange(spaceId, e.target.value)}
+                                    title={t('space.color', 'Change space color')}
                                     style={{
                                         height: '26px',
                                         width: '40px',
@@ -209,30 +219,34 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (window.confirm(`Supprimer l'espace "${space.name}" ?`)) {
+                                        if (window.confirm(t('space.deleteConfirm', `Do you really want to delete the space "${space.name}"?`))) {
                                             deleteSpace(spaceId);
                                         }
                                     }}
+                                    title={t('space.delete', 'Delete space')}
                                     style={{
                                         padding: '0.25rem 0.5rem',
                                         borderRadius: '4px',
                                         border: 'none',
                                         background: '#ff4d4f',
                                         color: 'white',
-                                        cursor: 'pointer'
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
                                     }}
                                 >
-                                    Delete
+                                    <Trash2 size={16} />
                                 </button>
                             </div>
                         </div>
 
                         <div style={{ fontSize: '0.9rem', color: '#666' }}>
                             {areasCount === 0 ? (
-                                <span style={{ fontStyle: 'italic' }}>No area in this space</span>
+                                <span style={{ fontStyle: 'italic' }}>{t('space.noAreas', 'No area in this space')}</span>
                             ) : (
                                 <>
-                                    <b>{areasCount}</b> area{areasCount > 1 ? 's' : ''} in this space
+                                    <b>{areasCount}</b> {t('space.areasCount', `area${areasCount > 1 ? 's' : ''} in this space`)}
                                 </>
                             )}
                         </div>
@@ -247,42 +261,45 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                         type="text"
                         value={newSpaceName}
                         onChange={(e) => setNewSpaceName(e.target.value)}
-                        placeholder="Space name"
+                        placeholder={t('space.namePlaceholder', 'Space name')}
+                        title={t('space.nameInput', 'Enter the name of the new space')}
                         style={{
                             padding: '0.5rem',
-                            borderRadius: '4px',
                             border: '1px solid #ccc',
-                            flex: 1
+                            borderRadius: '4px',
+                            marginRight: '0.5rem'
                         }}
                     />
-
                     <input
                         type="color"
                         value={newColor}
                         onChange={(e) => setNewColor(e.target.value)}
+                        title={t('space.colorInput', 'Choose the color of the new space')}
                         style={{
-                            height: '38px',
-                            width: '50px',
+                            height: '26px',
+                            width: '40px',
                             padding: '0',
                             border: '1px solid #ccc',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
+                            marginRight: '0.5rem'
                         }}
                     />
-
                     <button
                         onClick={handleCreateSpace}
-                        disabled={!newSpaceName.trim()}
+                        title={t('space.create', 'Create new space')}
                         style={{
                             padding: '0.5rem 1rem',
                             borderRadius: '4px',
                             border: 'none',
                             background: '#1890ff',
                             color: 'white',
-                            cursor: newSpaceName.trim() ? 'pointer' : 'not-allowed',
-                            opacity: newSpaceName.trim() ? 1 : 0.6
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
                         }}
                     >
-                        +
+                        <Plus size={16} />
                     </button>
                 </div>
             </div>

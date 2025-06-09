@@ -41,7 +41,7 @@ export const DemoArea = () => {
             name: 'Save Demo Area',
             fn: (areaId: string) => {
                 console.log(`Saving demo area ${areaId}`);
-                // Implémentation de la sauvegarde
+                // Save implementation
             },
             history: true,
             isGlobal: true

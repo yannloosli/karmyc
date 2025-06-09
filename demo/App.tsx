@@ -21,7 +21,7 @@ const App: React.FC = () => {
         builtInLayouts: [
             {
                 id: 'default',
-                name: 'Layout par défaut',
+                name: 'Default layout',
                 config: {
                     _id: 10,
                     rootId: 'root',

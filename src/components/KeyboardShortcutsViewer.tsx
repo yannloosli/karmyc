@@ -7,11 +7,11 @@ const KeyboardShortcutsViewer: React.FC = () => {
     const { t } = useTranslation();
     const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
     
-    // Séparer les raccourcis globaux et par type d'aire
+    // Separate global shortcuts and by area type
     const globalShortcuts = allShortcuts.filter(s => s.isGlobal);
     const areaShortcuts = allShortcuts.filter(s => !s.isGlobal);
     
-    // Grouper les raccourcis par type d'aire
+    // Group shortcuts by area type
     const shortcutsByArea = areaShortcuts.reduce((acc, shortcut) => {
         const areaType = shortcut.areaType || 'Unknown';
         if (!acc[areaType]) {
@@ -28,14 +28,14 @@ const KeyboardShortcutsViewer: React.FC = () => {
             height: '100%',
             overflow: 'auto'
         }}>
-            {/* Raccourcis Globaux */}
+            {/* Global Shortcuts */}
             <div style={{ marginBottom: '30px' }}>
                 <h3 style={{ 
                     borderBottom: '1px solid rgba(255,255,255,0.2)',
                     paddingBottom: '10px',
                     marginBottom: '15px'
                 }}>
-                    {t('shortcuts.global.title', 'Raccourcis Globaux')}
+                    {t('shortcuts.global.title', 'Global Shortcuts')}
                 </h3>
                 <div style={{ display: 'grid', gap: '5px' }}>
                     {globalShortcuts.map((shortcut, index) => (
@@ -60,7 +60,7 @@ const KeyboardShortcutsViewer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Raccourcis par Type d'Aire */}
+            {/* Shortcuts by Area Type */}
             {Object.entries(shortcutsByArea).map(([areaType, shortcuts]) => (
                 <div key={areaType} style={{ marginBottom: '30px' }}>
                     <h3 style={{ 

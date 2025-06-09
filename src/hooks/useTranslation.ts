@@ -2,8 +2,8 @@ import { useContext } from 'react';
 import { KarmycContext } from '../providers/KarmycProvider';
 
 /**
- * Hook personnalisé pour gérer les traductions
- * @returns Une fonction de traduction qui utilise la fonction t fournie dans les options ou retourne le fallback
+ * Custom hook to handle translations
+ * @returns A translation function that uses the t function provided in the options or returns the fallback
  */
 export const useTranslation = () => {
     const { options } = useContext(KarmycContext);

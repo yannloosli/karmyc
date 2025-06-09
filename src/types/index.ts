@@ -6,4 +6,5 @@ export * from './areaTypes';
 export * from './actions';
 export * from './directions';
 export * from './math';
-export * from './state'; 
+export * from './state';
+export * from './validators'; 

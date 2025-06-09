@@ -49,6 +49,7 @@ export interface IKarmycOptions {
         validator: (action: any) => { valid: boolean; message?: string };
     }>;
     initialAreas?: Array<{
+        id?: string;
         type: string;
         state?: any;
         position?: { x: number; y: number };
@@ -62,10 +63,10 @@ export interface IKarmycOptions {
     builtInLayouts?: LayoutPreset[];
     initialLayout?: string;
     /**
-     * Fonction de traduction personnalisée
-     * @param key - Clé de traduction
-     * @param fallback - Texte par défaut si la traduction n'est pas trouvée
-     * @returns La traduction ou le texte par défaut
+     * Custom translation function
+     * @param key - Translation key
+     * @param fallback - Default text if translation is not found
+     * @returns The translation or the default text
      */
     t?: (key: string, fallback: string) => string;
 }

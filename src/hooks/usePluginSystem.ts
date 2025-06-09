@@ -13,10 +13,9 @@ export type ZustandPlugin<T> = {
 };
 
 /**
- * Hook pour intégrer le système de plugins avec Zustand
- * 
- * @param store Le store Zustand à étendre avec les plugins
- * @param initialPlugins Les plugins à initialiser
+ * Hook to integrate the plugin system with Zustand
+ * @param store The Zustand store to extend with plugins
+ * @param initialPlugins The plugins to initialize
  */
 export function usePluginSystem<T>(
     store: StoreApi<T>,
@@ -25,18 +24,18 @@ export function usePluginSystem<T>(
     const [plugins, setPlugins] = useState<ZustandPlugin<T>[]>(initialPlugins);
     const [registeredActionPlugins, setRegisteredActionPlugins] = useState<IActionPlugin[]>([]);
 
-    // Enregistre les plugins au montage et les désenregistre au démontage
+    // Register plugins on mount and unregister them on unmount
     useEffect(() => {
-        // Initialiser les plugins Zustand
+        // Initializer Zustand plugins
         const unsubscribers: (() => void)[] = [];
 
         plugins.forEach(plugin => {
-            // Initialiser le plugin avec le store
+            // Initialize plugin with store
             if (plugin.onStoreInit) {
                 plugin.onStoreInit(store);
             }
 
-            // S'abonner aux changements du store pour ce plugin
+            // Subscribe to store changes for this plugin
             if (plugin.onStoreChange) {
                 let previousState = store.getState();
                 const unsubscribe = store.subscribe((state) => {
@@ -49,24 +48,24 @@ export function usePluginSystem<T>(
             }
         });
 
-        // Nettoyer les abonnements au démontage
+        // Clean up subscriptions on unmount
         return () => {
             unsubscribers.forEach(unsubscribe => unsubscribe());
         };
     }, [store, plugins]);
 
-    // Gère l'enregistrement/désenregistrement des plugins d'action
+    // Handle action plugin registration/unregistration
     useEffect(() => {
-        // Convertir les plugins Zustand en plugins d'action
+        // Convert Zustand plugins to action plugins
         const actionPlugins = plugins
             .filter(plugin => plugin.actions && Object.keys(plugin.actions).length > 0)
             .map(plugin => {
                 const actionPlugin: IActionPlugin = {
                     id: plugin.name,
-                    priority: 500, // Priorité moyenne par défaut
-                    actionTypes: null, // Gérer tous les types d'actions
+                    priority: 500, // Default medium priority
+                    actionTypes: null, // Handle all action types
                     handler: (action: Action) => {
-                        // Vérifier si ce plugin a une action pour ce type
+                        // Check if this plugin has an action for this type
                         if (plugin.actions && action.type in plugin.actions) {
                             plugin.actions[action.type](action.payload);
                         }
@@ -75,13 +74,13 @@ export function usePluginSystem<T>(
                 return actionPlugin;
             });
 
-        // Enregistrer les nouveaux plugins d'action
+        // Register new action plugins
         actionPlugins.forEach(plugin => {
             actionRegistry.registerPlugin(plugin);
         });
         setRegisteredActionPlugins(actionPlugins);
 
-        // Nettoyer lors du démontage
+        // Clean up on unmount
         return () => {
             registeredActionPlugins.forEach(plugin => {
                 actionRegistry.unregisterPlugin(plugin.id);
@@ -89,7 +88,7 @@ export function usePluginSystem<T>(
         };
     }, [plugins]);
 
-    // Fonctions pour gérer les plugins
+    // Functions to manage plugins
     const registerPlugin = (plugin: ZustandPlugin<T>) => {
         setPlugins(prev => [...prev, plugin]);
     };
@@ -98,7 +97,7 @@ export function usePluginSystem<T>(
         setPlugins(prev => prev.filter(p => p.name !== pluginName));
     };
 
-    // Fonction pour transformer l'état en utilisant tous les plugins
+    // Function to transform state using all plugins
     const applyPluginTransformations = (state: T): T => {
         let transformedState = { ...state };
 
@@ -120,7 +119,7 @@ export function usePluginSystem<T>(
     };
 }
 
-// Type pour set dans Zustand
+// Type for set in Zustand
 type SetState<T> = (
     partial: T | Partial<T> | ((state: T) => T | Partial<T>),
     replace?: boolean | undefined,
@@ -128,17 +127,18 @@ type SetState<T> = (
 ) => void;
 
 /**
- * Crée un middleware Zustand pour intégrer le système de plugins
+ * Creates a Zustand middleware to integrate the plugin system
  */
 export const createPluginMiddleware = <T>(plugins: ZustandPlugin<T>[]) => {
     return (config: StateCreator<T>) => (set: SetState<T>, get: () => T, api: StoreApi<T>) => {
-        // Initialiser les plugins avec le store
+        // Initialize plugins with store
         plugins.forEach(plugin => {
             if (plugin.onStoreInit) {
                 plugin.onStoreInit(api);
             }
         });
 
+        // Apply plugin transformations on state changes
         // Appliquer les transformations des plugins sur les changements d'état
         const pluginsSet: SetState<T> = (updater: T | Partial<T> | ((state: T) => T | Partial<T>), replace?: boolean, ...args: any[]) => {
             const applyUpdate = (state: T) => {

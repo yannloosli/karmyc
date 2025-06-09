@@ -8,6 +8,7 @@ import { useSpaceStore } from "../../store/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { SwitchAreaTypeContextMenu } from '../SwitchAreatypeContextMenu';
+import { useTranslation } from "../../hooks/useTranslation";
 
 interface IAreaDragButton {
     state: any;
@@ -17,6 +18,7 @@ interface IAreaDragButton {
 }
 
 export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
+    const { t } = useTranslation();
     const [isDragging, setIsDragging] = useState(false);
     const updateArea = useKarmycStore(state => state.updateArea);
     const isLocked = useKarmycStore(state => state.getAreaById(id)?.isLocked || false);
@@ -36,9 +38,9 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
 
     const openCustomContextMenu = useContextMenuStore((state) => state.openCustomContextMenu);
 
-    // Ref pour le bouton
+    // Ref for the button
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);
-    // Ref pour l'élément parent qui contient l'area
+    // Ref for the parent element containing the area
     const areaContainerRef = useRef<HTMLDivElement>(null);
 
     const openSelectArea = (e: React.MouseEvent) => {
@@ -57,7 +59,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
 
     const space = useSpaceStore(state => state.getSpaceById(area?.spaceId || ''));
 
-    // Si FOLLOW, on prend la couleur du space du dernier LEAD sélectionné
+    // If FOLLOW, use the color from the last selected LEAD space
     let spaceColor = space?.sharedState?.color || '#0000ff';
     if (area?.role === 'FOLLOW') {
         const activeScreenId = useKarmycStore.getState().activeScreenId;
@@ -89,16 +91,16 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         if (!manageableAreas) return;
         e.stopPropagation();
 
-        // Trouver l'élément parent qui contient l'area
+        // Find the parent element containing the area
         const areaContainer = document.querySelector(`[data-areaid="${id}"]`);
         if (!areaContainer) return;
 
         if (!isFullscreen) {
-            // Sauvegarder l'état actuel avant de passer en plein écran
+            // Save current state before going fullscreen
             const currentLayout = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.layout;
             const currentRootId = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.rootId;
             
-            // Mettre à jour l'area avec l'état précédent
+            // Update area with previous state
             updateArea({ 
                 id, 
                 enableFullscreen: true,
@@ -106,7 +108,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                 previousRootId: currentRootId
             });
 
-            // Passer en mode plein écran
+            // Enter fullscreen mode
             if (areaContainer.requestFullscreen) {
                 areaContainer.requestFullscreen();
             } else if ((areaContainer as any).webkitRequestFullscreen) {
@@ -115,19 +117,19 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                 (areaContainer as any).msRequestFullscreen();
             }
 
-            // Ajouter un écouteur pour la sortie du mode plein écran
+            // Add listener for fullscreen exit
             const handleFullscreenChange = () => {
                 if (!document.fullscreenElement && 
                     !(document as any).webkitFullscreenElement && 
                     !(document as any).msFullscreenElement) {
-                    // Mettre à jour l'area
+                    // Update area
                     updateArea({ 
                         id, 
                         enableFullscreen: false,
                         previousLayout: undefined,
                         previousRootId: undefined
                     });
-                    // Nettoyer l'écouteur
+                    // Clean up listener
                     document.removeEventListener('fullscreenchange', handleFullscreenChange);
                     document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
                     document.removeEventListener('msfullscreenchange', handleFullscreenChange);
@@ -138,7 +140,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
             document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
             document.addEventListener('msfullscreenchange', handleFullscreenChange);
         } else {
-            // Sortir du mode plein écran
+            // Exit fullscreen mode
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if ((document as any).webkitExitFullscreen) {
@@ -147,7 +149,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                 (document as any).msExitFullscreen();
             }
 
-            // Mettre à jour l'area
+            // Update area
             updateArea({ 
                 id, 
                 enableFullscreen: false,
@@ -161,11 +163,12 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         <div
             className="select-area-button"
             draggable={manageableAreas && !isLocked && !isFullscreen}
+            title={t('area.drag', 'Move area')}
             onDragStart={e => {
                 if (!manageableAreas || isFullscreen) return;
                 setIsDragging(true);
                 handleDragStart(e);
-                // Désactiver complètement le bouton pendant le drag, de manière asynchrone
+                // Completely disable the button during drag, asynchronously
                 requestAnimationFrame(() => {
                     if (selectAreaButtonRef.current) {
                         selectAreaButtonRef.current.style.pointerEvents = 'none';
@@ -213,12 +216,14 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                     <>
                         <button
                             className="select-area-icons select-area-button__detach"
-                            onClick={handleDetach}>
+                            onClick={handleDetach}
+                            title={t('area.detach', 'Detach area')}>
                             <CopyIcon />
                         </button>
                         <button
                             className="select-area-icons select-area-button__close"
-                            onClick={handleClose}>
+                            onClick={handleClose}
+                            title={t('area.close', 'Close area')}>
                             <XIcon />
                         </button>
                     </>
@@ -229,6 +234,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                             <button
                                 className="select-area-icons select-area-button__fullscreen"
                                 onClick={handleToggleFullscreen}
+                                title={t('area.fullscreen', 'Toggle fullscreen')}
                             >
                                 {isFullscreen ? <Minimize2Icon /> : <Maximize2Icon />}
                             </button>
@@ -239,6 +245,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                                 e.stopPropagation();
                                 updateArea({ id, isLocked: !isLocked });
                             }}
+                            title={t('area.lock', 'Lock/Unlock area')}
                         >
                             {isLocked ? <LockIcon /> : <LockOpenIcon />}
                         </button>

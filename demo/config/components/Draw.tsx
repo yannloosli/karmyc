@@ -8,6 +8,7 @@ import { useSpaceStore, SpaceSharedState, SpaceState } from '../../../src/store/
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/actions/handlers/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/actions/handlers/actionRegistry';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
 interface DrawingState { }
 
@@ -38,6 +39,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     id,
     viewport
 }) => {
+    const { t } = useTranslation();
     const currentArea = useKarmycStore(state => {
         const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
         return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;
@@ -198,16 +200,16 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             () => {
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={handleUndo} disabled={!canUndo}><Undo /></button>
-                        <button onClick={handleRedo} disabled={!canRedo}><Redo /></button>
-                        <button onClick={handleClearCanvas}><BrushCleaning /></button>
+                        <button onClick={handleUndo} disabled={!canUndo} title={t('draw.undo', 'Undo')}><Undo /></button>
+                        <button onClick={handleRedo} disabled={!canRedo} title={t('draw.redo', 'Redo')}><Redo /></button>
+                        <button onClick={handleClearCanvas} title={t('draw.clear', 'Clear drawing')}><BrushCleaning /></button>
                     </div>
                 );
             },
             { name: 'bottomInnerSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'center' }
         );
-    }, [id, handleUndo, handleRedo, handleClearCanvas, canUndo, canRedo]);
+    }, [id, handleUndo, handleRedo, handleClearCanvas, canUndo, canRedo, t]);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);

@@ -18,7 +18,7 @@ function simpleDragHandler(
     onDrag: (e: MouseEvent) => void,
     onDragEnd: () => void
 ) {
-    // Désactiver la sélection de texte pendant le drag
+    // Disable text selection during drag
     document.body.style.userSelect = 'none';
     const handleMouseMove = (e: MouseEvent) => {
         onDrag(e);
@@ -27,7 +27,7 @@ function simpleDragHandler(
     const handleMouseUp = () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
-        // Réactiver la sélection de texte à la fin du drag
+        // Re-enable text selection at the end of drag
         document.body.style.userSelect = '';
         onDragEnd();
     };
@@ -43,7 +43,7 @@ export const handleDragAreaResize = (
     areaIndex: number, // 1 is the first separator
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>
 ) => {
-    // Vérifier si nous sommes dans une fenêtre détachée
+    // Check if we are in a detached window
     const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.isDetached;
     if (isDetached) {
         return;
@@ -60,7 +60,7 @@ export const handleDragAreaResize = (
         return;
     }
 
-    // --- Récupérer l'état de l'écran actif au début --- 
+    // --- Get active screen state at the beginning ---
     const initialRootState = useKarmycStore.getState();
     const initialActiveScreenId = initialRootState.activeScreenId;
     const initialActiveScreenAreas = initialRootState.screens[initialActiveScreenId]?.areas;
@@ -69,12 +69,12 @@ export const handleDragAreaResize = (
         console.error("Invalid active screen area state for resize:", initialActiveScreenAreas);
         return;
     }
-    // Utiliser ces états spécifiques pour la suite
+    // Use these specific states for the rest
     const activeLayout = initialActiveScreenAreas.layout;
     const activeRootId = initialActiveScreenAreas.rootId;
-    // --- Fin récupération état actif ---
+    // --- End active state retrieval ---
 
-    // Calculs initiaux basés sur l'état de l'écran actif
+    // Initial calculations based on active screen state
     const rowToMinSize = computeAreaRowToMinSize(activeRootId, activeLayout);
     const rootViewport = getAreaRootViewport();
     if (!rootViewport) {
@@ -98,7 +98,7 @@ export const handleDragAreaResize = (
     let v1 = initialAreaToViewport[a1.id];
     if (!v0 || !v1) {
         console.error('Missing initial viewports:', { a0: a0.id, a1: a1.id, viewports: initialAreaToViewport });
-        // Peut-être tenter un recalcul ici si nécessaire, ou simplement retourner
+        // Maybe attempt a recalculation here if needed, or just return
         return;
     }
 
@@ -114,7 +114,7 @@ export const handleDragAreaResize = (
     const m1 = getMinSize(a1.id);
     let sizeToShare = a0.size + a1.size;
     if (isNaN(sizeToShare) || sizeToShare <= 0) {
-        sizeToShare = 1.0; // Correction par défaut
+        sizeToShare = 1.0; // Default correction
     }
 
     const sharedViewport: Rect = {
@@ -167,14 +167,14 @@ export const handleDragAreaResize = (
         const val = horizontal ? vec.x : vec.y;
         const t = capToRange(tMin0, 1 - tMin1, (val - t0) / (t1 - t0));
 
-        // Mettre à jour la prévisualisation locale IMMÉDIATEMENT
+        // Update local preview IMMEDIATELY
         setResizePreview({
             rowId: row.id,
             separatorIndex: areaIndex,
             t: t
         });
 
-        // Stocker la dernière valeur de t
+        // Store the last t value
         lastT = t;
 
         // Calculer les pourcentages

@@ -81,7 +81,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         // Capture params here after the guard. They are now guaranteed to be defined.
         const { type: areaType, id: areaId, state: areaState } = params;
 
-        // Empêcher la sélection de texte pendant le drag
+        // Prevent text selection during drag
         document.body.style.userSelect = 'none';
 
         const rect = e.currentTarget.getBoundingClientRect();
@@ -135,22 +135,22 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [params, setAreaToOpenAction, globalDragOverHandler]);
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
-        // Si c'est un onglet en cours de réorganisation, on laisse AreaTabs.tsx gérer.
+        // If it's a tab being reorganized, let AreaTabs.tsx handle it
         if (e.dataTransfer.types.includes('karmyc/tab-drag-source')) {
-            // Ne pas appeler e.preventDefault() ici pour permettre à l'événement de "remonter"
-            // à AreaTabs si nécessaire, ou d'être ignoré par cet élément.
+            // Don't call e.preventDefault() here to allow the event to "bubble up"
+            // to AreaTabs if needed, or be ignored by this element
             return;
         }
-        // Pour tous les autres types de drag (ex: une nouvelle area depuis la menubar),
-        // on gère le dragOver comme d'habitude.
+        // For all other drag types (e.g. a new area from the menubar),
+        // handle dragOver as usual
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
     }, []);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
-        // Si la source du drag est un onglet (pour réorganisation), AreaTabs.tsx devrait le gérer.
-        // On arrête le traitement ici pour éviter les conflits ou la duplication.
-        // On vérifie d'abord si e.dataTransfer.getData a été appelé sans erreur.
+        // If the drag source is a tab (for reorganization), AreaTabs.tsx should handle it
+        // Stop processing here to avoid conflicts or duplication
+        // First check if e.dataTransfer.getData was called without error
         let sourceData;
         try {
             const dataString = e.dataTransfer.getData('text/plain');
@@ -158,7 +158,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 sourceData = JSON.parse(dataString);
             }
         } catch (error) {
-            // Ignorer l'erreur si getData échoue (ex: type de fichier natif glissé)
+            // Ignore error if getData fails (e.g. native file drag)
             console.warn('[DropZone] handleDrop - Could not parse drag data', error);
             cleanupTemporaryStates();
             return;
@@ -166,13 +166,13 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
 
         if (sourceData && sourceData.type === 'tab') {
             console.warn('[DropZone] handleDrop - Received "tab" type drag, assuming handled by AreaTabs. Aborting here.');
-            // Il est important de ne PAS appeler e.preventDefault() ou e.stopPropagation() ici,
-            // pour s'assurer que le handleDrop de AreaTabs.tsx puisse s'exécuter.
-            cleanupTemporaryStates(); // Nettoyer au cas où areaToOpen aurait été activé par erreur.
+            // It's important NOT to call e.preventDefault() or e.stopPropagation() here,
+            // to ensure that AreaTabs.tsx's handleDrop can execute
+            cleanupTemporaryStates(); // Clean up in case areaToOpen was activated by mistake
             return;
         }
 
-        // Le reste de la logique de handleDrop pour les autres types de données...
+        // Rest of handleDrop logic for other data types...
         e.preventDefault();
         e.stopPropagation();
 
@@ -197,7 +197,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 const potentialTargetId = areaElement.dataset.areaid;
 
                 if (potentialTargetId && potentialTargetId !== '-1' && potentialTargetId !== sourceAreaId) {
-                    // Vérifier si l'area cible est un enfant d'une stack
+                    // Check if target area is a child of a stack
                     const isChildOfStack = Object.values(layout).some(layoutItem =>
                         layoutItem.type === 'area_row' &&
                         layoutItem.orientation === 'stack' &&
@@ -221,7 +221,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         try {
             updatePosition(e.clientX, e.clientY);
 
-            // Vérifier si on drop sur une stack en mode stack
+            // Check if dropping on a stack in stack mode
             const isStack = Object.values(layout).some(layoutItem =>
                 layoutItem.type === 'area_row' &&
                 layoutItem.orientation === 'stack' &&
@@ -229,7 +229,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
             );
 
             if (isStack && calculatedPlacement === 'stack') {
-                // Ajouter l'area comme un nouvel onglet dans la stack
+                // Add area as a new tab in the stack
                 const stackLayout = Object.values(layout).find(layoutItem =>
                     layoutItem.type === 'area_row' &&
                     layoutItem.orientation === 'stack' &&
@@ -237,42 +237,42 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 ) as AreaRowLayout;
 
                 if (stackLayout) {
-                    // Trouver la zone d'origine dans le layout
+                    // Find source area in layout
                     const sourceRow = Object.values(layout).find(layoutItem =>
                         layoutItem.type === 'area_row' &&
                         layoutItem.areas.some(area => area.id === sourceAreaId)
                     ) as AreaRowLayout;
 
                     if (sourceRow) {
-                        // Supprimer la zone d'origine de sa rangée
+                        // Remove source area from its row
                         const updatedSourceAreas = sourceRow.areas.filter(area => area.id !== sourceAreaId);
 
-                        // Redistribuer les tailles des zones restantes
+                        // Redistribute sizes of remaining areas
                         const totalSize = updatedSourceAreas.reduce((sum, area) => sum + area.size, 0);
                         const normalizedAreas = updatedSourceAreas.map(area => ({
                             ...area,
                             size: totalSize > 0 ? area.size / totalSize : 1 / updatedSourceAreas.length
                         }));
 
-                        // Mettre à jour le layout de la rangée source
+                        // Update source row layout
                         updateLayout({
                             ...sourceRow,
                             areas: normalizedAreas
                         });
                     }
 
-                    // Mettre à jour le layout de la stack
+                    // Update stack layout
                     const updatedLayout = {
                         ...stackLayout,
                         areas: [...stackLayout.areas, { id: sourceAreaId, size: 1 }]
                     };
                     updateLayout(updatedLayout);
-                    // Verrouiller l'area qui vient d'être déposée dans la stack
+                    // Lock area that was just dropped into the stack
                     useKarmycStore.getState().updateArea({ id: sourceAreaId, isLocked: true });
                     cleanupTemporaryStates();
                 }
             } else {
-                // Si on crée une nouvelle stack, on verrouille les deux areas
+                // If creating a new stack, lock both areas
                 if (calculatedPlacement === 'stack') {
                     useKarmycStore.getState().updateArea({ id: sourceAreaId, isLocked: true });
                     useKarmycStore.getState().updateArea({ id: targetAreaId, isLocked: true });
@@ -288,7 +288,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     }, [cleanupTemporaryStates, finalizeAreaPlacementAction, updatePosition, calculatedPlacement, layout, updateLayout]);
 
     const handleDragEnd = useCallback((e: React.DragEvent) => {
-        // Réactiver la sélection de texte à la fin du drag
+        // Reactivate text selection at the end of the drag
         document.body.style.userSelect = '';
 
         if (!dragRef.current) return;

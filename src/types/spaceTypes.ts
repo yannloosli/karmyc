@@ -2,8 +2,8 @@ import { Action, ActionPriority, IActionPlugin } from '../types/actions';
 import { useTranslation } from '../hooks/useTranslation';
 
 /**
- * Liste des types d'actions qui doivent être enregistrés dans l'historique
- * Seules ces actions seront disponibles pour l'annulation/rétablissement
+ * List of action types that must be recorded in the history
+ * Only these actions will be available for undo/redo
  */
 const HISTORY_ACTION_TYPES = [
     'area/addArea',
@@ -16,7 +16,7 @@ const HISTORY_ACTION_TYPES = [
     'composition/removeElement',
     'composition/updateElement',
     'project/update',
-    // Actions de dessin
+    // Drawing actions
     'draw/addLine',
     'draw/updateLine',
     'draw/removeLine',
@@ -28,21 +28,21 @@ const HISTORY_ACTION_TYPES = [
 ];
 
 /**
- * Plugin qui gère l'historique des actions
- * Enregistre les actions dans l'historique pour permettre l'undo/redo
+ * Plugin that manages the action history
+ * Records actions in the history to allow undo/redo
  */
 export const historyPlugin: IActionPlugin = {
     id: 'history',
-    priority: ActionPriority.HIGH, // Priorité élevée pour s'exécuter avant d'autres plugins
-    actionTypes: HISTORY_ACTION_TYPES, // Liste des types d'actions à enregistrer
+    priority: ActionPriority.HIGH, // High priority to run before other plugins
+    actionTypes: HISTORY_ACTION_TYPES, // List of action types to record
     handler: (action: Action) => {
-        // Enregistrer l'action dans l'historique
+        // Record the action in the history
         const { type, payload } = action;
 
-        // Générer un identifiant unique pour cette action dans l'historique
+        // Generate a unique identifier for this history action
         const historyEntryId = `${type}-${Date.now()}`;
 
-        // Enregistrer l'entrée d'historique avec les métadonnées importantes
+        // Record the history entry with important metadata
         const historyEntry = {
             id: historyEntryId,
             type,
@@ -54,42 +54,42 @@ export const historyPlugin: IActionPlugin = {
 };
 
 /**
- * Génère une description lisible par l'humain pour une action
- * Utilisé pour afficher des messages dans l'UI d'historique
+ * Generates a human-readable description for an action
+ * Used to display messages in the history UI
  */
 export function getActionDescription(type: string, payload: any): string {
     const { t } = useTranslation();
     
     switch (type) {
     case 'area/addArea':
-        return t('action.area.add', `Ajout d'une zone ${payload.type || ''}`);
+        return t('action.area.add', `Add area ${payload.type || ''}`);
     case 'area/removeArea':
-        return t('action.area.remove', 'Suppression d\'une zone');
+        return t('action.area.remove', 'Remove area');
     case 'area/updateArea':
-        return t('action.area.update', 'Mise à jour d\'une zone');
+        return t('action.area.update', 'Update area');
     case 'area/moveArea':
-        return t('action.area.move', 'Déplacement d\'une zone');
+        return t('action.area.move', 'Move area');
     case 'area/resizeArea':
-        return t('action.area.resize', 'Redimensionnement d\'une zone');
+        return t('action.area.resize', 'Resize area');
     case 'composition/addElement':
-        return t('action.composition.add', `Ajout d'un élément ${payload.elementType || ''}`);
+        return t('action.composition.add', `Add element ${payload.elementType || ''}`);
     case 'composition/removeElement':
-        return t('action.composition.remove', 'Suppression d\'un élément');
+        return t('action.composition.remove', 'Remove element');
     case 'composition/updateElement':
-        return t('action.composition.update', 'Mise à jour d\'un élément');
-    // Actions de dessin
+        return t('action.composition.update', 'Update element');
+    // Drawing actions
     case 'draw/addLine':
-        return t('action.draw.addLine', 'Ajout d\'une ligne');
+        return t('action.draw.addLine', 'Add line');
     case 'draw/updateLine':
-        return t('action.draw.updateLine', 'Modification d\'une ligne');
+        return t('action.draw.updateLine', 'Edit line');
     case 'draw/removeLine':
-        return t('action.draw.removeLine', 'Suppression d\'une ligne');
+        return t('action.draw.removeLine', 'Remove line');
     case 'draw/updateStrokeWidth':
-        return t('action.draw.updateStrokeWidth', `Modification de l'épaisseur du trait : ${payload.oldValue} → ${payload.newValue}`);
+        return t('action.draw.updateStrokeWidth', `Change stroke width: ${payload.oldValue} → ${payload.newValue}`);
     case 'draw/updateColor':
-        return t('action.draw.updateColor', `Modification de la couleur : ${payload.oldValue} → ${payload.newValue}`);
+        return t('action.draw.updateColor', `Change color: ${payload.oldValue} → ${payload.newValue}`);
     case 'draw/clearCanvas':
-        return t('action.draw.clearCanvas', 'Effacement du dessin');
+        return t('action.draw.clearCanvas', 'Clear drawing');
     default:
         return t('action.unknown', `Action ${type}`);
     }

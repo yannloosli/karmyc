@@ -68,17 +68,17 @@ export function isKeyDown(key: string): boolean {
  * for the given key combination
  */
 export function checkShouldPreventDefault(key: string, activeModifiers: Set<ModifierKey>): boolean {
-    // Obtenir tous les raccourcis enregistrés
+    // Get all registered shortcuts
     const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
     
-    // Vérifier si la combinaison correspond à un raccourci enregistré
+    // Check if the combination matches a registered shortcut
     for (const shortcut of allShortcuts) {
         if (shortcut.key === key) {
-            // Vérifier les modificateurs
+            // Check modifiers
             const requiredModifiers = new Set(shortcut.modifierKeys || []);
             let allModifiersMatch = true;
 
-            // Vérifier que tous les modificateurs requis sont actifs
+            // Check that all required modifiers are active
             for (const modKey of requiredModifiers) {
                 if (!activeModifiers.has(modKey as ModifierKey)) {
                     allModifiersMatch = false;
@@ -86,7 +86,7 @@ export function checkShouldPreventDefault(key: string, activeModifiers: Set<Modi
                 }
             }
 
-            // Vérifier qu'il n'y a pas de modificateurs supplémentaires non autorisés
+            // Check that there are no additional unauthorized modifiers
             if (allModifiersMatch) {
                 const optionalModifiers = new Set(shortcut.optionalModifierKeys || []);
                 for (const activeMod of activeModifiers) {
@@ -97,14 +97,14 @@ export function checkShouldPreventDefault(key: string, activeModifiers: Set<Modi
                 }
             }
 
-            // Si tous les modificateurs correspondent, empêcher le comportement par défaut
+            // If all modifiers match, prevent default behavior
             if (allModifiersMatch) {
                 return true;
             }
         }
     }
 
-    // Liste des raccourcis système à toujours intercepter
+    // List of system shortcuts to always intercept
     const systemShortcuts = [
         { key: 'R', modifiers: ['Control'] },  // Ctrl+R (Refresh)
         { key: 'S', modifiers: ['Control'] },  // Ctrl+S (Save)
@@ -120,13 +120,13 @@ export function checkShouldPreventDefault(key: string, activeModifiers: Set<Modi
         { key: 'W', modifiers: ['Control'] },  // Ctrl+W (Close Tab)
     ];
 
-    // Vérifier les raccourcis système
+    // Check system shortcuts
     for (const shortcut of systemShortcuts) {
         if (key === shortcut.key) {
             const requiredModifiers = new Set(shortcut.modifiers);
             let allModifiersMatch = true;
 
-            // Vérifier que tous les modificateurs requis sont actifs
+            // Check that all required modifiers are active
             for (const modKey of requiredModifiers) {
                 if (!activeModifiers.has(modKey as ModifierKey)) {
                     allModifiersMatch = false;
@@ -134,7 +134,7 @@ export function checkShouldPreventDefault(key: string, activeModifiers: Set<Modi
                 }
             }
 
-            // Vérifier qu'il n'y a pas de modificateurs supplémentaires
+            // Check that there are no additional modifiers
             if (allModifiersMatch && activeModifiers.size === requiredModifiers.size) {
                 return true;
             }

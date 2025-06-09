@@ -35,7 +35,7 @@ export const ScreenSwitcher: React.FC = () => {
             if (Object.keys(screens).length > 1) {
                 removeScreen(params.screenId);
             } else {
-                console.warn('Impossible de supprimer le dernier écran');
+                console.warn('Cannot remove the last screen');
             }
         }
     });
@@ -110,6 +110,7 @@ export const ScreenSwitcher: React.FC = () => {
                     key={id}
                     onClick={() => switchScreen(id)}
                     onContextMenu={(e) => handleContextMenu(e, id)}
+                    title={t('screen.switch', `Switch to screen ${idx + 1}`)}
                     style={{
                         padding: '2px 8px',
                         border: '1px solid #555',

@@ -149,7 +149,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                             //position: area?.enableFullscreen ? 'fixed' : 'relative',
                             top: area?.enableFullscreen ? 0 : 'auto',
                             left: area?.enableFullscreen ? 0 : 'auto',
-                            zIndex: area?.enableFullscreen ? 9999 : 'auto'
+                            zIndex: area?.enableFullscreen ? 9999 : 'auto',
+                            overflow: 'hidden',
                         }}
                     >
                         <AreaErrorBoundary
@@ -259,7 +260,6 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         width: `${viewport.width || 0}px`,
         height: isDetached ? '100%' : `${viewport.height || 0}px`,
         boxSizing: 'border-box',
-        overflow: 'hidden',
     };
 
     // Déplacer la condition de retour après tous les appels de hooks

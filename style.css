@@ -111,7 +111,7 @@
 
 .area__content {
     border-radius: 8px;
-    background: var(--normal-bg)
+    background: var(--normal-bg);
     position: absolute;
     z-index: 1;
     top: var(--area-border-width);

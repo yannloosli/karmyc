@@ -17,31 +17,31 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
     const activeAreaId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId);
     const { t } = useTranslation();
 
-    // État pour l'indicateur de position de dépôt
+    // State for drop position indicator
     const [dragIndicator, setDragIndicator] = useState<{ targetId: string | null, position: 'before' | 'after' | null }>({ targetId: null, position: null });
-    // État pour l'onglet en cours de glissement
+    // State for currently dragged tab
     const [draggingTabId, setDraggingTabId] = useState<string | null>(null);
 
     const handleTabClick = (areaId: string) => {
         const area = areas[areaId];
         if (!area) return;
 
-        // Mettre à jour d'abord le layout pour changer l'onglet actif
+        // First update the layout to change the active tab
         updateLayout({ id: rowId, activeTabId: areaId });
-        // Puis mettre à jour l'aire active
+        // Then update the active area
         setActiveArea(areaId);
 
-        // Si l'area a un espace, passer en mode MANUAL et mettre à jour l'espace actif
+        // If the area has a space, switch to MANUAL mode and update the active space
         if (area.spaceId) {
             useSpaceStore.getState().setActiveSpace(area.spaceId);
         }
     };
 
-    // Drag & drop pour réorganiser les onglets
+    // Drag & drop for tab reorganization
     const handleTabDragStart = (e: React.DragEvent, areaId: string) => {
-        // area.isLocked est vrai ici, donc c'est un drag pour réorganiser les onglets.
-        e.stopPropagation(); // Empêche AreaDragButton/useAreaDragAndDrop d'interférer.
-        setDraggingTabId(areaId); // Marquer cet onglet comme étant glissé
+        // area.isLocked is true here, so this is a drag for tab reorganization
+        e.stopPropagation(); // Prevents AreaDragButton/useAreaDragAndDrop from interfering
+        setDraggingTabId(areaId); // Mark this tab as being dragged
         
         e.dataTransfer.setData('text/plain', JSON.stringify({
             type: 'tab',
@@ -62,16 +62,16 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
             const midPoint = rect.left + rect.width / 2;
             const position = e.clientX < midPoint ? 'before' : 'after';
 
-            // Éviter les mises à jour d'état inutiles si l'indicateur est déjà correct
+            // Avoid unnecessary state updates if the indicator is already correct
             if (dragIndicator.targetId !== overAreaId || dragIndicator.position !== position) {
                 setDragIndicator({ targetId: overAreaId, position });
             }
         }
     };
 
-    // Réinitialiser l'indicateur lorsque le drag quitte la zone des onglets
+    // Reset the indicator when drag leaves the tabs area
     const handleTabsContainerDragLeave = (e: React.DragEvent) => {
-        // Vérifier si le relatedTarget est en dehors du conteneur des onglets
+        // Check if the relatedTarget is outside the tabs container
         if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
             setDragIndicator({ targetId: null, position: null });
         }
@@ -93,13 +93,13 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                 const sourceAreaId = data.areaId;
                 const { targetId: indicatedTargetId, position: indicatedPosition } = dragIndicator;
 
-                // Si on dépose la source sur elle-même sans intention claire de déplacement (via l'indicateur),
-                // ou si l'onglet glissé n'est pas celui indiqué (par exemple, indicateur désynchronisé).
+                // If we drop the source on itself without clear intention to move (via indicator),
+                // or if the dragged tab is not the one indicated (e.g., desynchronized indicator)
                 if (sourceAreaId === onDropAreaId && indicatedTargetId !== onDropAreaId) {
                     setDragIndicator({ targetId: null, position: null });
                     return;
                 }
-                 // Si on dépose la source sur elle-même et que l'indicateur ne montre pas de changement de position
+                // If we drop the source on itself and the indicator doesn't show a position change
                 if (sourceAreaId === onDropAreaId && indicatedTargetId === onDropAreaId && indicatedPosition === null) {
                     setDragIndicator({ targetId: null, position: null });
                     return;
@@ -111,51 +111,50 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
 
                 if (sourceIndex === -1 || onDropAreaOriginalIndex === -1) {
                     setDragIndicator({ targetId: null, position: null });
-                    return; // Source ou cible non trouvée (ne devrait pas arriver)
+                    return; // Source or target not found (shouldn't happen)
                 }
                 
-                const [movedArea] = workingAreas.splice(sourceIndex, 1); // Enlever l'élément source
+                const [movedArea] = workingAreas.splice(sourceIndex, 1); // Remove the source element
 
-                // Calculer l'index de la cible dans le tableau modifié (après suppression de la source)
+                // Calculate the target index in the modified array (after source removal)
                 let targetIndexInModifiedArray = onDropAreaOriginalIndex;
                 if (sourceIndex < onDropAreaOriginalIndex) {
                     targetIndexInModifiedArray--; 
                 }
-                // Si sourceIndex === onDropAreaOriginalIndex, alors on dépose sur l'emplacement original de la source.
-                // targetIndexInModifiedArray sera l'index de l'élément qui a pris la place de la source (ou sourceIndex si c'était le dernier).
-                // Si on dépose sur la source elle-même, targetIndexInModifiedArray est l'index où la source *serait* si elle n'était pas déplacée.
-                 if (sourceAreaId === onDropAreaId) {
-                    targetIndexInModifiedArray = sourceIndex; // L'insertion se fera par rapport à la position originale de la source
+                // If sourceIndex === onDropAreaOriginalIndex, then we're dropping on the source's original position
+                // targetIndexInModifiedArray will be the index of the element that took the source's place (or sourceIndex if it was the last one)
+                // If we drop on the source itself, targetIndexInModifiedArray is the index where the source *would be* if it wasn't moved
+                if (sourceAreaId === onDropAreaId) {
+                    targetIndexInModifiedArray = sourceIndex; // Insertion will be relative to the source's original position
                 }
-
 
                 let finalInsertionIndex = targetIndexInModifiedArray;
-                // Utiliser l'indicateur pour déterminer si on insère avant ou après la cible
+                // Use the indicator to determine if we insert before or after the target
                 if (indicatedTargetId === onDropAreaId && indicatedPosition === 'after') {
-                     finalInsertionIndex = targetIndexInModifiedArray + 1;
+                    finalInsertionIndex = targetIndexInModifiedArray + 1;
                 }
-                // Si indicatedPosition === 'before', finalInsertionIndex est déjà correct (targetIndexInModifiedArray)
-                // Si l'indicateur n'est pas sur onDropAreaId (ex: dragLeave puis drop rapide), 
-                // on insère par défaut avant onDropAreaId.
+                // If indicatedPosition === 'before', finalInsertionIndex is already correct (targetIndexInModifiedArray)
+                // If the indicator is not on onDropAreaId (e.g., dragLeave then quick drop),
+                // we insert by default before onDropAreaId
 
                 workingAreas.splice(finalInsertionIndex, 0, movedArea);
                 
                 updateLayout({ 
                     id: rowId, 
                     areas: workingAreas,
-                    activeTabId: row.activeTabId // Préserver l'onglet actif
+                    activeTabId: row.activeTabId // Preserve the active tab
                 });
             }
         } catch (error) {
             console.error('Error handling tab drop:', error);
         }
-        // Toujours réinitialiser l'indicateur après le drop ou en cas d'erreur
+        // Always reset the indicator after drop or in case of error
         setDragIndicator({ targetId: null, position: null });
-        // Et l'onglet en cours de drag, car le drag est terminé
+        // And the currently dragged tab, as the drag is finished
         setDraggingTabId(null);
     };
 
-    // Gérer la fin du drag (si le drop n'a pas eu lieu sur une cible valide ou a été annulé)
+    // Handle drag end (if drop didn't occur on a valid target or was cancelled)
     const handleTabDragEnd = (e: React.DragEvent) => {
         setDraggingTabId(null);
         setDragIndicator({ targetId: null, position: null });
@@ -178,26 +177,14 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
                         key={id}
                         className={`area-tab ${isActive ? 'area-tab--active' : ''} ${indicatorClass} ${isDraggingSource ? 'is-dragging-source' : ''}`}
                         onClick={() => handleTabClick(id)}
-                        draggable={area.isLocked} // Draggable uniquement si verrouillé pour réorganisation interne
+                        draggable={area.isLocked} // Draggable only if locked for internal reorganization
                         onDragStart={e => area.isLocked ? handleTabDragStart(e, id) : undefined}
-                        onDragOver={e => handleTabDragOver(e, id)} // Passer l'id de l'onglet survolé
+                        onDragOver={e => handleTabDragOver(e, id)} // Pass the hovered tab id
                         onDrop={e => handleTabDrop(e, id)}
-                        onDragEnd={handleTabDragEnd} // Ajouter le gestionnaire onDragEnd
+                        onDragEnd={handleTabDragEnd} // Add the onDragEnd handler
                         data-areaid={id}
                     >
-                        <span className="area-tab-label">
-                            {t(`area.tab.${area.type}`, `Area: ${area.type}`)}
-                        </span>
-                        <button
-                            className="area-tab-close"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleTabClick(id);
-                            }}
-                            title={t('area.tab.close', 'Close')}
-                        >
-                            ×
-                        </button>
+                        <AreaDragButton id={id} state={area.state} type={area.type} />
                     </div>
                 );
             })}

@@ -26,35 +26,35 @@ const cornerDirections: Record<IntercardinalDirection, [CardinalDirection, Cardi
 
 // Function to determine if the movement is toward the inside of the area
 function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2): boolean {
-    // Pour les mouvements purement horizontaux ou verticaux, on considère la direction principale
+    // For purely horizontal or vertical movements, we consider the main direction
     const absX = Math.abs(moveVec.x);
     const absY = Math.abs(moveVec.y);
     const isMainlyHorizontal = absX > absY;
     const isMainlyVertical = absY > absX;
 
-    // Si le mouvement est principalement horizontal, on ne considère que la composante x
-    // Si le mouvement est principalement vertical, on ne considère que la composante y
+    // If the movement is mainly horizontal, we only consider the x component
+    // If the movement is mainly vertical, we only consider the y component
     if (isMainlyHorizontal) {
         switch (corner) {
         case "ne":
         case "se":
-            return moveVec.x < 0; // Vers la gauche = vers l'intérieur
+            return moveVec.x < 0; // Left = inward
         case "nw":
         case "sw":
-            return moveVec.x > 0; // Vers la droite = vers l'intérieur
+            return moveVec.x > 0; // Right = inward
         }
     } else if (isMainlyVertical) {
         switch (corner) {
         case "ne":
         case "nw":
-            return moveVec.y > 0; // Vers le bas = vers l'intérieur
+            return moveVec.y > 0; // Down = inward
         case "se":
         case "sw":
-            return moveVec.y < 0; // Vers le haut = vers l'intérieur
+            return moveVec.y < 0; // Up = inward
         }
     }
 
-    // Pour les mouvements diagonaux, on utilise la logique précédente
+    // For diagonal movements, we use the previous logic
     switch (corner) {
     case "ne":
         return moveVec.x < 0 && moveVec.y > 0;
@@ -65,7 +65,7 @@ function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2)
     case "sw":
         return moveVec.x > 0 && moveVec.y < 0;
     default:
-        console.warn("Direction de coin inconnue dans determineIfMovingInwards:", corner);
+        console.warn("Unknown corner direction in determineIfMovingInwards:", corner);
         return false;
     }
 }
@@ -78,7 +78,7 @@ export const handleAreaDragFromCorner = (
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>,
     setAreaResizing: (resizing: boolean) => void
 ) => {
-    // Vérifier si nous sommes dans une fenêtre détachée
+    // Check if we are in a detached window
     const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.isDetached;
     if (isDetached) {
         return;
@@ -132,7 +132,7 @@ export const handleAreaDragFromCorner = (
             return;
         }
 
-        // Récupérer le type et l'état de la zone source
+        // Get source area type and state
         const sourceAreaData = useKarmycStore.getState().getAreaById(areaId);
         if (!sourceAreaData) {
             console.error("Source area data not found");
@@ -159,7 +159,7 @@ export const handleAreaDragFromCorner = (
 
         const { newRowId, separatorIndex } = splitResult;
 
-        // Attendre que le layout soit mis à jour
+        // Wait for layout to be updated
         const checkLayout = () => {
             const currentActiveScreenStateAfterSplit = getActiveScreenState();
             if (!currentActiveScreenStateAfterSplit) {
@@ -176,7 +176,7 @@ export const handleAreaDragFromCorner = (
                 return;
             }
 
-            // Vérifier que les zones ont des tailles valides
+            // Check that areas have valid sizes
             const hasValidSizes = newRowLayout.areas.every(area => area.size >= 0.1);
             if (!hasValidSizes) {
                 console.error("Invalid sizes detected in new row layout");
@@ -184,7 +184,7 @@ export const handleAreaDragFromCorner = (
                 return;
             }
 
-            // Mettre à jour le type et l'état de la nouvelle zone
+            // Update new area type and state
             const newAreaId = newRowLayout.areas[separatorIndex].id;
             useKarmycStore.getState().updateArea({
                 id: newAreaId,
@@ -192,7 +192,7 @@ export const handleAreaDragFromCorner = (
                 state: { ...sourceAreaData.state }
             });
 
-            // Mettre à jour les tailles des zones pour qu'elles soient égales
+            // Update area sizes to be equal
             const equalSizes = newRowLayout.areas.map(() => 1 / newRowLayout.areas.length);
             useKarmycStore.getState().setRowSizes({ 
                 rowId: newRowId, 
@@ -205,7 +205,7 @@ export const handleAreaDragFromCorner = (
             }
         };
 
-        // Attendre un tick pour s'assurer que le layout est mis à jour
+        // Wait one tick to ensure layout is updated
         setTimeout(checkLayout, 0);
     }
 

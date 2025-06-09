@@ -14,10 +14,10 @@ interface ActionMetadata {
 
     // History Metadata
     history?: {
-        enabled: boolean;           // Si l'action doit être historisée
-        type: string;              // Type d'action pour l'historique (ex: 'draw/addLine')
-        getDescription?: (params: any) => string;  // Fonction pour générer la description
-        getPayload?: (params: any) => any;        // Fonction pour extraire le payload
+        enabled: boolean;           // If the action should be recorded in history
+        type: string;              // Action type for history (e.g. 'draw/addLine')
+        getDescription?: (params: any) => string;  // Function to generate the description
+        getPayload?: (params: any) => any;        // Function to extract the payload
     };
 }
 

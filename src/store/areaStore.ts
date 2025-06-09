@@ -14,7 +14,7 @@ import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
-// import { IKarmycOptions } from '../types/karmyc'; // <-- SUPPRIMÉ car redéfini localement
+// import { IKarmycOptions } from '../types/karmyc'; // <-- REMOVED as redefined locally
 import { v4 as uuidv4 } from 'uuid';
 import { createJSONStorage } from 'zustand/middleware';
 import { useSpaceStore } from './spaceStore';
@@ -65,8 +65,8 @@ export interface AreaSliceStateData {
     };
     lastSplitResultData: SplitResult | null;
     lastLeadAreaId?: string | null;
-    isDetached?: boolean; // Flag pour désactiver les manipulations dans les fenêtres détachées
-    isLocked?: boolean; // Flag pour verrouiller les manipulations
+    isDetached?: boolean; // Flag to disable manipulations in detached windows
+    isLocked?: boolean; // Flag for locking manipulations
 }
 
 // --- Define the FULL state structure for the Areas SLICE ---
@@ -144,7 +144,6 @@ const initialAreaSliceState: AreaSliceState = {
     getLastLeadAreaId: () => null,
 };
 
-
 // --- Define the state of a single Screen ---
 interface ScreenState {
     // Use the full AreaSliceState (containing data part)
@@ -166,24 +165,29 @@ const createInitialScreenState = (): ScreenState => {
     }));
 };
 
-
 // --- Define the New Root State Structure ---
-interface IKarmycOptions {
+export interface IKarmycOptions {
     allowStackMixedRoles?: boolean;
     resizableAreas?: boolean;
     manageableAreas?: boolean;
     multiScreen?: boolean;
     builtInLayouts?: LayoutPreset[];
-    // ... autres options éventuelles ...
+    keyboardShortcutsEnabled?: boolean;
+    validators?: Array<{
+        actionType: string;
+        validator: (action: any) => { valid: boolean; message?: string };
+    }>;
+    // ... other options ...
 }
 
-interface RootState {
+// Export the RootState type
+export type RootState = {
     screens: Record<string, ScreenState>;
     activeScreenId: string;
     nextScreenId: number;
     windowId?: string;
     options: IKarmycOptions;
-    lastUpdated: number; // Ajouté pour la gestion de version
+    lastUpdated: number; // Added for version management
     layout_preset: LayoutPreset[];
 
     // --- Screen Management Actions ---
@@ -223,7 +227,7 @@ interface RootState {
     getAllAreas: () => Record<string, IArea<AreaTypeValue>>;
     getAreaErrors: () => string[];
     findParentRowAndIndices: (layout: AreaSliceStateData['layout'], sourceAreaId: string, targetAreaId: string) => { parentRow: AreaRowLayout | null; sourceIndex: number; targetIndex: number };
-}
+};
 
 // --- ADD BACK HELPER FUNCTIONS (adapted for Immer drafts if needed) ---
 // Note: These operate on ScreenState['areas'] data structures
@@ -366,7 +370,8 @@ function findFirstAreaId(layout: any, id: string): string | null {
     const item = layout[id];
     if (!item) return null;
     if (item.type === 'area') return id;
-    if (item.type === 'area_row' && item.areas.length > 0) {
+    if (item.type === 'area_row') {
+        if (item.areas.length === 0) return null;
         return findFirstAreaId(layout, item.areas[0].id);
     }
     return null;
@@ -556,7 +561,7 @@ const createAreaSlice: StateCreator<
             const layout = activeScreenAreas.layout[layoutData.id];
             if (layout && layout.type === 'area_row') {
                 const before = JSON.stringify(layout);
-                // Mettre à jour uniquement les propriétés fournies
+                // Update only the provided properties
                 if (layoutData.activeTabId !== undefined) {
                     layout.activeTabId = layoutData.activeTabId;
                 }
@@ -585,7 +590,7 @@ const createAreaSlice: StateCreator<
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (activeScreenAreas?.areaToOpen && (activeScreenAreas.areaToOpen.position.x !== position.x || activeScreenAreas.areaToOpen.position.y !== position.y)) {
                 activeScreenAreas.areaToOpen.position = position;
-                // Ne pas mettre à jour lastUpdated pendant le drag
+                // Don't update lastUpdated during drag
             }
         }),
 
@@ -1439,9 +1444,10 @@ const rootStoreCreator: StateCreator<
             delete state.screens[screenId];
 
             // Mettre à jour le compteur d'ID d'écran (max des classiques + 1)
-            state.nextScreenId = Object.keys(state.screens)
-                .filter(id => !id.startsWith('detached-'))
-                .reduce((max, id) => Math.max(max, parseInt(id)), 0) + 1;
+            const maxClassicId = Object.keys(state.screens)
+                .filter(id => !state.screens[id]?.isDetached)
+                .reduce((max, id) => Math.max(max, parseInt(id)), 0);
+            state.nextScreenId = maxClassicId + 1;
 
             // Si l'écran supprimé était actif, basculer vers le plus petit ID classique restant
             if (state.activeScreenId === screenId) {
@@ -1454,9 +1460,10 @@ const rootStoreCreator: StateCreator<
             // Mettre à jour l'URL si nécessaire
             const url = new URL(window.location.href);
             if (url.searchParams.get('screen') === screenId) {
-                url.searchParams.set('screen', state.activeScreenId);
+                url.searchParams.delete('screen');
                 window.history.replaceState({}, '', url.toString());
             }
+
             state.lastUpdated = Date.now();
         }),
 
@@ -1525,7 +1532,7 @@ const rootStoreCreator: StateCreator<
                 if (originScreen.areas.rootId === areaId) {
                     originScreen.areas.rootId = null;
                 }
-                // Simplification automatique des rows après détachement
+                // Automatic simplification of rows after detachment
                 for (const key in originScreen.areas.layout) {
                     const item = originScreen.areas.layout[key];
                     if (item.type === 'area_row' && item.areas.length === 1) {
@@ -1640,7 +1647,7 @@ export const initializeKarmycStore = (optionsParam: Partial<IKarmycOptions> = {}
 // Synchronisation inter-fenêtres : ignorer l'event storage si c'est la même fenêtre
 if (typeof window !== 'undefined') {
     let syncTimeout: NodeJS.Timeout | null = null;
-    const SYNC_DEBOUNCE_MS = 50; // 100ms de debounce
+    const SYNC_DEBOUNCE_MS = 50; // 50ms debounce
 
     window.addEventListener('storage', (event) => {
         if (event.key === 'karmycRootState') {

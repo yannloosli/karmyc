@@ -21,9 +21,9 @@ export function useArea() {
         getAreaErrors
     } = useKarmycStore();
 
-    const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }): string => {
+    const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }, id?: string): string => {
         const area: IArea<AreaTypeValue> = {
-            id: '',
+            id: id || '',
             type,
             state,
             position
@@ -39,7 +39,7 @@ export function useArea() {
                 const activeSpaceId = useSpaceStore.getState().activeSpaceId;
                 area.spaceId = activeSpaceId || existingSpaces[0];
             } else {
-                // Créer un nouvel espace seulement s'il n'y en a aucun
+                // Create a new space only if there are none
                 const newSpaceId = useSpaceStore.getState().addSpace({
                     name: `Space for ${type}`,
                     sharedState: {}

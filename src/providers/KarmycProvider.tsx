@@ -79,24 +79,24 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
         const state = useKarmycStore.getState();
         const currentScreenCount = Object.keys(state.screens).length;
 
-        // Vérifier si le nombre d'écrans a changé (suppression d'écran)
+        // Check if the number of screens has changed (screen removal)
         if (currentScreenCount !== lastScreenCount.current) {
             const currentScreenOrder = Object.keys(state.screens).sort((a, b) => parseInt(a) - parseInt(b));
 
-            // Si c'est la première fois, initialiser lastScreenOrder
+            // If it's the first time, initialize lastScreenOrder
             if (lastScreenOrder.current.length === 0) {
                 lastScreenOrder.current = currentScreenOrder;
                 lastScreenCount.current = currentScreenCount;
                 return;
             }
 
-            // Trouver l'écran supprimé
+            // Find the removed screen
             const deletedScreenId = lastScreenOrder.current.find(id => !currentScreenOrder.includes(id));
             if (deletedScreenId) {
                 const deletedScreenIndex = lastScreenOrder.current.indexOf(deletedScreenId);
                 const oldActiveIndex = lastScreenOrder.current.indexOf(activeScreenId);
 
-                // Si l'écran actif était après l'écran supprimé, on doit ajuster son index
+                // If the active screen was after the removed screen, we need to adjust its index
                 if (oldActiveIndex > deletedScreenIndex) {
                     const newIndex = oldActiveIndex - 1;
                     const newActiveScreenId = currentScreenOrder[newIndex];
@@ -109,17 +109,17 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
             lastScreenOrder.current = currentScreenOrder;
             lastScreenCount.current = currentScreenCount;
-            return; // Sortir de l'effet après la renumérotation
+            return; // Exit the effect after renumbering
         }
 
-        // Vérifier si l'écran actif est valide (uniquement si pas de renumérotation)
+        // Check if the active screen is valid (only if no renumbering)
         if (!state.screens[activeScreenId]) {
             console.warn(`[KarmycProvider] Invalid active screen ID '${activeScreenId}', resetting to '1'`);
             useKarmycStore.setState({ activeScreenId: '1' });
             return;
         }
 
-        // Éviter les mises à jour inutiles
+        // Avoid unnecessary updates
         if (lastActiveScreenId.current === activeScreenId) {
             return;
         }
@@ -146,24 +146,24 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     // Effect 4: Initialize keyboard shortcuts system
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignorer les événements de modificateurs seuls
+            // Ignore modifier-only events
             if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
                 return;
             }
 
-            // Obtenir les modificateurs actifs directement depuis l'événement
+            // Get active modifiers directly from the event
             const activeModifiers = new Set<ModifierKey>();
             if (e.ctrlKey) activeModifiers.add('Control');
             if (e.altKey) activeModifiers.add('Alt');
             if (e.shiftKey) activeModifiers.add('Shift');
             if (e.metaKey) activeModifiers.add('Command');
 
-            // Obtenir l'aire active
+            // Get the active area
             const store = useKarmycStore.getState();
             const activeAreaId = store.screens[store.activeScreenId]?.areas.activeAreaId;
             const activeAreaType = activeAreaId ? store.getAreaById(activeAreaId)?.type : null;
 
-            // Vérifier d'abord les raccourcis globaux
+            // Check global shortcuts first
             const globalShortcuts = keyboardShortcutRegistry.getAllShortcuts().filter(s => s.isGlobal);
 
             for (const shortcut of globalShortcuts) {
@@ -171,7 +171,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                     const requiredModifiers = new Set(shortcut.modifierKeys || []);
                     let allModifiersMatch = true;
 
-                    // Vérifier les modificateurs requis
+                    // Check required modifiers
                     for (const modKey of requiredModifiers) {
                         if (!activeModifiers.has(modKey as ModifierKey)) {
                             allModifiersMatch = false;
@@ -179,7 +179,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         }
                     }
 
-                    // Vérifier les modificateurs optionnels
+                    // Check optional modifiers
                     if (allModifiersMatch) {
                         const optionalModifiers = new Set(shortcut.optionalModifierKeys || []);
                         for (const activeMod of activeModifiers) {
@@ -190,7 +190,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         }
                     }
 
-                    // Si c'est un raccourci valide, empêcher le comportement par défaut et exécuter
+                    // If it's a valid shortcut, prevent default behavior and execute
                     if (allModifiersMatch) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -204,23 +204,23 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                 }
             }
 
-            // Si aucune aire n'est active, on s'arrête là
+            // If no area is active, stop here
             if (!activeAreaId || !activeAreaType) {
                 return;
             }
 
-            // Vérifier les raccourcis spécifiques à l'aire
+            // Check area-specific shortcuts
             const shortcuts = keyboardShortcutRegistry.getShortcuts(activeAreaType);
             
             for (const shortcut of shortcuts) {
-                // Ignorer les raccourcis globaux déjà vérifiés
+                // Ignore global shortcuts already checked
                 if (shortcut.isGlobal) continue;
 
                 if (shortcut.key.toUpperCase() === e.key.toUpperCase()) {
                     const requiredModifiers = new Set(shortcut.modifierKeys || []);
                     let allModifiersMatch = true;
 
-                    // Vérifier les modificateurs requis
+                    // Check required modifiers
                     for (const modKey of requiredModifiers) {
                         if (!activeModifiers.has(modKey as ModifierKey)) {
                             allModifiersMatch = false;
@@ -228,7 +228,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         }
                     }
 
-                    // Vérifier les modificateurs optionnels
+                    // Check optional modifiers
                     if (allModifiersMatch) {
                         const optionalModifiers = new Set(shortcut.optionalModifierKeys || []);
                         for (const activeMod of activeModifiers) {
@@ -239,7 +239,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         }
                     }
 
-                    // Si c'est un raccourci valide, empêcher le comportement par défaut et exécuter
+                    // If it's a valid shortcut, prevent default behavior and execute
                     if (allModifiersMatch) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -253,14 +253,14 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                 }
             }
 
-            // Vérifier les raccourcis système
+            // Check system shortcuts
             if (checkShouldPreventDefault(e.key, activeModifiers)) {
                 e.preventDefault();
                 e.stopPropagation();
             }
         };
 
-        // Utiliser capture pour intercepter l'événement avant qu'il ne soit propagé
+        // Use capture to intercept the event before it propagates
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
     }, []);

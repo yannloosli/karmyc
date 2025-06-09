@@ -6,16 +6,16 @@ import { Rect } from '../types/math';
 import { useSpaceStore } from '../store/spaceStore';
 import { useTranslation } from '../hooks/useTranslation';
 
-// Type pour identifier un composant de façon unique
+// Type to uniquely identify a component
 export type ComponentIdentifier = {
     name: string;
     type: string;
 };
 
-// Alignement possible dans la barre
+// Alignment possible in the toolbar
 export type ToolsBarAlignment = 'left' | 'center' | 'right';
 
-// Positionnement de la barre
+// Positioning of the toolbar
 export type ToolsBarPosition =
     | 'top-outer'
     | 'top-inner'
@@ -23,7 +23,7 @@ export type ToolsBarPosition =
     | 'bottom-inner'
     | string;
 
-// Structure d'un composant enregistré
+// Structure of a registered component
 interface ToolsBarComponent {
     component: React.ComponentType<any>;
     order: number;
@@ -34,29 +34,29 @@ interface ToolsBarComponent {
     callback?: (() => void)[];
 }
 
-// Registre global
+// Global registry
 const toolsBarRegistry: Record<string, ToolsBarComponent[]> = {};
 
-// Système d'abonnement pour la réactivité du registre
+// Subscription system for registry reactivity
 const listeners = new Set<() => void>();
 function notifyToolsRegistryChange() {
     listeners.forEach((cb) => cb());
 }
 
-// Hook d'enregistrement
+// Hook for registration
 /**
- * Hook pour enregistrer dynamiquement des composants dans une barre Tools.
- * @param key ID de l'area ou type d'area
- * @param position Position de la barre
+ * Hook for dynamically registering components in a Tools bar.
+ * @param key ID of the area or type of area
+ * @param position Position of the bar
  */
 export function useToolsSlot(
     key: string,
     position: ToolsBarPosition,
 ) {
-    // Utiliser la clé (ID ou type) et la position comme clé de registre
+    // Use the key (ID or type) and position as registry key
     const registryKey = `${key}:${position}`;
 
-    // Enregistrer un composant dans la barre
+    // Register a component in the bar
     const registerComponent = useCallback(
         (
             component: React.ComponentType<any>,
@@ -94,7 +94,7 @@ export function useToolsSlot(
         [registryKey]
     );
 
-    // Récupérer les composants enregistrés
+    // Get registered components
     const getComponents = useCallback(() => {
         return toolsBarRegistry[registryKey] || [];
     }, [registryKey]);
@@ -105,7 +105,7 @@ export function useToolsSlot(
     };
 }
 
-// Hook pour s'abonner aux changements du registre (useSyncExternalStore)
+// Hook for subscribing to registry changes (useSyncExternalStore)
 function useToolsRegistrySubscription() {
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
     useEffect(() => {
@@ -116,7 +116,7 @@ function useToolsRegistrySubscription() {
     }, []);
 }
 
-// Props du composant Tools
+// Props of the Tools component
 interface ToolsProps {
     areaId?: string;
     areaType?: string;
@@ -139,48 +139,66 @@ export const Tools: React.FC<ToolsProps> = ({
     }
 }) => {
     const { t } = useTranslation();
-    const key = areaId || areaType;
     useToolsRegistrySubscription();
-    const { getComponents: getMenuComponents } = useToolsSlot(key, 'top-outer');
-    const { getComponents: getStatusComponents } = useToolsSlot(key, 'bottom-outer');
-    const { getComponents: getToolbarTopInner } = useToolsSlot(key, 'top-inner');
-    const { getComponents: getToolbarBottomInner } = useToolsSlot(key, 'bottom-inner');
 
-    const menuComponents = getMenuComponents();
-    const statusComponents = getStatusComponents();
-    const toolbarTopInnerComponents = getToolbarTopInner();
-    const toolbarBottomInnerComponents = getToolbarBottomInner();
+    const combineAndDedupe = (...componentArrays: ToolsBarComponent[][]) => {
+        const componentMap = new Map<string, ToolsBarComponent>();
+        componentArrays.flat().forEach(comp => {
+            const key = `${comp.identifier.name}:${comp.identifier.type}`;
+            if (!componentMap.has(key)) {
+                componentMap.set(key, comp);
+            }
+        });
+        return Array.from(componentMap.values()).sort((a, b) => a.order - b.order);
+    };
+
+    const { getComponents: getMenuComponentsById } = useToolsSlot(areaId || '', 'top-outer');
+    const { getComponents: getMenuComponentsByType } = useToolsSlot(areaType, 'top-outer');
+    const menuComponents = combineAndDedupe(getMenuComponentsById(), getMenuComponentsByType());
+
+    const { getComponents: getStatusComponentsById } = useToolsSlot(areaId || '', 'bottom-outer');
+    const { getComponents: getStatusComponentsByType } = useToolsSlot(areaType, 'bottom-outer');
+    const statusComponents = combineAndDedupe(getStatusComponentsById(), getStatusComponentsByType());
+
+    const { getComponents: getToolbarTopInnerById } = useToolsSlot(areaId || '', 'top-inner');
+    const { getComponents: getToolbarTopInnerByType } = useToolsSlot(areaType, 'top-inner');
+    const toolbarTopInnerComponents = combineAndDedupe(getToolbarTopInnerById(), getToolbarTopInnerByType());
+
+    const { getComponents: getToolbarBottomInnerById } = useToolsSlot(areaId || '', 'bottom-inner');
+    const { getComponents: getToolbarBottomInnerByType } = useToolsSlot(areaType, 'bottom-inner');
+    const toolbarBottomInnerComponents = combineAndDedupe(getToolbarBottomInnerById(), getToolbarBottomInnerByType());
 
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
     const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
 
-    // Récupérer l'ID de l'area et son espace associé
+    // Get the area ID and its associated space
     const currentArea = useKarmycStore(state => {
         const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
         if (!activeScreenAreas) return undefined;
-        // L'activation de l'espace par focus ne s'applique qu'aux areas avec un ID
+        // Activation of space by focus only applies to areas with an ID
         return areaId ? Object.values(activeScreenAreas.areas).find(area => area.id === areaId) : undefined;
     });
     const currentSpaceId = currentArea?.spaceId;
 
-    // Gestionnaire de focus pour activer l'espace
+    // Focus manager to activate space
     const handleFocus = useCallback(() => {
         if (currentSpaceId) {
             useSpaceStore.getState().setActiveSpace(currentSpaceId);
         }
     }, [currentSpaceId]);
 
-    // Calculer les hauteurs des toolbars
+    // Calculate toolbar heights
     const hasTopOuter = menuComponents.length > 0;
     const hasBottomOuter = statusComponents.length > 0;
+    console.log('====>', areaType, statusComponents);
 
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
 
     const isFullscreen = currentArea?.enableFullscreen ?? false;
 
-    // Organiser par alignement et filtrer pour chaque position
+    // Organize by alignment and filter for each position
     const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {
         const leftComponents = components.filter(c => c.alignment === 'left');
         const centerComponents = components.filter(c => c.alignment === 'center');
@@ -197,6 +215,7 @@ export const Tools: React.FC<ToolsProps> = ({
                     style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
                     onFocusCapture={handleFocus}
                     tabIndex={0}
+                    data-testid="tools-container"
                 >
                     <div className="tools-bar-section tools-bar-section--left" style={{ display: leftComponents.length > 0 ? 'flex' : 'none'}}>
                         {leftComponents.map((item, idx) => {
@@ -240,7 +259,7 @@ export const Tools: React.FC<ToolsProps> = ({
         }
         return null;
     };
-
+console.log('====>', areaType, hasTopOuter, hasBottomOuter, topOuterHeight, bottomOuterHeight);
     return (
         <div
             className="tools-container"

@@ -4,6 +4,7 @@ import { Layout, FileUp, FileDown, Edit, Trash2, Plus } from 'lucide-react';
 import { actionRegistry } from '../../actions/handlers/actionRegistry';
 import { useKarmycStore } from '../../store/areaStore';
 import { ControlledMenu, MenuItem, MenuState } from '@szhsin/react-menu';
+import { useTranslation } from '../../hooks/useTranslation';
 
 
 // Types pour les layouts
@@ -17,6 +18,7 @@ interface LayoutPreset {
 const STORAGE_KEY = 'karmyc_custom_layouts';
 
 export const LayoutMenu: React.FC = () => {
+    const { t } = useTranslation();
     const { open } = useContextMenu();
     const [isHovered, setIsHovered] = useState(false);
     const [menuState, setMenuState] = useState<MenuState>('closed');
@@ -230,6 +232,7 @@ export const LayoutMenu: React.FC = () => {
                 onClick={handleContextMenu}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
+                title={t('layout.menu', 'Menu des layouts')}
                 style={{
                     cursor: 'pointer',
                     padding: '8px',
@@ -250,49 +253,41 @@ export const LayoutMenu: React.FC = () => {
                 onClose={handleClose}
                 menuClassName="layout-context-menu"
             >
-                {builtInLayouts.map(preset => (
-                    <MenuItem key={preset.id} onClick={() => handleApplyPreset(preset.id)}>
-                        {preset.name}
-                    </MenuItem>
-                ))}
-                {userPresets.map(preset => (
+                {allPresets.map(preset => (
                     <MenuItem key={preset.id} onClick={() => handleApplyPreset(preset.id)}>
                         <div className="preset-item">
                             <span>{preset.name}</span>
-                            <div className="preset-actions">
-                                <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRenamePreset(preset);
-                                }}>
-                                    <Edit size={16} />
-                                </button>
-                                <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePreset(preset);
-                                }}>
-                                    <Trash2 size={16} />
-                                </button>
-                                <button onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleExportPreset(preset);
-                                }}>
-                                    <FileDown size={16} />
-                                </button>
-                            </div>
+                            {!preset.isBuiltIn && (
+                                <div className="preset-actions">
+                                    <button onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleExportPreset(preset);
+                                    }} title={t('layout.export', 'Exporter le layout')}>
+                                        <FileUp size={16} />
+                                    </button>
+                                    <button onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRenamePreset(preset);
+                                    }} title={t('layout.rename', 'Renommer le layout')}>
+                                        <Edit size={16} />
+                                    </button>
+                                    <button onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeletePreset(preset);
+                                    }} title={t('layout.delete', 'Supprimer le layout')}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </MenuItem>
                 ))}
-                <hr />
-                <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
-                    <MenuItem onClick={handleSaveCurrentLayout}>
-                        <Plus size={16} style={{ marginRight: '8px' }} />
-                        Nouveau
-                    </MenuItem>
-                    <MenuItem onClick={handleImportPreset}>
-                        <FileUp size={16} style={{ marginRight: '8px' }} />
-                        Importer
-                    </MenuItem>
-                </div>
+                <MenuItem onClick={handleSaveCurrentLayout} title={t('layout.save', 'Save current layout')}>
+                    <Plus size={16} /> {t('layout.save', 'Save current layout')}
+                </MenuItem>
+                <MenuItem onClick={handleImportPreset} title={t('layout.import', 'Import a layout')}>
+                    <FileDown size={16} /> {t('layout.import', 'Import a layout')}
+                </MenuItem>
             </ControlledMenu>
         </>
     );

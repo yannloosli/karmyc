@@ -159,7 +159,7 @@ export const computeAreaToViewport = (
         // Check if the area has a valid size
         if (contentArea.width <= 0 || contentArea.height <= 0) {
             console.warn(`Area ${area.id} has invalid content area size: ${contentArea.width}x${contentArea.height}`);
-            // Ne pas assigner de viewport si la taille reçue est invalide
+            // Do not assign a viewport if the received size is invalid
             return;
         }
 

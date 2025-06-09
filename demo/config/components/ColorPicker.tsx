@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { useSpace } from '../../../src/hooks';
 import { useKarmycStore } from '../../../src/store/areaStore';
 import { useSpaceStore } from '../../../src/store/spaceStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
 
-// Type pour l'état du composant
+// Type for component state
 interface ColorPickerAreaState {
     color: string;
 }
 
-// Type des propriétés du composant en utilisant les types définis par l'API de Karmyc
+// Component properties type using types defined by Karmyc API
 interface ColorPickerAreaProps {
     id: string;
     state: ColorPickerAreaState;
@@ -40,6 +41,7 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
     viewport,
     targetSpace,
 }) => {
+    const { t } = useTranslation();
     const { activeSpaceId, updateSharedState, spaceList } = useSpace();
     const areaStore = useKarmycStore();
     const activeScreenId = areaStore.activeScreenId;
@@ -48,18 +50,18 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
 
     const [selectedSpace, setSelectedSpace] = useState<string>(targetSpace || activeSpaceId || '');
 
-    // Synchroniser le select sur l'espace du dernier LEAD sélectionné
+    // Synchronize select with the space of the last selected LEAD
     useEffect(() => {
         if (lastLeadAreaId && selectedSpace !== lastLeadAreaId) {
             setSelectedSpace(lastLeadAreaId);
         }
     }, [lastLeadAreaId]);
 
-    // Récupérer l'area LEAD et son spaceId
+    // Get LEAD area and its spaceId
     const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
     const leadSpaceId = leadArea?.spaceId;
 
-    // Couleur à afficher : priorité à la couleur du space du LEAD
+    // Color to display: priority to LEAD space color
     const spaceStore = useSpaceStore();
     const leadSpaceColor = leadSpaceId ? spaceStore.spaces[leadSpaceId]?.sharedState?.color : undefined;
     const colorToShow = leadSpaceColor || state.color || '#ffffff';
@@ -95,6 +97,7 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
                 type="color"
                 value={colorToShow}
                 onChange={(e) => updateColor(e.target.value)}
+                title={t('colorPicker.pickColor', 'Pick a color')}
                 style={{
                     width: '100%',
                     height: '100%',
@@ -120,7 +123,7 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
                 textAlign: 'center',
                 pointerEvents: 'none'
             }}>
-                <code>{colorToShow}</code>
+                <code title={t('colorPicker.currentColor', 'Current color')}>{colorToShow}</code>
             </div>
         </div>
     );

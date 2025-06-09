@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useKarmycStore } from '../../../src/store/areaStore';
 import { useSpace } from '../../../src/hooks';
 import { useSpaceStore } from '../../../src/store/spaceStore';
+import { useTranslation } from '../../../src/hooks/useTranslation';
+import { Info, Layers, Palette } from 'lucide-react';
 
 interface DebugAreaProps {
     id: string;
@@ -18,6 +20,7 @@ export const Debug: React.FC<DebugAreaProps> = ({
     state,
     targetSpace,
 }) => {
+    const { t } = useTranslation();
     const { activeSpaceId } = useSpace();
     const areaStore = useKarmycStore();
     const activeScreenId = areaStore.activeScreenId;
@@ -52,9 +55,24 @@ export const Debug: React.FC<DebugAreaProps> = ({
             borderRadius: '8px',
             boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
         }}>
-            <div><strong>LEAD area</strong> : {leadArea ? `${leadArea.type} (id : ${leadArea.id})` : 'Aucune'}</div>
-            <div><strong>Espace du LEAD</strong> : {leadSpaceId || 'Aucun'}</div>
-            <div>Couleur du space du LEAD : <span style={{ color: leadSpaceColor }}>{leadSpaceColor || 'N/A'}</span></div>
+            <div title={t('debug.leadArea', 'Currently selected LEAD area')}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Info size={16} />
+                    {t('debug.leadAreaLabel', 'LEAD area')}
+                </strong> : {leadArea ? `${leadArea.type} (id : ${leadArea.id})` : t('debug.none', 'None')}
+            </div>
+            <div title={t('debug.leadSpace', 'Space associated with LEAD area')}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Layers size={16} />
+                    {t('debug.leadSpaceLabel', 'LEAD space')}
+                </strong> : {leadSpaceId || t('debug.none', 'None')}
+            </div>
+            <div title={t('debug.leadSpaceColor', 'Color of space associated with LEAD area')}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Palette size={16} />
+                    {t('debug.leadSpaceColorLabel', 'LEAD space color')}
+                </strong> : <span style={{ color: leadSpaceColor }}>{leadSpaceColor || 'N/A'}</span>
+            </div>
         </div>
     );
 };

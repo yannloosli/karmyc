@@ -16,7 +16,8 @@ export const ReadmeArea = () => {
     return (
         <div className="readme-area" style={{ 
             padding: '20px 20px 20px 30px', 
-            overflow: 'auto', 
+            overflow: 'hidden',
+            overflowY: 'auto',
             height: '100%',
             lineHeight: '1.4',
             backgroundColor: '#f0f0f0'

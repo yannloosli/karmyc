@@ -65,7 +65,7 @@ export function getValueAtPath(state: any, path: string[]): unknown {
     return path.reduce((obj, key) => (obj as Record<string, unknown>)[key], state);
 }
 
-// Applique un diff à un état (version simplifiée)
+// Apply a diff to a state (simplified version)
 export function applyDiff<T>(state: T, diff: THistoryDiff): T {
     let newState = { ...state } as any;
     diff.changes.forEach(change => {
@@ -78,7 +78,7 @@ export function applyDiff<T>(state: T, diff: THistoryDiff): T {
     return newState;
 }
 
-// Inverse un diff (version simplifiée)
+// Reverse a diff (simplified version)
 export function invertDiff(diff: THistoryDiff): THistoryDiff {
     return {
         ...diff,

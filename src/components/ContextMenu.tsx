@@ -7,7 +7,7 @@ import { ContextMenuItem } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 
 
-// Fonction utilitaire récursive pour générer les items et sous-menus
+// Recursive utility function to generate items and submenus
 function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: string, metadata?: Record<string, any>, option?: ContextMenuItem) => void) {
   const { t } = useTranslation();
   
@@ -19,7 +19,7 @@ function renderMenuItems(items: ContextMenuItem[], handleAction: (actionId: stri
         </SubMenu>
       );
     }
-    // Séparateur visuel
+    // Visual separator
     if (item.actionId === 'area.separator' || item.label.match(/^[-\u2500]+$/)) {
       return <div key={item.id} style={{ margin: '4px 0', borderBottom: '1px solid #ccc' }} />;
     }
@@ -44,7 +44,7 @@ export const ContextMenu: React.FC = () => {
   const metadata = useContextMenuStore((state) => state.metadata);
   const menuClassName = useContextMenuStore((state) => state.menuClassName);
 
-  // À adapter selon la logique métier pour déclencher l'action
+  // To be adapted according to business logic to trigger the action
   const handleAction = (actionId: string, itemMetadata?: Record<string, any>, option?: ContextMenuItem) => {
     actionRegistry.executeAction(actionId, { ...metadata, ...itemMetadata });
     if (closeContextMenu) closeContextMenu();

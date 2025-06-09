@@ -24,7 +24,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
     const spaces = useSpaceStore((state) => state.spaces);
     const activeSpaceId = useSpaceStore((state) => state.activeSpaceId);
 
-    // Regroupe les types par rôle
+    // Group types by role
     const columns = [
         { role: AREA_ROLE.LEAD, title: t('area.role.lead', 'LEAD'), items: [] as string[] },
         { role: AREA_ROLE.FOLLOW, title: t('area.role.follow', 'FOLLOW'), items: [] as string[] },
@@ -48,7 +48,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
 
     useRegisterActionHandler('switch-area-type', (params) => {
         if (params?.areaId && params?.newType) {
-            // Logique de changement de type d'aire
+            // Logic for changing area type
             console.log(t('area.switch.log', `Switching area ${params.areaId} to type ${params.newType}`));
         }
     });

@@ -39,7 +39,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
         }
     }, [areaToOpenTargetId, areaToOpenTargetViewport, dimensions, setAreaToOpenDimensions]);
 
-    // Mettre à jour les viewports
+    // Update viewports
     useEffect(() => {
         setViewports(areaToViewport);
     }, [areaToViewport, setViewports]);
@@ -75,13 +75,11 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
 
     return (
         <div
-            className={`drop-zone ${areaToOpenTargetViewport ? 'active' : ''}`}
+            className={`area-to-open-overlay`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
         >
-            <div className="drop-zone-content">
-                {t('dropzone.message', 'Drop here')}
-            </div>
+
             {areaToOpenTargetViewport && (
                 <svg
                     width={areaToOpenTargetViewport.width}
