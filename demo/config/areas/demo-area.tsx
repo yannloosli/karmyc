@@ -4,7 +4,7 @@ import { areaRegistry } from "../../../src/store/registries/areaRegistry";
 import { useRegisterActionHandler } from "../../../src/actions";
 import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
 import { useToolsSlot } from "../../../src/components/ToolsSlot";
-import { EmptyAreaMessage } from "../../../src/components/EmptyAreaMessage";
+import { ReadmeArea } from "./ReadmeArea";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/types/actions";
 import { CircleSlash } from "lucide-react";
@@ -63,7 +63,7 @@ export const DemoArea = () => {
     // Register area types
     useRegisterAreaType(
         'demo-area',
-        EmptyAreaMessage,
+        ReadmeArea,
         {},
         {
             displayName: 'Demo area',
