@@ -3,6 +3,7 @@ import { ContextMenuItem } from '../types/contextMenu';
 import { IDiff } from '../types/diff';
 import { IState } from '../types/state';
 import { IToolbarItem } from '../types/toolbarType';
+import { areaRegistry } from '../store/registries/areaRegistry';
 
 // All validation functions commented out as they are unused according to ts-prune
 // and the re-export in utils/index.ts has been commented out.
@@ -87,6 +88,11 @@ export const validateArea = (area: IArea<string>): { isValid: boolean; errors: s
     if (!area.id) errors.push('Missing ID');
     if (!area.type) errors.push('Missing type');
     if (!area.state) errors.push('Missing state');
+
+    // Vérifier si le type de zone est valide
+    if (area.type && !areaRegistry.getRegisteredTypes().has(area.type)) {
+        errors.push(`Invalid area type: ${area.type}`);
+    }
 
     return {
         isValid: errors.length === 0,

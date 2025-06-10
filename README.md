@@ -134,44 +134,6 @@ const App = () => (
 - **KarmycProvider**: Main provider component that sets up the global context and handles URL synchronization
 - **ContextMenuProvider**: Manages context menus throughout the application
 
-### Core Types
-```typescript
-interface IKarmycConfig {
-    areas: {
-        types: string[];
-        layout: any;
-    };
-    actions: {
-        plugins: any[];
-        validators: any[];
-    };
-    contextMenu: {
-        actions: any[];
-    };
-}
-
-interface IKarmycOptions {
-    plugins?: IActionPlugin[];
-    validators?: Array<{
-        actionType: string;
-        validator: (action: any) => { valid: boolean; message?: string };
-    }>;
-    initialAreas?: Array<{
-        type: string;
-        state?: any;
-        position?: { x: number; y: number };
-        role?: AreaRole;
-    }>;
-    keyboardShortcutsEnabled?: boolean;
-    resizableAreas?: boolean;
-    manageableAreas?: boolean;
-    multiScreen?: boolean;
-    allowStackMixedRoles?: boolean;
-    builtInLayouts?: LayoutPreset[];
-    initialLayout?: string;
-}
-```
-
 ### Keyboard Shortcuts System
 The system handles three types of keyboard shortcuts:
 
@@ -335,38 +297,6 @@ Each space can operate in two modes:
 - `useToolsSlot(slotName)`: Manage toolbar slots
 - `useContextMenu()`: Manage context menus
 - `useTranslation()`: Access the translation system and translate text
-
-### Types and Interfaces
-```typescript
-interface Space {
-  id: string;
-  name: string;
-  description?: string;
-  sharedState: SpaceSharedState;
-}
-
-interface SpaceSharedState {
-  color: string;
-  pastDiffs: THistoryDiff[];
-  futureDiffs: THistoryDiff[];
-  [key: string]: any;
-}
-
-interface IKarmycOptions {
-  plugins?: IActionPlugin[];
-  validators?: Array<{
-    actionType: string;
-    validator: (action: any) => { valid: boolean; message?: string };
-  }>;
-  initialAreas?: Array<{
-    type: string;
-    state?: any;
-    position?: { x: number; y: number };
-    role?: AreaRole;
-  }>;
-  // ... other options
-}
-```
 
 ### Configuration Options
 The `useKarmyc` hook accepts a configuration object with the following options:

@@ -14,17 +14,11 @@ import { joinAreas as joinAreasUtil } from '../utils/joinArea';
 import { validateArea } from '../utils/validation';
 import { devtools, persist } from 'zustand/middleware';
 import { areaRegistry } from './registries/areaRegistry';
-// import { IKarmycOptions } from '../types/karmyc'; // <-- REMOVED as redefined locally
+import { IKarmycOptions, LayoutPreset } from '../types/karmyc';
 import { v4 as uuidv4 } from 'uuid';
 import { createJSONStorage } from 'zustand/middleware';
 import { useSpaceStore } from './spaceStore';
-
-interface LayoutPreset {
-    id: string;
-    name: string;
-    config: any;
-    isBuiltIn: boolean;
-}
+import { cleanupToolsRegistry } from '../components/ToolsSlot';
 
 // --- Define Join Preview State Type (kept for AreaSliceStateData) ---
 export interface JoinPreviewState {
@@ -108,7 +102,7 @@ export interface AreaSliceState extends AreaSliceStateData {
 
 // --- Initial state for AreaSlice (Data + Dummy Actions/Selectors) ---
 // Used for createInitialScreenState - actions/selectors replaced by createAreaSlice
-const initialAreaSliceState: AreaSliceState = {
+export const initialAreaSliceState: AreaSliceState = {
     // Data part
     _id: 0,
     rootId: null,
@@ -156,7 +150,7 @@ interface ScreenState {
 }
 
 // --- Helper function to generate the initial state for a new screen ---
-const createInitialScreenState = (): ScreenState => {
+export const createInitialScreenState = (): ScreenState => {
     // Deep copy only the DATA part for initialization
     return JSON.parse(JSON.stringify({
         areas: initialAreaSliceState, // Use the data part of the initial state
@@ -164,21 +158,6 @@ const createInitialScreenState = (): ScreenState => {
         // history: initialHistoryStateData,
     }));
 };
-
-// --- Define the New Root State Structure ---
-export interface IKarmycOptions {
-    allowStackMixedRoles?: boolean;
-    resizableAreas?: boolean;
-    manageableAreas?: boolean;
-    multiScreen?: boolean;
-    builtInLayouts?: LayoutPreset[];
-    keyboardShortcutsEnabled?: boolean;
-    validators?: Array<{
-        actionType: string;
-        validator: (action: any) => { valid: boolean; message?: string };
-    }>;
-    // ... other options ...
-}
 
 // Export the RootState type
 export type RootState = {
@@ -393,7 +372,9 @@ const createAreaSlice: StateCreator<
         addArea: (area) => {
             let generatedAreaId = '';
             set((state: WritableDraft<RootState>) => {
+                console.log('state', state);
                 const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
+                console.log('activeScreenAreas', activeScreenAreas);
                 if (!activeScreenAreas) return;
                 const areaId = area.id || uuidv4();
                 let role = undefined;
@@ -426,7 +407,7 @@ const createAreaSlice: StateCreator<
                         }
                     }
                 }
-
+                console.log('areaWithId', areaWithId);
                 const validation = validateArea(areaWithId);
                 if (!validation.isValid) {
                     activeScreenAreas.errors = validation.errors;
@@ -439,6 +420,8 @@ const createAreaSlice: StateCreator<
                     state.lastUpdated = Date.now();
                 }
             });
+
+            console.log('generatedAreaId', generatedAreaId);
             return generatedAreaId;
         },
 
@@ -544,7 +527,26 @@ const createAreaSlice: StateCreator<
                     newRole = _roleMap[newType];
                 }
                 const before = JSON.stringify(area);
+                
+                // Si le type change, on nettoie l'état précédent
+                if (areaData.type && areaData.type !== area.type) {
+                    // On garde uniquement les propriétés de base de la zone
+                    const baseProperties = {
+                        id: area.id,
+                        type: areaData.type,
+                        role: newRole,
+                        spaceId: area.spaceId,
+                        isLocked: area.isLocked
+                    };
+                    Object.assign(area, baseProperties);
+
+                    // Nettoyer le registre des outils pour cette zone
+                    cleanupToolsRegistry(area.id);
+                }
+                
+                // On applique les autres mises à jour
                 Object.assign(area, areaData, { role: newRole });
+                
                 const after = JSON.stringify(area);
                 if (before !== after) {
                     activeScreenAreas.errors = [];
@@ -738,7 +740,6 @@ const createAreaSlice: StateCreator<
                     // Si la cible est un row, on descend jusqu'à la première area enfant
                     let targetAreaId = determinedTargetAreaId;
                     let targetArea = activeScreenAreas.areas[targetAreaId];
-                    let replacedRowId: string | null = null;
 
                     // Si la cible est un area_row avec orientation stack, on le traite comme un area simple
                     if (activeScreenAreas.layout[targetAreaId]?.type === 'area_row' &&
@@ -747,7 +748,6 @@ const createAreaSlice: StateCreator<
                     } else if (!targetArea && activeScreenAreas.layout[targetAreaId]?.type === 'area_row') {
                         const found = findFirstAreaId(activeScreenAreas.layout, targetAreaId);
                         if (found) {
-                            replacedRowId = targetAreaId;
                             targetAreaId = found;
                             targetArea = activeScreenAreas.areas[targetAreaId];
                         }

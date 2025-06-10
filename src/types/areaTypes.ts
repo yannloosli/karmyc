@@ -1,5 +1,6 @@
 import { ComponentType } from "react";
-import { AreaTypeValue, AreaRole } from "./actions";
+import { AreaTypeValue } from "./actions";
+import { AreaRole } from "./karmyc";
 import { Point, Rect } from ".";
 
 export interface AreaComponentProps<T = any> {
@@ -14,7 +15,7 @@ export interface AreaComponentProps<T = any> {
 export interface IArea<T extends AreaTypeValue = AreaTypeValue> {
     id: string;
     type: T;
-    state: any;
+    state?: Record<string, any>;
     spaceId?: string | null;
     viewport?: Rect;
     position?: Point;

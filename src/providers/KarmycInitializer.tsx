@@ -6,13 +6,15 @@ import { useKarmycStore } from '../store/areaStore';
 import { AreaRowLayout } from '../types/areaTypes';
 import { IKarmycOptions } from '../types/karmyc';
 import { IActionPlugin } from '../types/actions';
+import { validateArea } from '../utils/validation';
 
 interface IKarmycInitializerProps {
     options?: IKarmycOptions;
     children?: React.ReactNode;
+    onError?: (error: Error) => void;
 }
 
-export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {}, children }) => {
+export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options = {}, children, onError }) => {
     const initialized = useRef(false);
     const { createArea } = useArea();
 
@@ -55,12 +57,25 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
 
                 areasToInitialize.forEach((areaConfig, index) => {
                     if (!areaConfig || typeof areaConfig !== 'object') {
-                        console.warn(`[KarmycInitializer] Invalid area config at index ${index}`);
+                        const error = new Error(`Invalid area config at index ${index}`);
+                        console.error('[KarmycInitializer] Invalid area config', error);
+                        onError?.(error);
                         return;
                     }
 
                     if (!areaConfig.type || typeof areaConfig.type !== 'string') {
-                        console.warn(`[KarmycInitializer] Invalid area type for area at index ${index}`);
+                        const error = new Error(`Invalid area type for area at index ${index}`);
+                        console.error('[KarmycInitializer] Invalid area config', error);
+                        onError?.(error);
+                        return;
+                    }
+
+                    // Valider la configuration de la zone
+                    const validation = validateArea(areaConfig);
+                    if (!validation.isValid) {
+                        const error = new Error(`Invalid area configuration: ${validation.errors.join(', ')}`);
+                        console.error('[KarmycInitializer] Invalid area config', error);
+                        onError?.(error);
                         return;
                     }
 
@@ -73,14 +88,16 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                             areaConfig.id
                         );
                     } catch (error) {
-                        console.error(`[KarmycInitializer] Error creating area at index ${index}:`, error);
+                        console.error('[KarmycInitializer] Invalid area config', error);
+                        onError?.(error instanceof Error ? error : new Error(String(error)));
                         return;
                     }
-
                     if (newId) {
                         newAreaIds.push(newId);
                     } else {
-                        console.warn(`[KarmycInitializer] Failed to create area at index ${index}`);
+                        const error = new Error(`Failed to create area at index ${index}`);
+                        console.error('[KarmycInitializer] Invalid area config', error);
+                        onError?.(error);
                     }
                 });
 
@@ -94,7 +111,8 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
 
                     useKarmycStore.setState(state => {
                         if (!state.screens[state.activeScreenId]?.areas) {
-                            console.error(`[KarmycInitializer] Active screen areas ${state.activeScreenId} not found during layout update.`);
+                            const error = new Error(`Active screen areas ${state.activeScreenId} not found during layout update.`);
+                            onError?.(error);
                             return state;
                         }
 
@@ -124,12 +142,11 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                             }
                         };
                     }, false, 'KarmycInitializer/setDefaultLayout');
-                } else {
-                    console.warn("[KarmycInitializer] No areas were successfully created. Skipping layout creation.");
                 }
             }
         } catch (error) {
-            console.error('[KarmycInitializer] Error during initialization:', error);
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error instanceof Error ? error : new Error(String(error)));
         }
 
         // Cleanup
@@ -145,9 +162,11 @@ export const KarmycInitializer: React.FC<IKarmycInitializerProps> = ({ options =
                 });
             } catch (error) {
                 console.error('[KarmycInitializer] Error during cleanup:', error);
+                onError?.(error instanceof Error ? error : new Error(String(error)));
             }
         };
-    }, []); // Keep dependencies empty to run only once
+    }, [onError]); // Add onError to dependencies
 
+    // Toujours rendre les enfants, même en cas d'erreur
     return <>{children}</>;
 }; 

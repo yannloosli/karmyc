@@ -1,4 +1,7 @@
-import { AreaRole, IActionPlugin } from '../types/actions';
+import { IActionPlugin } from '../types/actions';
+import { IArea } from './areaTypes';
+
+export type AreaRole = 'LEAD' | 'FOLLOW' | 'SELF';
 
 /**
  * Configuration du module core
@@ -41,6 +44,11 @@ export interface LayoutPreset {
     };
     isBuiltIn: boolean;
 }
+export interface ISpace {
+    id: string;
+    name: string;
+    state: Record<string, any>;
+}
 
 export interface IKarmycOptions {
     plugins?: IActionPlugin[];
@@ -48,13 +56,7 @@ export interface IKarmycOptions {
         actionType: string;
         validator: (action: any) => { valid: boolean; message?: string };
     }>;
-    initialAreas?: Array<{
-        id?: string;
-        type: string;
-        state?: any;
-        position?: { x: number; y: number };
-        role?: AreaRole;
-    }>;
+    initialAreas?: IArea[];
     keyboardShortcutsEnabled?: boolean;
     resizableAreas?: boolean;
     manageableAreas?: boolean;
@@ -69,10 +71,13 @@ export interface IKarmycOptions {
      * @returns The translation or the default text
      */
     t?: (key: string, fallback: string) => string;
+    spaces?: Record<string, ISpace>;
+
 }
 
 export interface IKarmycProviderProps {
     children: React.ReactNode;
     options?: IKarmycOptions;
     customStore?: any; // TODO: Typer correctement avec le type du store
+    onError?: (error: Error) => void;
 }

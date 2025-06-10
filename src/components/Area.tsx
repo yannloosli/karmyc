@@ -124,7 +124,9 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 <div
                     ref={viewportRef}
                     data-areaid={id}
-                    className={`area ${raised ? 'area--raised' : ''}`}
+                    data-testid={`area-${id}`}
+                    data-testid-resize-handle={`area-${id}-resize-handle`}
+                    className={`area ${raised ? 'active' : ''}`}
                     style={{
                         width: '100%',
                         height: isDetached || area?.enableFullscreen ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
@@ -135,6 +137,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                         <div
                             key={dir}
                             className={`area__corner area__corner--${dir}`}
+                            data-testid={`area-${id}-resize-handle`}
                             onMouseDown={(e) => handleAreaDragFromCorner(e.nativeEvent, dir as 'ne', id, viewport, setResizePreview, () => { })}
                         />
                     ))}
@@ -142,29 +145,49 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     <div
                         className={`area-main-content-wrapper ${type}`}
                         data-areatype={type}
+                        data-testid={`area-${id}-role-button`}
                         style={{
                             opacity: active ? 1 : 0.9,
                             height: '100%',
                             width: area?.enableFullscreen ? '100vw' : '100%',
-                            //position: area?.enableFullscreen ? 'fixed' : 'relative',
                             top: area?.enableFullscreen ? 0 : 'auto',
                             left: area?.enableFullscreen ? 0 : 'auto',
                             zIndex: area?.enableFullscreen ? 9999 : 'auto',
                             overflow: 'hidden',
                         }}
                     >
-                        <AreaErrorBoundary
-                            component={Component}
-                            areaId={id}
-                            areaState={state}
-                            type={type}
-                            viewport={{
-                                left: 0,
-                                top: 0,
-                                width: area?.enableFullscreen ? window.innerWidth : viewport.width,
-                                height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
-                            }}
-                        />
+                        {Component ? (
+                            <AreaErrorBoundary
+                                component={Component}
+                                areaId={id}
+                                areaState={state}
+                                type={type}
+                                viewport={{
+                                    left: 0,
+                                    top: 0,
+                                    width: area?.enableFullscreen ? window.innerWidth : viewport.width,
+                                    height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
+                                }}
+                            />
+                        ) : (
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    left: 0,
+                                    top: 0,
+                                    width: area?.enableFullscreen ? window.innerWidth : viewport.width,
+                                    height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0),
+                                    backgroundColor: "#fff5f5",
+                                    border: "1px solid #feb2b2",
+                                    borderRadius: "4px",
+                                    padding: "16px",
+                                    color: "#c53030",
+                                }}
+                            >
+                                <h3>Invalid area type: {type}</h3>
+                                <p>This area type is not registered in the area registry.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </Tools>
@@ -273,6 +296,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
             className={"area-container " + id}
             style={containerStyle}
             data-areaid={id}
+            data-testid={`area-${id}`}
             data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
         >
             {isStack && rowLayout &&

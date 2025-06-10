@@ -84,6 +84,4 @@ export const AREA_ROLE = {
     SELF: "SELF"
 } as const;
 
-export type AreaRole = typeof AREA_ROLE[keyof typeof AREA_ROLE];
-
 export type AreaTypeValue = string;

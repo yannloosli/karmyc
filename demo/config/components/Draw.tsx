@@ -50,7 +50,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     // --- Zustand selectors for reactive state and actions ---
     const { undoSharedState, redoSharedState, getSpaceById } = useSpaceStore();
 
-    const { sharedState, canUndo, canRedo } = useSpaceStore(useShallow(state => {
+    const { sharedState = defaultSharedState, canUndo, canRedo } = useSpaceStore(useShallow(state => {
         const space = currentSpaceId ? state.spaces[currentSpaceId] : null;
         return {
             sharedState: space?.sharedState ?? defaultSharedState,
@@ -59,7 +59,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
         }
     }));
     
-    const { lines, strokeWidth, color } = sharedState;
+    const { lines = [], strokeWidth = 3, color = '#000000' } = sharedState;
 
     // Enregistrement des actions avec historique
     useRegisterActionHandler('draw/addLine', (params) => {
@@ -160,7 +160,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
 
 
     const { registerComponent: registerStatusBar } = useToolsSlot(id, 'bottom-outer');
-    useMemo(() => {
+    useEffect(() => {
         registerStatusBar(
             () => {
                 return (
@@ -192,10 +192,10 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             { name: 'topOuterSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'right' }
         );
-    }, [id, handleStrokeWidthChange, strokeWidth]);
+    }, [id, handleStrokeWidthChange, strokeWidth, registerStatusBar]);
 
     const { registerComponent: registerBottomToolBar } = useToolsSlot(id, 'bottom-inner');
-    useMemo(() => {
+    useEffect(() => {
         registerBottomToolBar(
             () => {
                 return (
@@ -209,7 +209,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             { name: 'bottomInnerSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'center' }
         );
-    }, [id, handleUndo, handleRedo, handleClearCanvas, canUndo, canRedo, t]);
+    }, [id, handleUndo, handleRedo, handleClearCanvas, canUndo, canRedo, t, registerBottomToolBar]);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -227,13 +227,13 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (!Array.isArray(lines)) {
-            console.error(`[HistoryDrawingArea ${id}] Invalid drawingLines data detected (not an array):`, lines);
+            console.error(`[DrawArea ${id}] Invalid drawingLines data detected (not an array):`, lines);
             return;
         }
 
         lines.forEach((line: Line | null | undefined, index: number) => {
             if (!line || !Array.isArray(line.points) || line.points.length < 2) {
-                console.warn(`[HistoryDrawingArea ${id}] Skipping invalid line data at index ${index}:`, line);
+                console.warn(`[DrawArea ${id}] Skipping invalid line data at index ${index}:`, line);
                 return;
             }
             ctx.beginPath();

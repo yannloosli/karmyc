@@ -22,6 +22,12 @@ export function useArea() {
     } = useKarmycStore();
 
     const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }, id?: string): string => {
+        // Vérifier si le type est valide
+        const registeredTypes = areaRegistry.getRegisteredTypes();
+        if (!registeredTypes.has(type)) {
+            throw new Error(`Invalid area type: ${type}`);
+        }
+
         const area: IArea<AreaTypeValue> = {
             id: id || '',
             type,
@@ -49,7 +55,6 @@ export function useArea() {
                 }
             }
         }
-
         return addArea(area);
     }, [addArea]);
 

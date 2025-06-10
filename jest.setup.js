@@ -1,4 +1,19 @@
 require('@testing-library/jest-dom');
+const { configure } = require('@testing-library/react');
+
+// Configure testing-library
+configure({
+  testIdAttribute: 'data-testid',
+});
+
+// Mock ResizeObserver
+class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+window.ResizeObserver = ResizeObserver;
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -14,13 +29,6 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: jest.fn(),
   })),
 });
-
-// Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
 
 // Mock getBoundingClientRect
 Element.prototype.getBoundingClientRect = jest.fn(() => ({

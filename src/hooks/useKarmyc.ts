@@ -107,7 +107,7 @@ export function useKarmyc(options: IKarmycOptions = {}): IKarmycConfigWithLayout
                     options: validOptions
                 }));
             } catch (error) {
-                console.error('Erreur lors de l\'initialisation de Karmyc:', error);
+                console.error('[KarmycInitializer] Error during initialization:', error);
                 if (isMounted) {
                     // Réinitialiser le store en cas d'erreur
                     useKarmycStore.setState(state => ({

@@ -43,6 +43,18 @@ function notifyToolsRegistryChange() {
     listeners.forEach((cb) => cb());
 }
 
+// Fonction pour nettoyer le registre des outils d'une zone
+export function cleanupToolsRegistry(areaId: string) {
+    const positions = ['top-outer', 'top-inner', 'bottom-outer', 'bottom-inner'];
+    positions.forEach(position => {
+        const registryKey = `${areaId}:${position}`;
+        if (toolsBarRegistry[registryKey]) {
+            delete toolsBarRegistry[registryKey];
+        }
+    });
+    notifyToolsRegistryChange();
+}
+
 // Hook for registration
 /**
  * Hook for dynamically registering components in a Tools bar.
@@ -136,7 +148,8 @@ export const Tools: React.FC<ToolsProps> = ({
         left: 0,
         width: '100%',
         height: '100%'
-    }
+    },
+    style
 }) => {
     const { t } = useTranslation();
     useToolsRegistrySubscription();
@@ -191,7 +204,6 @@ export const Tools: React.FC<ToolsProps> = ({
     // Calculate toolbar heights
     const hasTopOuter = menuComponents.length > 0;
     const hasBottomOuter = statusComponents.length > 0;
-    console.log('====>', areaType, statusComponents);
 
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
@@ -259,7 +271,6 @@ export const Tools: React.FC<ToolsProps> = ({
         }
         return null;
     };
-console.log('====>', areaType, hasTopOuter, hasBottomOuter, topOuterHeight, bottomOuterHeight);
     return (
         <div
             className="tools-container"
@@ -269,8 +280,8 @@ console.log('====>', areaType, hasTopOuter, hasBottomOuter, topOuterHeight, bott
                 //width: viewport.width,
                 height: isDetached || isFullscreen ? '100%' : `calc(${viewport.height})`,
             }}
-            onFocusCapture={handleFocus}
             tabIndex={0}
+            data-testid="tools-container"
         >
             {renderToolbar(menuComponents, 'top-outer')}
             <div

@@ -21,7 +21,7 @@
     --z-index-area-base: 5;
     --z-index-area-separator: 2000;
     --z-index-area-cursor-capture: 15;
-    --z-index-area-raised: 20;
+    --z-index-area-active: 20;
     --z-index-area-join-preview: 25;
     --z-index-area-area-to-open-target: 99;
     --z-index-area-area-to-open: 100;
@@ -105,8 +105,8 @@
     z-index: var(--z-index-area-base);
 }
 
-.area--raised {
-    z-index: var(--z-index-area-raised);
+.area.active {
+    z-index: var(--z-index-area-active);
 }
 
 .area__content {

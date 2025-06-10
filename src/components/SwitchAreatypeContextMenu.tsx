@@ -102,6 +102,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
                             {Object.entries(spaces).map(([spaceId, space]) => (
                                 <div
                                     key={spaceId}
+                                    data-testid="space-switch-button"
                                     style={{ 
                                         display: 'flex', 
                                         alignItems: 'center', 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useLayoutEffect, useRef } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useLayoutEffect, useRef, useContext } from "react";
 import { useKarmycStore } from "../store/areaStore";
 import { AreaRowLayout } from "../types/areaTypes";
 import { computeAreaToViewport } from "../utils/areaToViewport";
@@ -10,6 +10,7 @@ import { JoinAreaPreview } from "./JoinAreaPreview";
 import { ContextMenuProvider } from "../providers/ContextMenuProvider";
 import { DetachedWindowCleanup } from "./DetachedWindowCleanup";
 import { areViewportMapsEqual } from "../utils/objectEquality";
+import { KarmycContext } from "../providers/KarmycProvider";
 
 interface Rect {
     left: number;
@@ -31,6 +32,12 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
 };
 
 export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
+    const context = useContext(KarmycContext);
+    
+    if (!context) {
+        throw new Error('Karmyc must be used within a KarmycProvider');
+    }
+
     // Selectors for active screen state
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
     const isDetached = useKarmycStore(state => state.screens[state.activeScreenId]?.isDetached);

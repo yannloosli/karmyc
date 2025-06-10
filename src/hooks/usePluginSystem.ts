@@ -90,6 +90,11 @@ export function usePluginSystem<T>(
 
     // Functions to manage plugins
     const registerPlugin = (plugin: ZustandPlugin<T>) => {
+        // Vérifier si un plugin avec le même nom existe déjà
+        const existingPlugin = plugins.find(p => p.name === plugin.name);
+        if (existingPlugin) {
+            throw new Error(`Plugin with name "${plugin.name}" already exists`);
+        }
         setPlugins(prev => [...prev, plugin]);
     };
 

@@ -24,13 +24,19 @@ export const KarmycContext = createContext<KarmycContextType>({ options: {} });
  */
 export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     children,
-    options = {}
+    options = {},
+    onError
 }) => {
     const isInitialLoad = useRef(true);
     const isUpdatingUrl = useRef(false);
     const lastActiveScreenId = useRef<string | null>(null);
     const lastScreenCount = useRef<number>(0);
     const lastScreenOrder = useRef<string[]>([]);
+
+    const handleInitializationError = (error: Error) => {
+        console.error('[KarmycInitializer] Error during initialization:', error);
+        onError?.(error);
+    };
 
     // Initialiser le store explicitement
     useEffect(() => {
@@ -146,6 +152,12 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     // Effect 4: Initialize keyboard shortcuts system
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Vérifier si les raccourcis sont activés
+            const store = useKarmycStore.getState();
+            if (!store.options.keyboardShortcutsEnabled) {
+                return;
+            }
+
             // Ignore modifier-only events
             if (e.key === 'Control' || e.key === 'Alt' || e.key === 'Shift' || e.key === 'Meta') {
                 return;
@@ -159,7 +171,6 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
             if (e.metaKey) activeModifiers.add('Command');
 
             // Get the active area
-            const store = useKarmycStore.getState();
             const activeAreaId = store.screens[store.activeScreenId]?.areas.activeAreaId;
             const activeAreaType = activeAreaId ? store.getAreaById(activeAreaId)?.type : null;
 
@@ -246,7 +257,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
                         try {
                             shortcut.fn(activeAreaId, {});
                         } catch (error) {
-                            console.error(`Error executing area shortcut ${shortcut.name}:`, error);
+                            console.error(`Error executing shortcut ${shortcut.name}:`, error);
                         }
                         return;
                     }
@@ -267,7 +278,7 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
 
     return (
         <KarmycContext.Provider value={{ options }}>
-            <KarmycInitializer options={options}>
+            <KarmycInitializer options={options} onError={handleInitializationError}>
                 {children}
             </KarmycInitializer>
         </KarmycContext.Provider>
