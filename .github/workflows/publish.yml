@@ -17,22 +17,22 @@ jobs:
               with:
                   node-version: "18"
                   registry-url: "https://registry.npmjs.org"
-                  cache: "npm"
+                  cache: "yarn"
 
             - name: Install dependencies
-              run: npm ci
+              run: yarn install
 
             - name: Run tests
-              run: npm test
+              run: yarn test
 
             - name: Build
-              run: npm run build
+              run: yarn build
 
             - name: Bundle
-              run: npm run bundle
+              run: yarn bundle
 
             - name: Generate documentation
-              run: npm run docs
+              run: yarn docs
 
             - name: Create Release
               id: create_release
@@ -45,7 +45,7 @@ jobs:
                     
                     ## Installation
                     ```bash
-                    npm install @gamesberry/karmyc-core@${{ github.ref_name }}
+                    yarn add @gamesberry/karmyc-core@${{ github.ref_name }}
                     ```
                   draft: false
                   prerelease: false
@@ -56,7 +56,7 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Publish to NPM
-              run: npm publish
+              run: yarn publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
