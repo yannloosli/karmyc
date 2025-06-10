@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Generate docs
+        run: yarn docs
+
       - name: Build demo
         run: yarn demo:build
 
@@ -38,5 +41,5 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-          git add demo/dist
-          git diff --staged --quiet || (git commit -m "chore: update demo build [skip ci]" && git push) 
+          git add demo/dist demo/public/docs
+          git diff --staged --quiet || (git commit -m "chore: update demo build and docs [skip ci]" && git push) 

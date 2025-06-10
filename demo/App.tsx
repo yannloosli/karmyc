@@ -16,6 +16,7 @@ const App: React.FC = () => {
             { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
             { id: 'area-2', type: 'logo-karmyc-area', state: {}, role: AREA_ROLE.SELF },
             { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF },
+            { id: 'area-4', type: 'docs-area', state: {}, role: AREA_ROLE.SELF },
         ],
         keyboardShortcutsEnabled: true,
         builtInLayouts: [
@@ -35,8 +36,9 @@ const App: React.FC = () => {
                             orientation: 'horizontal',
                             areas: [
                                 { id: 'area-1', size: 0.3 },
-                                { id: 'area-2', size: 0.4 },
-                                { id: 'area-3', size: 0.3 }
+                                { id: 'area-2', size: 0.3 },
+                                { id: 'area-3', size: 0.2 },
+                                { id: 'area-4', size: 0.2 }
                             ]
                         },
                         'area-1': {
@@ -50,12 +52,17 @@ const App: React.FC = () => {
                         'area-3': {
                             type: 'area',
                             id: 'area-3'
+                        },
+                        'area-4': {
+                            type: 'area',
+                            id: 'area-4'
                         }
                     },
                     areas: {
                         'area-1': { id: 'area-1', type: 'demo-area', state: {}, role: AREA_ROLE.LEAD },
                         'area-2': { id: 'area-2', type: 'logo-karmyc-area', state: {}, role: AREA_ROLE.SELF },
-                        'area-3': { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF }
+                        'area-3': { id: 'area-3', type: 'keyboard-shortcuts-area', state: {}, role: AREA_ROLE.SELF },
+                        'area-4': { id: 'area-4', type: 'docs-area', state: {}, role: AREA_ROLE.SELF }
                     },
                     viewports: {},
                     areaToOpen: null,
