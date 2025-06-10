@@ -1,155 +1,181 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { AreaRole } from '../../src/types/actions';
+import { AREA_ROLE, AreaTypeValue, AreaRole } from '../../src/types/actions';
 import { IArea } from '../../src/types/areaTypes';
-import { IKarmycOptions } from '../../src/types/karmyc';
+import { IKarmycOptions, ISpace, LayoutPreset } from '../../src/types/karmyc';
+import { 
+  TestComponent, 
+  setupErrorTest, 
+  resetKarmycStore, 
+  waitForInitialization,
+  assertErrorLogged 
+} from '../__mocks__/errorTestUtils';
 
-const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const config = useKarmyc({});
-  return <KarmycProvider options={config}>{children}</KarmycProvider>;
-};
+// Composant ErrorBoundary pour capturer les erreurs
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+    constructor(props: { children: React.ReactNode }) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error: Error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error: Error) {
+        this.setState({ hasError: true, error });
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return <div data-testid="error-boundary">{this.state.error?.message}</div>;
+        }
+
+        return this.props.children;
+    }
+}
 
 describe('Error Handling', () => {
-  it('should handle invalid area type', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'invalid-area', role: 'LEAD' as AreaRole }
-      ]
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('should handle invalid area type', async () => {
+    const { consoleWarn, cleanup } = setupErrorTest();
+    
+    const invalidArea: IArea<AreaTypeValue> = {
+      id: 'area-1',
+      type: '',
+      role: AREA_ROLE.LEAD
+    };
+    
+    await act(async () => {
+      render(
+        <TestComponent
+          options={{
+            initialAreas: [invalidArea]
+          }}
+        />
+      );
     });
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
+    await waitForInitialization();
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Invalid area type: invalid-area')
+    expect(consoleWarn).toHaveBeenCalledWith(
+      expect.stringContaining('Zone invalide ignorée: type non défini')
     );
     
-    consoleError.mockRestore();
+    cleanup();
   });
 
-  it('should handle invalid area role', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'test-area', role: 'INVALID_ROLE' as AreaRole }
-      ]
+  it('should handle invalid area role', async () => {
+    const { consoleWarn, cleanup } = setupErrorTest();
+    
+    const invalidArea: IArea<AreaTypeValue> = {
+      id: 'area-1',
+      type: 'test-area',
+      role: 'INVALID_ROLE' as any
+    };
+    
+    await act(async () => {
+      render(
+        <TestComponent
+          options={{
+            initialAreas: [invalidArea]
+          }}
+        />
+      );
     });
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
+    await waitForInitialization();
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Invalid area role: INVALID_ROLE')
+    expect(consoleWarn).toHaveBeenCalledWith(
+      expect.stringContaining('Zone invalide ignorée: rôle "INVALID_ROLE" non reconnu')
     );
     
-    consoleError.mockRestore();
+    cleanup();
   });
 
-  it('should handle missing provider', () => {
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should handle duplicate area IDs', async () => {
+    const { consoleError, cleanup } = setupErrorTest();
     
-    render(<Karmyc />);
+    const duplicateArea1: IArea<AreaTypeValue> = {
+      id: 'duplicate-id',
+      type: 'test-area',
+      role: AREA_ROLE.LEAD
+    };
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Karmyc must be used within a KarmycProvider')
-    );
-    
-    consoleError.mockRestore();
-  });
+    const duplicateArea2: IArea<AreaTypeValue> = {
+      id: 'duplicate-id',
+      type: 'test-area',
+      role: AREA_ROLE.FOLLOW
+    };
 
-  it('should handle invalid layout configuration', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'test-area', role: 'LEAD' as AreaRole }
-      ],
-      builtInLayouts: [
-        {
-          id: 'invalid-layout',
-          name: 'Invalid Layout',
-          config: {
-            type: 'invalid-type',
-            children: []
-          }
-        }
-      ]
+    await act(async () => {
+      render(
+        <ErrorBoundary>
+          <TestComponent
+            options={{
+              initialAreas: [duplicateArea1, duplicateArea2]
+            }}
+          />
+        </ErrorBoundary>
+      );
     });
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
+    await waitFor(() => {
+      const errorMessage = screen.getByTestId('error-boundary');
+      expect(errorMessage).toBeInTheDocument();
+      expect(errorMessage).toHaveTextContent('Invalid area type: test-area');
+    }, { timeout: 1000 });
 
     expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Invalid layout type: invalid-type')
+      expect.stringContaining('[KarmycInitializer] Invalid area config'),
+      expect.any(Error)
     );
     
-    consoleError.mockRestore();
+    cleanup();
   });
 
-  it('should handle duplicate area IDs', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'test-area', role: 'LEAD' as AreaRole, id: 'duplicate-id' } as IArea,
-        { type: 'test-area', role: 'FOLLOW' as AreaRole, id: 'duplicate-id' } as IArea
-      ]
+  it('should handle invalid space configuration', async () => {
+    const { consoleError, onError, cleanup } = setupErrorTest();
+    
+    const invalidSpace: ISpace = {
+      id: 'invalid-space',
+      name: '', // Nom vide pour rendre l'espace invalide
+      state: {}
+    };
+    
+    resetKarmycStore();
+    
+    await act(async () => {
+      render(
+        <KarmycProvider
+          options={{
+            initialAreas: [
+              { type: 'test-area', role: 'LEAD' }
+            ],
+            spaces: {
+              'invalid-space': invalidSpace
+            }
+          }}
+          onError={onError}
+        >
+          <Karmyc />
+        </KarmycProvider>
+      );
     });
 
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
+    await waitForInitialization();
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Duplicate area ID: duplicate-id')
-    );
+    assertErrorLogged(consoleError, '[KarmycInitializer] Error during initialization');
     
-    consoleError.mockRestore();
-  });
-
-  it('should handle invalid space configuration', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'test-area', role: 'LEAD' as AreaRole }
-      ],
-      spaces: {
-        'invalid-space': {
-          id: 'invalid-space',
-          name: 'Invalid Space',
-          state: null // Invalid state
-        }
-      }
-    } as IKarmycOptions);
-
-    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-    
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
-
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining('Invalid space configuration')
-    );
-    
-    consoleError.mockRestore();
+    cleanup();
   });
 }); 

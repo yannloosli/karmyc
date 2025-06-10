@@ -3,6 +3,8 @@ import { act } from 'react';
 import { useKarmycStore, initializeKarmycStore } from '../../src/store/areaStore';
 
 describe('useKarmycStore - Screen Management', () => {
+  let consoleWarnSpy: jest.SpyInstance;
+
   beforeEach(() => {
     // Completely reset the store
     useKarmycStore.setState({
@@ -33,6 +35,15 @@ describe('useKarmycStore - Screen Management', () => {
       },
       lastUpdated: Date.now()
     });
+
+    // Mock console.warn for all tests
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+  });
+
+  afterEach(() => {
+    if (consoleWarnSpy) {
+      consoleWarnSpy.mockRestore();
+    }
   });
 
   it('should add a new screen', () => {

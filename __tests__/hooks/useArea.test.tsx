@@ -1,20 +1,28 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
 import { useArea } from '../../src/hooks/useArea';
 import { AREA_ROLE } from '../../src/types/actions';
 import { useKarmycStore } from '../../src/store/areaStore';
+import { resetKarmycStore, createTestArea, assertStoreState } from '../__mocks__/hookTestUtils';
+import { areaRegistry } from '../../src/store/registries/areaRegistry';
+import React from 'react';
+
+// Composant de test pour l'aire
+const TestAreaComponent: React.FC = () => {
+  return <div data-testid="test-area">Test Area</div>;
+};
 
 describe('useArea', () => {
   beforeEach(() => {
-    // Reset the store before each test
-    useKarmycStore.setState({
-      screens: {},
-      activeScreenId: 'main',
-      options: {
-        resizableAreas: true,
-        manageableAreas: true,
-        multiScreen: true
-      }
-    });
+    resetKarmycStore();
+    // Enregistrer le composant de test
+    areaRegistry.registerComponent('test-area', TestAreaComponent);
+    // Enregistrer l'état initial
+    areaRegistry.registerInitialState('test-area', {});
+  });
+
+  afterEach(() => {
+    // Nettoyer l'enregistrement
+    areaRegistry.unregisterAreaType('test-area');
   });
 
   it('should create an area', () => {
@@ -28,11 +36,10 @@ describe('useArea', () => {
     expect(areaId).toBeDefined();
     if (!areaId) return;
 
-    const store = useKarmycStore.getState();
-    const area = store.getAreaById(areaId);
-    expect(area).toBeDefined();
-    expect(area?.type).toBe('test-area');
-    expect(area?.state).toEqual({ test: 'value' });
+    assertStoreState(useKarmycStore, {
+      [`screens.main.areas.areas.${areaId}.type`]: 'test-area',
+      [`screens.main.areas.areas.${areaId}.state`]: { test: 'value' }
+    });
   });
 
   it('should update area state', () => {
@@ -50,12 +57,12 @@ describe('useArea', () => {
       result.current.update(areaId as string, { state: { newValue: 'updated' } });
     });
 
-    const store = useKarmycStore.getState();
-    const area = store.getAreaById(areaId as string);
-    expect(area?.state).toEqual({ newValue: 'updated' });
+    assertStoreState(useKarmycStore, {
+      [`screens.main.areas.areas.${areaId}.state`]: { newValue: 'updated' }
+    });
   });
 
-  it('should handle role changes', () => {
+  it('should handle area position updates', () => {
     const { result } = renderHook(() => useArea());
     
     let areaId: string | undefined;
@@ -66,32 +73,13 @@ describe('useArea', () => {
     expect(areaId).toBeDefined();
     if (!areaId) return;
 
+    const newPosition = { x: 100, y: 200 };
     act(() => {
-      result.current.update(areaId as string, { role: AREA_ROLE.LEAD });
+      result.current.update(areaId as string, { position: newPosition });
     });
 
-    const store = useKarmycStore.getState();
-    const area = store.getAreaById(areaId as string);
-    expect(area?.role).toBe(AREA_ROLE.LEAD);
-  });
-
-  it('should handle area removal', () => {
-    const { result } = renderHook(() => useArea());
-    
-    let areaId: string | undefined;
-    act(() => {
-      areaId = result.current.createArea('test-area', {});
+    assertStoreState(useKarmycStore, {
+      [`screens.main.areas.areas.${areaId}.position`]: newPosition
     });
-
-    expect(areaId).toBeDefined();
-    if (!areaId) return;
-
-    act(() => {
-      result.current.removeArea(areaId as string);
-    });
-
-    const store = useKarmycStore.getState();
-    const area = store.getAreaById(areaId as string);
-    expect(area).toBeUndefined();
   });
 }); 

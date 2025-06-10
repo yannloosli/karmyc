@@ -1,79 +1,71 @@
+import { renderHook, act } from '@testing-library/react';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { usePluginSystem } from '../../src/hooks/usePluginSystem';
 import { ZustandPlugin } from '../../src/hooks/usePluginSystem';
 import { IActionPlugin } from '../../src/types/actions';
+import { TestWrapper } from '../utils/TestWrapper';
+import { actionRegistry } from '../../src/actions/handlers/actionRegistry';
 
 describe('Plugin System', () => {
   beforeEach(() => {
-    useKarmycStore.setState({
-      screens: {
-        main: {
-          areas: {
-            _id: 0,
-            rootId: null,
-            errors: [],
-            activeAreaId: null,
-            joinPreview: null,
-            layout: {},
-            areas: {},
-            viewports: {},
-            areaToOpen: null,
-            lastSplitResultData: null,
-            lastLeadAreaId: null
-          }
-        }
-      },
-      activeScreenId: 'main',
-      options: {
-        keyboardShortcutsEnabled: true,
-        builtInLayouts: [],
-        validators: [],
-        plugins: []
-      }
+    // Reset action registry
+    actionRegistry['plugins'] = new Map();
+  });
+
+  it('should register a plugin', async () => {
+    const { result } = renderHook(() => usePluginSystem(useKarmycStore), {
+      wrapper: TestWrapper
     });
-  });
 
-  it('should register a plugin', () => {
-    const { registerPlugin } = usePluginSystem(useKarmycStore);
     const plugin: ZustandPlugin<any> = {
       name: 'test-plugin',
       actions: {
         TEST_ACTION: jest.fn()
       }
     };
-    registerPlugin(plugin);
-    const state = useKarmycStore.getState();
-    const expectedPlugin: IActionPlugin = {
-      id: plugin.name,
-      actionTypes: ['TEST_ACTION'],
-      priority: 500,
-      handler: expect.any(Function)
-    };
-    expect(state.options.plugins).toContainEqual(expectedPlugin);
+
+    await act(async () => {
+      result.current.registerPlugin(plugin);
+    });
+
+    const action = { type: 'TEST_ACTION', payload: { test: 'data' } };
+    await act(async () => {
+      actionRegistry.handleAction(action);
+    });
+
+    expect(plugin.actions?.TEST_ACTION).toHaveBeenCalledWith({ test: 'data' });
   });
 
-  it('should unregister a plugin', () => {
-    const { registerPlugin, unregisterPlugin } = usePluginSystem(useKarmycStore);
+  it('should unregister a plugin', async () => {
+    const { result } = renderHook(() => usePluginSystem(useKarmycStore), {
+      wrapper: TestWrapper
+    });
+
     const plugin: ZustandPlugin<any> = {
       name: 'test-plugin',
       actions: {
         TEST_ACTION: jest.fn()
       }
     };
-    registerPlugin(plugin);
-    unregisterPlugin('test-plugin');
-    const state = useKarmycStore.getState();
-    const expectedPlugin: IActionPlugin = {
-      id: plugin.name,
-      actionTypes: ['TEST_ACTION'],
-      priority: 500,
-      handler: expect.any(Function)
-    };
-    expect(state.options.plugins).not.toContainEqual(expectedPlugin);
+
+    await act(async () => {
+      result.current.registerPlugin(plugin);
+      result.current.unregisterPlugin('test-plugin');
+    });
+
+    const action = { type: 'TEST_ACTION', payload: { test: 'data' } };
+    await act(async () => {
+      actionRegistry.handleAction(action);
+    });
+
+    expect(plugin.actions?.TEST_ACTION).not.toHaveBeenCalled();
   });
 
   it('should execute plugin action', async () => {
-    const { registerPlugin } = usePluginSystem(useKarmycStore);
+    const { result } = renderHook(() => usePluginSystem(useKarmycStore), {
+      wrapper: TestWrapper
+    });
+
     const handler = jest.fn();
     const plugin: ZustandPlugin<any> = {
       name: 'test-plugin',
@@ -81,20 +73,24 @@ describe('Plugin System', () => {
         TEST_ACTION: handler
       }
     };
-    registerPlugin(plugin);
+
+    await act(async () => {
+      result.current.registerPlugin(plugin);
+    });
     
     const action = { type: 'TEST_ACTION', payload: { test: 'data' } };
-    const state = useKarmycStore.getState();
-    const actionPlugin = state.options.plugins?.find((p: IActionPlugin) => p.id === plugin.name);
-    if (actionPlugin) {
-      await actionPlugin.handler(action);
-    }
-    
+    await act(async () => {
+      actionRegistry.handleAction(action);
+    });
+
     expect(handler).toHaveBeenCalledWith({ test: 'data' });
   });
 
-  it('should handle plugin dependencies', () => {
-    const { registerPlugin } = usePluginSystem(useKarmycStore);
+  it('should handle plugin dependencies', async () => {
+    const { result } = renderHook(() => usePluginSystem(useKarmycStore), {
+      wrapper: TestWrapper
+    });
+
     const plugin1: ZustandPlugin<any> = {
       name: 'plugin-1',
       actions: {
@@ -107,20 +103,29 @@ describe('Plugin System', () => {
         ACTION_2: jest.fn()
       }
     };
-    registerPlugin(plugin1);
-    registerPlugin(plugin2);
-    const state = useKarmycStore.getState();
-    const expectedPlugin: IActionPlugin = {
-      id: plugin2.name,
-      actionTypes: ['ACTION_2'],
-      priority: 500,
-      handler: expect.any(Function)
-    };
-    expect(state.options.plugins).toContainEqual(expectedPlugin);
+
+    await act(async () => {
+      result.current.registerPlugin(plugin1);
+      result.current.registerPlugin(plugin2);
+    });
+    
+    const action1 = { type: 'ACTION_1', payload: { test: 'data' } };
+    const action2 = { type: 'ACTION_2', payload: { test: 'data' } };
+    
+    await act(async () => {
+      actionRegistry.handleAction(action1);
+      actionRegistry.handleAction(action2);
+    });
+    
+    expect(plugin1.actions?.ACTION_1).toHaveBeenCalledWith({ test: 'data' });
+    expect(plugin2.actions?.ACTION_2).toHaveBeenCalledWith({ test: 'data' });
   });
 
-  it('should handle plugin conflicts', () => {
-    const { registerPlugin } = usePluginSystem(useKarmycStore);
+  it('should handle plugin conflicts', async () => {
+    const { result } = renderHook(() => usePluginSystem(useKarmycStore), {
+      wrapper: TestWrapper
+    });
+
     const plugin1: ZustandPlugin<any> = {
       name: 'test-plugin',
       actions: {
@@ -133,7 +138,21 @@ describe('Plugin System', () => {
         TEST_ACTION: jest.fn()
       }
     };
-    registerPlugin(plugin1);
-    expect(() => registerPlugin(plugin2)).toThrow();
+
+    await act(async () => {
+      result.current.registerPlugin(plugin1);
+    });
+
+    let error: Error | undefined;
+    try {
+      await act(async () => {
+        result.current.registerPlugin(plugin2);
+      });
+    } catch (e) {
+      error = e as Error;
+    }
+
+    expect(error).toBeDefined();
+    expect(error?.message).toBe('Plugin with name "test-plugin" already exists');
   });
 }); 

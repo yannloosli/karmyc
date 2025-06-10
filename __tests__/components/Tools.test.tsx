@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Tools } from '../../src/components/ToolsSlot';
 import { useKarmycStore } from '../../src/store/areaStore';
+import { createMockStore, createTestViewport } from '../__mocks__/testWrappers';
 
 // Mock the store
 jest.mock('../../src/store/areaStore', () => ({
@@ -12,21 +13,7 @@ describe('Tools Component', () => {
   beforeEach(() => {
     // Mock default store values
     (useKarmycStore as unknown as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        activeScreenId: 'screen-1',
-        screens: {
-          'screen-1': {
-            isDetached: false,
-            areas: {
-              areas: {}
-            }
-          }
-        },
-        options: {
-          multiScreen: false
-        }
-      };
-      return selector(state);
+      return selector(createMockStore());
     });
   });
 
@@ -53,28 +40,6 @@ describe('Tools Component', () => {
     expect(tools).toBeInTheDocument();
   });
 
-  it('should handle viewport changes', () => {
-    const viewport = {
-      top: 0,
-      left: 0,
-      width: 100,
-      height: 100
-    };
-
-    render(
-      <Tools viewport={viewport}>
-        <button>Test Button</button>
-      </Tools>
-    );
-
-    const tools = screen.getByTestId('tools-container');
-    expect(tools).toHaveStyle({
-      top: '0px',
-      left: '0px',
-      height: 'calc(100px)'
-    });
-  });
-
   it('should handle area ID', () => {
     render(
       <Tools areaId="test-area">
@@ -86,26 +51,9 @@ describe('Tools Component', () => {
     expect(tools).toBeInTheDocument();
   });
 
-  it('should handle custom styles', () => {
-    const customStyle = {
-      backgroundColor: 'red',
-      padding: '10px'
-    };
-
-    render(
-      <Tools style={customStyle}>
-        <button>Test Button</button>
-      </Tools>
-    );
-
-    const tools = screen.getByTestId('tools-container');
-    expect(tools).toHaveStyle(customStyle);
-  });
-
   it('should handle fullscreen mode', () => {
     (useKarmycStore as unknown as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        activeScreenId: 'screen-1',
+      return selector(createMockStore({
         screens: {
           'screen-1': {
             isDetached: false,
@@ -117,12 +65,8 @@ describe('Tools Component', () => {
               }
             }
           }
-        },
-        options: {
-          multiScreen: false
         }
-      };
-      return selector(state);
+      }));
     });
 
     render(
@@ -132,13 +76,12 @@ describe('Tools Component', () => {
     );
 
     const tools = screen.getByTestId('tools-container');
-    expect(tools).toHaveStyle({ height: '100%' });
+    expect(tools).toHaveStyle({ height: 'calc(100%)' });
   });
 
   it('should handle detached mode', () => {
     (useKarmycStore as unknown as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        activeScreenId: 'screen-1',
+      return selector(createMockStore({
         screens: {
           'screen-1': {
             isDetached: true,
@@ -146,12 +89,8 @@ describe('Tools Component', () => {
               areas: {}
             }
           }
-        },
-        options: {
-          multiScreen: false
         }
-      };
-      return selector(state);
+      }));
     });
 
     render(

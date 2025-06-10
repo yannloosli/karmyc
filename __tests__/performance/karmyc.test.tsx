@@ -1,62 +1,45 @@
 import React from 'react';
-import { render } from '@testing-library/react';
-import { Karmyc } from '../../src/components/Karmyc';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { AreaRole } from '../../src/types/area';
+import { render, act } from '@testing-library/react';
+import { AreaRole } from '../../src/types/actions';
+import { 
+  TestComponent, 
+  createGridAreas,
+  measurePerformance,
+  assertPerformance
+} from '../__mocks__/performanceTestUtils';
 
 describe('Karmyc Performance', () => {
-  it('should render many areas efficiently', () => {
-    const startTime = performance.now();
+  it('should render many areas efficiently', async () => {
+    const { areas } = createGridAreas(5, 5);
 
-    const config = useKarmyc({
-      initialAreas: Array.from({ length: 50 }, (_, i) => ({
-        type: `test-area-${i}`,
-        role: 'LEAD' as AreaRole
-      }))
+    const renderTime = await measurePerformance(async () => {
+      await act(async () => {
+        render(<TestComponent areas={areas} />);
+      });
     });
 
-    render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
-
-    const endTime = performance.now();
-    const renderTime = endTime - startTime;
-
-    // Rendering time should not exceed 1000ms
-    expect(renderTime).toBeLessThan(1000);
+    assertPerformance(renderTime, 1000, 'Rendering 25 areas grid');
   });
 
-  it('should handle state updates efficiently', () => {
-    const config = useKarmyc({
-      initialAreas: [
-        { type: 'test-area', role: 'LEAD' as AreaRole }
-      ]
+  it('should handle state updates efficiently', async () => {
+    const { areas } = createGridAreas(2, 2);
+
+    let rerender: any;
+    await act(async () => {
+      const result = render(<TestComponent areas={areas} />);
+      rerender = result.rerender;
     });
 
-    const { rerender } = render(
-      <KarmycProvider options={config}>
-        <Karmyc />
-      </KarmycProvider>
-    );
+    const updateTime = await measurePerformance(async () => {
+      // Simulate 100 state updates
+      for (let i = 0; i < 100; i++) {
+        await act(async () => {
+          rerender(<TestComponent areas={areas} />);
+        });
+      }
+    });
 
-    const startTime = performance.now();
-
-    // Simulate 100 state updates
-    for (let i = 0; i < 100; i++) {
-      rerender(
-        <KarmycProvider options={config}>
-          <Karmyc />
-        </KarmycProvider>
-      );
-    }
-
-    const endTime = performance.now();
-    const updateTime = endTime - startTime;
-
-    // Average update time should not exceed 10ms
-    expect(updateTime / 100).toBeLessThan(10);
+    const averageUpdateTime = updateTime / 100;
+    assertPerformance(averageUpdateTime, 10, 'Average state update');
   });
 }); 

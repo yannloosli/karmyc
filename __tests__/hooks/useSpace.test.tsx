@@ -1,95 +1,128 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
+import { act } from 'react';
 import { useSpace } from '../../src/hooks/useSpace';
 import { useSpaceStore } from '../../src/store/spaceStore';
+import { resetSpaceStore, createTestSpace, assertStoreState } from '../__mocks__/hookTestUtils';
 
 describe('useSpace', () => {
   beforeEach(() => {
-    useSpaceStore.setState({
-      spaces: {},
-      activeSpaceId: null,
-      openSpaceIds: [],
-      pilotMode: 'MANUAL'
+    resetSpaceStore();
+  });
+
+  it('should create a new space', async () => {
+    const { result } = renderHook(() => useSpace());
+
+    let spaceId: string | undefined;
+    await act(async () => {
+      spaceId = result.current.createSpace('test-space', { color: '#ff0000' });
+    });
+
+    expect(spaceId).toBeDefined();
+    assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}.name`]: 'test-space',
+      [`spaces.${spaceId}.sharedState.color`]: '#ff0000',
+      'openSpaceIds': [spaceId]
     });
   });
 
-  it('should create a new space', () => {
+  it('should remove a space', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('test-space', { color: '#ff0000' });
+    let spaceId: string | undefined;
+    await act(async () => {
+      spaceId = result.current.createSpace('test-space', { color: '#ff0000' });
+      result.current.deleteSpace(spaceId!);
     });
 
-    const state = useSpaceStore.getState();
-    expect(state.spaces['test-space']).toBeDefined();
-    expect(state.spaces['test-space'].name).toBe('test-space');
-    expect(state.spaces['test-space'].sharedState.color).toBe('#ff0000');
+    assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}`]: undefined,
+      'openSpaceIds': []
+    });
   });
 
-  it('should remove a space', () => {
+  it('should update space state', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('test-space', { color: '#ff0000' });
-      result.current.deleteSpace('test-space');
+    let spaceId: string | undefined;
+    await act(async () => {
+      spaceId = result.current.createSpace('test-space', { color: '#ff0000' });
+      result.current.updateSharedState(spaceId!, { color: '#00ff00' });
     });
 
-    const state = useSpaceStore.getState();
-    expect(state.spaces['test-space']).toBeUndefined();
+    assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}.sharedState.color`]: '#00ff00',
+      [`spaces.${spaceId}.sharedState.pastDiffs`]: expect.any(Array),
+      [`spaces.${spaceId}.sharedState.futureDiffs`]: []
+    });
   });
 
-  it('should update space state', () => {
+  it('should switch active space', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('test-space', { color: '#ff0000' });
-      result.current.updateSharedState('test-space', { color: '#00ff00' });
+    let space1Id: string | undefined;
+    let space2Id: string | undefined;
+    await act(async () => {
+      space1Id = result.current.createSpace('space-1', { color: '#ff0000' });
+      space2Id = result.current.createSpace('space-2', { color: '#00ff00' });
+      result.current.setActive(space2Id!);
     });
 
-    const state = useSpaceStore.getState();
-    expect(state.spaces['test-space'].sharedState.color).toBe('#00ff00');
+    assertStoreState(useSpaceStore, {
+      'activeSpaceId': space2Id,
+      'openSpaceIds': [space1Id, space2Id]
+    });
   });
 
-  it('should switch active space', () => {
+  it('should handle space persistence', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('space-1', { color: '#ff0000' });
-      result.current.createSpace('space-2', { color: '#00ff00' });
-      result.current.setActive('space-2');
+    let spaceId: string | undefined;
+    await act(async () => {
+      spaceId = result.current.createSpace('test-space', { color: '#ff0000' });
     });
 
-    const state = useSpaceStore.getState();
-    expect(state.activeSpaceId).toBe('space-2');
+    // Simulate page reload by creating a new store instance
+    const persistedState = useSpaceStore.getState();
+    await act(async () => {
+      resetSpaceStore();
+    });
+
+    // Simulate loading persisted state
+    await act(async () => {
+      useSpaceStore.setState(persistedState);
+    });
+
+    assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}`]: expect.any(Object),
+      'openSpaceIds': [spaceId]
+    });
   });
 
-  it('should handle space persistence', () => {
+  it('should handle space synchronization', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('test-space', { color: '#ff0000' });
+    let spaceId: string | undefined;
+    await act(async () => {
+      spaceId = result.current.createSpace('test-space', { color: '#ff0000' });
+      result.current.updateSharedState(spaceId!, { color: '#00ff00' });
     });
 
-    // Simulate page reload
-    useSpaceStore.setState({
-      ...useSpaceStore.getState(),
-      spaces: {}
+    assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}.sharedState.color`]: '#00ff00',
+      [`spaces.${spaceId}.sharedState.pastDiffs`]: expect.any(Array),
+      [`spaces.${spaceId}.sharedState.futureDiffs`]: []
     });
-
-    // Check that the space is restored
-    const state = useSpaceStore.getState();
-    expect(state.spaces['test-space']).toBeDefined();
   });
 
-  it('should handle space synchronization', () => {
+  it('should handle pilot mode', async () => {
     const { result } = renderHook(() => useSpace());
 
-    act(() => {
-      result.current.createSpace('test-space', { color: '#ff0000' });
-      result.current.updateSharedState('test-space', { color: '#00ff00' });
+    await act(async () => {
+      result.current.setPilotMode('AUTO');
     });
 
-    // Simulate synchronization between tabs
-    const state = useSpaceStore.getState();
-    expect(state.spaces['test-space'].sharedState.color).toBe('#00ff00');
+    assertStoreState(useSpaceStore, {
+      'pilotMode': 'AUTO'
+    });
   });
 }); 

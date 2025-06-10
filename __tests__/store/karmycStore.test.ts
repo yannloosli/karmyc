@@ -1,37 +1,51 @@
 import { useKarmycStore } from '../../src/store/areaStore';
 import { AreaRole } from '../../src/types/area';
 import type { RootState } from '../../src/store/areaStore';
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react';
+import { createRoot } from 'react-dom/client';
 
 describe('Karmyc Store', () => {
+  let container: HTMLDivElement;
+
   beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    const root = createRoot(container);
+
     // Réinitialiser le store avec un état valide
-    useKarmycStore.setState({
-      screens: {
-        main: {
-          areas: {
-            _id: 0,
-            rootId: null,
-            errors: [],
-            activeAreaId: null,
-            joinPreview: null,
-            layout: {},
-            areas: {},
-            viewports: {},
-            areaToOpen: null,
-            lastSplitResultData: null,
-            lastLeadAreaId: null
+    act(() => {
+      useKarmycStore.setState({
+        screens: {
+          main: {
+            areas: {
+              _id: 0,
+              rootId: null,
+              errors: [],
+              activeAreaId: null,
+              joinPreview: null,
+              layout: {},
+              areas: {},
+              viewports: {},
+              areaToOpen: null,
+              lastSplitResultData: null,
+              lastLeadAreaId: null
+            }
           }
+        },
+        activeScreenId: 'main',
+        options: {
+          resizableAreas: true,
+          manageableAreas: true,
+          multiScreen: true,
+          builtInLayouts: []
         }
-      },
-      activeScreenId: 'main',
-      options: {
-        resizableAreas: true,
-        manageableAreas: true,
-        multiScreen: true,
-        builtInLayouts: []
-      }
+      });
     });
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+    container.remove();
   });
 
   it('should initialize with default state', () => {
@@ -56,21 +70,23 @@ describe('Karmyc Store', () => {
       }
     };
 
-    useKarmycStore.setState((state: RootState) => ({
-      ...state,
-      screens: {
-        ...state.screens,
-        [state.activeScreenId]: {
-          areas: {
-            ...state.screens[state.activeScreenId].areas,
+    act(() => {
+      useKarmycStore.setState((state: RootState) => ({
+        ...state,
+        screens: {
+          ...state.screens,
+          [state.activeScreenId]: {
             areas: {
-              ...state.screens[state.activeScreenId].areas.areas,
-              [areaId]: newArea
+              ...state.screens[state.activeScreenId].areas,
+              areas: {
+                ...state.screens[state.activeScreenId].areas.areas,
+                [areaId]: newArea
+              }
             }
           }
         }
-      }
-    }));
+      }));
+    });
 
     const state = result.current;
     expect(Object.keys(state.screens[state.activeScreenId].areas.areas)).toHaveLength(1);
@@ -93,38 +109,42 @@ describe('Karmyc Store', () => {
     };
 
     // Add area first
-    useKarmycStore.setState((state: RootState) => ({
-      ...state,
-      screens: {
-        ...state.screens,
-        [state.activeScreenId]: {
-          areas: {
-            ...state.screens[state.activeScreenId].areas,
-            areas: {
-              ...state.screens[state.activeScreenId].areas.areas,
-              [areaId]: newArea
-            }
-          }
-        }
-      }
-    }));
-
-    // Remove area
-    useKarmycStore.setState((state: RootState) => {
-      const { [areaId]: removedArea, ...remainingAreas } = state.screens[state.activeScreenId].areas.areas;
-      return {
+    act(() => {
+      useKarmycStore.setState((state: RootState) => ({
         ...state,
         screens: {
           ...state.screens,
           [state.activeScreenId]: {
-            ...state.screens[state.activeScreenId],
             areas: {
               ...state.screens[state.activeScreenId].areas,
-              areas: remainingAreas
+              areas: {
+                ...state.screens[state.activeScreenId].areas.areas,
+                [areaId]: newArea
+              }
             }
           }
         }
-      };
+      }));
+    });
+
+    // Remove area
+    act(() => {
+      useKarmycStore.setState((state: RootState) => {
+        const { [areaId]: removedArea, ...remainingAreas } = state.screens[state.activeScreenId].areas.areas;
+        return {
+          ...state,
+          screens: {
+            ...state.screens,
+            [state.activeScreenId]: {
+              ...state.screens[state.activeScreenId],
+              areas: {
+                ...state.screens[state.activeScreenId].areas,
+                areas: remainingAreas
+              }
+            }
+          }
+        };
+      });
     });
 
     const state = result.current;

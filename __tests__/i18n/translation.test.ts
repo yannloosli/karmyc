@@ -1,58 +1,75 @@
-import { karmycStore } from '../../src/store/karmycStore';
+import { renderHook } from '@testing-library/react';
+import { useKarmycStore } from '../../src/store/areaStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
+import { TestWrapper } from '../utils/TestWrapper';
+import { IKarmycOptions } from '../../src/types/karmyc';
 
 describe('Translation System', () => {
   beforeEach(() => {
-    karmycStore.setState({
+    useKarmycStore.setState({
       screens: {
         main: {
-          areas: {},
-          layout: {
-            type: 'row',
-            children: []
+          areas: {
+            _id: 0,
+            rootId: null,
+            errors: [],
+            activeAreaId: null,
+            joinPreview: null,
+            layout: {},
+            areas: {},
+            viewports: {},
+            areaToOpen: null,
+            lastSplitResultData: null,
+            lastLeadAreaId: null
           }
         }
       },
       activeScreenId: 'main',
-      i18n: {
-        currentLanguage: 'en',
-        translations: {
-          en: {},
-          fr: {}
-        }
-      },
       options: {
+        keyboardShortcutsEnabled: true,
+        builtInLayouts: [],
+        validators: [],
         resizableAreas: true,
         manageableAreas: true,
-        multiScreen: true,
-        builtInLayouts: []
+        multiScreen: false,
+        t: (key: string, fallback: string) => fallback
       }
     });
   });
 
   it('should set language', () => {
-    const { t } = useTranslation();
-    expect(typeof t).toBe('function');
+    const { result } = renderHook(() => useTranslation(), {
+      wrapper: TestWrapper
+    });
+    expect(typeof result.current.t).toBe('function');
   });
 
   it('should get translation', () => {
-    const { t } = useTranslation();
-    expect(t('test.key', 'Test Value')).toBe('Test Value');
+    const { result } = renderHook(() => useTranslation(), {
+      wrapper: TestWrapper
+    });
+    expect(result.current.t('test.key', 'Test Value')).toBe('Test Value');
   });
 
   it('should fallback to default language', () => {
-    const { t } = useTranslation();
-    expect(t('test.key', 'Test Value')).toBe('Test Value');
+    const { result } = renderHook(() => useTranslation(), {
+      wrapper: TestWrapper
+    });
+    expect(result.current.t('test.key', 'Test Value')).toBe('Test Value');
   });
 
   it('should handle missing translations', () => {
-    const { t } = useTranslation();
-    expect(t('missing.key', 'missing.key')).toBe('missing.key');
+    const { result } = renderHook(() => useTranslation(), {
+      wrapper: TestWrapper
+    });
+    expect(result.current.t('missing.key', 'missing.key')).toBe('missing.key');
   });
 
   it('should handle nested translations', () => {
-    const { t } = useTranslation();
-    expect(t('area.role.lead', 'Lead')).toBe('Lead');
-    expect(t('area.role.follow', 'Follow')).toBe('Follow');
+    const { result } = renderHook(() => useTranslation(), {
+      wrapper: TestWrapper
+    });
+    expect(result.current.t('area.role.lead', 'Lead')).toBe('Lead');
+    expect(result.current.t('area.role.follow', 'Follow')).toBe('Follow');
   });
 }); 
