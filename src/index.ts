@@ -1,16 +1,29 @@
-export * from './areas';
-export * from './core';
-export * from './tools';
-export * from './spaces';
-
+// Components
+export * from './components';
 
 // Hooks
-export * from './hooks/useArea';
-export * from './hooks/useAreaDragAndDrop';
-export * from './hooks/useRegisterAreaType';
+export { useArea } from './hooks/useArea';
+export { default as useAreaDragAndDrop } from './hooks/useAreaDragAndDrop';
+export { useRegisterAreaType } from './hooks/useRegisterAreaType';
+export { useSpace } from './hooks/useSpace';
+export { useKarmyc } from './hooks/useKarmyc';
+export { usePluginSystem } from './hooks/usePluginSystem';
+export { useTranslation } from './hooks/useTranslation';
+export { useSpaceHistory } from './hooks/useSpaceHistory';
+export { useContextMenu } from './hooks/useContextMenu';
+export { useAreaKeyboardShortcuts } from './hooks/useAreaKeyboardShortcuts';
 
-// Components
-export * from './components'; 
+// Store
+export * from './store';
 
-// Core exports
-export { areaRegistry } from '../core/data/registries/areaRegistry'; 
+// Utils
+export * from './utils';
+
+// Types
+export * from './types';
+
+// Actions
+export * from './actions';
+
+// Providers
+export * from './providers'; 

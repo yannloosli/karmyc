@@ -1,10 +1,12 @@
 {
     "name": "@gamesberry/karmyc-core",
-    "version": "1.0.0",
+    "version": "1.0.0-beta.1",
     "description": "A flexible and powerful layout management system for React applications",
+    "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
     "types": "dist/index.d.ts",
+    "license": "MIT",
     "files": [
         "dist",
         "style.css"
@@ -36,7 +38,6 @@
         "name": "Yann Loosli",
         "email": "yann@gamesberry.fr"
     },
-    "license": "MIT",
     "dependencies": {
         "@szhsin/react-menu": "^4.4.1",
         "immer": "^10.0.0",

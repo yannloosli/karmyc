@@ -4,9 +4,11 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import { terser } from 'rollup-plugin-terser';
-import pkg from './package.json';
+import { readFileSync } from 'fs';
 
-export const createRollupConfig = (pkg, options = {}) => {
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+
+const createRollupConfig = (pkg, options = {}) => {
   return {
     input: options.input || 'src/index.ts',
     output: [
@@ -37,3 +39,5 @@ export const createRollupConfig = (pkg, options = {}) => {
     external: options.external || []
   };
 };
+
+export default createRollupConfig(pkg);
