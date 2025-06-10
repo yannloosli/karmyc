@@ -1,5 +1,5 @@
-import '@testing-library/jest-dom';
-import { configure } from '@testing-library/react';
+require('@testing-library/jest-dom');
+const { configure } = require('@testing-library/react');
 
 // Configure testing-library
 configure({
