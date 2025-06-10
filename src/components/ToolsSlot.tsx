@@ -4,6 +4,8 @@ import { useKarmycStore } from '../store/areaStore';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
 import { useSpaceStore } from '../store/spaceStore';
+import { useToolsState } from '../hooks/useToolsState';
+import { useToolsScreenState } from '../hooks/useToolsScreenState';
 
 // Type to uniquely identify a component
 export type ComponentIdentifier = {
@@ -178,34 +180,26 @@ export const Tools: React.FC<ToolsProps> = ({
     const { getComponents: getToolbarBottomInnerByType } = useToolsSlot(areaType, 'bottom-inner');
     const toolbarBottomInnerComponents = combineAndDedupe(getToolbarBottomInnerById(), getToolbarBottomInnerByType());
 
-    const activeScreenId = useKarmycStore((state) => state.activeScreenId);
-    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
-    const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
+    const {
+        handleFocus,
+        isFullscreen
+    } = useToolsState(areaId);
 
-    // Get the area ID and its associated space
-    const currentArea = useKarmycStore(state => {
-        const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
-        if (!activeScreenAreas) return undefined;
-        // Activation of space by focus only applies to areas with an ID
-        return areaId ? Object.values(activeScreenAreas.areas).find(area => area.id === areaId) : undefined;
-    });
-    const currentSpaceId = currentArea?.spaceId;
-
-    // Focus manager to activate space
-    const handleFocus = useCallback(() => {
-        if (currentSpaceId) {
-            useSpaceStore.getState().setActiveSpace(currentSpaceId);
-        }
-    }, [currentSpaceId]);
+    const {
+        isDetached,
+        multiScreen
+    } = useToolsScreenState();
 
     // Calculate toolbar heights
     const hasTopOuter = menuComponents.length > 0;
     const hasBottomOuter = statusComponents.length > 0;
+    const hasTopInner = toolbarTopInnerComponents.length > 0;
+    const hasBottomInner = toolbarBottomInnerComponents.length > 0;
 
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
-
-    const isFullscreen = currentArea?.enableFullscreen ?? false;
+    const topInnerHeight = hasTopInner ? TOOLBAR_HEIGHT : 0;
+    const bottomInnerHeight = hasBottomInner ? TOOLBAR_HEIGHT : 0;
 
     // Organize by alignment and filter for each position
     const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {
@@ -221,10 +215,17 @@ export const Tools: React.FC<ToolsProps> = ({
             return (
                 <div 
                     className={`tools-bar tools-bar-${position}`} 
-                    style={{ height: TOOLBAR_HEIGHT, minHeight: TOOLBAR_HEIGHT }}
+                    style={{ 
+                        height: TOOLBAR_HEIGHT, 
+                        minHeight: TOOLBAR_HEIGHT,
+                        position: position.includes('outer') ? 'absolute' : 'relative',
+                        left: 0,
+                        right: 0,
+                        ...(position.includes('bottom') ? { bottom: 0 } : { top: 0 })
+                    }}
                     onFocusCapture={handleFocus}
                     tabIndex={0}
-                    data-testid="tools-container"
+                    data-testid={`tools-bar-${position}`}
                 >
                     <div className="tools-bar-section tools-bar-section--left" style={{ display: leftComponents.length > 0 ? 'flex' : 'none'}}>
                         {leftComponents.map((item, idx) => {
@@ -268,30 +269,41 @@ export const Tools: React.FC<ToolsProps> = ({
         }
         return null;
     };
+
     return (
-        <div
-            className="tools-container"
-            style={{
-                top: viewport.top,
-                left: viewport.left,
-                //width: viewport.width,
-                height: isDetached || isFullscreen ? '100%' : `calc(${viewport.height})`,
+        <div 
+            className="tools-container" 
+            style={{ 
+                position: 'relative', 
+                width: viewport.width, 
+                height: isDetached ? '100%' : 'calc(100%)',
+                overflow: 'hidden'
             }}
-            tabIndex={0}
             data-testid="tools-container"
         >
-            {renderToolbar(menuComponents, 'top-outer')}
-            <div
+            <div 
                 className="tools-content"
-                style={{
-                    height:isDetached || isFullscreen ? `calc(100% - ${bottomOuterHeight}px)` : `calc(${viewport?.height}${typeof viewport?.height === 'string' ? '' : 'px'} - ${topOuterHeight}px - ${bottomOuterHeight}px)`,
+                style={{ 
+                    position: 'absolute',
+                    top: topOuterHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: bottomOuterHeight,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}
+                data-testid="tools-content"
             >
-                {renderToolbar(toolbarTopInnerComponents, 'top-inner')}
-                {children}
-                {renderToolbar(toolbarBottomInnerComponents, 'bottom-inner')}
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                    {children}
+                </div>
             </div>
-            {renderToolbar(statusComponents, 'bottom-outer')}
+
+            {hasTopOuter && renderToolbar(menuComponents, 'top-outer')}
+            {hasBottomOuter && renderToolbar(statusComponents, 'bottom-outer')}
+            {hasTopInner && renderToolbar(toolbarTopInnerComponents, 'top-inner')}
+            {hasBottomInner && renderToolbar(toolbarBottomInnerComponents, 'bottom-inner')}
         </div>
     );
 }; 

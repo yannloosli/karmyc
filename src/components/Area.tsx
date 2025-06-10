@@ -13,6 +13,7 @@ import { useSpaceStore } from "../store/spaceStore";
 import { AreaStack } from "./AreaStack";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 import { AreaRowLayout } from "../types/areaTypes";
+import { useAreaStack } from "../hooks/useAreaStack";
 
 interface OwnProps {
     id: string;
@@ -206,19 +207,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
 
-    const isChildOfStack = useKarmycStore(state => {
-        const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
-        if (!activeScreenLayout) return false;
-
-        for (const [, layoutItem] of Object.entries(activeScreenLayout)) {
-            if (layoutItem.type === 'area_row' &&
-                layoutItem.orientation === 'stack' &&
-                layoutItem.areas.some(areaRef => areaRef.id === id)) {
-                return true;
-            }
-        }
-        return false;
-    });
+    const { isChildOfStack, stackData } = useAreaStack(id);
 
     const isLayoutRow = layoutData?.type === 'area_row';
     const rowLayout = isLayoutRow ? layoutData as AreaRowLayout : null;

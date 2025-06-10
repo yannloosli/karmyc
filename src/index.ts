@@ -1,5 +1,5 @@
 // Components
-export * from './components';
+export * from './components'; 
 
 // Hooks
 export { useArea } from './hooks/useArea';
