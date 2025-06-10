@@ -4,6 +4,7 @@ import { IKarmycProviderProps, IKarmycOptions } from '../types/karmyc';
 import { KarmycInitializer } from './KarmycInitializer';
 import { keyboardShortcutRegistry } from '../store/registries/keyboardShortcutRegistry';
 import { checkShouldPreventDefault, ModifierKey } from '../utils/keyboard';
+import { initializeTranslation } from '../hooks/useTranslation';
 
 import '@szhsin/react-menu/dist/index.css';
 import '@szhsin/react-menu/dist/transitions/zoom.css';
@@ -41,6 +42,10 @@ export const KarmycProvider: React.FC<IKarmycProviderProps> = ({
     // Initialiser le store explicitement
     useEffect(() => {
         initializeKarmycStore(options);
+        // Initialiser le système de traduction
+        if (options.t) {
+            initializeTranslation(options.t);
+        }
     }, [options]);
 
     useEffect(() => {

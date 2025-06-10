@@ -1,7 +1,7 @@
 # Karmyc Core
 
 <p align="center">
-  <img style="width:50%;" src="./demo/assets/brand/karmyc_logo.svg" alt="🔗Karmyc" />
+  <img style="width:50%;" src="https://raw.githubusercontent.com/yannloosli/karmyc/refs/heads/main/demo/assets/brand/karmyc_logo.svg" alt="🔗Karmyc" />
 </p>
 <p align="center"><strong>CORE</strong></p>
 <p align="center"><em>A flexible and powerful layout management system for React applications</em></p>

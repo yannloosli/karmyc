@@ -1,19 +1,13 @@
 import React from 'react';
-import { useKarmycStore } from '../store/areaStore';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 import { PlusIcon, CopyIcon, AppWindow, ExternalLinkIcon, TrashIcon } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { useScreenManagement } from '../hooks/useScreenManagement';
 
 export const ScreenSwitcher: React.FC = () => {
     const { t } = useTranslation();
-    // Récupérer les données nécessaires du store
-    const screens = useKarmycStore((state) => state.screens);
-    const activeScreenId = useKarmycStore((state) => state.activeScreenId);
-    const switchScreen = useKarmycStore((state) => state.switchScreen);
-    const addScreen = useKarmycStore((state) => state.addScreen);
-    const removeScreen = useKarmycStore((state) => state.removeScreen);
-    const duplicateScreen = useKarmycStore((state) => state.duplicateScreen);
+    const { screens, activeScreenId, switchScreen, addScreen, removeScreen, duplicateScreen } = useScreenManagement();
     const { open } = useContextMenu();
 
     // Enregistrer les actions du menu contextuel
@@ -126,7 +120,6 @@ export const ScreenSwitcher: React.FC = () => {
                     {idx + 1}
                 </button>
             ))}
-
         </div>
     );
 }; 
