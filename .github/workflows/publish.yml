@@ -31,6 +31,15 @@ jobs:
             - name: Build demo
               run: yarn demo:build
 
+            - name: List files for release
+              run: |
+                echo "=== Package files ==="
+                ls -la dist/
+                echo "=== Demo files ==="
+                ls -la demo/dist/
+                echo "=== Docs files ==="
+                ls -la demo/public/docs/
+
             - name: Publish to NPM
               run: yarn publish --access public
               env:
@@ -45,8 +54,8 @@ jobs:
                     dist/index.esm.js
                     dist/index.esm.js.map
                     dist/index.js.map
-                    style.css
-                    demo/dist/**
+                    demo/dist/index.html
+                    demo/dist/assets/**
                     demo/public/docs/**
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
