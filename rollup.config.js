@@ -5,6 +5,7 @@ import typescript from '@rollup/plugin-typescript';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import { terser } from 'rollup-plugin-terser';
 import { readFileSync } from 'fs';
+import css from 'rollup-plugin-css-only';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
@@ -29,14 +30,23 @@ const createRollupConfig = (pkg, options = {}) => {
       peerDepsExternal(),
       resolve(),
       commonjs(),
+      css({
+        output: 'dist/style.css'
+      }),
       typescript({
         tsconfig: options.tsconfig || './tsconfig.json',
         declaration: true,
-        declarationDir: 'dist'
+        declarationDir: 'dist',
+        noEmit: false
       }),
       terser()
     ],
-    external: options.external || []
+    external: [
+      ...(options.external || []),
+      'react',
+      'react-dom',
+      '@szhsin/react-menu'
+    ]
   };
 };
 
