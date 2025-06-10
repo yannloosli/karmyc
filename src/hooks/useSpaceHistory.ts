@@ -7,7 +7,7 @@ export interface UseSpaceHistoryOptions {
 }
 
 export function useSpaceHistory(spaceId: string | null, options: UseSpaceHistoryOptions = {}) {
-    const { enabled = true, maxHistorySize = 50 } = options;
+    const { enabled = true } = options;
 
     const undoSharedState = useSpaceStore(state => state.undoSharedState);
     const redoSharedState = useSpaceStore(state => state.redoSharedState);

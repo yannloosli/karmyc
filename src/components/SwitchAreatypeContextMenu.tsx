@@ -4,7 +4,6 @@ import { AreaTypeValue, AREA_ROLE } from '../types/actions';
 import { ControlledMenu } from '@szhsin/react-menu';
 import { useContextMenuStore } from '../store/contextMenuStore';
 import { useSpaceStore } from '../store/spaceStore';
-import { useContextMenu } from '../hooks/useContextMenu';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -13,7 +12,6 @@ const getRoleMap = () => (areaRegistry as any)._roleMap || {};
 
 export const SwitchAreaTypeContextMenu: React.FC = () => {
     const { t } = useTranslation();
-    const { open } = useContextMenu();
     const isVisible = useContextMenuStore((state) => state.isVisible && state.menuType === 'custom');
     const position = useContextMenuStore((state) => state.position);
     const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
@@ -52,23 +50,6 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
             console.log(t('area.switch.log', `Switching area ${params.areaId} to type ${params.newType}`));
         }
     });
-
-    const handleContextMenu = (e: React.MouseEvent, areaId: string) => {
-        e.preventDefault();
-        const areaTypes = Array.from(areaRegistry.getRegisteredTypes());
-        
-        open({
-            position: { x: e.clientX, y: e.clientY },
-            menuClassName: 'switch-area-type-menu',
-            items: areaTypes.map((type: string) => ({
-                id: `switch-to-${type}`,
-                label: t(`area.type.${type}`, type),
-                actionId: 'switch-area-type',
-                metadata: { areaId, newType: type }
-            })),
-            targetId: areaId
-        });
-    };
 
     return (
         <ControlledMenu

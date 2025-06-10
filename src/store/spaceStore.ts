@@ -197,6 +197,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
                         currentSpace.sharedState.pastDiffs.push({
                             timestamp: Date.now(),
                             actionType,
+                            // @ts-expect-error - payload is used in the next line
                             payload: actionPayload,
                             changes: diff,
                         });

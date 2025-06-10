@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { KarmycProvider } from '../../src/providers/KarmycProvider';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { AreaRole } from '../../src/types/actions';
+import { AreaRole } from '../../src/types';
 import { IKarmycOptions } from '../../src/types/karmyc';
 
 // Fonction utilitaire pour générer des IDs uniques

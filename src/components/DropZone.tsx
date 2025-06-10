@@ -5,7 +5,6 @@ import { PlaceArea } from "../utils/areaUtils";
 import { useKarmycStore } from "../store/areaStore";
 import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../utils/constants";
-import { useTranslation } from '../hooks/useTranslation';
 
 interface DropZoneProps {
     areaToOpen: AreaToOpen;
@@ -14,18 +13,15 @@ interface DropZoneProps {
 }
 
 export const DropZone: React.FC<DropZoneProps> = React.memo(({
-    areaToOpen,
     dimensions,
     setAreaToOpenDimensions
 }) => {
     const setViewports = useKarmycStore(state => state.setViewports);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
-    const { t } = useTranslation();
     
     const {
         handleDragOver,
         handleDrop,
-        handleDragEnd,
         areaToOpenTargetId,
         areaToOpenTargetViewport,
         calculatedPlacement

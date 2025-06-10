@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useRef } from "react";
+import React, { Dispatch, SetStateAction } from "react";
 import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../utils/constants";
 import { useKarmycStore } from "../store/areaStore";
 import { AreaRowLayout } from "../types/areaTypes";
@@ -24,7 +24,6 @@ type Props = OwnProps;
 
 export const AreaRowSeparators: React.FC<Props> = props => {
     const { row, setResizePreview, offset } = props;
-    const setRowSizes = useKarmycStore(state => state.setRowSizes);
     const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout ?? {});
     const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
@@ -103,7 +102,7 @@ export const AreaRowSeparators: React.FC<Props> = props => {
 
         const handleMouseDown = (e: React.MouseEvent) => {
             e.stopPropagation();
-            handleDragAreaResize(e.nativeEvent, row, horizontal, i + 1, setResizePreview);
+            handleDragAreaResize(row, horizontal, i + 1, setResizePreview);
         };
 
         separators.push(

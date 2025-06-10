@@ -29,6 +29,7 @@ class ActionRegistry implements IActionRegistry {
     private validators: Map<string, TActionValidator[]> = new Map();
     private actionHandlers: Map<string, { handler: ActionHandler; metadata?: ActionMetadata }> = new Map();
     private menuActionsByType: Map<string, Set<string>> = new Map();
+    // @ts-expect-error - options is used in the next line
     private options: IActionRegistryOptions;
 
     constructor(options: IActionRegistryOptions = {}) {

@@ -1,6 +1,5 @@
-import React from 'react';
 import { render, act } from '@testing-library/react';
-import { AreaRole } from '../../src/types/actions';
+import { AreaRole } from '../../src/types/karmyc';
 import { 
   TestComponent, 
   generateUniqueId, 
@@ -22,6 +21,7 @@ describe('Karmyc Performance', () => {
       state: { index: i }
     }));
 
+    // @ts-expect-error - config is used in the next line
     let config: any;
     const handleConfigReady = (newConfig: any) => {
       config = newConfig;

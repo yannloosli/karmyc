@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useEffect, useLayoutEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './Area';

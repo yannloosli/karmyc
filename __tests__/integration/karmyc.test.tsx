@@ -1,16 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
-import { useKarmyc } from '../../src/hooks/useKarmyc';
 import { AREA_ROLE } from '../../src/types/actions';
 import { AreaRole } from '../../src/types/karmyc';
 import { TestWrapper } from '../utils/TestWrapper';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { useSpaceStore } from '../../src/store/spaceStore';
-import { keyboardShortcutRegistry } from '../../src/store/registries/keyboardShortcutRegistry';
 import { areaRegistry } from '../../src/store/registries/areaRegistry';
 import { AreaComponentProps } from '../../src/types/areaTypes';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
 
 // Composant de test pour l'aire
 const TestAreaComponent: React.FC<AreaComponentProps<any>> = ({ id, state, type, viewport }) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { KarmycProvider } from '../../src/providers/KarmycProvider';
 import { useKarmyc } from '../../src/hooks/useKarmyc';

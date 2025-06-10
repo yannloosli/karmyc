@@ -17,7 +17,6 @@ interface DebugAreaProps {
 }
 
 export const Debug: React.FC<DebugAreaProps> = ({
-    state,
     targetSpace,
 }) => {
     const { t } = useTranslation();

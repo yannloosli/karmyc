@@ -1,10 +1,9 @@
-import { useKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/actions';
+import { AreaRole } from '../../src/types/karmyc';
 import { IArea } from '../../src/types/areaTypes';
 import { AreaTypeValue } from '../../src/types/actions';
 import { act } from '@testing-library/react';
 import { createTestStore, resetStore } from '../__mocks__/store';
-import { createTestArea, createTestLayout } from '../__mocks__/testUtils';
+import { createTestArea } from '../__mocks__/testUtils';
 import { AreaRowLayout } from '../../src/types/areaTypes';
 
 const karmycStore = createTestStore();

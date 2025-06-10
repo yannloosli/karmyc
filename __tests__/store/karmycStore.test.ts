@@ -1,8 +1,7 @@
 import { useKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/area';
+import { AreaRole } from '../../src/types/karmyc';
 import type { RootState } from '../../src/store/areaStore';
 import { renderHook, act } from '@testing-library/react';
-import { createRoot } from 'react-dom/client';
 
 describe('Karmyc Store', () => {
   let container: HTMLDivElement;
@@ -10,7 +9,6 @@ describe('Karmyc Store', () => {
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
-    const root = createRoot(container);
 
     // Réinitialiser le store avec un état valide
     act(() => {

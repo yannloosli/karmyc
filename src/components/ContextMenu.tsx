@@ -45,7 +45,7 @@ export const ContextMenu: React.FC = () => {
   const menuClassName = useContextMenuStore((state) => state.menuClassName);
 
   // To be adapted according to business logic to trigger the action
-  const handleAction = (actionId: string, itemMetadata?: Record<string, any>, option?: ContextMenuItem) => {
+  const handleAction = (actionId: string, itemMetadata?: Record<string, any>) => {
     actionRegistry.executeAction(actionId, { ...metadata, ...itemMetadata });
     if (closeContextMenu) closeContextMenu();
   };

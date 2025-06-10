@@ -8,7 +8,7 @@ import { AreaTypeValue } from '../../src/types/actions';
 
 export const createTestStore = () => {
   return create<RootState>()(
-    immer((set, get) => ({
+    immer((set) => ({
       screens: {
         main: {
           areas: {

@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 import { useSpace } from '../../src/hooks/useSpace';
 import { useSpaceStore } from '../../src/store/spaceStore';
-import { resetSpaceStore, createTestSpace, assertStoreState } from '../__mocks__/hookTestUtils';
+import { resetSpaceStore, assertStoreState } from '../__mocks__/hookTestUtils';
 
 describe('useSpace', () => {
   beforeEach(() => {

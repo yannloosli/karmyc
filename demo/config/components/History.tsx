@@ -9,7 +9,6 @@ import { useTranslation } from '../../../src/hooks/useTranslation';
 interface HistoryState {}
 
 export const History: React.FC<AreaComponentProps<HistoryState>> = ({
-    id,
     viewport
 }) => {
     const { t } = useTranslation();
@@ -21,7 +20,6 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
         canRedo, 
         undo, 
         redo, 
-        clearHistory 
     } = useSpaceHistory(activeSpaceId);
 
     const formatTimestamp = useCallback((timestamp: number) => {
@@ -101,7 +99,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                 {futureDiffs.length > 0 && (
                     <div style={{ marginBottom: '16px' }}>
                         <h4 style={{ color: '#666', margin: '0 0 8px 0' }}>{t('history.futureActions', 'Actions futures')}</h4>
-                        {futureDiffs.map((diff, index) => (
+                        {futureDiffs.map((diff) => (
                             <div
                                 key={`future-${diff.timestamp}`}
                                 style={{
@@ -122,7 +120,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
 
                 {/* Past history (bottom) */}
                 {pastDiffs.length > 0 ? (
-                    pastDiffs.map((diff, index) => (
+                    pastDiffs.map((diff) => (
                         <div
                             key={`past-${diff.timestamp}`}
                             style={{

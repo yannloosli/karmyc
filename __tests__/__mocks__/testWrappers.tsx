@@ -4,7 +4,6 @@ import { KarmycProvider } from '../../src/providers/KarmycProvider';
 import { IKarmycOptions } from '../../src/types/karmyc';
 import { useKarmycStore, initializeKarmycStore } from '../../src/store/areaStore';
 import { act } from '@testing-library/react';
-import { AREA_ROLE } from '../../src/types/actions';
 import { IArea } from '../../src/types/areaTypes';
 import { AreaTypeValue } from '../../src/types/actions';
 import { Karmyc } from '../../src/components/Karmyc';

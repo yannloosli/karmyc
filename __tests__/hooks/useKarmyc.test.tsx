@@ -2,10 +2,9 @@ import { render } from '@testing-library/react';
 import { act } from 'react';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
 import { useKarmycStore, initializeKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/actions';
+import { AreaRole } from '../../src/types/karmyc';
 import { actionRegistry } from '../../src/actions/handlers/actionRegistry';
 import { TestWrapper } from '../utils/TestWrapper';
-import type { RootState, AreaSliceStateData } from '../../src/store/areaStore';
 import type { IArea } from '../../src/types/areaTypes';
 
 // Composant de test pour wrapper le hook
@@ -150,7 +149,7 @@ describe('useKarmyc', () => {
   it('should handle validators', async () => {
     const validator = {
       actionType: 'test-action',
-      validator: (action: any) => ({ valid: true })
+      validator: () => ({ valid: true })
     };
 
     const options = {
@@ -284,7 +283,7 @@ describe('useKarmyc', () => {
 
     // Attendre que KarmycInitializer termine son initialisation
     await act(async () => {
-      const { getByTestId } = render(
+      render(
         <TestWrapper options={options}>
           <TestComponent options={options} />
         </TestWrapper>
@@ -471,7 +470,7 @@ describe('useKarmyc', () => {
       keyboardShortcutsEnabled: true
     };
 
-    const { getByTestId } = render(
+    render(
       <TestWrapper options={options}>
         <TestComponent options={options} />
       </TestWrapper>

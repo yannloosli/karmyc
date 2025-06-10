@@ -37,7 +37,6 @@ function simpleDragHandler(
 }
 
 export const handleDragAreaResize = (
-    initialEvent: MouseEvent,
     row: AreaRowLayout,
     horizontal: boolean,
     areaIndex: number, // 1 is the first separator
@@ -137,8 +136,6 @@ export const handleDragAreaResize = (
         return;
     }
 
-    let lastT = 0.5; // Initialiser
-
     let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let lastUpdateTime = 0;
     const minUpdateInterval = 16; // ~60fps
@@ -174,13 +171,9 @@ export const handleDragAreaResize = (
             t: t
         });
 
-        // Store the last t value
-        lastT = t;
-
-        // Calculer les pourcentages
         const tempFinalSizes = [t, 1 - t].map((v) => interpolate(0, sizeToShare, v));
         if (!tempFinalSizes.some(s => isNaN(s) || s < 0)) {
-            const latestFinalPercentages = row.areas.map((area, i) => {
+            const latestFinalPercentages = row.areas.map((_, i) => {
                 if (i === areaIndex - 1) return tempFinalSizes[0];
                 if (i === areaIndex) return tempFinalSizes[1];
                 const initialRowState = activeLayout[row.id] as AreaRowLayout | undefined;

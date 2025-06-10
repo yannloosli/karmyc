@@ -90,7 +90,7 @@ export function useKarmyc(options: IKarmycOptions = {}): IKarmycConfigWithLayout
                 };
 
                 // Initialize the system with the provided configuration
-                await coreRegistry.initialize(coreConfig);
+                coreRegistry.initialize(coreConfig);
 
                 if (!isMounted) return;
 
@@ -123,11 +123,6 @@ export function useKarmyc(options: IKarmycOptions = {}): IKarmycConfigWithLayout
         // Clean up when component unmounts
         return () => {
             isMounted = false;
-            try {
-                coreRegistry.cleanup();
-            } catch (error) {
-                console.error('Erreur lors du nettoyage de Karmyc:', error);
-            }
         };
     }, [config]);
 

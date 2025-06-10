@@ -4,7 +4,6 @@ import { useKarmycStore } from '../store/areaStore';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
 import { useSpaceStore } from '../store/spaceStore';
-import { useTranslation } from '../hooks/useTranslation';
 
 // Type to uniquely identify a component
 export type ComponentIdentifier = {
@@ -149,9 +148,7 @@ export const Tools: React.FC<ToolsProps> = ({
         width: '100%',
         height: '100%'
     },
-    style
 }) => {
-    const { t } = useTranslation();
     useToolsRegistrySubscription();
 
     const combineAndDedupe = (...componentArrays: ToolsBarComponent[][]) => {

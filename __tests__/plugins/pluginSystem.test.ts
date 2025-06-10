@@ -2,7 +2,6 @@ import { renderHook, act } from '@testing-library/react';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { usePluginSystem } from '../../src/hooks/usePluginSystem';
 import { ZustandPlugin } from '../../src/hooks/usePluginSystem';
-import { IActionPlugin } from '../../src/types/actions';
 import { TestWrapper } from '../utils/TestWrapper';
 import { actionRegistry } from '../../src/actions/handlers/actionRegistry';
 

@@ -1,4 +1,3 @@
-import { act } from '@testing-library/react';
 import type { RootState } from '../../src/store/areaStore';
 import { createTestStore } from './store';
 import { IArea } from '../../src/types/areaTypes';

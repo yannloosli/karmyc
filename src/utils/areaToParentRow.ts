@@ -1,10 +1,8 @@
-// import { AreaState } from "../store/slices/areaSlice"; // REMOVE Redux import
 import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
 
 // Updated function signature to accept layout and rootId directly
 export function computeAreaToParentRow(
     layout: { [key: string]: AreaRowLayout | AreaLayout },
-    rootId: string | null // Keep rootId in case needed for traversal logic later, though unused now
 ): { [key: string]: string } {
     const areaToParentRow: { [key: string]: string } = {};
 

@@ -1,10 +1,8 @@
-import { useTranslation } from "../../../src/hooks/useTranslation";
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import readmeContent from '../../../README.md?raw';
 
 export const ReadmeArea = () => {
-    const { t } = useTranslation();
 
     // Remplacer les chemins des images et supprimer la première ligne
     const processedContent = readmeContent

@@ -1,5 +1,4 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
-import { useContextMenu } from '../../hooks/useContextMenu';
 import { Layout, FileUp, FileDown, Edit, Trash2, Plus } from 'lucide-react';
 import { actionRegistry } from '../../actions/handlers/actionRegistry';
 import { useKarmycStore } from '../../store/areaStore';
@@ -19,7 +18,6 @@ const STORAGE_KEY = 'karmyc_custom_layouts';
 
 export const LayoutMenu: React.FC = () => {
     const { t } = useTranslation();
-    const { open } = useContextMenu();
     const [isHovered, setIsHovered] = useState(false);
     const [menuState, setMenuState] = useState<MenuState>('closed');
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });

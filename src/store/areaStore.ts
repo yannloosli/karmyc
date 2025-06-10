@@ -264,7 +264,7 @@ function findAllDescendantAreaIds(layout: AreaSliceStateData['layout'], itemId: 
 }
 
 
-function findAllDisconnectedAreas(layout: AreaSliceStateData['layout'], rootId: string | null): Set<string> {
+/* function findAllDisconnectedAreas(layout: AreaSliceStateData['layout'], rootId: string | null): Set<string> {
     const allLayoutIds = new Set<string>(Object.keys(layout));
     const connectedLayoutIds = new Set<string>();
 
@@ -300,7 +300,7 @@ function findAllDisconnectedAreas(layout: AreaSliceStateData['layout'], rootId: 
     // Return only IDs that correspond to actual areas (needs areas map access?)
     // For now, returning all disconnected layout IDs. Refinement needed.
     return disconnectedLayoutIds;
-}
+} */
 
 
 function simplifyLayoutNodeIfNeeded(state: WritableDraft<AreaSliceStateData>, rowId: string | null | undefined) {
@@ -313,7 +313,7 @@ function simplifyLayoutNodeIfNeeded(state: WritableDraft<AreaSliceStateData>, ro
 
     const survivingChildRef = rowLayout.areas[0];
     const survivingChildId = survivingChildRef.id;
-    const areaToParentRowMap = computeAreaToParentRow(state.layout, state.rootId); // Compute within helper
+    const areaToParentRowMap = computeAreaToParentRow(state.layout); // Compute within helper
     const grandParentRowId = areaToParentRowMap[rowId];
 
     // On permet la simplification même pour les stacks quand il ne reste qu'un élément
@@ -678,7 +678,7 @@ const createAreaSlice: StateCreator<
                 let survivingChildIdFromSourceSimplification: string | null = null;
 
                 if (sourceAreaId) {
-                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
+                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout);
                     const sourceParentRowId = areaToParentRow[sourceAreaId];
                     sourceParentRowIdForCleanup = sourceParentRowId; // Store for potential simplification later
 
@@ -788,7 +788,7 @@ const createAreaSlice: StateCreator<
                     };
 
                     // Trouver le parent row de l'area cible
-                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
+                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout);
                     const parentRowId = areaToParentRow[targetAreaId];
 
                     if (parentRowId && activeScreenAreas.layout[parentRowId]?.type === 'area_row') {
@@ -812,7 +812,7 @@ const createAreaSlice: StateCreator<
 
                 } else {
                     // --- Logic for Top/Bottom/Left/Right placement ---
-                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
+                    const areaToParentRow = computeAreaToParentRow(activeScreenAreas.layout);
                     const parentRowId = areaToParentRow[determinedTargetAreaId];
                     const parentRow = parentRowId ? activeScreenAreas.layout[parentRowId] as AreaRowLayout : null;
 
@@ -1123,7 +1123,7 @@ const createAreaSlice: StateCreator<
                         const before = activeScreenAreas.layout[currentId];
                         simplifyLayoutNodeIfNeeded(activeScreenAreas, currentId);
                         // Si le node a été supprimé, on remonte au parent
-                        const areaToParentRowMap = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
+                        const areaToParentRowMap = computeAreaToParentRow(activeScreenAreas.layout);
                         currentId = areaToParentRowMap[currentId];
                         if (before && !activeScreenAreas.layout[before.id]) {
                             continue;
@@ -1217,7 +1217,7 @@ const createAreaSlice: StateCreator<
             const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
             if (!activeScreenAreas) return;
 
-            const { sourceAreaId, targetAreaId, direction } = payload;
+            const { sourceAreaId, targetAreaId } = payload;
             const { parentRow, sourceIndex, targetIndex } = findParentRowAndIndices(
                 activeScreenAreas.layout, sourceAreaId, targetAreaId
             );
@@ -1230,7 +1230,7 @@ const createAreaSlice: StateCreator<
 
             // Store original parent row ID and get grandparent ID *before* mutation
             const originalParentRowId = parentRow.id;
-            const areaToParentMapBefore = computeAreaToParentRow(activeScreenAreas.layout, activeScreenAreas.rootId);
+            const areaToParentMapBefore = computeAreaToParentRow(activeScreenAreas.layout);
             const grandParentId = areaToParentMapBefore[originalParentRowId];
 
             // Create a deep copy for the utility function

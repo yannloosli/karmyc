@@ -1,8 +1,7 @@
 import { useKarmycStore } from '../../src/store/areaStore';
-import { AreaRole, AREA_ROLE } from '../../src/types/actions';
+import { AREA_ROLE } from '../../src/types/actions';
 import { create } from 'zustand';
 import { act } from '@testing-library/react';
-import { AreaSliceStateData } from '../../src/store/areaStore';
 import { IKarmycOptions } from '../../src/types/karmyc';
 import { Space, SpaceState } from '../../src/store/spaceStore';
 

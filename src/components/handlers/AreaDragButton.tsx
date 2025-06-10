@@ -26,8 +26,6 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const area = useKarmycStore(state => state.getAreaById(id));
     const isFullscreen = area?.enableFullscreen ?? false;
     const supportsFullscreen = (areaRegistry as any)._supportFullscreenMap?.[type] ?? false;
-    const updateLayout = useKarmycStore(state => state.updateLayout);
-    const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
 
     const {
         handleDragStart,
@@ -41,9 +39,8 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     // Ref for the button
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);
     // Ref for the parent element containing the area
-    const areaContainerRef = useRef<HTMLDivElement>(null);
 
-    const openSelectArea = (e: React.MouseEvent) => {
+    const openSelectArea = () => {
         if (!manageableAreas) return;
         if (selectAreaButtonRef.current) {
             const rect = selectAreaButtonRef.current.getBoundingClientRect();
@@ -186,17 +183,17 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
                     handleDrop(e);
                 }
             }}
-            onDragEnd={e => {
+            onDragEnd={() => {
                 if (!manageableAreas || isFullscreen) return;
                 setIsDragging(false);
                 selectAreaButtonRef.current!.style.pointerEvents = 'auto';
                 selectAreaButtonRef.current!.style.opacity = '1';
-                handleDragEnd(e);
+                handleDragEnd();
             }}
             onContextMenu={e => { 
                 if (!manageableAreas || isFullscreen) return;
                 e.preventDefault(); 
-                openSelectArea(e); 
+                openSelectArea(); 
             }}
             style={{
                 cursor: !manageableAreas || isFullscreen ? 'default' : isLocked ? 'default' : isDragging ? 'grabbing' : 'grab',

@@ -1,5 +1,6 @@
 import { Action, ActionPriority, IActionPlugin } from '../types/actions';
 import { useTranslation } from '../hooks/useTranslation';
+import { spaceHistoryStore } from '../store/spaceHistoryStore';
 
 /**
  * List of action types that must be recorded in the history
@@ -50,6 +51,9 @@ export const historyPlugin: IActionPlugin = {
             timestamp: Date.now(),
             description: getActionDescription(type, payload)
         };
+
+        // Add to history
+        spaceHistoryStore.getState().addEntry(historyEntry);
     }
 };
 

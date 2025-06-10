@@ -15,14 +15,6 @@ interface ResizePreviewState {
     t: number;
 }
 
-const cornerDirections: Record<IntercardinalDirection, [CardinalDirection, CardinalDirection]> = {
-    ne: ["n", "e"],
-    nw: ["n", "w"],
-    se: ["s", "e"],
-    sw: ["s", "w"],
-};
-
-// Removed parseCorner as directionParts wasn't used in Zustand logic
 
 // Function to determine if the movement is toward the inside of the area
 function determineIfMovingInwards(corner: IntercardinalDirection, moveVec: Vec2): boolean {
@@ -116,7 +108,7 @@ export const handleAreaDragFromCorner = (
     }
 
     // Pass the active screen's layout and rootId
-    const areaToParentRowMap = computeAreaToParentRow(initialLayout, initialRootId);
+    const areaToParentRowMap = computeAreaToParentRow(initialLayout);
     const parentRowId = areaToParentRowMap[areaId];
 
     // --- Function: createNewArea (Initiate Split) ---
@@ -514,7 +506,6 @@ export const handleAreaDragFromCorner = (
     }
 
     // --- Initial Decision Logic ---
-    const deltaThreshold = 10;
     let initialDirectionDetermined = false;
 
     const determineInitialDirection = (currentPos: Vec2) => {
@@ -566,7 +557,7 @@ export const handleAreaDragFromCorner = (
         }
     };
 
-    const handleMouseUp = (upEvent: MouseEvent) => {
+    const handleMouseUp = () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
 

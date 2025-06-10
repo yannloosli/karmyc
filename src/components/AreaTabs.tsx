@@ -3,7 +3,6 @@ import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { useKarmycStore } from '../store/areaStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
 import { useSpaceStore } from '../store/spaceStore';
-import { useTranslation } from '../hooks/useTranslation';
 
 interface AreaTabsProps {
     rowId: string;
@@ -14,8 +13,6 @@ interface AreaTabsProps {
 export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas }) => {
     const updateLayout = useKarmycStore(state => state.updateLayout);
     const setActiveArea = useKarmycStore(state => state.setActiveArea);
-    const activeAreaId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.activeAreaId);
-    const { t } = useTranslation();
 
     // State for drop position indicator
     const [dragIndicator, setDragIndicator] = useState<{ targetId: string | null, position: 'before' | 'after' | null }>({ targetId: null, position: null });
@@ -155,7 +152,7 @@ export const AreaTabs: React.FC<AreaTabsProps> = React.memo(({ rowId, row, areas
     };
 
     // Handle drag end (if drop didn't occur on a valid target or was cancelled)
-    const handleTabDragEnd = (e: React.DragEvent) => {
+    const handleTabDragEnd = () => {
         setDraggingTabId(null);
         setDragIndicator({ targetId: null, position: null });
     };

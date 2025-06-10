@@ -36,13 +36,12 @@ function getContrastColor(hexColor: string): string {
 }
 
 export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
-    id,
     state,
     viewport,
     targetSpace,
 }) => {
     const { t } = useTranslation();
-    const { activeSpaceId, updateSharedState, spaceList } = useSpace();
+    const { activeSpaceId, updateSharedState } = useSpace();
     const areaStore = useKarmycStore();
     const activeScreenId = areaStore.activeScreenId;
     const allAreas = areaStore.screens[activeScreenId]?.areas.areas || {};

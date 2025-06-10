@@ -1,8 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Tools } from '../../src/components/ToolsSlot';
 import { useKarmycStore } from '../../src/store/areaStore';
-import { createMockStore, createTestViewport } from '../__mocks__/testWrappers';
+import { createMockStore } from '../__mocks__/testWrappers';
 
 // Mock the store
 jest.mock('../../src/store/areaStore', () => ({

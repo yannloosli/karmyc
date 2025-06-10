@@ -2,7 +2,6 @@ import { renderHook } from '@testing-library/react';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { useTranslation } from '../../src/hooks/useTranslation';
 import { TestWrapper } from '../utils/TestWrapper';
-import { IKarmycOptions } from '../../src/types/karmyc';
 
 describe('Translation System', () => {
   beforeEach(() => {
@@ -32,7 +31,7 @@ describe('Translation System', () => {
         resizableAreas: true,
         manageableAreas: true,
         multiScreen: false,
-        t: (key: string, fallback: string) => fallback
+        t: (_key: string, fallback: string) => fallback
       }
     });
   });

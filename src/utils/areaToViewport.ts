@@ -20,53 +20,6 @@ setInterval(() => {
     }
 }, 60000);
 
-// Helper function to check if an object is extensible
-function isObjectExtensible(obj: any): boolean {
-    try {
-        // Try to add a temporary property
-        const testKey = `__test_${Date.now()}`;
-        obj[testKey] = true;
-        delete obj[testKey];
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-// Helper function to safely clone a layout object
-function safeCloneLayout(item: AreaLayout | AreaRowLayout): AreaLayout | AreaRowLayout {
-    // Create a basic copy
-    const baseClone = { ...item };
-
-    // If it's a row, also clone its areas
-    if (item.type === "area_row") {
-        const rowItem = item as AreaRowLayout;
-        const clonedAreas = rowItem.areas.map(area => {
-            if (!area.id) {
-                console.warn(`Area in row ${rowItem.id} has no ID`);
-            }
-            if (typeof area.size !== 'number' || isNaN(area.size)) {
-                console.warn(`Area ${area.id} in row ${rowItem.id} has invalid size: ${area.size}`);
-            }
-            return { ...area };
-        });
-        return {
-            ...baseClone,
-            type: "area_row",
-            id: rowItem.id,
-            orientation: rowItem.orientation,
-            areas: clonedAreas
-        } as AreaRowLayout;
-    }
-
-    // If it's a simple area
-    return {
-        ...baseClone,
-        type: "area",
-        id: item.id,
-    } as AreaLayout;
-}
-
 // Static variable to keep the last valid viewport dimensions
 let lastValidViewportSize = { width: 0, height: 0 };
 
@@ -75,14 +28,10 @@ export const computeAreaToViewport = (
     rootId: string | null,
     viewport: { left: number; top: number; width: number; height: number }
 ) => {
-    const functionCallId = Math.random().toString(36).substring(2, 7);
-
     // If rootId is null, return an empty object
     if (!rootId) {
         return {};
     }
-    const result: { [key: string]: { left: number; top: number; width: number; height: number } } = {};
-
     // Create a deep mutable copy of the layout with type assertion
     const mutableLayout = JSON.parse(JSON.stringify(layout)) as { [key: string]: AreaLayout | AreaRowLayout };
 
@@ -227,6 +176,7 @@ export const computeAreaToViewport = (
 
         // Check and fix invalid sizes
         const MIN_AREA_SIZE = 0.05; // Minimum size of 5% for an area
+        // @ts-expect-error - hasInvalidSizes is used in the next line
         let hasInvalidSizes = false;
         let zeroSizeCount = 0;
 

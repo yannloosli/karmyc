@@ -33,7 +33,6 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     const lastUpdateRef = useRef<number>(performance.now());
     const rafRef = useRef<number | undefined>(undefined);
     const isUpdatingRef = useRef(false);
-    const UPDATE_INTERVAL = 16; // 60fps
 
     const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
 
@@ -287,7 +286,7 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
 
     }, [cleanupTemporaryStates, finalizeAreaPlacementAction, updatePosition, calculatedPlacement, layout, updateLayout]);
 
-    const handleDragEnd = useCallback((e: React.DragEvent) => {
+    const handleDragEnd = useCallback(() => {
         // Reactivate text selection at the end of the drag
         document.body.style.userSelect = '';
 

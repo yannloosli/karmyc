@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks';
 import { useKarmycStore } from '../../../src/store/areaStore';
-import { useSpaceStore, SpaceSharedState, SpaceState } from '../../../src/store/spaceStore';
+import { useSpaceStore, SpaceSharedState } from '../../../src/store/spaceStore';
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/actions/handlers/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/actions/handlers/actionRegistry';
@@ -18,14 +18,7 @@ export interface Line {
     color: string;
     width: number;
 }
-
-// Define a type for the object returned by the selector
-interface SelectedSpaceHistoryState {
-    spaceSharedState: SpaceSharedState;
-    canUndoSpace: boolean;
-    canRedoSpace: boolean;
-}
-
+    
 // Define a default value for the entire selected object
 const defaultSharedState: SpaceSharedState = {
     lines: [],

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo, useLayoutEffect, useRef, useContext } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useRef, useContext } from "react";
 import { useKarmycStore } from "../store/areaStore";
 import { AreaRowLayout } from "../types/areaTypes";
 import { computeAreaToViewport } from "../utils/areaToViewport";

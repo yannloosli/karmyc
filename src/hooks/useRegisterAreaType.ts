@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { areaRegistry } from '../store/registries/areaRegistry';
-import { AreaRole } from '../types/actions';
+import { AreaRole } from '../types/karmyc';
 
 /**
  * Hook to register a custom area type

@@ -13,7 +13,6 @@ export const SpaceMenu: React.FC = () => {
         activeSpaceId,
         openSpaces,
         createSpace, 
-        deleteSpace, 
         setActive,
         openSpace,
         closeSpace,

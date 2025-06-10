@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { AREA_ROLE, AreaTypeValue, AreaRole } from '../../src/types/actions';
+import { AREA_ROLE, AreaTypeValue } from '../../src/types/actions';
 import { IArea } from '../../src/types/areaTypes';
-import { IKarmycOptions, ISpace, LayoutPreset } from '../../src/types/karmyc';
+import { ISpace } from '../../src/types/karmyc';
 import { 
   TestComponent, 
   setupErrorTest, 
@@ -159,7 +159,7 @@ describe('Error Handling', () => {
         <KarmycProvider
           options={{
             initialAreas: [
-              { type: 'test-area', role: 'LEAD' }
+              { type: 'test-area', role: 'LEAD', id: 'test-area-1' }
             ],
             spaces: {
               'invalid-space': invalidSpace
