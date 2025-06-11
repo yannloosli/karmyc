@@ -20,6 +20,34 @@ interface State {
     error: Error | null;
 }
 
+// Composant fonctionnel pour l'affichage de l'erreur
+const ErrorDisplay: React.FC<{
+    viewport: Props['viewport'];
+    error: Error | null;
+}> = ({ viewport, error }) => {
+    const { t } = useTranslation();
+    
+    return (
+        <div
+            style={{
+                position: "absolute",
+                left: viewport.left,
+                top: viewport.top,
+                width: viewport.width,
+                height: viewport.height,
+                backgroundColor: "#fff5f5",
+                border: "1px solid #feb2b2",
+                borderRadius: "4px",
+                padding: "16px",
+                color: "#c53030",
+            }}
+        >
+            <h3>{t('area.error.title', 'An error occurred in the area')}</h3>
+            <p>{error?.message}</p>
+        </div>
+    );
+};
+
 export class AreaErrorBoundary extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -36,25 +64,7 @@ export class AreaErrorBoundary extends React.Component<Props, State> {
 
     render() {
         if (this.state.hasError) {
-            return (
-                <div
-                    style={{
-                        position: "absolute",
-                        left: this.props.viewport.left,
-                        top: this.props.viewport.top,
-                        width: this.props.viewport.width,
-                        height: this.props.viewport.height,
-                        backgroundColor: "#fff5f5",
-                        border: "1px solid #feb2b2",
-                        borderRadius: "4px",
-                        padding: "16px",
-                        color: "#c53030",
-                    }}
-                >
-                    <h3>{useTranslation().t('area.error.title', 'An error occurred in the area')}</h3>
-                    <p>{this.state.error?.message}</p>
-                </div>
-            );
+            return <ErrorDisplay viewport={this.props.viewport} error={this.state.error} />;
         }
 
         const Component = this.props.component;

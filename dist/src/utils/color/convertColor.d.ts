@@ -1,0 +1,11 @@
+import { HSLColor, RGBAColor, RGBColor } from "../../types/colorTypes";
+export declare const hexRegex: RegExp;
+export declare const hexToRGB: (hex: string) => RGBColor;
+export declare const hexToBinary: (hex: string) => number;
+export declare const rgbToBinary: (rgb: RGBColor) => number;
+export declare const hexToRGBA: (hex: string) => RGBAColor;
+export declare const hexToRGBAString: (hex: string, alpha?: number) => string;
+export declare const rgbToString: (rgb: RGBColor, alpha?: number) => string;
+export declare const rgbaToString: (rgba: RGBAColor) => string;
+export declare const rgbToHSL: (rgbColor: RGBColor) => HSLColor;
+export declare const hslToRGB: ([h, s, l]: HSLColor) => RGBColor;

@@ -1,5 +1,5 @@
 import React from "react";
-import { AreaComponent } from "./Area";
+import { AreaComponent } from "./AreaComponent";
 import { areaRegistry } from "../store/registries/areaRegistry";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";

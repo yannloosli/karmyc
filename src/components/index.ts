@@ -1,4 +1,3 @@
-export { AreaComponent } from './Area';
 export { AreaStack } from './AreaStack';
 export { AreaErrorBoundary } from './AreaErrorBoundary';
 export { AreaPreview } from './AreaPreview';

@@ -288,6 +288,14 @@ Each space can operate in two modes:
 - `<KarmycProvider options={config}>`: Main provider component
 - `<Karmyc />`: Main layout component
 - `<Tools name="slot-name" orientation="horizontal|vertical">`: Toolbar component
+- `<Area />`: Individual area component
+- `<AreaStack />`: Stack of areas
+- `<AreaTabs />`: Tab management for areas
+- `<ContextMenu />`: Context menu system
+- `<DropZone />`: Drag and drop zones
+- `<ScreenSwitcher />`: Multi-screen management
+- `<KeyboardShortcutsViewer />`: Keyboard shortcuts display
+- `<AreaErrorBoundary />`: Error handling for areas
 
 ### Key Hooks
 - `useKarmyc(config)`: Initialize Karmyc configuration
@@ -296,7 +304,14 @@ Each space can operate in two modes:
 - `useRegisterAreaType(type, component, initialState, options)`: Register area types
 - `useToolsSlot(slotName)`: Manage toolbar slots
 - `useContextMenu()`: Manage context menus
-- `useTranslation()`: Access the translation system and translate text
+- `useTranslation()`: Access the translation system
+- `useAreaDragAndDrop()`: Handle drag and drop functionality
+- `usePluginSystem()`: Manage plugin system
+- `useSpaceHistory()`: Handle space history
+- `useAreaKeyboardShortcuts()`: Manage keyboard shortcuts
+- `useScreenManagement()`: Handle multi-screen functionality
+- `useToolsState()`: Manage tools state
+- `useAreaStack()`: Handle area stacking
 
 ### Configuration Options
 The `useKarmyc` hook accepts a configuration object with the following options:
@@ -535,11 +550,15 @@ karmyc-core/
 ├── src/                    # Source code
 │   ├── actions/           # Action creators and handlers
 │   ├── components/        # React components
+│   │   ├── handlers/     # Event handlers
+│   │   └── menus/        # Menu components
 │   ├── hooks/            # Custom React hooks
 │   ├── providers/        # React context providers
 │   ├── store/            # State management
 │   ├── types/            # TypeScript type definitions
-│   └── utils/            # Utility functions
+│   ├── utils/            # Utility functions
+│   ├── index.ts          # Main entry point
+│   └── setupTests.ts     # Test configuration
 ├── demo/                  # Demo application
 │   ├── config/           # Demo configuration
 │   ├── assets/           # Static assets

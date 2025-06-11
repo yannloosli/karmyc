@@ -18,7 +18,7 @@ import { IKarmycOptions, LayoutPreset } from '../types/karmyc';
 import { v4 as uuidv4 } from 'uuid';
 import { createJSONStorage } from 'zustand/middleware';
 import { useSpaceStore } from './spaceStore';
-import { cleanupToolsRegistry } from '../components/ToolsSlot';
+import { toolsEventBus } from '../utils/toolsEventBus';
 
 // --- Define Join Preview State Type (kept for AreaSliceStateData) ---
 export interface JoinPreviewState {
@@ -498,6 +498,7 @@ const createAreaSlice: StateCreator<
             }
             activeScreenAreas.errors = [];
             state.lastUpdated = Date.now();
+            toolsEventBus.publish({ type: 'cleanup', areaId: id });
         }),
 
         setActiveArea: (id) => set((state: WritableDraft<RootState>) => {
@@ -520,40 +521,14 @@ const createAreaSlice: StateCreator<
             if (!activeScreenAreas) return;
             const area = activeScreenAreas.areas[areaData.id];
             if (area) {
-                const newType = areaData.type || area.type;
-                let newRole = area.role;
-                if (!newRole || (areaData.type && areaData.type !== area.type)) {
-                    const _roleMap = (areaRegistry as any)._roleMap || {};
-                    newRole = _roleMap[newType];
-                }
-                const before = JSON.stringify(area);
-                
-                // Si le type change, on nettoie l'état précédent
-                if (areaData.type && areaData.type !== area.type) {
-                    // On garde uniquement les propriétés de base de la zone
-                    const baseProperties = {
-                        id: area.id,
-                        type: areaData.type,
-                        role: newRole,
-                        spaceId: area.spaceId,
-                        isLocked: area.isLocked
-                    };
-                    Object.assign(area, baseProperties);
-
-                    // Nettoyer le registre des outils pour cette zone
-                    cleanupToolsRegistry(area.id);
+                const newRole = areaData.role;
+                if (newRole && newRole !== area.role) {
+                    // On nettoie d'abord les outils pour cette zone
+                    toolsEventBus.publish({ type: 'cleanup', areaId: area.id });
                 }
                 
                 // On applique les autres mises à jour
                 Object.assign(area, areaData, { role: newRole });
-                
-                const after = JSON.stringify(area);
-                if (before !== after) {
-                    activeScreenAreas.errors = [];
-                    state.lastUpdated = Date.now();
-                }
-            } else {
-                activeScreenAreas.errors = [`Area with ID ${areaData.id} not found for update.`];
             }
         }),
 

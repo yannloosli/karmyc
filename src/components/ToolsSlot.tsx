@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect } from 'react';
 import { ScreenSwitcher } from './ScreenSwitcher';
-import { useKarmycStore } from '../store/areaStore';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
-import { useSpaceStore } from '../store/spaceStore';
 import { useToolsState } from '../hooks/useToolsState';
 import { useToolsScreenState } from '../hooks/useToolsScreenState';
+import { toolsBarRegistry, subscribeToRegistryChanges } from '../utils/toolsRegistry';
+import { useToolsCleanup } from '../hooks/useToolsCleanup';
 
 // Type to uniquely identify a component
 export type ComponentIdentifier = {
@@ -25,7 +25,7 @@ export type ToolsBarPosition =
     | string;
 
 // Structure of a registered component
-interface ToolsBarComponent {
+export interface ToolsBarComponent {
     component: React.ComponentType<any>;
     order: number;
     alignment: ToolsBarAlignment;
@@ -36,24 +36,9 @@ interface ToolsBarComponent {
 }
 
 // Global registry
-const toolsBarRegistry: Record<string, ToolsBarComponent[]> = {};
-
-// Subscription system for registry reactivity
 const listeners = new Set<() => void>();
 function notifyToolsRegistryChange() {
     listeners.forEach((cb) => cb());
-}
-
-// Fonction pour nettoyer le registre des outils d'une zone
-export function cleanupToolsRegistry(areaId: string) {
-    const positions = ['top-outer', 'top-inner', 'bottom-outer', 'bottom-inner'];
-    positions.forEach(position => {
-        const registryKey = `${areaId}:${position}`;
-        if (toolsBarRegistry[registryKey]) {
-            delete toolsBarRegistry[registryKey];
-        }
-    });
-    notifyToolsRegistryChange();
 }
 
 // Hook for registration
@@ -122,10 +107,7 @@ export function useToolsSlot(
 function useToolsRegistrySubscription() {
     const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
     useEffect(() => {
-        listeners.add(forceUpdate);
-        return () => {
-            listeners.delete(forceUpdate);
-        };
+        return subscribeToRegistryChanges(forceUpdate);
     }, []);
 }
 
@@ -152,6 +134,7 @@ export const Tools: React.FC<ToolsProps> = ({
     },
 }) => {
     useToolsRegistrySubscription();
+    useToolsCleanup();
 
     const combineAndDedupe = (...componentArrays: ToolsBarComponent[][]) => {
         const componentMap = new Map<string, ToolsBarComponent>();
@@ -182,7 +165,6 @@ export const Tools: React.FC<ToolsProps> = ({
 
     const {
         handleFocus,
-        isFullscreen
     } = useToolsState(areaId);
 
     const {
@@ -198,8 +180,6 @@ export const Tools: React.FC<ToolsProps> = ({
 
     const topOuterHeight = hasTopOuter ? TOOLBAR_HEIGHT : 0;
     const bottomOuterHeight = hasBottomOuter ? TOOLBAR_HEIGHT : 0;
-    const topInnerHeight = hasTopInner ? TOOLBAR_HEIGHT : 0;
-    const bottomInnerHeight = hasBottomInner ? TOOLBAR_HEIGHT : 0;
 
     // Organize by alignment and filter for each position
     const renderToolbar = (components: ToolsBarComponent[], position: ToolsBarPosition) => {

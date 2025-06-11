@@ -1,11 +1,10 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { AreaTabs } from './AreaTabs';
-import { AreaComponent } from './Area';
+import { AreaComponent } from './AreaComponent';
 import { areaRegistry } from '../store/registries/areaRegistry';
 import { ResizePreviewState } from '../types/areaTypes';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
-import { useAreaStack } from '../hooks/useAreaStack';
 
 interface AreaStackProps {
     id: string;
@@ -19,7 +18,6 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
     const activeAreaId = layout.activeTabId || layout.areas[0]?.id;
     const activeArea = activeAreaId ? areas[activeAreaId] : null;
     const [isComponentReady, setIsComponentReady] = useState(false);
-    const { stackData } = useAreaStack(id);
 
     useEffect(() => {
         if (activeArea?.type) {
