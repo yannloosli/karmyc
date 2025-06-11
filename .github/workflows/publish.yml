@@ -25,12 +25,6 @@ jobs:
             - name: Build
               run: yarn build
 
-            - name: Generate docs
-              run: yarn docs
-
-            - name: Build demo
-              run: yarn demo:build
-
             - name: List files for release
               run: |
                 echo "=== Package files ==="
