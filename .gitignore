@@ -3,4 +3,6 @@
 .DS_Store
 .cursor
 .rollup.cache
-dist/demo/
+dist
+tsconfg.tsbuildinfo
+tsconfig.tsbuildinfo
