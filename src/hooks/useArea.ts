@@ -5,6 +5,11 @@ import { IArea } from '../types/areaTypes';
 import { useSpaceStore } from '../store/spaceStore';
 import { areaRegistry } from '../store/registries/areaRegistry';
 
+interface Position {
+    x: number;
+    y: number;
+}
+
 /**
  * Hook for managing areas
  * Provides functions to manipulate areas and access their state
@@ -21,7 +26,7 @@ export function useArea() {
         getAreaErrors
     } = useKarmycStore();
 
-    const createArea = useCallback((type: AreaTypeValue, state: any, position?: { x: number, y: number }, id?: string): string => {
+    const createArea = useCallback((type: AreaTypeValue, state: any, position?: Position, id?: string): string => {
         // Vérifier si le type est valide
         const registeredTypes = areaRegistry.getRegisteredTypes();
         if (!registeredTypes.has(type)) {
