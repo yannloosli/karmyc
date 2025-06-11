@@ -50,12 +50,5 @@ jobs:
                     dist/index.js.map
                     demo/dist/index.html
                     demo/dist/assets/**
-                    demo/public/docs/**
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: Deploy documentation
-              uses: peaceiris/actions-gh-pages@v3
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./docs
