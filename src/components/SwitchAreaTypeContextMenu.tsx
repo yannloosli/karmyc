@@ -6,6 +6,7 @@ import { useContextMenuStore } from '../store/contextMenuStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 import { useTranslation } from '../hooks/useTranslation';
+import { CircleHelp } from 'lucide-react';
 
 // Récupère la map des rôles
 const getRoleMap = () => (areaRegistry as any)._roleMap || {};
@@ -64,7 +65,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
                 <div key={col.role} style={{ flex: 1, margin: '0 8px', width: '250px' }}>
                     <div style={{ padding: '4px 0 16px', marginBottom: 8, textAlign: 'left', borderBottom: '2px ridge #444', paddingBottom: 4 }}>{col.title}</div>
                     {col.items.map(type => {
-                        const Icon = areaRegistry.getIcon(type);
+                        const Icon = areaRegistry.getIcon(type) || CircleHelp;
                         return (
                             <div
                                 key={type}

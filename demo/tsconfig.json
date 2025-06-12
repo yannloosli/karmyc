@@ -25,6 +25,5 @@
     ".",
     "../src",
     "../style.css"
-, "../../website/app/(main-app)/[lng]/(pages)/curry/plugins/layeredWorkspace/hools/useActiveLayerInfo.ts", "../../website/app/(main-app)/[lng]/(pages)/curry/types/drawingTypes.ts"],
-
+  ]
 } 

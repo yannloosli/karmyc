@@ -11,5 +11,6 @@ export * from './ContextMenu';
 export * from './KeyboardShortcutsViewer';
 export * from './ScreenSwitcher';
 export * from './DetachedWindowCleanup';
-export * from './SwitchAreatypeContextMenu';
+export * from './SwitchAreaTypeContextMenu';
 export * from './menus/SpaceMenu'; 
+export * from './ToolsSlot'

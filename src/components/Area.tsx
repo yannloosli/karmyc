@@ -9,6 +9,7 @@ import { Rect } from "../types";
 import { AreaStack } from "./AreaStack";
 import { AreaRowLayout } from "../types/areaTypes";
 import { AreaComponent } from "./AreaComponent";
+import { useAreaStack } from "../hooks/useAreaStack";
 
 interface OwnProps {
     id: string;
@@ -25,6 +26,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
     const activeScreenId = useKarmycStore((state) => state.activeScreenId);
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
+    const { isChildOfStack } = useAreaStack(id);
 
     const isLayoutRow = layoutData?.type === 'area_row';
     const rowLayout = isLayoutRow ? layoutData as AreaRowLayout : null;
@@ -70,8 +72,8 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         // Ajuster le viewport en fonction des toolbars du parent
         return {
             ...viewport,
-            top: viewport.top + parentTopOuterHeight,
-            height: viewport.height - parentTopOuterHeight - parentBottomOuterHeight
+            top: viewport.top /* + parentTopOuterHeight */,
+            height: viewport.height /* - parentTopOuterHeight - parentBottomOuterHeight */
         };
     }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight]);
 
@@ -112,7 +114,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
                     setResizePreview={setResizePreview}
                 />)
             }
-            {!isLayoutRow && componentForRender && dataForRender &&
+            {!isLayoutRow && !isChildOfStack && componentForRender && dataForRender &&
                 <AreaComponent
                     id={dataForRender.id}
                     Component={componentForRender}

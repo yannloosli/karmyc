@@ -19,14 +19,12 @@ const useTranslationStore = create<TranslationStore>((set) => ({
 export const useTranslation = () => {
     const { t } = useTranslationStore();
 
-    const translate = (key: string, fallback: string): string => {
-        if (t) {
-            return t(key, fallback);
-        }
-        return fallback;
-    };
+    // Si t n'est pas initialisé, on retourne une fonction qui retourne toujours le fallback
+    if (!t) {
+        return { t: (_key: string, fallback: string) => fallback };
+    }
 
-    return { t: translate };
+    return { t };
 };
 
 /**

@@ -202,7 +202,7 @@
     padding: 0 5px;
     min-width: 120px;
 
-    :drag {
+    &:active {
         cursor: grabbing;
     }
 }
@@ -261,7 +261,7 @@
 .select-area-button__lock-icon {
     width: 20px;
     height: 20px;
-    
+
     &.locked {
         color: var(--lighter-bg);
 
@@ -315,6 +315,26 @@
 
 .tools-content {
     position: relative;
+}
+
+.tools-bar-section {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    gap: 8px;
+}
+
+.tools-bar-section button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #999;
+    transition: color 0.2s ease;
+}
+
+.tools-bar-section button:hover {
+    color: #fff;
 }
 
 .tools-bar-section--left {
@@ -404,14 +424,8 @@
     line-height: 1em;
 }
 
-.tools-bar-section {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    gap: 8px;
-}
-
-.tools-bar-top-inner, .tools-bar-bottom-inner {
+.tools-bar-top-inner,
+.tools-bar-bottom-inner {
     background-color: transparent;
     position: absolute;
     width: 100%;

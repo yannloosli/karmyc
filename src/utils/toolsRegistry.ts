@@ -2,6 +2,7 @@ import { ToolsBarComponent } from '../components/ToolsSlot';
 
 // Global registry
 export const toolsBarRegistry: Record<string, ToolsBarComponent[]> = {};
+export const toolsBarLinesRegistry: Record<string, number> = {};
 
 // Subscription system for registry reactivity
 const listeners = new Set<() => void>();

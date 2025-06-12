@@ -1,4 +1,4 @@
-import { useMemo, FC } from 'react';
+import { useMemo } from 'react';
 import { SpaceMenu } from '../../src/components/menus/SpaceMenu';
 import { LayoutMenu } from '../../src/components/menus/LayoutMenu';
 import { useSpace } from '../../src/hooks/useSpace';
@@ -14,7 +14,7 @@ import { DebugArea } from './areas/debug-area';
 import { DocsAreaComponent } from './areas/docs-area';
 import iconSvg from '../assets/brand/icon.svg';
 
-export const AreaInitializer: FC<{}> = ({ }) => {
+export const AreaInitializer = () => {
     const { registerComponent: registerTitleComponent } = useToolsSlot('apptitle', 'top-outer');
     const { registerComponent: registerRootMenuComponent } = useToolsSlot('app', 'top-outer');
     const { registerComponent: registerRootStatusComponent } = useToolsSlot('app', 'bottom-outer');

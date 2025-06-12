@@ -13,6 +13,7 @@ import { AreaDragButton } from "./handlers/AreaDragButton";
 interface AreaComponentOwnProps extends AreaComponentProps {
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
     isChildOfStack: boolean;
+    nbOfLines?: number;
 }
 
 export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
@@ -24,6 +25,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
     raised,
     isChildOfStack = false,
     setResizePreview,
+    nbOfLines = 1,
 }) => {
     if (!viewport) {
         console.warn(`No viewport found for area ${id}, using default viewport`);
@@ -111,6 +113,7 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                 areaType={type}
                 areaState={state}
                 viewport={viewport}
+                nbOfLines={nbOfLines}
             >
                 <div
                     ref={viewportRef}
@@ -120,7 +123,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                     className={`area ${raised ? 'active' : ''}`}
                     style={{
                         width: '100%',
-                        height: isDetached || area?.enableFullscreen ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
+                       // height: isDetached || area?.enableFullscreen ? '100%' : `calc(${typeof viewport.height === 'string' ? viewport.height : viewport.height + 'px'} - ${TOOLBAR_HEIGHT}px)`,
+                        height: '100%',
                     }}
                     onClick={onActivate}
                 >

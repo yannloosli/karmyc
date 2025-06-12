@@ -46,7 +46,7 @@ export const AreaStack: React.FC<AreaStackProps> = React.memo(({ id, layout, are
                 left: viewport.left,
                 top: viewport.top,
                 width: viewport.width,
-                height: viewport.height + TOOLBAR_HEIGHT
+                height: viewport.height
             }}
             data-areaid={id}
         >

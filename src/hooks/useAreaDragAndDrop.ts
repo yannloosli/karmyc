@@ -4,12 +4,22 @@ import { Vec2 } from '../utils/vec2';
 import { AreaRowLayout } from '../types/areaTypes';
 import { AreaTypeValue } from '../types/actions';
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../utils/areaUtils';
+import { useAreaStack } from './useAreaStack';
 
 interface UseAreaDragAndDropParams {
     type?: AreaTypeValue;
     id?: string;
     state?: any;
 }
+
+// Fonction utilitaire pour vérifier si une aire est un enfant de stack
+const isAreaChildOfStack = (areaId: string, layout: Record<string, any>) => {
+    return Object.values(layout).some(layoutItem =>
+        layoutItem.type === 'area_row' &&
+        layoutItem.orientation === 'stack' &&
+        layoutItem.areas.some((area: { id: string }) => area.id === areaId)
+    );
+};
 
 const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     // Get actions and state selectors from Zustand store
@@ -193,14 +203,8 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
                 const potentialTargetId = areaElement.dataset.areaid;
 
                 if (potentialTargetId && potentialTargetId !== '-1' && potentialTargetId !== sourceAreaId) {
-                    // Check if target area is a child of a stack
-                    const isChildOfStack = Object.values(layout).some(layoutItem =>
-                        layoutItem.type === 'area_row' &&
-                        layoutItem.orientation === 'stack' &&
-                        layoutItem.areas.some(area => area.id === potentialTargetId)
-                    );
-
-                    if (!isChildOfStack) {
+                    // Utiliser la fonction utilitaire pour vérifier si c'est un enfant de stack
+                    if (!isAreaChildOfStack(potentialTargetId, layout)) {
                         targetAreaId = potentialTargetId;
                         break;
                     }

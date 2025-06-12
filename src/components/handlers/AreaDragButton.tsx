@@ -7,7 +7,7 @@ import { areaRegistry } from "../../store/registries/areaRegistry";
 import { useSpaceStore } from "../../store/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
-import { SwitchAreaTypeContextMenu } from '../SwitchAreatypeContextMenu';
+import { SwitchAreaTypeContextMenu } from '../SwitchAreaTypeContextMenu';
 import { useTranslation } from "../../hooks/useTranslation";
 
 interface IAreaDragButton {
