@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { areaRegistry } from '../store/registries/areaRegistry';
+import { areaRegistry } from '../data/registries/areaRegistry';
 import { AreaRole } from '../types/karmyc';
 
 /**

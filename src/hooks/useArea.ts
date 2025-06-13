@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { AreaTypeValue, AREA_ROLE } from '../types/actions';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 import { IArea } from '../types/areaTypes';
 import { useSpaceStore } from '../store/spaceStore';
-import { areaRegistry } from '../store/registries/areaRegistry';
+import { areaRegistry } from '../data/registries/areaRegistry';
 
 interface Position {
     x: number;

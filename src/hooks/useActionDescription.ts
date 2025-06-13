@@ -1,7 +1,7 @@
-import { useTranslation } from './useTranslation';
+import { t } from '../data/utils/translation';
 
 export function useActionDescription() {
-    const { t } = useTranslation();
+    
 
     const getActionDescription = (type: string, payload: any): string => {
         switch (type) {

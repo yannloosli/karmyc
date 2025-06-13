@@ -1,6 +1,6 @@
 import { useKarmycStore } from '../../src/store/areaStore';
 import { AreaRole } from '../../src/types/karmyc';
-import { keyboardShortcutRegistry, KeyboardShortcut } from '../../src/store/registries/keyboardShortcutRegistry';
+import { keyboardShortcutRegistry, KeyboardShortcut } from '../../src/data/registries/keyboardShortcutRegistry';
 import { act } from '@testing-library/react';
 import { KarmycProvider } from '../../src/providers/KarmycProvider';
 import { render } from '@testing-library/react';

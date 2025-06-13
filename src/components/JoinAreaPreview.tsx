@@ -1,7 +1,7 @@
 import React from "react";
 import { ArrowBigDown } from 'lucide-react';
 import { CardinalDirection } from "../types/directions";
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 
 interface Props {
     viewport: { left: number; top: number; width: number; height: number };
@@ -10,7 +10,7 @@ interface Props {
 
 export const JoinAreaPreview: React.FC<Props> = props => {
     const { viewport, movingInDirection } = props;
-    const { t } = useTranslation();
+    
     const arrowWidth = Math.min(256, Math.min(viewport.width, viewport.height) * 5);
     return (
         <div

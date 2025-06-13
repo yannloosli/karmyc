@@ -2,21 +2,21 @@ import React from 'react';
 import { areaRegistry, useKarmycStore } from '../store';
 import { AreaTypeValue, AREA_ROLE } from '../types/actions';
 import { ControlledMenu } from '@szhsin/react-menu';
-import { useContextMenuStore } from '../store/contextMenuStore';
+import { useKarmycStore  } from '../data/mainStore';
 import { useSpaceStore } from '../store/spaceStore';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 import { CircleHelp } from 'lucide-react';
 
 // Récupère la map des rôles
 const getRoleMap = () => (areaRegistry as any)._roleMap || {};
 
 export const SwitchAreaTypeContextMenu: React.FC = () => {
-    const { t } = useTranslation();
-    const isVisible = useContextMenuStore((state) => state.isVisible && state.menuType === 'custom');
-    const position = useContextMenuStore((state) => state.position);
-    const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
-    const targetId = useContextMenuStore((state) => state.targetId) || "";
+    
+    const isVisible = useKarmycStore((state) => state.contextMenu.isVisible && state.contextMenu.menuType === 'custom');
+    const position = useKarmycStore((state) => state.contextMenu.position);
+    const closeContextMenu = useKarmycStore((state) => state.contextMenu.closeContextMenu);
+    const targetId = useKarmycStore((state) => state.contextMenu.targetId) || "";
 
     const roleMap = getRoleMap();
     const registeredTypes = Array.from(areaRegistry.getRegisteredTypes());

@@ -1,30 +1,5 @@
 import { ComponentType } from "react";
 
-/**
- * Area registry interface
- */
-interface IAreaRegistry {
-    // Registration methods
-    registerComponent: (areaType: string, component: ComponentType<any>) => void;
-    registerInitialState: (areaType: string, initialState: any) => void;
-    registerDisplayName: (areaType: string, name: string) => void;
-    registerIcon: (areaType: string, icon: any) => void;
-    registerDefaultSize: (areaType: string, size: { width: number, height: number }) => void;
-    registerSupportedActions: (areaType: string, actions: string[]) => void;
-
-    // Retrieval methods
-    getComponent: (areaType: string) => ComponentType<any> | undefined;
-    getInitialState: (areaType: string) => any;
-    getDisplayName: (areaType: string) => string;
-    getIcon: (areaType: string) => any;
-    getDefaultSize: (areaType: string) => { width: number, height: number } | undefined;
-    getSupportedActions: (areaType: string) => string[] | undefined;
-    getRegisteredTypes: () => Set<string>;
-
-    // Unregistration method
-    unregisterAreaType: (areaType: string) => void;
-}
-
 // In-memory storage for registered areas
 const areaStorage = new Map<string, {
     component?: ComponentType<any>;
@@ -39,7 +14,7 @@ const areaStorage = new Map<string, {
  * Area Registry
  * Allows registering and retrieving components and initial states of areas
  */
-export const areaRegistry: IAreaRegistry = {
+export const areaRegistry = {
     // Registration methods
     registerComponent: (areaType: string, component: ComponentType<any>) => {
         const existing = areaStorage.get(areaType) || {};

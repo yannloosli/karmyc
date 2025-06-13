@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useArea } from '../../src/hooks/useArea';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { resetKarmycStore, assertStoreState } from '../__mocks__/hookTestUtils';
-import { areaRegistry } from '../../src/store/registries/areaRegistry';
+import { areaRegistry } from '../../src/data/registries/areaRegistry';
 import React from 'react';
 
 // Composant de test pour l'aire

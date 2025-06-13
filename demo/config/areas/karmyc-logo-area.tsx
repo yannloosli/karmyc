@@ -1,5 +1,5 @@
-import { useKarmycStore } from "../../../src/store/areaStore";
-import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useKarmycStore } from "../../../src/data/mainStore";
+import { areaRegistry } from "../../../src/data/registries/areaRegistry";
 import { useRegisterActionHandler } from "../../../src/actions";
 import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";

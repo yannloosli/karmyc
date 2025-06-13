@@ -1,9 +1,9 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Layout, FileUp, FileDown, Edit, Trash2, Plus } from 'lucide-react';
 import { actionRegistry } from '../../actions/handlers/actionRegistry';
-import { useKarmycStore } from '../../store/areaStore';
+import { useKarmycStore } from '../../data/mainStore';
 import { ControlledMenu, MenuItem, MenuState } from '@szhsin/react-menu';
-import { useTranslation } from '../../hooks/useTranslation';
+import { t } from '../../data/utils/translation';
 
 
 // Types pour les layouts
@@ -17,7 +17,7 @@ interface LayoutPreset {
 const STORAGE_KEY = 'karmyc_custom_layouts';
 
 export const LayoutMenu: React.FC = () => {
-    const { t } = useTranslation();
+    
     const [isHovered, setIsHovered] = useState(false);
     const [menuState, setMenuState] = useState<MenuState>('closed');
     const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });

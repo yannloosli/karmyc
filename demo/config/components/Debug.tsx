@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useKarmycStore } from '../../../src/store/areaStore';
+import { useKarmycStore } from '../../../src/data/mainStore';
 import { useSpace } from '../../../src/hooks';
 import { useSpaceStore } from '../../../src/store/spaceStore';
-import { useTranslation } from '../../../src/hooks/useTranslation';
+import { t } from '../../../src/data/utils/translation';
 import { Info, Layers, Palette } from 'lucide-react';
 
 interface DebugAreaProps {
@@ -19,7 +19,6 @@ interface DebugAreaProps {
 export const Debug: React.FC<DebugAreaProps> = ({
     targetSpace,
 }) => {
-    const { t } = useTranslation();
     const { activeSpaceId } = useSpace();
     const areaStore = useKarmycStore();
     const activeScreenId = areaStore.activeScreenId;

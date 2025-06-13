@@ -1,5 +1,5 @@
 export * from './karmyc';
-export * from './contextMenu';
+export * from '../data/types/context-menu-types';
 export * from './colorTypes';
 export * from './stores';
 export * from './areaTypes';

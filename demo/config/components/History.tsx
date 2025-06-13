@@ -3,7 +3,7 @@ import { useSpace } from '../../../src/hooks/useSpace';
 import { useSpaceHistory } from '../../../src/hooks/useSpaceHistory';
 import { useCallback } from 'react';
 import { Clock, RotateCcw, RotateCw } from 'lucide-react';
-import { useTranslation } from '../../../src/hooks/useTranslation';
+import { t } from '../../../src/data/utils/translation';
 import { useActionDescription } from '../../../src/hooks/useActionDescription';
 
 interface HistoryState {}
@@ -11,7 +11,6 @@ interface HistoryState {}
 export const History: React.FC<AreaComponentProps<HistoryState>> = ({
     viewport
 }) => {
-    const { t } = useTranslation();
     const { getActionDescription } = useActionDescription();
     const { activeSpaceId } = useSpace();
     const { 

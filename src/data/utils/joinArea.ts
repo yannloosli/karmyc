@@ -1,4 +1,4 @@
-import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
+import { AreaLayout, AreaRowLayout } from "../../types/areaTypes";
 
 export const joinAreas = (
     row: AreaRowLayout,

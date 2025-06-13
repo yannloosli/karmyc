@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import { Vec2 } from "../utils";
-import { useKarmycStore } from "../store/areaStore";
+import { useKarmycStore } from "../data/mainStore";
 import { AreaPreview } from "./AreaPreview";
 import { DropZone } from "./DropZone";
 

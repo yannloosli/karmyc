@@ -1,10 +1,10 @@
 import React from 'react';
-import { keyboardShortcutRegistry } from '../store/registries/keyboardShortcutRegistry';
-import { KeyboardShortcut } from '../store/registries/keyboardShortcutRegistry';
-import { useTranslation } from '../hooks/useTranslation';
+import { keyboardShortcutRegistry } from '../data/registries/keyboardShortcutRegistry';
+import { KeyboardShortcut } from '../data/registries/keyboardShortcutRegistry';
+import { t } from '../data/utils/translation';
 
 const KeyboardShortcutsViewer: React.FC = () => {
-    const { t } = useTranslation();
+    
     const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
     
     // Separate global shortcuts and by area type

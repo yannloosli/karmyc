@@ -267,7 +267,7 @@ const immerConfig = immer<SpaceState>((set, get) => {
 
 // Wrap with persist
 const persistConfig = persist(immerConfig, {
-    name: 'space-storage',
+    name: 'karmyc-space-storage',
     partialize: (state: SpaceState) => {
         const spacesToPersist: Record<string, Partial<Omit<Space, 'sharedState'>> & { sharedState: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }> = {};
         for (const spaceId in state.spaces) {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSpace } from '../../../src/hooks';
-import { useKarmycStore } from '../../../src/store/areaStore';
+import { useKarmycStore } from '../../../src/data/mainStore';
 import { useSpaceStore } from '../../../src/store/spaceStore';
-import { useTranslation } from '../../../src/hooks/useTranslation';
+import { t } from '../../../src/data/utils/translation';
 
 // Type for component state
 interface ColorPickerAreaState {
@@ -40,7 +40,6 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
     viewport,
     targetSpace,
 }) => {
-    const { t } = useTranslation();
     const { activeSpaceId, updateSharedState } = useSpace();
     const areaStore = useKarmycStore();
     const activeScreenId = areaStore.activeScreenId;

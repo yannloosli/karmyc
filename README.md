@@ -219,7 +219,7 @@ The system uses a combination of Zustand and Immer for state management:
 
 #### Store Structure
 ```typescript
-interface IKarmycStore {
+interface IMainStore {
     screens: {
         [screenId: string]: {
             areas: {
@@ -304,7 +304,6 @@ Each space can operate in two modes:
 - `useRegisterAreaType(type, component, initialState, options)`: Register area types
 - `useToolsSlot(slotName)`: Manage toolbar slots
 - `useContextMenu()`: Manage context menus
-- `useTranslation()`: Access the translation system
 - `useAreaDragAndDrop()`: Handle drag and drop functionality
 - `usePluginSystem()`: Manage plugin system
 - `useSpaceHistory()`: Handle space history
@@ -496,10 +495,9 @@ const translations = {
 
 #### Using Translations in Components
 ```typescript
-import { useTranslation } from '@gamesberry/karmyc-core';
+import { t } from '@gamesberry/karmyc-core';
 
 const MyComponent = () => {
-  const { t } = useTranslation();
   
   return (
     <div>

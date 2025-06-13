@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { useKarmycStore } from '../../src/store/areaStore';
-import { useTranslation } from '../../src/hooks/useTranslation';
+import { useTranslation } from '../../src/data/utils/translation';
 import { TestWrapper } from '../utils/TestWrapper';
 
 describe('Translation System', () => {

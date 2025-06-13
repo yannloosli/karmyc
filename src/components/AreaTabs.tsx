@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 import { AreaDragButton } from './handlers/AreaDragButton';
 import { useSpaceStore } from '../store/spaceStore';
 

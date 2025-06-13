@@ -1,19 +1,19 @@
 import React from "react";
 import { ControlledMenu, MenuItem, SubMenu } from '@szhsin/react-menu';
 
-import { useContextMenuStore } from '../store/contextMenuStore';
+import { useKarmycStore } from '../data/mainStore';
 import { actionRegistry } from '../actions/handlers/actionRegistry';
 import { ContextMenuItem } from '../types';
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 
 export const ContextMenu: React.FC = () => {
-  const isVisible = useContextMenuStore((state) => state.isVisible && state.menuType === 'default');
-  const items = useContextMenuStore((state) => state.items);
-  const position = useContextMenuStore((state) => state.position);
-  const closeContextMenu = useContextMenuStore((state) => state.closeContextMenu);
-  const metadata = useContextMenuStore((state) => state.metadata);
-  const menuClassName = useContextMenuStore((state) => state.menuClassName);
-  const { t } = useTranslation();
+  const isVisible = useKarmycStore((state) => state.contextMenu.isVisible && state.contextMenu.menuType === 'default');
+  const items = useKarmycStore((state) => state.contextMenu.items);
+  const position = useKarmycStore((state) => state.contextMenu.position);
+  const closeContextMenu = useKarmycStore((state) => state.contextMenu.closeContextMenu);
+  const metadata = useKarmycStore((state) => state.contextMenu.metadata);
+  const menuClassName = useKarmycStore((state) => state.contextMenu.menuClassName);
+  
 
   // To be adapted according to business logic to trigger the action
   const handleAction = (actionId: string, itemMetadata?: Record<string, any>) => {

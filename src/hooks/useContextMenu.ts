@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { useContextMenuStore } from '../store/contextMenuStore';
-import { ContextMenuItem } from '../types/contextMenu';
+import { useKarmycStore      } from '../data/mainStore';
+import { ContextMenuItem } from '../data/types/context-menu-types';
 
 /**
  * Hook for managing the context menu
@@ -9,10 +9,10 @@ import { ContextMenuItem } from '../types/contextMenu';
  */
 export const useContextMenu = () => {
     // Selectors
-    const isVisible = useContextMenuStore((state) => state.isVisible);
-    const position = useContextMenuStore((state) => state.position);
-    const openAction = useContextMenuStore((state) => state.openContextMenu);
-    const closeAction = useContextMenuStore((state) => state.closeContextMenu);
+    const isVisible = useKarmycStore((state) => state.contextMenu.isVisible);
+    const position = useKarmycStore((state) => state.contextMenu.position);
+    const openAction = useKarmycStore((state) => state.contextMenu.openContextMenu);
+    const closeAction = useKarmycStore((state) => state.contextMenu.closeContextMenu);
 
     // Actions
     const open = useCallback((params: {

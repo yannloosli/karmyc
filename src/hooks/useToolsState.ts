@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 import { useSpaceStore } from '../store/spaceStore';
 
 /**

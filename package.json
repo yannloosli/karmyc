@@ -31,7 +31,7 @@
         "lint": "eslint src --ext .ts,.tsx",
         "format": "prettier --write \"src/**/*.{ts,tsx}\"",
         "docs": "typedoc --out demo/public/docs src/index.ts",
-        "demo:dev": "yarn docs && cd demo && vite",
+        "demo:dev": "cd demo && vite",
         "demo:build": "yarn docs && cd demo && vite build",
         "demo:preview": "cd demo && vite preview"
     },

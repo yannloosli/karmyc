@@ -6,7 +6,7 @@ import { AreaRole } from '../../src/types/karmyc';
 import { TestWrapper } from '../utils/TestWrapper';
 import { useKarmycStore } from '../../src/store/areaStore';
 import { useSpaceStore } from '../../src/store/spaceStore';
-import { areaRegistry } from '../../src/store/registries/areaRegistry';
+import { areaRegistry } from '../../src/data/registries/areaRegistry';
 import { AreaComponentProps } from '../../src/types/areaTypes';
 
 // Composant de test pour l'aire

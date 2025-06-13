@@ -4,7 +4,7 @@ import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { Tools } from './ToolsSlot';
 import { AREA_ROLE } from "../types/actions";
 import { TOOLBAR_HEIGHT } from "../utils/constants";
-import { useKarmycStore } from "../store/areaStore";
+import { useKarmycStore } from "../data/mainStore";
 import { AreaComponentProps, ResizePreviewState } from "../types/areaTypes";
 import { AreaIdContext } from "../utils/AreaIdContext";
 import { useSpaceStore } from "../store/spaceStore";

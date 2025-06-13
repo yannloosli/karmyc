@@ -1,14 +1,13 @@
 import { createElement, useRef, useState } from "react";
 import { AreaTypeValue } from "../../types/actions";
-import { useKarmycStore } from "../../store/areaStore";
-import { useContextMenuStore } from "../../store/contextMenuStore";
+import { useKarmycStore } from "../../data/mainStore";
 import { TOOLBAR_HEIGHT } from "../../utils/constants";
-import { areaRegistry } from "../../store/registries/areaRegistry";
+import { areaRegistry } from "../../data/registries/areaRegistry";
 import { useSpaceStore } from "../../store/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { SwitchAreaTypeContextMenu } from '../SwitchAreaTypeContextMenu';
-import { useTranslation } from "../../hooks/useTranslation";
+import { t } from "../../data/utils/translation";
 
 interface IAreaDragButton {
     state: any;
@@ -18,7 +17,7 @@ interface IAreaDragButton {
 }
 
 export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
-    const { t } = useTranslation();
+    
     const [isDragging, setIsDragging] = useState(false);
     const updateArea = useKarmycStore(state => state.updateArea);
     const isLocked = useKarmycStore(state => state.getAreaById(id)?.isLocked || false);
@@ -34,7 +33,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         handleDragEnd
     } = useAreaDragAndDrop({ type, id, state });
 
-    const openCustomContextMenu = useContextMenuStore((state) => state.openCustomContextMenu);
+    const openCustomContextMenu = useKarmycStore((state) => state.contextMenu.openCustomContextMenu);
 
     // Ref for the button
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { toolsEventBus } from '../utils/toolsEventBus';
+import { toolsEventBus } from '../data/utils/toolsEventBus';
 import { toolsBarRegistry, notifyToolsRegistryChange } from '../utils/toolsRegistry';
 
 // Fonction pour nettoyer le registre des outils d'une zone

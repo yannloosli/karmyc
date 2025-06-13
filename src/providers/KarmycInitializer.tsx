@@ -2,11 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { historyPlugin } from '../types/spaceTypes';
 import { actionRegistry } from '../actions/handlers/actionRegistry';
 import { useArea } from '../hooks/useArea';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 import { AreaRowLayout } from '../types/areaTypes';
 import { IKarmycOptions } from '../types/karmyc';
 import { IActionPlugin } from '../types/actions';
-import { validateArea } from '../utils/validation';
+import { validateArea } from '../data/utils/validation';
 
 interface IKarmycInitializerProps {
     options?: IKarmycOptions;

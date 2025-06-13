@@ -1,4 +1,4 @@
-import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
+import { AreaLayout, AreaRowLayout } from "../../types/areaTypes";
 
 // Updated function signature to accept layout and rootId directly
 export function computeAreaToParentRow(

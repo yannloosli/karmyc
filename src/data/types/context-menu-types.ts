@@ -1,4 +1,4 @@
-import { Rect } from './math';
+import { Rect } from '../../types/math';
 
 /**
  * Context menu position

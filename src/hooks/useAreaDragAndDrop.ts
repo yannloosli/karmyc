@@ -1,10 +1,9 @@
 import React, { useCallback, useRef, useEffect, useMemo } from 'react';
-import { useKarmycStore } from '../store';
+import { useKarmycStore } from '../data/mainStore';
 import { Vec2 } from '../utils/vec2';
 import { AreaRowLayout } from '../types/areaTypes';
 import { AreaTypeValue } from '../types/actions';
-import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../utils/areaUtils';
-import { useAreaStack } from './useAreaStack';
+import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../data/utils/areaUtils';
 
 interface UseAreaDragAndDropParams {
     type?: AreaTypeValue;

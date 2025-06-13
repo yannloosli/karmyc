@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { capToRange, interpolate, Vec2 } from "../../utils";
 import { AREA_MIN_CONTENT_WIDTH } from "../../utils/constants";
-import { useKarmycStore } from "../../store/areaStore";
+import { useKarmycStore } from "../../data/mainStore";
 import { AreaRowLayout } from "../../types/areaTypes";
 import type { Rect } from "../../types";
 import { computeAreaRowToMinSize } from "../../utils/areaRowToMinSize";

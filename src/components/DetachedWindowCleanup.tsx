@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 
 /**
  * This component removes the detached screen from the store when the window is closed.

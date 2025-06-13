@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction } from 'react'; 
 import { capToRange, Vec2 } from "../../utils";
 import { AREA_MIN_CONTENT_WIDTH } from "../../utils/constants";
-import { useKarmycStore } from "../../store/areaStore"; 
+import { useKarmycStore } from "../../data/mainStore"; 
 import { AreaRowLayout } from "../../types/areaTypes";
 import { CardinalDirection, IntercardinalDirection } from "../../types/directions";
 import type { Rect } from "../../types";
-import { computeAreaToParentRow } from "../../utils/areaToParentRow";
+import { computeAreaToParentRow } from "../../data/utils/areaToParentRow";
 import { computeAreaToViewport } from "../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../utils/getAreaViewport";
 

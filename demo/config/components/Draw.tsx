@@ -3,12 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks';
-import { useKarmycStore } from '../../../src/store/areaStore';
+import { useKarmycStore } from '../../../src/data/mainStore';
 import { useSpaceStore, SpaceSharedState } from '../../../src/store/spaceStore';
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/actions/handlers/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/actions/handlers/actionRegistry';
-import { useTranslation } from '../../../src/hooks/useTranslation';
+import { t } from '../../../src/data/utils/translation';
 
 interface DrawingState { }
 
@@ -32,7 +32,6 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     id,
     viewport
 }) => {
-    const { t } = useTranslation();
     const currentArea = useKarmycStore(state => {
         const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
         return activeScreenAreas ? activeScreenAreas.areas[id] : undefined;

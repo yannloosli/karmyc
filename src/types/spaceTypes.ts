@@ -1,5 +1,5 @@
 import { Action, ActionPriority, IActionPlugin } from '../types/actions';
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 import { spaceHistoryStore } from '../store/spaceHistoryStore';
 
 /**
@@ -62,7 +62,7 @@ export const historyPlugin: IActionPlugin = {
  * Used to display messages in the history UI
  */
 export function getActionDescription(type: string, payload: any): string {
-    const { t } = useTranslation();
+    
     
     switch (type) {
     case 'area/addArea':

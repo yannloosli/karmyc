@@ -1,9 +1,9 @@
 import React, { Dispatch, SetStateAction, useMemo } from "react";
 import { useToolsSlot } from './ToolsSlot';
-import { areaRegistry } from "../store/registries/areaRegistry";
+import { areaRegistry } from "../data/registries/areaRegistry";
 import { AreaTypeValue } from "../types/actions";
 import { TOOLBAR_HEIGHT } from "../utils/constants";
-import { useKarmycStore } from "../store/areaStore";
+import { useKarmycStore } from "../data/mainStore";
 import { ResizePreviewState } from "../types/areaTypes";
 import { Rect } from "../types";
 import { AreaStack } from "./AreaStack";

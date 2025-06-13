@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo } from "react";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
-import { PlaceArea } from "../utils/areaUtils";
-import { useKarmycStore } from "../store/areaStore";
+import { PlaceArea } from "../data/utils/areaUtils";
+import { useKarmycStore } from "../data/mainStore";
 import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../utils/constants";
 

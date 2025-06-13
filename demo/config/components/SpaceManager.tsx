@@ -3,9 +3,9 @@ import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks/useSpace';
-import { useKarmycStore } from '../../../src/store/areaStore';
+import { useKarmycStore } from '../../../src/data/mainStore';
 import { useSpaceStore } from '../../../src/store/spaceStore';
-import { useTranslation } from '../../../src/hooks/useTranslation';
+import { t } from '../../../src/data/utils/translation';
 import { Plus, Trash2, Settings } from 'lucide-react';
 
 interface SpaceType {
@@ -50,7 +50,6 @@ interface AreasMap { [key: string]: AreaType }
 export const SpaceManager: React.FC<AreaComponentProps> = ({
     viewport
 }) => {
-    const { t } = useTranslation();
     // Get actions and activeId from the hook
     const { activeSpaceId, createSpace, deleteSpace, setActive, updateSharedState, pilotMode, setPilotMode } = useSpace();
 

@@ -2,11 +2,11 @@ import React from 'react';
 import { useContextMenu } from '../hooks/useContextMenu';
 import { useRegisterActionHandler } from '../actions/handlers/useRegisterActionHandler';
 import { PlusIcon, CopyIcon, AppWindow, ExternalLinkIcon, TrashIcon } from 'lucide-react';
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 import { useScreenManagement } from '../hooks/useScreenManagement';
 
 export const ScreenSwitcher: React.FC = () => {
-    const { t } = useTranslation();
+    
     const { screens, activeScreenId, switchScreen, addScreen, removeScreen, duplicateScreen } = useScreenManagement();
     const { open } = useContextMenu();
 

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { useKarmycStore } from "../../../src/store/areaStore";
-import { areaRegistry } from "../../../src/store/registries/areaRegistry";
+import { useKarmycStore } from "../../../src/data/mainStore";
+import { areaRegistry } from "../../../src/data/registries/areaRegistry";
 import { useRegisterActionHandler } from "../../../src/actions";
 import { useToolsSlot } from "../../../src/components/ToolsSlot";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";

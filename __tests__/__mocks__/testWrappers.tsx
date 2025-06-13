@@ -7,7 +7,7 @@ import { act } from '@testing-library/react';
 import { IArea } from '../../src/types/areaTypes';
 import { AreaTypeValue } from '../../src/types/actions';
 import { Karmyc } from '../../src/components/Karmyc';
-import { validateArea } from '../../src/utils/validation';
+import { validateArea } from '../../src/data/utils/validation';
 
 interface TestWrapperProps {
   children: React.ReactNode;

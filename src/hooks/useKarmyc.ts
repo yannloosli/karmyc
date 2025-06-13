@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { coreRegistry } from '../store/registries/coreRegistry';
 import { IKarmycConfig, IKarmycOptions, LayoutPreset } from '../types/karmyc';
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 import { AREA_ROLE } from '../types/actions';
 
 interface IKarmycConfigWithLayouts {

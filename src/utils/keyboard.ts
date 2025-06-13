@@ -1,5 +1,5 @@
-import { keyboardShortcutRegistry, KeyboardShortcut } from "../store/registries/keyboardShortcutRegistry";
-import { useKarmycStore } from "../store/areaStore";
+import { keyboardShortcutRegistry, KeyboardShortcut } from "../data/registries/keyboardShortcutRegistry";
+import { useKarmycStore } from "../data/mainStore";
 
 /**
  * List of supported modifier keys

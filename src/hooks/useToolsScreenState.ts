@@ -1,4 +1,4 @@
-import { useKarmycStore } from '../store/areaStore';
+import { useKarmycStore } from '../data/mainStore';
 
 /**
  * Hook pour gérer l'état des écrans dans ToolsSlot

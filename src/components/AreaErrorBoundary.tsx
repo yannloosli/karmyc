@@ -1,6 +1,6 @@
 import React from "react";
 import { AreaComponentProps } from "../types/areaTypes";
-import { useTranslation } from '../hooks/useTranslation';
+import { t } from '../data/utils/translation';
 
 interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;
@@ -25,7 +25,6 @@ const ErrorDisplay: React.FC<{
     viewport: Props['viewport'];
     error: Error | null;
 }> = ({ viewport, error }) => {
-    const { t } = useTranslation();
     
     return (
         <div

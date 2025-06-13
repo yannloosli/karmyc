@@ -64,12 +64,6 @@ export interface IKarmycOptions {
     allowStackMixedRoles?: boolean;
     builtInLayouts?: LayoutPreset[];
     initialLayout?: string;
-    /**
-     * Custom translation function
-     * @param key - Translation key
-     * @param fallback - Default text if translation is not found
-     * @returns The translation or the default text
-     */
     t?: (key: string, fallback: string) => string;
     spaces?: Record<string, ISpace>;
 

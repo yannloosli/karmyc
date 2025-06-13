@@ -1,7 +1,6 @@
-import { Vec2 } from "./vec2";
-import { AreaReducerState, Rect } from "../types";
-
-export type PlaceArea = "top" | "left" | "right" | "bottom" | "stack";
+import { Vec2 } from "../../utils/vec2";
+import { AreaReducerState, Rect } from "../../types";
+import { PlaceArea } from "../types/areas-type";
 
 export const getHoveredAreaId = (
     position: Vec2,

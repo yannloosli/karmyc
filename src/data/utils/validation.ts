@@ -1,9 +1,9 @@
-import { IArea } from '../types/areaTypes';
-import { ContextMenuItem } from '../types/contextMenu';
-import { IDiff } from '../types/diff';
-import { IState } from '../types/state';
-import { IToolbarItem } from '../types/toolbarType';
-import { areaRegistry } from '../store/registries/areaRegistry';
+import { IArea } from '../../types/areaTypes';
+import { ContextMenuItem } from '../types/context-menu-types';
+import { IDiff } from '../../types/diff';
+import { IState } from '../../types/state';
+import { IToolbarItem } from '../../types/toolbarType';
+import { areaRegistry } from '../registries/areaRegistry';
 
 // All validation functions commented out as they are unused according to ts-prune
 // and the re-export in utils/index.ts has been commented out.
