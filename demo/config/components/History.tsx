@@ -3,15 +3,15 @@ import { useSpace } from '../../../src/hooks/useSpace';
 import { useSpaceHistory } from '../../../src/hooks/useSpaceHistory';
 import { useCallback } from 'react';
 import { Clock, RotateCcw, RotateCw } from 'lucide-react';
-import { t } from '../../../src/data/utils/translation';
-import { useActionDescription } from '../../../src/hooks/useActionDescription';
+import { t } from '../../../src/core/utils/translation';
+import { actionRegistry } from '../../../src/core/registries/actionRegistry';
 
 interface HistoryState {}
 
 export const History: React.FC<AreaComponentProps<HistoryState>> = ({
     viewport
 }) => {
-    const { getActionDescription } = useActionDescription();
+    const getActionDescription = actionRegistry.getActionDescription;
     const { activeSpaceId } = useSpace();
     const { 
         pastDiffs, 
@@ -111,7 +111,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                             >
                                 <div style={{ color: '#888' }}>{formatTimestamp(diff.timestamp)}</div>
                                 <div style={{ marginTop: '4px' }}>
-                                    {getActionDescription(diff.actionType, {})}
+                                    {getActionDescription(diff.actionType)}
                                 </div>
                             </div>
                         ))}
@@ -143,7 +143,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
                         >
                             <div style={{ color: '#888' }}>{formatTimestamp(diff.timestamp)}</div>
                             <div style={{ marginTop: '4px' }}>
-                                {getActionDescription(diff.actionType, {})}
+                                {getActionDescription(diff.actionType)}
                             </div>
                         </div>
                     ))

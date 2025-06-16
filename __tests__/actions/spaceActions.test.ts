@@ -1,32 +1,33 @@
-import { useKarmycStore } from '../../src/store/areaStore';
-import { AREA_ROLE } from '../../src/types/actions';
+import { useKarmycStore } from '../../src/core/store';
+import { AREA_ROLE } from '../../src/core/types/actions';
 import { create } from 'zustand';
 import { act } from '@testing-library/react';
-import { IKarmycOptions } from '../../src/types/karmyc';
-import { Space, SpaceState } from '../../src/store/spaceStore';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
+import { Space, SpaceSharedState } from '../../src/core/spaceStore';
+import { SpaceStateType } from '../../src/core/spaceStore';
 
 // Créer une version simplifiée du store pour les tests
 const createTestSpaceStore = () => {
-  return create<SpaceState>((set, get) => ({
+  return create<SpaceStateType>((set, get) => ({
     spaces: {},
     activeSpaceId: null,
     openSpaceIds: [],
     errors: [],
     pilotMode: 'AUTO',
-    addSpace: (spaceData) => {
+    addSpace: (spaceData: { name: string; description?: string | undefined; sharedState?: Partial<Omit<SpaceSharedState, "pastDiffs" | "futureDiffs">> | undefined; }) => {
       const newId = 'test-space';
-      set(state => ({
+      set((state: SpaceStateType) => ({
         spaces: {
           ...state.spaces,
           [newId]: {
             id: newId,
             name: spaceData.name,
             description: spaceData.description ?? '',
+            color: spaceData.sharedState?.color ?? '#ff0000',
             sharedState: {
-              color: spaceData.sharedState?.color ?? '#ff0000',
+              ...(spaceData.sharedState || {}),
               pastDiffs: [],
-              futureDiffs: [],
-              ...(spaceData.sharedState || {})
+              futureDiffs: []
             }
           }
         },
@@ -34,8 +35,8 @@ const createTestSpaceStore = () => {
       }));
       return newId;
     },
-    removeSpace: (id) => {
-      set(state => {
+    removeSpace: (id: string) => {
+      set((state: SpaceStateType) => {
         const { [id]: removed, ...spaces } = state.spaces;
         return {
           spaces,
@@ -44,25 +45,25 @@ const createTestSpaceStore = () => {
         };
       });
     },
-    setActiveSpace: (id) => {
+    setActiveSpace: (id: string | null) => {
       set({ activeSpaceId: id });
     },
-    setPilotMode: (mode) => {
+    setPilotMode: (mode: 'AUTO' | 'MANUAL') => {
       set({ pilotMode: mode });
     },
-    openSpace: (id) => {
-      set(state => ({
+    openSpace: (id: string) => {
+      set((state: SpaceStateType) => ({
         openSpaceIds: state.openSpaceIds.includes(id) ? state.openSpaceIds : [...state.openSpaceIds, id]
       }));
     },
-    closeSpace: (id) => {
-      set(state => ({
+    closeSpace: (id: string) => {
+      set((state: SpaceStateType) => ({
         openSpaceIds: state.openSpaceIds.filter(spaceId => spaceId !== id),
         activeSpaceId: state.activeSpaceId === id ? null : state.activeSpaceId
       }));
     },
-    updateSpace: (spaceData) => {
-      set(state => ({
+    updateSpace: (spaceData: Partial<Space> & { id: string }) => {
+      set((state: SpaceStateType) => ({
         spaces: {
           ...state.spaces,
           [spaceData.id]: {
@@ -72,8 +73,8 @@ const createTestSpaceStore = () => {
         }
       }));
     },
-    updateSpaceGenericSharedState: (payload) => {
-      set(state => ({
+    updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<SpaceSharedState> }) => {
+      set((state: SpaceStateType) => ({
         spaces: {
           ...state.spaces,
           [payload.spaceId]: {
@@ -89,7 +90,7 @@ const createTestSpaceStore = () => {
     clearErrors: () => set({ errors: [] }),
     undoSharedState: () => {},
     redoSharedState: () => {},
-    getSpaceById: (id) => get().spaces[id],
+    getSpaceById: (id: string) => get().spaces[id],
     getAllSpaces: () => get().spaces,
     getActiveSpace: () => {
       const state = get();
@@ -117,7 +118,7 @@ describe('Space Actions', () => {
     act(() => {
       useKarmycStore.setState({
         screens: {
-          main: {
+          "1": {
             areas: {
               _id: 0,
               rootId: null,
@@ -133,7 +134,7 @@ describe('Space Actions', () => {
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: {
           resizableAreas: true,
           manageableAreas: true,
@@ -157,9 +158,8 @@ describe('Space Actions', () => {
 
   it('should remove a space', () => {
     act(() => {
-      const store = testSpaceStore.getState();
-      store.addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
-      store.removeSpace('test-space');
+      testSpaceStore.getState().addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
+      testSpaceStore.getState().removeSpace('test-space');
     });
 
     const state = testSpaceStore.getState();
@@ -168,9 +168,8 @@ describe('Space Actions', () => {
 
   it('should update space state', () => {
     act(() => {
-      const store = testSpaceStore.getState();
-      store.addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
-      store.updateSpaceGenericSharedState({ spaceId: 'test-space', changes: { color: '#00ff00' } });
+      testSpaceStore.getState().addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
+      testSpaceStore.getState().updateSpaceGenericSharedState({ spaceId: 'test-space', changes: { color: '#00ff00' } });
     });
 
     const state = testSpaceStore.getState();
@@ -179,10 +178,9 @@ describe('Space Actions', () => {
 
   it('should switch active space', () => {
     act(() => {
-      const store = testSpaceStore.getState();
-      store.addSpace({ name: 'space-1', sharedState: { color: '#ff0000' } });
-      store.addSpace({ name: 'space-2', sharedState: { color: '#00ff00' } });
-      store.setActiveSpace('space-2');
+      testSpaceStore.getState().addSpace({ name: 'space-1', sharedState: { color: '#ff0000' } });
+      testSpaceStore.getState().addSpace({ name: 'space-2', sharedState: { color: '#00ff00' } });
+      testSpaceStore.getState().setActiveSpace('space-2');
     });
 
     const state = testSpaceStore.getState();
@@ -191,8 +189,7 @@ describe('Space Actions', () => {
 
   it('should handle area roles in spaces', () => {
     act(() => {
-      const store = testSpaceStore.getState();
-      store.addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
+      testSpaceStore.getState().addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
       const area = {
         id: 'test-area-1',
         type: 'test-area',
@@ -201,7 +198,7 @@ describe('Space Actions', () => {
       };
       useKarmycStore.setState({
         screens: {
-          main: {
+          "1": {
             areas: {
               _id: 0,
               rootId: null,
@@ -219,7 +216,7 @@ describe('Space Actions', () => {
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: {
           resizableAreas: true,
           manageableAreas: true,
@@ -230,6 +227,6 @@ describe('Space Actions', () => {
     });
 
     const state = useKarmycStore.getState();
-    expect(state.screens.main.areas.areas['test-area-1'].role).toBe(AREA_ROLE.LEAD);
+    expect(state.screens['1'].areas.areas['test-area-1'].role).toBe(AREA_ROLE.LEAD);
   });
 }); 

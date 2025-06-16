@@ -1,4 +1,4 @@
-import { IAction } from './actions';
+import { IAction } from '../core/types/actions';
 
 /**
  * Options for the history system

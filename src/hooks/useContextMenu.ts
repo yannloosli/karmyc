@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
-import { useKarmycStore      } from '../data/mainStore';
-import { ContextMenuItem } from '../data/types/context-menu-types';
+import { useKarmycStore      } from '../core/store';
+import { ContextMenuItem } from '../core/types/context-menu-types';
 
 /**
  * Hook for managing the context menu
@@ -17,10 +17,11 @@ export const useContextMenu = () => {
     // Actions
     const open = useCallback((params: {
         position: { x: number; y: number };
-        items: ContextMenuItem[];
+        items: ContextMenuItem[] | React.ReactNode;
         targetId?: string;
         metadata?: Record<string, any>;
         menuClassName?: string;
+        menuType?: 'default' | 'switchType' | 'custom';
     }) => {
         openAction(params);
     }, [openAction]);

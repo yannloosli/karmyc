@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { useKarmycStore } from "../../../src/data/mainStore";
-import { areaRegistry } from "../../../src/data/registries/areaRegistry";
-import { useRegisterActionHandler } from "../../../src/actions";
+import { useKarmycStore } from "../../../src/core/store";
+import { areaRegistry } from "../../../src/core/registries/areaRegistry";
+import { useRegisterActionHandler } from "../../../src/hooks/useRegisterActionHandler";
 import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
 import { useToolsSlot } from "../../../src/components/ToolsSlot";
 import { ReadmeArea } from "./ReadmeArea";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
-import { AREA_ROLE } from "../../../src/types/actions";
+import { AREA_ROLE } from "../../../src/core/types/actions";
 import { CircleSlash } from "lucide-react";
 
 export const DemoArea = () => {

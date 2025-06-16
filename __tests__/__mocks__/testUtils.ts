@@ -1,11 +1,11 @@
-import type { RootState } from '../../src/store/areaStore';
+import type { RootStateType } from '../../src/core/store';
 import { createTestStore } from './store';
 import { IArea } from '../../src/types/areaTypes';
-import { AreaTypeValue } from '../../src/types/actions';
+import { AreaTypeValue } from '../../src/core/types/actions';
 
 export const waitForStateChange = async (
   store: ReturnType<typeof createTestStore>,
-  predicate: (state: RootState) => boolean,
+  predicate: (state: RootStateType) => boolean,
   timeout = 2000
 ) => {
   const startTime = Date.now();

@@ -1,9 +1,9 @@
 import React from "react";
 import { AreaComponent } from "./AreaComponent";
-import { areaRegistry } from "../data/registries/areaRegistry";
+import { areaRegistry } from "../core/registries/areaRegistry";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
-import { t } from '../data/utils/translation';
+import { t } from '../core/utils/translation';
 
 interface AreaPreviewProps {
     areaToOpen: AreaToOpen;

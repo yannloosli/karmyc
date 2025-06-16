@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
-import { useKarmycStore } from '../data/mainStore';
+import { useKarmycStore } from '../core/store';
 import { AreaDragButton } from './handlers/AreaDragButton';
-import { useSpaceStore } from '../store/spaceStore';
+import { useSpaceStore } from '../core/spaceStore';
 
 interface AreaTabsProps {
     rowId: string;

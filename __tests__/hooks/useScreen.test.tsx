@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
-import { useKarmycStore } from '../../src/store/areaStore';
+import { useKarmycStore } from '../../src/core/store';
 
 describe('useKarmycStore - Screen Management', () => {
   let consoleWarnSpy: jest.SpyInstance;

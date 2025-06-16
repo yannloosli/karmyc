@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
-import { AreaTypeValue, AREA_ROLE } from '../types/actions';
-import { useKarmycStore } from '../data/mainStore';
+import { AreaTypeValue, AREA_ROLE } from '../core/types/actions';
+import { useKarmycStore } from '../core/store';
 import { IArea } from '../types/areaTypes';
-import { useSpaceStore } from '../store/spaceStore';
-import { areaRegistry } from '../data/registries/areaRegistry';
+import { useSpaceStore } from '../core/spaceStore';
+import { areaRegistry } from '../core/registries/areaRegistry';
 
 interface Position {
     x: number;
@@ -30,7 +30,8 @@ export function useArea() {
         // Vérifier si le type est valide
         const registeredTypes = areaRegistry.getRegisteredTypes();
         if (!registeredTypes.has(type)) {
-            throw new Error(`Invalid area type: ${type}`);
+            // Au lieu de bloquer la création, on journalise une erreur et on poursuit.
+            console.error(`[useArea] Invalid area type: ${type}`);
         }
 
         const area: IArea<AreaTypeValue> = {

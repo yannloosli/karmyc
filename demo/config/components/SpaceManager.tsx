@@ -3,9 +3,9 @@ import { shallow } from 'zustand/shallow';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks/useSpace';
-import { useKarmycStore } from '../../../src/data/mainStore';
-import { useSpaceStore } from '../../../src/store/spaceStore';
-import { t } from '../../../src/data/utils/translation';
+import { useKarmycStore } from '../../../src/core/store';
+import { useSpaceStore } from '../../../src/core/spaceStore';
+import { t } from '../../../src/core/utils/translation';
 import { Plus, Trash2, Settings } from 'lucide-react';
 
 interface SpaceType {

@@ -1,4 +1,4 @@
-import { useKarmycStore } from '../data/mainStore';
+import { useKarmycStore } from '../core/store';
 
 export interface ScreenManagement {
     screens: Record<string, any>;

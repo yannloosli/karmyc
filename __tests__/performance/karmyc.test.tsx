@@ -10,9 +10,11 @@ describe('Karmyc Performance', () => {
   it('should render many areas efficiently', async () => {
     const { areas } = createGridAreas(5, 5);
 
+    const areaList = Object.values(areas).map(a => ({ ...a, type: 'test-area' }));
+
     const renderTime = await measurePerformance(async () => {
       await act(async () => {
-        render(<TestComponent areas={areas} />);
+        render(<TestComponent areas={areaList} />);
       });
     });
 
@@ -22,9 +24,11 @@ describe('Karmyc Performance', () => {
   it('should handle state updates efficiently', async () => {
     const { areas } = createGridAreas(2, 2);
 
+    const areaList = Object.values(areas).map(a => ({ ...a, type: 'test-area' }));
+
     let rerender: any;
     await act(async () => {
-      const result = render(<TestComponent areas={areas} />);
+      const result = render(<TestComponent areas={areaList} />);
       rerender = result.rerender;
     });
 
@@ -32,7 +36,7 @@ describe('Karmyc Performance', () => {
       // Simulate 100 state updates
       for (let i = 0; i < 100; i++) {
         await act(async () => {
-          rerender(<TestComponent areas={areas} />);
+          rerender(<TestComponent areas={areaList} />);
         });
       }
     });

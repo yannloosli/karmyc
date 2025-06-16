@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSpaceStore } from '../store/spaceStore';
+import { useSpaceStore } from '../core/spaceStore';
 
 export interface UseSpaceHistoryOptions {
     enabled?: boolean;

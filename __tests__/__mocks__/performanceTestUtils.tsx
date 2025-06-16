@@ -1,9 +1,48 @@
 import React from 'react';
 import { Karmyc } from '../../src/components/Karmyc';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { AreaRole } from '../../src/types';
-import { IKarmycOptions } from '../../src/types/karmyc';
+import { AREA_ROLE } from '../../src/core/types/actions';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
+import { areaRegistry } from '../../src/core/registries/areaRegistry';
+import { useToolsSlot } from '../../src/components/ToolsSlot';
+
+// Composant de test pour les barres d'outils
+const TestToolbarComponent: React.FC = () => {
+  return <div>Test Toolbar</div>;
+};
+
+// Enregistrer les types de zones de test
+const registerTestArea = (type: string, role: typeof AREA_ROLE[keyof typeof AREA_ROLE]) => {
+  areaRegistry.registerDisplayName(type, `Test ${type}`);
+  areaRegistry.registerInitialState(type, { test: true });
+  areaRegistry.registerSupportedActions(type, [role]);
+};
+
+registerTestArea('test-area-1', AREA_ROLE.LEAD);
+registerTestArea('test-area-2', AREA_ROLE.FOLLOW);
+registerTestArea('test-row', AREA_ROLE.LEAD);
+registerTestArea('test-root', AREA_ROLE.LEAD);
+
+// Enregistrer les outils une seule fois au démarrage
+const registerTestTools = () => {
+  const tools = useToolsSlot('test-root', 'bottom-outer');
+  React.useEffect(() => {
+    tools.registerComponent(TestToolbarComponent, { name: 'test-toolbar', type: 'test' });
+  }, []);
+};
+
+// Composant de test qui enregistre les outils
+const TestAreaWithTools: React.FC<{ id: string; type: string }> = React.memo(({ id, type }) => {
+  const tools = useToolsSlot(type, 'bottom-outer');
+  const componentRef = React.useRef<{ name: string; type: string }>({ name: 'test-toolbar', type: 'test' });
+  
+  React.useEffect(() => {
+    tools.registerComponent(TestToolbarComponent, componentRef.current);
+  }, [tools]);
+
+  return null;
+});
 
 // Fonction utilitaire pour générer des IDs uniques
 let idCounter = 0;
@@ -17,7 +56,7 @@ export const TestComponent: React.FC<{
   areas?: any[], 
   onConfigReady?: (config: any) => void,
   options?: IKarmycOptions 
-}> = ({ areas = [], onConfigReady, options = {} }) => {
+}> = React.memo(({ areas = [], onConfigReady, options = {} }) => {
   const config = useKarmyc({
     initialAreas: areas,
     ...options
@@ -29,58 +68,74 @@ export const TestComponent: React.FC<{
     }
   }, [config, onConfigReady]);
 
-  return (
-    <KarmycProvider options={config}>
-      <Karmyc />
-    </KarmycProvider>
+  const toolsComponents = React.useMemo(() => 
+    areas.map(area => (
+      <TestAreaWithTools key={area.id} id={area.id} type={area.type} />
+    )),
+    [areas]
   );
-};
+
+  return (
+    <KarmycCoreProvider options={config}>
+      <Karmyc />
+      {toolsComponents}
+    </KarmycCoreProvider>
+  );
+});
 
 export const createGridAreas = (rows: number, cols: number) => {
-  const gridRows = Array.from({ length: rows }, (_, rowIndex) => ({
-    type: 'area_row' as const,
-    id: `row-${rowIndex}`,
-    orientation: 'horizontal' as const,
-    areas: Array.from({ length: cols }, (_, colIndex) => ({
-      id: `area-${rowIndex}-${colIndex}`,
-      size: 1 / cols
-    }))
-  }));
+  // Génération des ids pour chaque cellule
+  const areaIds = Array.from({ length: rows * cols }, (_, i) => `area-${i + 1}`);
 
-  const rootRow = {
-    type: 'area_row' as const,
-    id: 'root-row',
-    orientation: 'vertical' as const,
-    areas: gridRows.map(row => ({
-      id: row.id,
+  // Création du mapping des areas
+  const areas: Record<string, any> = {};
+  areaIds.forEach((id) => {
+    areas[id] = {
+      id,
+      type: 'test-area',
+      state: { test: true },
+      role: AREA_ROLE.LEAD
+    };
+  });
+
+  // Création du layout imbriqué (root -> lignes -> cellules)
+  const layout: Record<string, any> = {};
+
+  // Racine verticale (chaque ligne est une area_row horizontale)
+  layout['root'] = {
+    id: 'root',
+    type: 'area_row',
+    orientation: 'vertical',
+    areas: Array.from({ length: rows }, (_, rowIdx) => ({
+      id: `row-${rowIdx + 1}`,
       size: 1 / rows
     }))
   };
 
+  // Pour chaque ligne, créer une area_row horizontale
+  for (let rowIdx = 0; rowIdx < rows; rowIdx++) {
+    layout[`row-${rowIdx + 1}`] = {
+      id: `row-${rowIdx + 1}`,
+      type: 'area_row',
+      orientation: 'horizontal',
+      areas: Array.from({ length: cols }, (_, colIdx) => ({
+        id: areaIds[rowIdx * cols + colIdx],
+        size: 1 / cols
+      }))
+    };
+  }
+
+  // Chaque cellule est une area simple
+  areaIds.forEach((id) => {
+    layout[id] = {
+      type: 'area',
+      id
+    };
+  });
+
   return {
-    areas: [
-      ...gridRows.flatMap(row => 
-        row.areas.map(area => ({
-          type: `test-area-${area.id}`,
-          role: 'LEAD' as AreaRole,
-          id: area.id
-        }))
-      ),
-      ...gridRows.map(row => ({
-        type: 'test-row',
-        role: 'LEAD' as AreaRole,
-        id: row.id
-      })),
-      {
-        type: 'test-root',
-        role: 'LEAD' as AreaRole,
-        id: rootRow.id
-      }
-    ],
-    layout: {
-      rootRow,
-      gridRows
-    }
+    areas,
+    layout
   };
 };
 

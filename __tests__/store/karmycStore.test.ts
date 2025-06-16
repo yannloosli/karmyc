@@ -1,6 +1,5 @@
-import { useKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/karmyc';
-import type { RootState } from '../../src/store/areaStore';
+import { useKarmycStore, RootStateType } from '../../src/core/store';
+import { AreaRole } from '../../src/core/types/karmyc';
 import { renderHook, act } from '@testing-library/react';
 
 describe('Karmyc Store', () => {
@@ -14,7 +13,7 @@ describe('Karmyc Store', () => {
     act(() => {
       useKarmycStore.setState({
         screens: {
-          main: {
+          '1': {
             areas: {
               _id: 0,
               rootId: null,
@@ -30,7 +29,7 @@ describe('Karmyc Store', () => {
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: {
           resizableAreas: true,
           manageableAreas: true,
@@ -49,7 +48,7 @@ describe('Karmyc Store', () => {
   it('should initialize with default state', () => {
     const { result } = renderHook(() => useKarmycStore(state => state));
     expect(result.current.screens).toBeDefined();
-    expect(result.current.activeScreenId).toBe('main');
+    expect(result.current.activeScreenId).toBe('1');
     expect(result.current.options.resizableAreas).toBe(true);
   });
 
@@ -69,7 +68,7 @@ describe('Karmyc Store', () => {
     };
 
     act(() => {
-      useKarmycStore.setState((state: RootState) => ({
+      useKarmycStore.setState((state: RootStateType) => ({
         ...state,
         screens: {
           ...state.screens,
@@ -108,7 +107,7 @@ describe('Karmyc Store', () => {
 
     // Add area first
     act(() => {
-      useKarmycStore.setState((state: RootState) => ({
+      useKarmycStore.setState((state: RootStateType) => ({
         ...state,
         screens: {
           ...state.screens,
@@ -127,7 +126,7 @@ describe('Karmyc Store', () => {
 
     // Remove area
     act(() => {
-      useKarmycStore.setState((state: RootState) => {
+      useKarmycStore.setState((state: RootStateType) => {
         const { [areaId]: removedArea, ...remainingAreas } = state.screens[state.activeScreenId].areas.areas;
         return {
           ...state,

@@ -73,7 +73,7 @@ npm install @gamesberry/karmyc-core
 
 ### 2. Basic Setup
 ```tsx
-import { KarmycProvider, useKarmyc, Karmyc } from '@gamesberry/karmyc-core';
+import { KarmycCoreProvider, useKarmyc, Karmyc } from '@gamesberry/karmyc-core';
 
 const App = () => {
   const config = useKarmyc({
@@ -83,9 +83,9 @@ const App = () => {
   });
 
   return (
-    <KarmycProvider options={config}>
+    <KarmycCoreProvider options={config}>
       <Karmyc />
-    </KarmycProvider>
+    </KarmycCoreProvider>
   );
 };
 ```
@@ -113,12 +113,12 @@ export const MyArea = () => {
 import { Tools, useToolsSlot } from '@gamesberry/karmyc-core';
 
 const App = () => (
-  <KarmycProvider options={config}>
+  <KarmycCoreProvider options={config}>
     <Tools name="app" orientation="horizontal">
       <MyToolbar />
     </Tools>
     <Karmyc />
-  </KarmycProvider>
+  </KarmycCoreProvider>
 );
 ```
 
@@ -131,8 +131,7 @@ const App = () => (
 
 ### Internal Components
 - **KarmycInitializer**: Internal component that handles system initialization, plugin registration, and initial area creation
-- **KarmycProvider**: Main provider component that sets up the global context and handles URL synchronization
-- **ContextMenuProvider**: Manages context menus throughout the application
+- **KarmycCoreProvider**: Main provider component that sets up the global context and handles URL synchronization
 
 ### Keyboard Shortcuts System
 The system handles three types of keyboard shortcuts:
@@ -170,49 +169,136 @@ keyboardShortcutRegistry.registerShortcut({
 });
 ```
 
-### Plugin System and Action Handling
-The system provides a flexible plugin architecture for extending functionality:
+### Plugin System
+Karmyc Core's plugin system allows you to extend and customize your application's behavior in a modular way. It's based on a Zustand plugin system that offers several features:
 
-#### Action Plugins
-Plugins can register custom actions and validators:
-
+#### Plugin Structure
 ```typescript
-interface IActionPlugin {
-    id: string;
-    priority: number;
-    actionTypes: string[];
-    handler: (action: any) => void;
-}
-
-// Example plugin registration
-const myPlugin: IActionPlugin = {
-    id: 'my-plugin',
-    priority: 100,
-    actionTypes: ['CUSTOM_ACTION'],
-    handler: (action) => {
-        console.log('Handling custom action:', action);
-    }
+type ZustandPlugin<T> = {
+    name: string;                    // Unique plugin identifier
+    onStoreChange?: (state: T, prevState: T) => void;  // Callback on state changes
+    onStoreInit?: (store: StoreApi<T>) => void;        // Initialization callback
+    transformState?: (state: T) => Partial<T>;         // State transformation
+    actions?: Record<string, (...args: any[]) => void>; // Custom actions
 };
 ```
 
-#### Action Validators
-Validators ensure actions are executed only when they meet specific criteria:
-
+#### Using the usePluginSystem Hook
 ```typescript
-// Register a validator for a specific action type
-actionRegistry.registerValidator('CUSTOM_ACTION', (action) => {
-    return {
-        valid: action.payload !== undefined,
-        message: 'Action payload is required'
-    };
-});
+const { registerPlugin, unregisterPlugin, applyPluginTransformations } = usePluginSystem(store, initialPlugins);
 ```
 
-#### Built-in Plugins
-The system includes several built-in plugins:
-- **History Plugin**: Manages undo/redo functionality
-- **Layout Plugin**: Handles area arrangement and resizing
-- **Space Plugin**: Manages space creation and state sharing
+#### Implementation Example
+```typescript
+// Creating a plugin
+const myPlugin = {
+    name: 'myPlugin',
+    onStoreInit: (store) => {
+        console.log('Store initialized');
+    },
+    onStoreChange: (state, prevState) => {
+        console.log('State changed', state);
+    },
+    transformState: (state) => {
+        return { ...state, newProperty: 'value' };
+    },
+    actions: {
+        'MY_ACTION': (payload) => {
+            // Handle action
+        }
+    }
+};
+
+// Using in a component
+function MyComponent() {
+    const store = useStore();
+    const { registerPlugin } = usePluginSystem(store);
+
+    useEffect(() => {
+        registerPlugin(myPlugin);
+        return () => unregisterPlugin('myPlugin');
+    }, []);
+}
+```
+
+#### Dynamic Slice Addition
+The system allows you to dynamically add "slices" (state parts) to your Zustand store. Here's an example:
+
+```typescript
+// Plugin that adds a new slice for theme management
+const themePlugin = {
+    name: 'theme',
+    transformState: (state) => {
+        // Add a new 'theme' slice to the state
+        return {
+            ...state,
+            theme: {
+                mode: 'light',
+                colors: {
+                    primary: '#000000',
+                    secondary: '#ffffff'
+                }
+            }
+        };
+    },
+    actions: {
+        'SET_THEME_MODE': (mode: 'light' | 'dark') => {
+            // Theme change logic
+        }
+    }
+};
+
+// Plugin that adds a slice for user preferences
+const preferencesPlugin = {
+    name: 'preferences',
+    transformState: (state) => {
+        return {
+            ...state,
+            preferences: {
+                language: 'en',
+                notifications: true,
+                fontSize: 14
+            }
+        };
+    }
+};
+
+// Plugins can be added and removed dynamically
+function App() {
+    const store = useStore();
+    const { registerPlugin, unregisterPlugin } = usePluginSystem(store);
+
+    // Add plugins
+    useEffect(() => {
+        registerPlugin(themePlugin);
+        registerPlugin(preferencesPlugin);
+
+        // Cleanup
+        return () => {
+            unregisterPlugin('theme');
+            unregisterPlugin('preferences');
+        };
+    }, []);
+}
+```
+
+This approach offers several advantages:
+- **Modularity**: Each plugin can manage its own state part
+- **Flexibility**: Slices can be added or removed on the fly
+- **Encapsulation**: Each slice's logic is isolated in its plugin
+- **Reusability**: Plugins can be shared between different applications
+
+#### Key Features
+- **Lifecycle Management**: Plugins are automatically initialized and cleaned up
+- **State Transformation**: Ability to modify the store state
+- **Custom Actions**: Add plugin-specific actions
+- **Action System Integration**: Plugins can integrate with the existing action system
+
+#### Best Practices
+1. Give unique names to your plugins
+2. Clean up resources in unmount callbacks
+3. Use TypeScript for better type safety
+4. Avoid uncontrolled side effects in state transformations
 
 ### State Management
 The system uses a combination of Zustand and Immer for state management:
@@ -280,12 +366,10 @@ Each space can operate in two modes:
 - **FOLLOW**: Subscriber that listens for state changes from its `LEAD` area
 - **SELF**: Independent area that manages its own state
 
-
-
 ## API Reference
 
 ### Main Components
-- `<KarmycProvider options={config}>`: Main provider component
+- `<KarmycCoreProvider options={config}>`: Main provider component
 - `<Karmyc />`: Main layout component
 - `<Tools name="slot-name" orientation="horizontal|vertical">`: Toolbar component
 - `<Area />`: Individual area component

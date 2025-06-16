@@ -1,9 +1,10 @@
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Layout, FileUp, FileDown, Edit, Trash2, Plus } from 'lucide-react';
-import { actionRegistry } from '../../actions/handlers/actionRegistry';
-import { useKarmycStore } from '../../data/mainStore';
-import { ControlledMenu, MenuItem, MenuState } from '@szhsin/react-menu';
-import { t } from '../../data/utils/translation';
+import { actionRegistry } from '../../core/registries/actionRegistry';
+import { useKarmycStore } from '../../core/store';
+import { MenuItem } from '@szhsin/react-menu';
+import { t } from '../../core/utils/translation';
+import { useContextMenu } from '../../hooks/useContextMenu';
 
 
 // Types pour les layouts
@@ -17,10 +18,8 @@ interface LayoutPreset {
 const STORAGE_KEY = 'karmyc_custom_layouts';
 
 export const LayoutMenu: React.FC = () => {
-    
+    const { open } = useContextMenu();
     const [isHovered, setIsHovered] = useState(false);
-    const [menuState, setMenuState] = useState<MenuState>('closed');
-    const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 });
     const store = useKarmycStore();
     const builtInLayouts = store.options?.builtInLayouts || [];
 
@@ -186,71 +185,9 @@ export const LayoutMenu: React.FC = () => {
 
     const handleContextMenu = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
-        setAnchorPoint({ x: e.clientX, y: e.clientY });
-        setMenuState('open');
-    }, []);
 
-    const handleClose = useCallback(() => {
-        setMenuState('closed');
-    }, []);
-
-    return (
-        <>
-            <style>
-                {`
-                    .layout-context-menu {
-                        z-index: 9999 !important;
-                    }
-                    .preset-item {
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        width: 100%;
-                        padding: 4px 8px;
-                    }
-                    .preset-actions {
-                        display: flex;
-                        gap: 4px;
-                    }
-                    .preset-actions button {
-                        background: none;
-                        border: none;
-                        padding: 4px;
-                        cursor: pointer;
-                        color: inherit;
-                    }
-                    .preset-actions button:hover {
-                        background: rgba(255, 255, 255, 0.1);
-                        border-radius: 4px;
-                    }
-                `}
-            </style>
-            <div
-                onContextMenu={handleContextMenu}
-                onClick={handleContextMenu}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                title={t('layout.menu', 'Menu des layouts')}
-                style={{
-                    cursor: 'pointer',
-                    padding: '8px',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    userSelect: 'none',
-                    backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                    transition: 'background-color 0.2s ease'
-                }}
-            >
-                <Layout size={26} />
-            </div>
-            <ControlledMenu
-                anchorPoint={anchorPoint}
-                state={menuState}
-                onClose={handleClose}
-                menuClassName="layout-context-menu"
-            >
+        const menuItems: React.ReactNode = (
+            <>
                 {allPresets.map(preset => (
                     <MenuItem key={preset.id} onClick={() => handleApplyPreset(preset.id)}>
                         <div className="preset-item">
@@ -286,7 +223,67 @@ export const LayoutMenu: React.FC = () => {
                 <MenuItem onClick={handleImportPreset} title={t('layout.import', 'Import a layout')}>
                     <FileDown size={16} /> {t('layout.import', 'Import a layout')}
                 </MenuItem>
-            </ControlledMenu>
+            </>
+        );
+
+        open({
+            position: { x: e.clientX, y: e.clientY },
+            items: menuItems,
+            menuClassName: 'context-menu layout-context-menu',
+            menuType: 'default'
+        });
+    }, [open, handleApplyPreset, handleExportPreset, handleRenamePreset, handleDeletePreset, handleSaveCurrentLayout, handleImportPreset]);
+
+    return (
+        <>
+            <style>
+                {`
+ 
+                    .preset-item {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        width: 100%;
+                        padding: 4px 8px;
+                    }
+                    .preset-actions {
+                        display: flex;
+                        gap: 4px;
+                    }
+                    .preset-actions button {
+                        background: none;
+                        border: none;
+                        padding: 4px;
+                        cursor: pointer;
+                        color: inherit;
+                    }
+                    .preset-actions button:hover {
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 4px;
+                    }
+                `}
+            </style>
+
+            <div
+                onContextMenu={handleContextMenu}
+                onClick={handleContextMenu}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                title={t('layout.menu', 'Menu des layouts')}
+                style={{
+                    cursor: 'pointer',
+                    padding: '8px',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    userSelect: 'none',
+                    backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                    transition: 'background-color 0.2s ease'
+                }}
+            >
+                <Layout size={26} />
+            </div>
         </>
     );
 }; 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSpace } from '../../../src/hooks';
-import { useKarmycStore } from '../../../src/data/mainStore';
-import { useSpaceStore } from '../../../src/store/spaceStore';
-import { t } from '../../../src/data/utils/translation';
+import { useKarmycStore } from '../../../src/core/store';
+import { useSpaceStore } from '../../../src/core/spaceStore';
+import { t } from '../../../src/core/utils/translation';
 
 // Type for component state
 interface ColorPickerAreaState {

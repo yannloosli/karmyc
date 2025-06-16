@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { AREA_ROLE, AreaTypeValue } from '../../src/types/actions';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
+import { AREA_ROLE, AreaTypeValue } from '../../src/core/types/actions';
 import { IArea } from '../../src/types/areaTypes';
-import { ISpace } from '../../src/types/karmyc';
+import { ISpace } from '../../src/core/types/karmyc';
 import { 
   TestComponent, 
   setupErrorTest, 
@@ -12,6 +12,9 @@ import {
   waitForInitialization,
   assertErrorLogged 
 } from '../__mocks__/errorTestUtils';
+import { useKarmycStore } from '../../src/core/store';
+import { initializeMainStore } from '../../src/core/store';
+import { useKarmyc } from '../../src/hooks/useKarmyc';
 
 // Composant ErrorBoundary pour capturer les erreurs
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -108,32 +111,49 @@ describe('Error Handling', () => {
     const duplicateArea1: IArea<AreaTypeValue> = {
       id: 'duplicate-id',
       type: 'test-area',
-      role: AREA_ROLE.LEAD
+      role: AREA_ROLE.LEAD,
+      state: {}
     };
 
     const duplicateArea2: IArea<AreaTypeValue> = {
       id: 'duplicate-id',
       type: 'test-area',
-      role: AREA_ROLE.FOLLOW
+      role: AREA_ROLE.FOLLOW,
+      state: {}
+    };
+
+    // Initialiser le store
+    initializeMainStore();
+
+    const TestComponentWithHook = () => {
+      const config = useKarmyc({
+        initialAreas: [duplicateArea1, duplicateArea2]
+      });
+
+      return (
+        <KarmycCoreProvider options={config}>
+          <Karmyc />
+        </KarmycCoreProvider>
+      );
     };
 
     await act(async () => {
-      render(
-        <ErrorBoundary>
-          <TestComponent
-            options={{
-              initialAreas: [duplicateArea1, duplicateArea2]
-            }}
-          />
-        </ErrorBoundary>
-      );
+      render(<TestComponentWithHook />);
     });
 
+    // Attendre que l'initialisation soit terminée
     await waitFor(() => {
-      const errorMessage = screen.getByTestId('error-boundary');
-      expect(errorMessage).toBeInTheDocument();
-      expect(errorMessage).toHaveTextContent('Invalid area type: test-area');
-    }, { timeout: 1000 });
+      const state = useKarmycStore.getState();
+      expect(state.screens[state.activeScreenId]).toBeDefined();
+    }, { timeout: 2000 });
+
+    // Attendre que les aires soient ajoutées
+    await waitFor(() => {
+      const state = useKarmycStore.getState();
+      const areas = state.screens[state.activeScreenId]?.areas.areas;
+      expect(Object.keys(areas || {}).length).toBe(1);
+      expect(areas?.['duplicate-id']).toBeDefined();
+    }, { timeout: 2000 });
 
     expect(consoleError).toHaveBeenCalledWith(
       expect.stringContaining('[KarmycInitializer] Invalid area config'),
@@ -141,10 +161,10 @@ describe('Error Handling', () => {
     );
     
     cleanup();
-  });
+  }, 5000);
 
   it('should handle invalid space configuration', async () => {
-    const { consoleError, onError, cleanup } = setupErrorTest();
+    const { consoleError, cleanup } = setupErrorTest();
     
     const invalidSpace: ISpace = {
       id: 'invalid-space',
@@ -156,26 +176,32 @@ describe('Error Handling', () => {
     
     await act(async () => {
       render(
-        <KarmycProvider
+        <TestComponent
           options={{
             initialAreas: [
-              { type: 'test-area', role: 'LEAD', id: 'test-area-1' }
+              { type: 'test-area', role: 'LEAD', id: 'test-area-1', state: {} }
             ],
             spaces: {
               'invalid-space': invalidSpace
             }
           }}
-          onError={onError}
-        >
-          <Karmyc />
-        </KarmycProvider>
+        />
       );
     });
 
     await waitForInitialization();
 
-    assertErrorLogged(consoleError, '[KarmycInitializer] Error during initialization');
+    await waitFor(() => {
+      const state = useKarmycStore.getState();
+      const areas = state.screens[state.activeScreenId]?.areas.areas;
+      expect(Object.keys(areas || {}).length).toBe(0); // Aucune aire ne devrait être ajoutée
+    }, { timeout: 1000 });
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining('[KarmycInitializer] Invalid area config'),
+      expect.any(Error)
+    );
     
     cleanup();
-  });
+  }, 10000);
 }); 

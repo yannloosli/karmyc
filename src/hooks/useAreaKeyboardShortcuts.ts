@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { KeyboardShortcut, keyboardShortcutRegistry } from "../data/registries/keyboardShortcutRegistry";
+import { KeyboardShortcut, keyboardShortcutRegistry } from "../core/registries/keyboardShortcutRegistry";
 
 
 /**

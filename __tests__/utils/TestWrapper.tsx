@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { IKarmycOptions } from '../../src/types/karmyc';
-import { useKarmycStore } from '../../src/store/areaStore';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
+import { useKarmycStore } from '../../src/core/store';
 
 interface TestWrapperProps {
   children: React.ReactNode;
@@ -30,7 +30,7 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
       // Initialiser le store seulement une fois
       useKarmycStore.setState({
         screens: {
-          'main': {
+          '1': {
             areas: {
               _id: 0,
               rootId: null,
@@ -46,7 +46,7 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: { ...defaultOptions, ...options }
       });
       isInitialized.current = true;
@@ -58,9 +58,9 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
 
     if (rootRef.current) {
       rootRef.current.render(
-        <KarmycProvider options={{ ...defaultOptions, ...options }}>
+        <KarmycCoreProvider options={{ ...defaultOptions, ...options }}>
           {children}
-        </KarmycProvider>
+        </KarmycCoreProvider>
       );
     }
 

@@ -2,12 +2,12 @@ import React, { Dispatch, SetStateAction, useRef, useEffect } from "react";
 import { handleAreaDragFromCorner } from "./handlers/areaDragFromCorner";
 import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { Tools } from './ToolsSlot';
-import { AREA_ROLE } from "../types/actions";
+import { AREA_ROLE } from "../core/types/actions";
 import { TOOLBAR_HEIGHT } from "../utils/constants";
-import { useKarmycStore } from "../data/mainStore";
+import { useKarmycStore } from "../core/store";
 import { AreaComponentProps, ResizePreviewState } from "../types/areaTypes";
 import { AreaIdContext } from "../utils/AreaIdContext";
-import { useSpaceStore } from "../store/spaceStore";
+import { useSpaceStore } from "../core/spaceStore";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 
 interface AreaComponentOwnProps extends AreaComponentProps {

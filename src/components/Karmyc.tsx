@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo, useRef } from "react";
-import { useKarmycStore } from "../data/mainStore";
+import { useKarmycStore } from "../core/store";
 import { AreaRowLayout } from "../types/areaTypes";
 import { computeAreaToViewport } from "../utils/areaToViewport";
 import { getAreaRootViewport } from "../utils/getAreaViewport";
@@ -7,7 +7,6 @@ import { Area } from "./Area";
 import { AreaRowSeparators } from "./AreaRowSeparators";
 import { AreaToOpenPreview } from "./AreaToOpenPreview";
 import { JoinAreaPreview } from "./JoinAreaPreview";
-import { ContextMenuProvider } from "../providers/ContextMenuProvider";
 import { DetachedWindowCleanup } from "./DetachedWindowCleanup";
 import { areViewportMapsEqual } from "../utils/objectEquality";
 
@@ -84,8 +83,8 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                     width: window.innerWidth,
                     height: window.innerHeight
                 };
-                if (!lastViewportRef.current || 
-                    newViewport.width !== lastViewportRef.current.width || 
+                if (!lastViewportRef.current ||
+                    newViewport.width !== lastViewportRef.current.width ||
                     newViewport.height !== lastViewportRef.current.height) {
                     setViewport(newViewport);
                 }
@@ -99,8 +98,8 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                         width: rect.width,
                         height: rect.height
                     };
-                    if (!lastViewportRef.current || 
-                        newViewport.width !== lastViewportRef.current.width || 
+                    if (!lastViewportRef.current ||
+                        newViewport.width !== lastViewportRef.current.width ||
                         newViewport.height !== lastViewportRef.current.height) {
                         setViewport(newViewport);
                     }
@@ -131,7 +130,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         }
 
         try {
-            const newViewportMap = computeAreaToViewport(layout, rootId, {...viewport, top: viewport.top + offset});
+            const newViewportMap = computeAreaToViewport(layout, rootId, { ...viewport, top: viewport.top + offset });
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
 
             // Ne mettre à jour que si les viewports ont réellement changé
@@ -141,11 +140,11 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                     const oldViewport = currentStoreViewports?.[key];
                     const newViewport = newViewportMap[key];
                     if (!oldViewport) return true;
-                    
+
                     return Math.abs(oldViewport.left - newViewport.left) > 1 ||
-                           Math.abs(oldViewport.top - newViewport.top) > 1 ||
-                           Math.abs(oldViewport.width - newViewport.width) > 1 ||
-                           Math.abs(oldViewport.height - newViewport.height) > 1;
+                        Math.abs(oldViewport.top - newViewport.top) > 1 ||
+                        Math.abs(oldViewport.width - newViewport.width) > 1 ||
+                        Math.abs(oldViewport.height - newViewport.height) > 1;
                 });
 
                 if (hasSignificantChange) {
@@ -254,7 +253,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     }, [layout, resizePreview]);
 
     return (
-        <ContextMenuProvider>
+        <>
             <DetachedWindowCleanup />
             <div className="area-root">
                 {Object.values(layout).map((item) => {
@@ -283,7 +282,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                             <Area
                                 key={id}
                                 id={id}
-                                viewport={{...visualViewport, top: visualViewport.top - offset}}
+                                viewport={{ ...visualViewport, top: visualViewport.top - offset }}
                                 setResizePreview={setResizePreview}
                             />
                         );
@@ -307,6 +306,6 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                     <AreaToOpenPreview />
                 )}
             </div>
-        </ContextMenuProvider>
+        </>
     );
 };

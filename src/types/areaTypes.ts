@@ -1,6 +1,6 @@
 import { ComponentType } from "react";
-import { AreaTypeValue } from "./actions";
-import { AreaRole } from "./karmyc";
+import { AreaTypeValue } from "../core/types/actions";
+import { AreaRole } from "../core/types/karmyc";
 import { Point, Rect } from ".";
 
 export interface AreaComponentProps<T = any> {

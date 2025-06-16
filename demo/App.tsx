@@ -1,13 +1,15 @@
 import * as React from 'react';
-import { AREA_ROLE } from '../src/types/actions';
+import { AREA_ROLE } from '../src/core/types/actions';
 import { useKarmyc } from '../src/hooks/useKarmyc';
-import { KarmycProvider } from '../src/providers/KarmycProvider';
+import { KarmycCoreProvider } from '../src/core/KarmycCoreProvider';
 import { Tools } from '../src/components/ToolsSlot';
 import { TOOLBAR_HEIGHT } from '../src/utils/constants';
 
 import '../style.css';
 import { AreaInitializer } from './config/AreaInitializer';
 import { Karmyc } from '../src/components/Karmyc';
+import { SwitchAreaTypeContextMenu } from '../src/components/menus/SwitchAreaTypeContextMenu';
+import { ContextMenu } from '../src/components/menus/ContextMenu';
 
 const App: React.FC = () => {
     const karmycConfig = {
@@ -120,14 +122,15 @@ const App: React.FC = () => {
     const config = useKarmyc(karmycConfig);
 
     return (
-        <KarmycProvider options={config}>
+        <KarmycCoreProvider options={config}>
             <AreaInitializer />
+            <ContextMenu />
             <Tools areaType="apptitle">
                 <Tools areaType="app">
                     <Karmyc offset={TOOLBAR_HEIGHT * 2} />
                 </Tools>
             </Tools>
-        </KarmycProvider>
+        </KarmycCoreProvider>
     );
 };
 

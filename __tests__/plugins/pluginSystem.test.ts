@@ -1,9 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
-import { useKarmycStore } from '../../src/store/areaStore';
+import { useKarmycStore } from '../../src/core/store';
 import { usePluginSystem } from '../../src/hooks/usePluginSystem';
 import { ZustandPlugin } from '../../src/hooks/usePluginSystem';
 import { TestWrapper } from '../utils/TestWrapper';
-import { actionRegistry } from '../../src/actions/handlers/actionRegistry';
+import { actionRegistry } from '../../src/core/registries/actionRegistry';
 
 describe('Plugin System', () => {
   beforeEach(() => {

@@ -1,10 +1,10 @@
 import React from 'react';
 import { act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { IKarmycOptions } from '../../src/types/karmyc';
-import { useKarmycStore } from '../../src/store/areaStore';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
+import { useKarmycStore } from '../../src/core/store';
 
 export const TestComponent: React.FC<{ 
   options?: IKarmycOptions, 
@@ -28,9 +28,9 @@ export const TestComponent: React.FC<{
   }, [error]);
 
   return (
-    <KarmycProvider options={config} onError={handleError}>
+    <KarmycCoreProvider options={config} onError={handleError}>
       <Karmyc />
-    </KarmycProvider>
+    </KarmycCoreProvider>
   );
 };
 
@@ -56,7 +56,7 @@ export const resetKarmycStore = () => {
   act(() => {
     useKarmycStore.setState({
       screens: {},
-      activeScreenId: 'main',
+      activeScreenId: '1',
       options: {
         keyboardShortcutsEnabled: true,
         builtInLayouts: [],

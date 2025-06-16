@@ -1,8 +1,8 @@
-import { useKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/karmyc';
-import { keyboardShortcutRegistry, KeyboardShortcut } from '../../src/data/registries/keyboardShortcutRegistry';
+import { useKarmycStore } from '../../src/core/store';
+import { AreaRole } from '../../src/core/types/karmyc';
+import { keyboardShortcutRegistry, KeyboardShortcut } from '../../src/core/registries/keyboardShortcutRegistry';
 import { act } from '@testing-library/react';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { render } from '@testing-library/react';
 
 describe('Keyboard Shortcuts', () => {
@@ -28,7 +28,7 @@ describe('Keyboard Shortcuts', () => {
     act(() => {
       useKarmycStore.setState({
         screens: {
-          main: {
+          "1": {
             areas: {
               _id: 0,
               rootId: null,
@@ -44,7 +44,7 @@ describe('Keyboard Shortcuts', () => {
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: {
           keyboardShortcutsEnabled: true,
           resizableAreas: true,
@@ -57,9 +57,9 @@ describe('Keyboard Shortcuts', () => {
 
     // Rendre le provider pour initialiser les événements clavier
     provider = render(
-      <KarmycProvider options={providerOptions}>
+      <KarmycCoreProvider options={providerOptions}>
         <div />
-      </KarmycProvider>
+      </KarmycCoreProvider>
     );
   });
 
@@ -144,7 +144,7 @@ describe('Keyboard Shortcuts', () => {
     act(() => {
       useKarmycStore.setState({
         screens: {
-          main: {
+          "1": {
             areas: {
               _id: 0,
               rootId: null,
@@ -199,9 +199,9 @@ describe('Keyboard Shortcuts', () => {
 
     // Créer un nouveau provider avec les options mises à jour
     provider = render(
-      <KarmycProvider options={providerOptions}>
+      <KarmycCoreProvider options={providerOptions}>
         <div />
-      </KarmycProvider>
+      </KarmycCoreProvider>
     );
 
     // Vérifier que les options sont correctement propagées

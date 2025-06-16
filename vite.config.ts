@@ -10,14 +10,13 @@ export default defineConfig({
     })
   ],
   assetsInclude: ['**/*.md'],
+  root: './',
   resolve: {
     alias: {
       '@': '/src',
+      '@core': '/src/core',
       '@components': '/src/components',
-      '@data': '/src/data',
       '@hooks': '/src/hooks',
-      '@store': '/src/store',
-      '@types': '/src/types',
       '@utils': '/src/utils',
     }
   },

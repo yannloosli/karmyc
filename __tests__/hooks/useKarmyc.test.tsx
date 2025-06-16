@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
 import { act } from 'react';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
-import { useKarmycStore, initializeKarmycStore } from '../../src/store/areaStore';
-import { AreaRole } from '../../src/types/karmyc';
-import { actionRegistry } from '../../src/actions/handlers/actionRegistry';
+import { useKarmycStore, initializeMainStore } from '../../src/core/store';
+import { AreaRole } from '../../src/core/types/karmyc';
+import { actionRegistry } from '../../src/core/registries/actionRegistry';
 import { TestWrapper } from '../utils/TestWrapper';
 import type { IArea } from '../../src/types/areaTypes';
 
@@ -271,7 +271,7 @@ describe('useKarmyc', () => {
 
     // Initialiser le store avec l'état correct
     await act(async () => {
-      initializeKarmycStore({
+      initializeMainStore({
         keyboardShortcutsEnabled: true,
         builtInLayouts: [],
         validators: [],

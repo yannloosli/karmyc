@@ -7,10 +7,10 @@ export { AreaTabs } from './AreaTabs';
 export { AreaToOpenPreview } from './AreaToOpenPreview';
 export { JoinAreaPreview } from './JoinAreaPreview';
 export { DropZone } from './DropZone'; 
-export * from './ContextMenu';
+export * from './menus/ContextMenu';
 export * from './KeyboardShortcutsViewer';
 export * from './ScreenSwitcher';
 export * from './DetachedWindowCleanup';
-export * from './SwitchAreaTypeContextMenu';
+export * from './menus/SwitchAreaTypeContextMenu';
 export * from './menus/SpaceMenu'; 
 export * from './ToolsSlot'

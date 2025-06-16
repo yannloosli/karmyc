@@ -1,4 +1,4 @@
-import { useKarmycStore } from '../data/mainStore';
+import { useKarmycStore } from '../core/store';
 
 /**
  * Hook pour gérer la logique de stack des aires

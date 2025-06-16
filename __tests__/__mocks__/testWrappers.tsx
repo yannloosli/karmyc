@@ -1,13 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { KarmycProvider } from '../../src/providers/KarmycProvider';
-import { IKarmycOptions } from '../../src/types/karmyc';
-import { useKarmycStore, initializeKarmycStore } from '../../src/store/areaStore';
+import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
+import { useKarmycStore, initializeMainStore } from '../../src/core/store';
 import { act } from '@testing-library/react';
 import { IArea } from '../../src/types/areaTypes';
-import { AreaTypeValue } from '../../src/types/actions';
+import { AreaTypeValue } from '../../src/core/types/actions';
 import { Karmyc } from '../../src/components/Karmyc';
-import { validateArea } from '../../src/data/utils/validation';
+import { validateArea } from '../../src/core/utils/validation';
 
 interface TestWrapperProps {
   children: React.ReactNode;
@@ -34,7 +34,7 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
     if (!isInitialized.current) {
       act(() => {
         // Initialiser le store
-        initializeKarmycStore({ ...defaultOptions, ...options });
+        initializeMainStore({ ...defaultOptions, ...options });
 
         // Valider les zones initiales et mettre à jour le store avec les erreurs
         const initialAreas = options.initialAreas || [];
@@ -75,9 +75,9 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
       const mergedOptions = { ...defaultOptions, ...options };
       act(() => {
         rootRef.current?.render(
-          <KarmycProvider options={mergedOptions}>
+          <KarmycCoreProvider options={mergedOptions}>
             {children}
-          </KarmycProvider>
+          </KarmycCoreProvider>
         );
       });
     }
@@ -98,9 +98,9 @@ export const TestWrapper: React.FC<TestWrapperProps> = ({ children, options = {}
 };
 
 export const createMockStore = (overrides = {}) => ({
-  activeScreenId: 'screen-1',
+  activeScreenId: '1',
   screens: {
-    'screen-1': {
+    '1': {
       isDetached: false,
       areas: {
         areas: {}

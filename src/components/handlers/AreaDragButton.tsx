@@ -1,13 +1,14 @@
 import { createElement, useRef, useState } from "react";
-import { AreaTypeValue } from "../../types/actions";
-import { useKarmycStore } from "../../data/mainStore";
+import { AreaTypeValue } from "../../core/types/actions";
+import { useKarmycStore } from "../../core/store";
 import { TOOLBAR_HEIGHT } from "../../utils/constants";
-import { areaRegistry } from "../../data/registries/areaRegistry";
-import { useSpaceStore } from "../../store/spaceStore";
+import { areaRegistry } from "../../core/registries/areaRegistry";
+import { useSpaceStore } from "../../core/spaceStore";
 import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
-import { SwitchAreaTypeContextMenu } from '../SwitchAreaTypeContextMenu';
-import { t } from "../../data/utils/translation";
+import { SwitchAreaTypeContextMenu } from '../menus/SwitchAreaTypeContextMenu';
+import { t } from "../../core/utils/translation";
+import { useContextMenu } from "../../hooks/useContextMenu";
 
 interface IAreaDragButton {
     state: any;
@@ -33,7 +34,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         handleDragEnd
     } = useAreaDragAndDrop({ type, id, state });
 
-    const openCustomContextMenu = useKarmycStore((state) => state.contextMenu.openCustomContextMenu);
+    const { open } = useContextMenu();
 
     // Ref for the button
     const selectAreaButtonRef = useRef<HTMLDivElement>(null);
@@ -43,12 +44,11 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         if (!manageableAreas) return;
         if (selectAreaButtonRef.current) {
             const rect = selectAreaButtonRef.current.getBoundingClientRect();
-            openCustomContextMenu({
+            open({
                 targetId: id,
                 position: { x: rect.left, y: rect.top },
-                component: (
-                    <SwitchAreaTypeContextMenu />
-                )
+                items: <SwitchAreaTypeContextMenu />,
+                menuClassName: 'context-menu switch-area-type-context-menu',
             });
         }
     };

@@ -3,20 +3,20 @@ import { useContextMenu } from '../../hooks/useContextMenu';
 import { useSpace } from '../../hooks/useSpace';
 import { Plus, FileUp, FileDown, History, X, FolderOpen, Edit } from 'lucide-react';
 import { ContextMenuItem } from '../../types';
-import { actionRegistry } from '../../actions/handlers/actionRegistry';
+import { actionRegistry } from '../../core/registries/actionRegistry';
 
 export const SpaceMenu: React.FC = () => {
     const { open } = useContextMenu();
     const [isHovered, setIsHovered] = useState(false);
-    const { 
-        spaceList, 
+    const {
+        spaceList,
         activeSpaceId,
         openSpaces,
-        createSpace, 
+        createSpace,
         setActive,
         openSpace,
         closeSpace,
-        updateSpaceProperties 
+        updateSpaceProperties
     } = useSpace();
 
     const handleExportSpace = useCallback(() => {
@@ -24,10 +24,10 @@ export const SpaceMenu: React.FC = () => {
         if (!space) return;
 
         const dataStr = JSON.stringify(space, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
         const exportFileDefaultName = `${space.name}.json`;
-        
+
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
         linkElement.setAttribute('download', exportFileDefaultName);
@@ -38,7 +38,7 @@ export const SpaceMenu: React.FC = () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
-        
+
         input.onchange = (e) => {
             const file = (e.target as HTMLInputElement).files?.[0];
             if (!file) return;
@@ -57,7 +57,7 @@ export const SpaceMenu: React.FC = () => {
             };
             reader.readAsText(file);
         };
-        
+
         input.click();
     }, [createSpace, setActive]);
 
@@ -108,10 +108,10 @@ export const SpaceMenu: React.FC = () => {
 
     const handleContextMenu = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
-        
+
         const recentSpaces = spaceList.slice(-10).reverse();
         const hasActiveSpace = !!activeSpaceId;
-        
+
         const menuItems: ContextMenuItem[] = [
             {
                 id: 'new',
@@ -193,42 +193,34 @@ export const SpaceMenu: React.FC = () => {
                 }
             );
         }
-        
+
         open({
             position: { x: e.clientX, y: e.clientY },
             items: menuItems,
-            menuClassName: 'space-context-menu'
+            menuClassName: 'context-menu space-context-menu',
+            menuType: 'default'
         });
     }, [open, spaceList, activeSpaceId, openSpaces]);
 
     return (
-        <>
-            <style>
-                {`
-                    .space-context-menu {
-                        z-index: 9999 !important;
-                    }
-                `}
-            </style>
-            <div 
-                onContextMenu={handleContextMenu}
-                onClick={handleContextMenu}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                style={{ 
-                    cursor: 'pointer',
-                    padding: '8px',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    userSelect: 'none',
-                    backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                    transition: 'background-color 0.2s ease'
-                }}
-            >
-                <FolderOpen size={26} />
-            </div>
-        </>
+        <div
+            onContextMenu={handleContextMenu}
+            onClick={handleContextMenu}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+                cursor: 'pointer',
+                padding: '8px',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                userSelect: 'none',
+                backgroundColor: isHovered ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                transition: 'background-color 0.2s ease'
+            }}
+        >
+            <FolderOpen size={26} />
+        </div>
     );
 }; 

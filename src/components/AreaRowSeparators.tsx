@@ -1,11 +1,11 @@
 import React, { Dispatch, SetStateAction } from "react";
 import { AREA_BORDER_WIDTH, TOOLBAR_HEIGHT } from "../utils/constants";
-import { useKarmycStore } from "../data/mainStore";
+import { useKarmycStore } from "../core/store";
 import { AreaRowLayout } from "../types/areaTypes";
 import { Rect } from "../types";
 import { handleDragAreaResize } from "./handlers/areaDragResize";
 import { Ellipsis, EllipsisVertical } from 'lucide-react';
-import { t } from '../data/utils/translation';
+import { t } from '../core/utils/translation';
 
 
 interface ResizePreviewState {

@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { useArea } from '../../src/hooks/useArea';
-import { useKarmycStore } from '../../src/store/areaStore';
+import { useKarmycStore } from '../../src/core/store';
 import { resetKarmycStore, assertStoreState } from '../__mocks__/hookTestUtils';
-import { areaRegistry } from '../../src/data/registries/areaRegistry';
+import { areaRegistry } from '../../src/core/registries/areaRegistry';
 import React from 'react';
 
 // Composant de test pour l'aire
@@ -36,8 +36,8 @@ describe('useArea', () => {
     if (!areaId) return;
 
     assertStoreState(useKarmycStore, {
-      [`screens.main.areas.areas.${areaId}.type`]: 'test-area',
-      [`screens.main.areas.areas.${areaId}.state`]: { test: 'value' }
+      [`screens.1.areas.areas.${areaId}.type`]: 'test-area',
+      [`screens.1.areas.areas.${areaId}.state`]: { test: 'value' }
     });
   });
 
@@ -57,7 +57,7 @@ describe('useArea', () => {
     });
 
     assertStoreState(useKarmycStore, {
-      [`screens.main.areas.areas.${areaId}.state`]: { newValue: 'updated' }
+      [`screens.1.areas.areas.${areaId}.state`]: { newValue: 'updated' }
     });
   });
 
@@ -78,7 +78,7 @@ describe('useArea', () => {
     });
 
     assertStoreState(useKarmycStore, {
-      [`screens.main.areas.areas.${areaId}.position`]: newPosition
+      [`screens.1.areas.areas.${areaId}.position`]: newPosition
     });
   });
 }); 

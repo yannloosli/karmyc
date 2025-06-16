@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useKarmycStore } from '../../../src/data/mainStore';
+import { useKarmycStore } from '../../../src/core/store';
 import { useSpace } from '../../../src/hooks';
-import { useSpaceStore } from '../../../src/store/spaceStore';
-import { t } from '../../../src/data/utils/translation';
+import { useSpaceStore } from '../../../src/core/spaceStore';
+import { t } from '../../../src/core/utils/translation';
 import { Info, Layers, Palette } from 'lucide-react';
 
 interface DebugAreaProps {

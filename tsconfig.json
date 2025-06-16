@@ -26,7 +26,14 @@
             "react-dom",
             "jest",
             "node"
-        ]
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@core/*": ["./src/core/*"],
+            "@components/*": ["./src/components/*"],
+            "@hooks/*": ["./src/hooks/*"],
+            "@utils/*": ["./src/utils/*"],
+        }
     },
     "include": [
         "**/*.ts",

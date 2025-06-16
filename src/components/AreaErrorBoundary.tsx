@@ -1,6 +1,6 @@
 import React from "react";
 import { AreaComponentProps } from "../types/areaTypes";
-import { t } from '../data/utils/translation';
+import { t } from '../core/utils/translation';
 
 interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;

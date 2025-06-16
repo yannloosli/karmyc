@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
-import { AREA_ROLE } from '../../src/types/actions';
-import { AreaRole } from '../../src/types/karmyc';
+import { AREA_ROLE } from '../../src/core/types/actions';
+import { AreaRole } from '../../src/core/types/karmyc';
 import { TestWrapper } from '../utils/TestWrapper';
-import { useKarmycStore } from '../../src/store/areaStore';
-import { useSpaceStore } from '../../src/store/spaceStore';
-import { areaRegistry } from '../../src/data/registries/areaRegistry';
+import { useKarmycStore } from '../../src/core/store';
+import { useSpaceStore } from '../../src/core/spaceStore';
+import { areaRegistry } from '../../src/core/registries/areaRegistry';
 import { AreaComponentProps } from '../../src/types/areaTypes';
 
 // Composant de test pour l'aire
@@ -50,7 +50,7 @@ describe('Karmyc Integration', () => {
     act(() => {
       useKarmycStore.setState({
         screens: {
-          main: {
+          "1": {
             areas: {
               areas: {
                 'area-1': {
@@ -95,7 +95,7 @@ describe('Karmyc Integration', () => {
             }
           }
         },
-        activeScreenId: 'main',
+        activeScreenId: '1',
         options: {
           keyboardShortcutsEnabled: true,
           builtInLayouts: [],
@@ -136,13 +136,10 @@ describe('Karmyc Integration', () => {
       </TestWrapper>
     );
 
-    const spaceButton = screen.getByTestId('space-switch-button');
-    
-    act(() => {
-      fireEvent.click(spaceButton);
-    });
-
+    // Vérifier que l'espace a été ajouté correctement
     const spaces = useSpaceStore.getState().spaces;
-    expect(Object.keys(spaces).length).toBeGreaterThan(0);
+    expect(Object.keys(spaces).length).toBe(1);
+    expect(spaces[Object.keys(spaces)[0]].name).toBe('test-space');
+    expect(spaces[Object.keys(spaces)[0]].sharedState.color).toBe('#ff0000');
   });
 }); 

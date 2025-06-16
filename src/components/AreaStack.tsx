@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { IArea, AreaRowLayout } from '../types/areaTypes';
 import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './AreaComponent';
-import { areaRegistry } from '../data/registries/areaRegistry';
+import { areaRegistry } from '../core/registries/areaRegistry';
 import { ResizePreviewState } from '../types/areaTypes';
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 

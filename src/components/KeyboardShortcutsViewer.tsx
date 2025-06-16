@@ -1,7 +1,7 @@
 import React from 'react';
-import { keyboardShortcutRegistry } from '../data/registries/keyboardShortcutRegistry';
-import { KeyboardShortcut } from '../data/registries/keyboardShortcutRegistry';
-import { t } from '../data/utils/translation';
+import { keyboardShortcutRegistry } from '../core/registries/keyboardShortcutRegistry';
+import { KeyboardShortcut } from '../core/registries/keyboardShortcutRegistry';
+import { t } from '../core/utils/translation';
 
 const KeyboardShortcutsViewer: React.FC = () => {
     

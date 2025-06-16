@@ -3,12 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks';
-import { useKarmycStore } from '../../../src/data/mainStore';
-import { useSpaceStore, SpaceSharedState } from '../../../src/store/spaceStore';
+import { useKarmycStore } from '../../../src/core/store';
+import { useSpaceStore, SpaceSharedState } from '../../../src/core/spaceStore';
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
-import { useRegisterActionHandler } from '../../../src/actions/handlers/useRegisterActionHandler';
-import { actionRegistry } from '../../../src/actions/handlers/actionRegistry';
-import { t } from '../../../src/data/utils/translation';
+import { useRegisterActionHandler } from '../../../src/hooks/useRegisterActionHandler';
+import { actionRegistry } from '../../../src/core/registries/actionRegistry';
+import { t } from '../../../src/core/utils/translation';
 
 interface DrawingState { }
 

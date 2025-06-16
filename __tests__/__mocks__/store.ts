@@ -1,16 +1,16 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import { v4 as uuidv4 } from 'uuid';
-import type { RootState } from '../../src/store/areaStore';
+import type { RootStateType } from '../../src/core/store';
 import { AreaRowLayout } from '../../src/types/areaTypes';
 import { IArea } from '../../src/types/areaTypes';
-import { AreaTypeValue } from '../../src/types/actions';
+import { AreaTypeValue } from '../../src/core/types/actions';
 
 export const createTestStore = () => {
-  return create<RootState>()(
+  return create<RootStateType>()(
     immer((set) => ({
       screens: {
-        main: {
+        "1": {
           areas: {
             _id: 0,
             rootId: null,
@@ -26,7 +26,7 @@ export const createTestStore = () => {
           }
         }
       },
-      activeScreenId: 'main',
+      activeScreenId: '1',
       nextScreenId: 2,
       options: {
         resizableAreas: true,
@@ -38,6 +38,36 @@ export const createTestStore = () => {
       },
       lastUpdated: Date.now(),
       layout_preset: [],
+      contextMenu: {
+        isVisible: false,
+        position: { x: 0, y: 0 },
+        items: [],
+        errors: [],
+        targetId: undefined,
+        metadata: undefined,
+        menuClassName: 'menu',
+        customContextMenuContent: null,
+        menuType: undefined,
+        openContextMenu: () => {},
+        openCustomContextMenu: () => {},
+        closeContextMenu: () => {},
+        updateContextMenuPosition: () => {},
+        updateContextMenuItems: () => {},
+        clearErrors: () => {}
+      },
+      _id: 0,
+      rootId: null,
+      errors: [],
+      activeAreaId: null,
+      joinPreview: null,
+      layout: {},
+      areas: {},
+      viewports: {},
+      areaToOpen: null,
+      lastSplitResultData: null,
+      lastLeadAreaId: null,
+      isDetached: false,
+      isLocked: false,
 
       // Actions communes pour les tests
       addArea: (area) => {
@@ -116,6 +146,7 @@ export const createTestStore = () => {
       splitArea: () => null,
 
       // Actions requises par le type RootState
+      initialize: () => {},
       addScreen: () => {},
       switchScreen: () => {},
       removeScreen: () => {},
@@ -135,7 +166,8 @@ export const createTestStore = () => {
       getAreaById: () => undefined,
       getAllAreas: () => ({}),
       getAreaErrors: () => [],
-      findParentRowAndIndices: () => ({ parentRow: null, sourceIndex: -1, targetIndex: -1 })
+      findParentRowAndIndices: () => ({ parentRow: null, sourceIndex: -1, targetIndex: -1 }),
+      getLastLeadAreaId: () => null
     }))
   );
 };
@@ -143,7 +175,7 @@ export const createTestStore = () => {
 export const resetStore = (store: ReturnType<typeof createTestStore>) => {
   store.setState({
     screens: {
-      main: {
+      "1": {
         areas: {
           _id: 0,
           rootId: null,
@@ -159,7 +191,7 @@ export const resetStore = (store: ReturnType<typeof createTestStore>) => {
         }
       }
     },
-    activeScreenId: 'main',
+    activeScreenId: '1',
     nextScreenId: 2,
     options: {
       resizableAreas: true,

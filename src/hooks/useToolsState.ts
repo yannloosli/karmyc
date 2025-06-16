@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { useKarmycStore } from '../data/mainStore';
-import { useSpaceStore } from '../store/spaceStore';
+import { useKarmycStore } from '../core/store';
+import { useSpaceStore } from '../core/spaceStore';
 
 /**
  * Hook pour gérer l'état des outils

@@ -1,6 +1,6 @@
-import { AreaRole } from '../../src/types/karmyc';
+import { AreaRole } from '../../src/core/types/karmyc';
 import { IArea } from '../../src/types/areaTypes';
-import { AreaTypeValue } from '../../src/types/actions';
+import { AreaTypeValue } from '../../src/core/types/actions';
 import { act } from '@testing-library/react';
 import { createTestStore, resetStore } from '../__mocks__/store';
 import { createTestArea } from '../__mocks__/testUtils';

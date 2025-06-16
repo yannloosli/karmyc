@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { ScreenSwitcher } from './ScreenSwitcher';
+
 import { TOOLBAR_HEIGHT } from '../utils/constants';
 import { Rect } from '../types/math';
 import { useToolsState } from '../hooks/useToolsState';
-import { useToolsScreenState } from '../hooks/useToolsScreenState';
 import { toolsBarRegistry, subscribeToRegistryChanges, toolsBarLinesRegistry, notifyToolsRegistryChange } from '../utils/toolsRegistry';
-import { useToolsCleanup } from '../hooks/useToolsCleanup';
+import { ScreenSwitcher } from './ScreenSwitcher';
+import { useKarmycStore } from '../core/store';
+import { toolsEventBus } from '../core/utils/toolsEventBus';
+
 
 // Type to uniquely identify a component
 export type ComponentIdentifier = {
@@ -35,38 +37,19 @@ export interface ToolsBarComponent {
     callback?: (() => void)[];
 }
 
-// Créer un contexte pour les Tools
-const ToolsContext = React.createContext<{
-    areaId?: string;
-    areaType?: string;
-}>({});
-
-// Hook pour utiliser le contexte Tools
-function useToolsContext() {
-    return React.useContext(ToolsContext);
-}
-
 // Hook pour enregistrer les composants
 export function useToolsSlot(
     key: string,
     position: ToolsBarPosition,
     nbOfLines?: number
 ) {
-    const { areaId, areaType } = useToolsContext();
     const registryKey = `${key}:${position}`;
-
-    // Si nous sommes dans un contexte Tools, utiliser l'areaId/areaType du contexte
-    const effectiveKey = areaId || areaType || key;
-
-    console.log('useToolsSlot - Input:', { key, position, nbOfLines, registryKey, effectiveKey });
-    console.log('useToolsSlot - Current registry value:', toolsBarLinesRegistry[registryKey]);
 
     // Déplacer la mise à jour du registre dans un useEffect
     useEffect(() => {
         if (nbOfLines !== undefined) {
             const currentValue = toolsBarLinesRegistry[registryKey] ?? 1;
             if (currentValue < nbOfLines) {
-                console.log('useToolsSlot - Updating registry value from', currentValue, 'to', nbOfLines);
                 toolsBarLinesRegistry[registryKey] = nbOfLines;
                 notifyToolsRegistryChange();
             }
@@ -118,7 +101,6 @@ export function useToolsSlot(
 
     const getLines = useCallback(() => {
         const lines = toolsBarLinesRegistry[registryKey] || 1;
-        console.log('getLines - Called for', registryKey, 'returning', lines);
         return lines;
     }, [registryKey]);
 
@@ -154,7 +136,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
     const toolbarBottomInnerByType = useToolsSlot(areaType || '', 'bottom-inner', nbOfLines);
 
     // Mémoriser les résultats des combinaisons
-    const menuComponents = useMemo(() => 
+    const menuComponents = useMemo(() =>
         combineAndDedupe(
             menuById.getComponents(),
             menuByType.getComponents()
@@ -162,7 +144,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [menuById, menuByType]
     );
 
-    const menuNbOfLines = useMemo(() => 
+    const menuNbOfLines = useMemo(() =>
         Math.max(
             menuById.getLines(),
             menuByType.getLines()
@@ -170,7 +152,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [menuById, menuByType]
     );
 
-    const statusComponents = useMemo(() => 
+    const statusComponents = useMemo(() =>
         combineAndDedupe(
             statusById.getComponents(),
             statusByType.getComponents()
@@ -178,7 +160,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [statusById, statusByType]
     );
 
-    const statusNbOfLines = useMemo(() => 
+    const statusNbOfLines = useMemo(() =>
         Math.max(
             statusById.getLines(),
             statusByType.getLines()
@@ -186,7 +168,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [statusById, statusByType]
     );
 
-    const toolbarTopInnerComponents = useMemo(() => 
+    const toolbarTopInnerComponents = useMemo(() =>
         combineAndDedupe(
             toolbarTopInnerById.getComponents(),
             toolbarTopInnerByType.getComponents()
@@ -194,7 +176,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [toolbarTopInnerById, toolbarTopInnerByType]
     );
 
-    const toolbarTopInnerNbOfLines = useMemo(() => 
+    const toolbarTopInnerNbOfLines = useMemo(() =>
         Math.max(
             toolbarTopInnerById.getLines(),
             toolbarTopInnerByType.getLines()
@@ -202,7 +184,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [toolbarTopInnerById, toolbarTopInnerByType]
     );
 
-    const toolbarBottomInnerComponents = useMemo(() => 
+    const toolbarBottomInnerComponents = useMemo(() =>
         combineAndDedupe(
             toolbarBottomInnerById.getComponents(),
             toolbarBottomInnerByType.getComponents()
@@ -210,14 +192,14 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
         [toolbarBottomInnerById, toolbarBottomInnerByType]
     );
 
-    const toolbarBottomInnerNbOfLines = useMemo(() => 
+    const toolbarBottomInnerNbOfLines = useMemo(() =>
         Math.max(
             toolbarBottomInnerById.getLines(),
             toolbarBottomInnerByType.getLines()
         ),
         [toolbarBottomInnerById, toolbarBottomInnerByType]
     );
-console.log(areaType, menuNbOfLines)
+
     return {
         menuComponents,
         menuNbOfLines,
@@ -263,7 +245,26 @@ export const Tools: React.FC<ToolsProps> = ({
     nbOfLines = 1,
 }) => {
     useToolsRegistrySubscription();
-    useToolsCleanup();
+    // Fonction pour nettoyer le registre des outils d'une zone
+    function cleanupToolsRegistry(areaId: string) {
+        const positions = ['top-outer', 'top-inner', 'bottom-outer', 'bottom-inner'];
+        positions.forEach(position => {
+            const registryKey = `${areaId}:${position}`;
+            if (toolsBarRegistry[registryKey]) {
+                delete toolsBarRegistry[registryKey];
+            }
+        });
+        notifyToolsRegistryChange();
+    }
+
+    useEffect(() => {
+        const unsubscribe = toolsEventBus.subscribe((event) => {
+            if (event.type === 'cleanup') {
+                cleanupToolsRegistry(event.areaId);
+            }
+        });
+        return unsubscribe;
+    }, []);
 
     const {
         menuComponents,
@@ -280,10 +281,9 @@ export const Tools: React.FC<ToolsProps> = ({
         handleFocus,
     } = useToolsState(areaId);
 
-    const {
-        isDetached,
-        multiScreen
-    } = useToolsScreenState();
+    const activeScreenId = useKarmycStore((state) => state.activeScreenId);
+    const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
+    const multiScreen = useKarmycStore((state) => state.options.multiScreen) || false;
 
     // Calculate toolbar heights
     const hasTopOuter = menuComponents.length > 0;
@@ -364,41 +364,39 @@ export const Tools: React.FC<ToolsProps> = ({
     };
 
     return (
-        <ToolsContext.Provider value={{ areaId, areaType }}>
+        <div
+            className="tools-container"
+            style={{
+                position: 'relative',
+                width: viewport.width,
+                height: '100%',
+                overflow: 'hidden'
+            }}
+            data-testid="tools-container"
+        >
             <div
-                className="tools-container"
+                className="tools-content"
                 style={{
-                    position: 'relative',
-                    width: viewport.width,
-                    height: isDetached ? '100%' : 'calc(100%)',
-                    overflow: 'hidden'
+                    position: 'absolute',
+                    top: topOuterHeight,
+                    left: 0,
+                    right: 0,
+                    bottom: bottomOuterHeight,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
                 }}
-                data-testid="tools-container"
+                data-testid="tools-content"
             >
-                <div
-                    className="tools-content"
-                    style={{
-                        position: 'absolute',
-                        top: topOuterHeight,
-                        left: 0,
-                        right: 0,
-                        bottom: bottomOuterHeight,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        flexDirection: 'column'
-                    }}
-                    data-testid="tools-content"
-                >
-                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                        {children}
-                    </div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                    {children}
                 </div>
-
-                {hasTopOuter && renderToolbar(menuComponents, 'top-outer', menuNbOfLines)}
-                {hasBottomOuter && renderToolbar(statusComponents, 'bottom-outer', statusNbOfLines)}
-                {hasTopInner && renderToolbar(toolbarTopInnerComponents, 'top-inner', toolbarTopInnerNbOfLines)}
-                {hasBottomInner && renderToolbar(toolbarBottomInnerComponents, 'bottom-inner', toolbarBottomInnerNbOfLines)}
             </div>
-        </ToolsContext.Provider>
+
+            {hasTopOuter && renderToolbar(menuComponents, 'top-outer', menuNbOfLines)}
+            {hasBottomOuter && renderToolbar(statusComponents, 'bottom-outer', statusNbOfLines)}
+            {hasTopInner && renderToolbar(toolbarTopInnerComponents, 'top-inner', toolbarTopInnerNbOfLines)}
+            {hasBottomInner && renderToolbar(toolbarBottomInnerComponents, 'bottom-inner', toolbarBottomInnerNbOfLines)}
+        </div>
     );
 }; 

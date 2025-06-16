@@ -1,13 +1,13 @@
 import { act } from '@testing-library/react';
-import { useKarmycStore } from '../../src/store/areaStore';
-import { useSpaceStore } from '../../src/store/spaceStore';
-import { IKarmycOptions } from '../../src/types/karmyc';
+import { useKarmycStore } from '../../src/core/store';
+import { useSpaceStore } from '../../src/core/spaceStore';
+import { IKarmycOptions } from '../../src/core/types/karmyc';
 
 export const resetKarmycStore = () => {
   act(() => {
     useKarmycStore.setState({
       screens: {
-        main: {
+        "1": {
           areas: {
             _id: 0,
             rootId: null,
@@ -23,13 +23,14 @@ export const resetKarmycStore = () => {
           }
         }
       },
-      activeScreenId: 'main',
+      activeScreenId: '1',
       options: {
         resizableAreas: true,
         manageableAreas: true,
         multiScreen: true,
         builtInLayouts: []
-      } as IKarmycOptions
+      } as IKarmycOptions,
+      lastUpdated: Date.now()
     });
   });
 };
