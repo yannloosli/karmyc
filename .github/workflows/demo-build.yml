@@ -45,5 +45,5 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-          git add demo/dist
+          git add demo/dist -f
           git diff --staged --quiet || (git commit -m "chore: update demo build [skip ci]" && git push) 
