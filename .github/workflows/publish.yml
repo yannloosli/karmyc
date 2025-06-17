@@ -31,8 +31,6 @@ jobs:
                 ls -la dist/
                 echo "=== Demo files ==="
                 ls -la demo/dist/
-                echo "=== Docs files ==="
-                ls -la demo/public/docs/
 
             - name: Publish to NPM
               run: yarn publish --access public
