@@ -1,6 +1,13 @@
 name: Demo Build
 
 on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build"
+        required: true
+        default: "main"
+
   push:
     branches: [main, develop]
     paths:
