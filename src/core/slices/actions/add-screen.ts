@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { createInitialScreenState } from "../../utils/screens";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 
 export const addScreen = (set: any) => () => {
     set((state: WritableDraft<RootStateType>) => {

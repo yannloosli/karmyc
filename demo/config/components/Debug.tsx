@@ -40,7 +40,7 @@ export const Debug: React.FC<DebugAreaProps> = ({
 
     // Couleur à afficher : priorité à la couleur du space du LEAD
     const spaceStore = useSpaceStore();
-    const leadSpaceColor = leadSpaceId ? spaceStore.spaces[leadSpaceId]?.sharedState?.color : undefined;
+    const leadSpaceColor = leadSpaceId ? spaceStore.spaces[leadSpaceId]?.color : undefined;
 
     return (
         <div style={{

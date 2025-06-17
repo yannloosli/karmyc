@@ -25,7 +25,7 @@ export interface THistoryState<T> {
 }
 
 /**
- * Change in history with path
+ * Représente un changement dans l'historique.
  */
 export interface THistoryChange {
     path: string[];

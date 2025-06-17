@@ -1,5 +1,5 @@
 import { WritableDraft } from "immer";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 import { AREA_ROLE } from "../../types/actions";
 
 

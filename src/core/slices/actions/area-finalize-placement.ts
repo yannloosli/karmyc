@@ -1,5 +1,5 @@
 import { WritableDraft } from "immer";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 import { PlaceArea } from "../../types/areas-type";
 import { v4 as uuidv4 } from 'uuid';
 import { Vec2 } from "../../../utils/vec2";

@@ -40,8 +40,10 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
     viewport,
     targetSpace,
 }) => {
-    const { activeSpaceId, updateSharedState } = useSpace();
+    const { activeSpaceId, updateSpaceProperties } = useSpace();
     const areaStore = useKarmycStore();
+    const spaceStore = useSpaceStore();
+    
     const activeScreenId = areaStore.activeScreenId;
     const allAreas = areaStore.screens[activeScreenId]?.areas.areas || {};
     const lastLeadAreaId = areaStore.screens[activeScreenId]?.areas.lastLeadAreaId;
@@ -50,28 +52,40 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
 
     // Synchronize select with the space of the last selected LEAD
     useEffect(() => {
-        if (lastLeadAreaId && selectedSpace !== lastLeadAreaId) {
-            setSelectedSpace(lastLeadAreaId);
+        const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+        const leadSpaceId = leadArea?.spaceId;
+        
+        console.log("Space Sync Effect:", {
+            lastLeadAreaId,
+            leadArea,
+            leadSpaceId,
+            currentSelectedSpace: selectedSpace
+        });
+
+        if (leadSpaceId && leadSpaceId !== selectedSpace) {
+            console.log("Updating selected space to:", leadSpaceId);
+            setSelectedSpace(leadSpaceId);
+        } else if (!leadSpaceId && activeSpaceId && activeSpaceId !== selectedSpace) {
+            console.log("Falling back to activeSpaceId:", activeSpaceId);
+            setSelectedSpace(activeSpaceId);
         }
-    }, [lastLeadAreaId]);
+    }, [lastLeadAreaId, activeSpaceId, allAreas]);
 
     // Get LEAD area and its spaceId
     const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
     const leadSpaceId = leadArea?.spaceId;
 
-    // Color to display: priority to LEAD space color
-    const spaceStore = useSpaceStore();
-    const leadSpaceColor = leadSpaceId ? spaceStore.spaces[leadSpaceId]?.sharedState?.color : undefined;
-    const colorToShow = leadSpaceColor || state.color || '#ffffff';
+    // Color to display: priority to selected space color
+    const spaceColor = selectedSpace ? spaceStore.spaces[selectedSpace]?.color : undefined;
+    const colorToShow = spaceColor || state.color || '#ffffff';
 
     const updateColor = (color: string) => {
-        const activeScreenId = useKarmycStore.getState().activeScreenId;
-        const lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
-        const allAreas = useKarmycStore.getState().screens[activeScreenId]?.areas.areas || {};
-        const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
+        const spaceToUpdate = selectedSpace || leadSpaceId || activeSpaceId;
 
-        if (leadArea?.spaceId) {
-            updateSharedState(leadArea.spaceId, { color });
+        if (spaceToUpdate) {
+            updateSpaceProperties(spaceToUpdate, { color });
+        } else {
+            console.warn("No space available to update color");
         }
     };
 
@@ -121,7 +135,7 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
                 textAlign: 'center',
                 pointerEvents: 'none'
             }}>
-                <code title={t('colorPicker.currentColor', 'Current color')}>{colorToShow}</code>
+                <code style={{ backgroundColor: 'transparent' }} title={t('colorPicker.currentColor', 'Current color')}>{colorToShow}</code>
             </div>
         </div>
     );

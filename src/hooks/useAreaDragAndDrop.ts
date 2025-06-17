@@ -5,7 +5,10 @@ import { AreaRowLayout } from '../types/areaTypes';
 import { AreaTypeValue } from '../core/types/actions';
 import { getAreaToOpenPlacementInViewport, getHoveredAreaId } from '../core/utils/areaUtils';
 
-interface UseAreaDragAndDropParams {
+/**
+ * Paramètres pour le hook useAreaDragAndDrop.
+ */
+export interface UseAreaDragAndDropParams {
     type?: AreaTypeValue;
     id?: string;
     state?: any;
@@ -20,7 +23,7 @@ const isAreaChildOfStack = (areaId: string, layout: Record<string, any>) => {
     );
 };
 
-const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
+export const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     // Get actions and state selectors from Zustand store
     const setAreaToOpenAction = useKarmycStore(state => state.setAreaToOpen);
     const updateAreaToOpenPositionAction = useKarmycStore(state => state.updateAreaToOpenPosition);
@@ -328,5 +331,3 @@ const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
         calculatedPlacement
     };
 };
-
-export default useAreaDragAndDrop; 

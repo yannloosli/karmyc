@@ -4,7 +4,13 @@ import { interpolate } from "./math";
 // We will need to implement these functions internally to avoid circular dependencies
 // as these functions already use Vec2
 
-type IVec2 = Vec2 | { x: number; y: number } | { left: number; top: number };
+/**
+ * Représente un vecteur 2D.
+ */
+export interface IVec2 {
+    x: number;
+    y: number;
+}
 
 const resolveVec2 = (data: IVec2): Vec2 => {
     if (data instanceof Vec2) {

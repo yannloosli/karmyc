@@ -8,9 +8,11 @@ import { actionRegistry } from '@core/registries/actionRegistry';
 import { historyPlugin } from '@core/plugins/historyPlugins';
 import { validateArea } from '@core/utils/validation';
 import { useArea } from '../hooks/useArea';
-import { useSpaceStore } from '@core/spaceStore';
 
-interface IKarmycConfigWithLayouts {
+/**
+ * Configuration Karmyc avec layouts.
+ */
+export interface IKarmycConfigWithLayouts {
     plugins: IKarmycOptions['plugins'];
     validators: IKarmycOptions['validators'];
     initialAreas: IKarmycOptions['initialAreas'];
@@ -115,24 +117,6 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                             console.error('[KarmycInitializer] Invalid area config', error);
                             onError?.(error);
                             // Arrêter l'initialisation, aucune aire ne sera créée
-                            return;
-                        }
-
-                        try {
-                            // Tenter d'ajouter l'espace si valide et inexistant
-                            const existingSpaces = useSpaceStore.getState().spaces;
-                            if (!existingSpaces[spaceId]) {
-                                const id = useSpaceStore.getState().addSpace({
-                                    name: spaceConfig.name,
-                                    description: (spaceConfig as any).description,
-                                    sharedState: (spaceConfig as any).sharedState
-                                });
-                                // Nous ne garantissons pas la conservation de l'ID fourni, mais ce n'est pas requis dans les tests.
-                            }
-                        } catch (e) {
-                            const error = e instanceof Error ? e : new Error(String(e));
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
                             return;
                         }
                     }

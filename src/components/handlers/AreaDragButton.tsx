@@ -4,7 +4,7 @@ import { useKarmycStore } from "../../core/store";
 import { TOOLBAR_HEIGHT } from "../../utils/constants";
 import { areaRegistry } from "../../core/registries/areaRegistry";
 import { useSpaceStore } from "../../core/spaceStore";
-import useAreaDragAndDrop from "../../hooks/useAreaDragAndDrop";
+import { useAreaDragAndDrop } from "../../hooks/useAreaDragAndDrop";
 import { CopyIcon, LockIcon, LockOpenIcon, XIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { SwitchAreaTypeContextMenu } from '../menus/SwitchAreaTypeContextMenu';
 import { t } from "../../core/utils/translation";
@@ -56,7 +56,7 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
     const space = useSpaceStore(state => state.getSpaceById(area?.spaceId || ''));
 
     // If FOLLOW, use the color from the last selected LEAD space
-    let spaceColor = space?.sharedState?.color || '#0000ff';
+    let spaceColor = space?.color || '#0000ff';
     if (area?.role === 'FOLLOW') {
         const activeScreenId = useKarmycStore.getState().activeScreenId;
         const lastLeadAreaId = useKarmycStore.getState().screens[activeScreenId]?.areas.lastLeadAreaId;
@@ -65,8 +65,8 @@ export const AreaDragButton = ({ state, type, id, style }: IAreaDragButton) => {
         const leadSpaceId = leadArea?.spaceId;
         if (leadSpaceId) {
             const leadSpace = useSpaceStore.getState().spaces[leadSpaceId];
-            if (leadSpace && leadSpace.sharedState?.color) {
-                spaceColor = leadSpace.sharedState.color;
+            if (leadSpace && leadSpace.color) {
+                spaceColor = leadSpace.color;
             }
         }
     }

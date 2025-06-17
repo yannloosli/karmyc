@@ -8,7 +8,7 @@ import { useContextMenu } from '../../hooks/useContextMenu';
 
 
 // Types pour les layouts
-interface LayoutPreset {
+export interface LayoutPreset {
     id: string;
     name: string;
     config: any;

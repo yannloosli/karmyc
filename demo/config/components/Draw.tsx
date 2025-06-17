@@ -12,6 +12,11 @@ import { t } from '../../../src/core/utils/translation';
 
 interface DrawingState { }
 
+export interface DrawSharedState extends SpaceSharedState {
+    lines: Line[];
+    strokeWidth: number;
+}
+
 export interface Line {
     id: string;
     points: { x: number; y: number }[];
@@ -20,10 +25,9 @@ export interface Line {
 }
     
 // Define a default value for the entire selected object
-const defaultSharedState: SpaceSharedState = {
+const defaultSharedState: DrawSharedState = {
     lines: [],
     strokeWidth: 3,
-    color: '#000000',
     pastDiffs: [],
     futureDiffs: [],
 };
@@ -42,22 +46,23 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     // --- Zustand selectors for reactive state and actions ---
     const { undoSharedState, redoSharedState, getSpaceById } = useSpaceStore();
 
-    const { sharedState = defaultSharedState, canUndo, canRedo } = useSpaceStore(useShallow(state => {
+    const { color, sharedState = defaultSharedState, canUndo, canRedo } = useSpaceStore(useShallow(state => {
         const space = currentSpaceId ? state.spaces[currentSpaceId] : null;
         return {
-            sharedState: space?.sharedState ?? defaultSharedState,
+            color: space?.color ?? '#000000',
+            sharedState: (space?.sharedState ?? defaultSharedState) as DrawSharedState,
             canUndo: (space?.sharedState?.pastDiffs?.length ?? 0) > 0,
             canRedo: (space?.sharedState?.futureDiffs?.length ?? 0) > 0,
         }
     }));
-    
-    const { lines = [], strokeWidth = 3, color = '#000000' } = sharedState;
+
+    const { lines = [], strokeWidth = 3 } = sharedState;
 
     // Enregistrement des actions avec historique
     useRegisterActionHandler('draw/addLine', (params) => {
         const { line, spaceId } = params;
         if (!spaceId) return;
-        const currentLines = getSpaceById(spaceId)?.sharedState?.lines ?? [];
+        const currentLines = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.lines ?? [];
         updateSharedState(spaceId, {
             lines: [...currentLines, line],
             actionType: 'draw/addLine',
@@ -75,7 +80,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     useRegisterActionHandler('draw/updateStrokeWidth', (params) => {
         const { width, spaceId } = params;
         if (!spaceId) return;
-        const oldWidth = getSpaceById(spaceId)?.sharedState?.strokeWidth;
+        const oldWidth = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.strokeWidth;
         updateSharedState(spaceId, {
             strokeWidth: width,
             actionType: 'draw/updateStrokeWidth',
@@ -99,7 +104,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     useRegisterActionHandler('draw/clearCanvas', (params) => {
         const { spaceId } = params;
         if (!spaceId) return;
-        const oldLines = getSpaceById(spaceId)?.sharedState?.lines ?? [];
+        const oldLines = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.lines ?? [];
         updateSharedState(spaceId, {
             lines: [],
             actionType: 'draw/clearCanvas',
@@ -114,7 +119,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             type: 'draw/clearCanvas',
             getDescription: () => 'Effacement du dessin',
             getPayload: (params) => ({
-                oldValue: getSpaceById(params.spaceId)?.sharedState?.lines ?? [],
+                oldValue: (getSpaceById(params.spaceId)?.sharedState as DrawSharedState)?.lines ?? [],
                 newValue: []
             })
         }

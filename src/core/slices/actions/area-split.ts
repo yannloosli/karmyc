@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { IntercardinalDirection } from "../../../types/directions";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 import { AreaRowLayout } from "../../../types/areaTypes";
 import { simplifyLayoutNodeIfNeeded } from "../../utils/areas";
 import { computeAreaToParentRow } from "../../..";

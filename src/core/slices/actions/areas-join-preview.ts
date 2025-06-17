@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { CardinalDirection } from "../../../types/directions";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 
 
 

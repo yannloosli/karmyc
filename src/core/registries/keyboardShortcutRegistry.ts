@@ -1,3 +1,6 @@
+/**
+ * Registre des raccourcis clavier.
+ */
 export interface KeyboardShortcut {
     key: string;
     name: string;

@@ -435,11 +435,11 @@
 }
 
 .tools-bar-top-inner {
-    top: 10px;
+    margin-top: 10px;
 }
 
 .tools-bar-bottom-inner {
-    bottom: 10px;
+    margin-bottom: 10px;
 }
 
 .tools-bar-top-outer {

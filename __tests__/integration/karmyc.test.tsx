@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, act } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { AREA_ROLE } from '../../src/core/types/actions';
 import { AreaRole } from '../../src/core/types/karmyc';
@@ -127,7 +127,7 @@ describe('Karmyc Integration', () => {
 
     // Ajouter un espace initial
     act(() => {
-      useSpaceStore.getState().addSpace({ name: 'test-space', sharedState: { color: '#ff0000' } });
+      useSpaceStore.getState().addSpace({ name: 'test-space', color: '#ff0000' });
     });
 
     render(
@@ -140,6 +140,6 @@ describe('Karmyc Integration', () => {
     const spaces = useSpaceStore.getState().spaces;
     expect(Object.keys(spaces).length).toBe(1);
     expect(spaces[Object.keys(spaces)[0]].name).toBe('test-space');
-    expect(spaces[Object.keys(spaces)[0]].sharedState.color).toBe('#ff0000');
+    expect(spaces[Object.keys(spaces)[0]].color).toBe('#ff0000');
   });
 }); 

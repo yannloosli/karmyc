@@ -1,6 +1,6 @@
 import { AreaLayout, AreaRowLayout } from "../types/areaTypes";
 
-type Layout = AreaLayout | AreaRowLayout;
+export type Layout = AreaLayout | AreaRowLayout;
 
 export const computeAreaRowToMinSize = (rootId: string, areaLayout: Record<string, Layout>) => {
     const rowToMinSize: { [areaId: string]: { width: number; height: number } } = {};

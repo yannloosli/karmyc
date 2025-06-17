@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { CardinalDirection } from "../../../types/directions";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 import { findParentRowAndIndices } from "../../utils/areas";
 import { computeAreaToParentRow } from "../../utils/areaToParentRow";
 import { joinAreas } from "../../utils/joinArea";

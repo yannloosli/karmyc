@@ -24,6 +24,7 @@ describe('Karmyc Performance', () => {
     let config: IKarmycOptions;
     const handleConfigReady = (newConfig: any) => {
       config = newConfig;
+      console.log('config', config);
     };
 
     const renderTime = await measurePerformance(async () => {

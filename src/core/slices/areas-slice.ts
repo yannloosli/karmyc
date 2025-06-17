@@ -22,7 +22,9 @@ import { updateAreaToOpenPosition } from "./actions/update-area-to-open-position
 import { cleanupTemporaryStates } from "./actions/cleanup-temporary-states";
 import { setViewports } from "./actions/area-set-viewports";
 
-
+/**
+ * État des zones (areas) dans le store.
+ */
 export interface AreasState {
     _id: number; // Unique ID counter *within* this slice for this screen
     rootId: string | null;
@@ -51,7 +53,10 @@ export interface AreasState {
     isLocked?: boolean; // Flag for locking manipulations
 }
 
-interface AreasActions {
+/**
+ * Actions possibles sur les zones (areas).
+ */
+export interface AreasActions {
     addArea: (area: IArea<AreaTypeValue>) => string;
     removeArea: (id: string) => void;
     setActiveArea: (id: string | null) => void;

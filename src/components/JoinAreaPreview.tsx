@@ -3,7 +3,7 @@ import { ArrowBigDown } from 'lucide-react';
 import { CardinalDirection } from "../types/directions";
 import { t } from '../core/utils/translation';
 
-interface Props {
+export interface Props {
     viewport: { left: number; top: number; width: number; height: number };
     movingInDirection: CardinalDirection;
 }

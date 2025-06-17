@@ -5,18 +5,20 @@ import { generateDiff, applyDiff, invertDiff } from '../utils/history';
 import { THistoryDiff } from '../types/historyTypes';
 import { v4 as uuidv4 } from 'uuid';
 
-export interface SpaceSharedState extends Record<string, any> {
+/**
+ * État partagé d'un espace (space).
+ */
+export interface SpaceSharedState {
     pastDiffs: THistoryDiff[];
     futureDiffs: THistoryDiff[];
+    actionType?: string;
+    payload?: Record<string, any>;
 }
 
 export interface Space {
     id: string;
     name: string;
-    color: string;
-    /**
-     * Optional description for the space (user-defined, can be empty).
-     */
+    color?: string;
     description?: string;
     sharedState: SpaceSharedState;
 }
@@ -30,7 +32,7 @@ export interface SpaceState {
 }
 
 export interface SpaceActions {
-    addSpace: (spaceData: { name: string; description?: string; sharedState?: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => string | undefined;
+    addSpace: (spaceData: { name: string; description?: string; color?: string; sharedState?: Partial<Omit<SpaceSharedState, 'pastDiffs' | 'futureDiffs'>> }) => string | undefined;
     removeSpace: (id: string) => void;
     setActiveSpace: (id: string | null) => void;
     setPilotMode: (mode: 'MANUAL' | 'AUTO') => void; // Nouvelle action
@@ -79,7 +81,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                             id: newId,
                             name: spaceData.name,
                             description: spaceData.description ?? '',
-                            color: spaceData.sharedState?.color ?? '#ff0000',
+                            color: spaceData.color ?? '#000000',
                             sharedState: {
                                 pastDiffs: [],
                                 futureDiffs: [],

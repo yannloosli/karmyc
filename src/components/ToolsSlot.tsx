@@ -220,8 +220,7 @@ function useToolsRegistrySubscription() {
     }, []);
 }
 
-// Props of the Tools component
-interface ToolsProps {
+export interface ToolsProps {
     areaId?: string;
     areaType?: string;
     areaState?: any;
@@ -311,10 +310,10 @@ export const Tools: React.FC<ToolsProps> = ({
                     style={{
                         height: TOOLBAR_HEIGHT * nbOfLines,
                         minHeight: TOOLBAR_HEIGHT,
-                        position: position.includes('outer') ? 'absolute' : 'relative',
+                        position: 'absolute',
                         left: 0,
                         right: 0,
-                        ...(position.includes('bottom') ? { bottom: 0 } : { top: 0 })
+                        ...(position.includes('bottom') ? { bottom: position.includes('outer') ? 0 : bottomOuterHeight + 'px' } : { top: position.includes('outer') ? 0 : topOuterHeight + 'px' })
                     }}
                     onFocusCapture={handleFocus}
                     tabIndex={0}

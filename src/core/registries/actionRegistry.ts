@@ -7,11 +7,10 @@ import {
     TActionValidator
 } from '../types/actions';
 
-// Definition of action handler type
-type ActionHandler = (params: any) => void;
-
-// Interface for context menu metadata
-interface ActionMetadata {
+/**
+ * Métadonnées d'une action.
+ */
+export interface ActionMetadata {
     menuType?: string;
     label?: string;
     icon?: string;
@@ -19,6 +18,13 @@ interface ActionMetadata {
     isVisible?: () => boolean;
     order?: number;
     actionType?: string;
+}
+
+/**
+ * Handler d'action.
+ */
+export interface ActionHandler {
+    (params: any): void;
 }
 
 /**

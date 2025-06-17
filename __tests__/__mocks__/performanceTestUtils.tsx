@@ -24,16 +24,9 @@ registerTestArea('test-area-2', AREA_ROLE.FOLLOW);
 registerTestArea('test-row', AREA_ROLE.LEAD);
 registerTestArea('test-root', AREA_ROLE.LEAD);
 
-// Enregistrer les outils une seule fois au démarrage
-const registerTestTools = () => {
-  const tools = useToolsSlot('test-root', 'bottom-outer');
-  React.useEffect(() => {
-    tools.registerComponent(TestToolbarComponent, { name: 'test-toolbar', type: 'test' });
-  }, []);
-};
 
 // Composant de test qui enregistre les outils
-const TestAreaWithTools: React.FC<{ id: string; type: string }> = React.memo(({ id, type }) => {
+const TestAreaWithTools: React.FC<{ id: string; type: string }> = React.memo(({ type }) => {
   const tools = useToolsSlot(type, 'bottom-outer');
   const componentRef = React.useRef<{ name: string; type: string }>({ name: 'test-toolbar', type: 'test' });
   

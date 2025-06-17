@@ -1,5 +1,4 @@
-import React from 'react';
-import { render, screen, act, waitFor } from '@testing-library/react';
+import { render, act, waitFor } from '@testing-library/react';
 import { Karmyc } from '../../src/components/Karmyc';
 import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { AREA_ROLE, AreaTypeValue } from '../../src/core/types/actions';
@@ -10,35 +9,10 @@ import {
   setupErrorTest, 
   resetKarmycStore, 
   waitForInitialization,
-  assertErrorLogged 
 } from '../__mocks__/errorTestUtils';
 import { useKarmycStore } from '../../src/core/store';
 import { initializeMainStore } from '../../src/core/store';
 import { useKarmyc } from '../../src/hooks/useKarmyc';
-
-// Composant ErrorBoundary pour capturer les erreurs
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
-    constructor(props: { children: React.ReactNode }) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error: Error) {
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error: Error) {
-        this.setState({ hasError: true, error });
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return <div data-testid="error-boundary">{this.state.error?.message}</div>;
-        }
-
-        return this.props.children;
-    }
-}
 
 describe('Error Handling', () => {
   beforeEach(() => {

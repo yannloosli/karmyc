@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo } from "react";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
-import { PlaceArea } from "../core/utils/areaUtils";
+import { PlaceArea } from "../core/types/areas-type";
 import { useKarmycStore } from "../core/store";
-import useAreaDragAndDrop from "../hooks/useAreaDragAndDrop";
+import { useAreaDragAndDrop } from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../utils/constants";
 
-interface DropZoneProps {
+export interface DropZoneProps {
     areaToOpen: AreaToOpen;
     dimensions: Vec2;
     setAreaToOpenDimensions: (dimensions: Vec2) => void;
@@ -18,7 +18,7 @@ export const DropZone: React.FC<DropZoneProps> = React.memo(({
 }) => {
     const setViewports = useKarmycStore(state => state.setViewports);
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
-    
+
     const {
         handleDragOver,
         handleDrop,

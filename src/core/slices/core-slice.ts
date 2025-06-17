@@ -1,15 +1,23 @@
-import { actionRegistry, IKarmycConfig, IKarmycOptions, LayoutPreset } from "../..";
+import { actionRegistry, IKarmycOptions } from "../..";
 import { StateCreator } from "zustand";
 import { RootStateType } from "../store";
+import { LayoutPreset } from "../../components/menus/LayoutMenu";
+import { IKarmycConfig } from "../types/karmyc";
 
 
+/**
+ * État principal du store.
+ */
 export interface CoreState {
     options: IKarmycOptions;
     lastUpdated: number;
     layout_preset: LayoutPreset[];
 }
 
-interface CoreActions {
+/**
+ * Actions principales du store.
+ */
+export interface CoreActions {
     initialize: (config: IKarmycConfig) => void;
 }
 
@@ -27,7 +35,7 @@ export const createCoreSlice: StateCreator<
     [],
     [],
     CoreSlice
-> = (set, get) => ({
+> = () => ({
     ...initialState,
 
     // Actions

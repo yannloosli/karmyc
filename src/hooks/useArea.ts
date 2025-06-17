@@ -5,7 +5,10 @@ import { IArea } from '../types/areaTypes';
 import { useSpaceStore } from '../core/spaceStore';
 import { areaRegistry } from '../core/registries/areaRegistry';
 
-interface Position {
+/**
+ * Représente une position d'area.
+ */
+export interface Position {
     x: number;
     y: number;
 }

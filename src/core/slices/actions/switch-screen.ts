@@ -1,5 +1,5 @@
 import { WritableDraft } from "immer";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 
 export const switchScreen = (set: any) => (screenId: string) => {
     set((state: WritableDraft<RootStateType>) => {

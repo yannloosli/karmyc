@@ -4,9 +4,8 @@ import { AreaTabs } from './AreaTabs';
 import { AreaComponent } from './AreaComponent';
 import { areaRegistry } from '../core/registries/areaRegistry';
 import { ResizePreviewState } from '../types/areaTypes';
-import { TOOLBAR_HEIGHT } from '../utils/constants';
 
-interface AreaStackProps {
+export interface AreaStackProps {
     id: string;
     layout: AreaRowLayout;
     areas: Record<string, IArea>;

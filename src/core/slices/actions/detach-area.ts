@@ -1,5 +1,5 @@
 import { WritableDraft } from "immer";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 import { createInitialScreenState } from "../../utils/screens";
 import { simplifyLayoutNodeIfNeeded } from "../../utils/areas";
 
@@ -42,7 +42,7 @@ export const detachArea = (set: any) => (areaId: string) => {
             for (const key in originScreen.areas.layout) {
                 const item = originScreen.areas.layout[key];
                 if (item.type === 'area_row') {
-                    item.areas = item.areas.filter(a => a.id !== areaId);
+                    item.areas = item.areas.filter((a: any) => a.id !== areaId);
                 }
             }
             // Supprimer l'entrée de layout si c'est un node direct

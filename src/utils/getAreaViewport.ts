@@ -1,6 +1,9 @@
 import { AREA_BORDER_WIDTH } from "./constants";
 
-interface Rect {
+/**
+ * Représente un rectangle (viewport).
+ */
+export interface Rect {
     top: number;
     left: number;
     width: number;

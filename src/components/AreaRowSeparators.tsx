@@ -7,14 +7,16 @@ import { handleDragAreaResize } from "./handlers/areaDragResize";
 import { Ellipsis, EllipsisVertical } from 'lucide-react';
 import { t } from '../core/utils/translation';
 
-
-interface ResizePreviewState {
+/**
+ * État de l'aperçu du redimensionnement d'une ligne.
+ */
+export interface ResizePreviewState {
     rowId: string;
     separatorIndex: number;
     t: number;
 }
 
-interface OwnProps {
+export interface OwnProps {
     row: AreaRowLayout;
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
     offset: number;
@@ -79,9 +81,9 @@ export const AreaRowSeparators: React.FC<Props> = props => {
         if (horizontal) {
             separatorRect = {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
-                top: nextViewport.top + TOOLBAR_HEIGHT - offset,
+                top: nextViewport.top + TOOLBAR_HEIGHT - offset - 5,
                 width: AREA_BORDER_WIDTH * 2,
-                height: Math.max(nextViewport.height - TOOLBAR_HEIGHT, 5)
+                height: Math.max(nextViewport.height - TOOLBAR_HEIGHT + 10, 5)
             };
         } else {
             separatorRect = {

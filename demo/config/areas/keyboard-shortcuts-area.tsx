@@ -10,7 +10,7 @@ import KeyboardShortcutsViewer from "../../../src/components/KeyboardShortcutsVi
 
 export const KeyboardShortcutsArea = () => {
     const { updateArea } = useKarmycStore.getState();
-    const { registerComponent: registerRootMenuDemoArea } = useToolsSlot('demo-area', 'top-inner');
+    const { registerComponent: registerRootMenuDemoArea } = useToolsSlot('keyboard-shortcuts-area', 'bottom-inner');
 
     const handleKeyboardShortcutsArea = (params: any) => {
         const areaId = params.areaId;
@@ -25,7 +25,7 @@ export const KeyboardShortcutsArea = () => {
 
     useMemo(() => {
         registerRootMenuDemoArea(
-            () => <div>Top Demo Area center slot</div>,
+            () => <div>Open console to see the result of keyboard shortcuts</div>,
             { name: 'topOuterSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'center' }
         );

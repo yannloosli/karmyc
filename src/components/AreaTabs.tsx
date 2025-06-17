@@ -4,7 +4,7 @@ import { useKarmycStore } from '../core/store';
 import { AreaDragButton } from './handlers/AreaDragButton';
 import { useSpaceStore } from '../core/spaceStore';
 
-interface AreaTabsProps {
+export interface AreaTabsProps {
     rowId: string;
     row: AreaRowLayout;
     areas: Record<string, IArea>;

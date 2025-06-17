@@ -11,7 +11,6 @@ import { DrawArea } from './areas/draw-area';
 import { SpaceManagerArea } from './areas/space-manager-area';
 import { ColorPickerArea } from './areas/color-picker-area';
 import { DebugArea } from './areas/debug-area';
-import { DocsAreaComponent } from './areas/docs-area';
 import iconSvg from '../assets/brand/icon.svg';
 
 export const AreaInitializer = () => {
@@ -91,7 +90,6 @@ export const AreaInitializer = () => {
             <HistoryArea />
             <DrawArea />
             <SpaceManagerArea />
-            <DocsAreaComponent />
         </>
     );
 };

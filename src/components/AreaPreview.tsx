@@ -5,7 +5,7 @@ import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
 import { t } from '../core/utils/translation';
 
-interface AreaPreviewProps {
+export interface AreaPreviewProps {
     areaToOpen: AreaToOpen;
     dimensions: Vec2;
 }

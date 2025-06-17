@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { AreaToOpen } from "../../../types/areaTypes";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 
 
 export const setAreaToOpen = (set: any) => (payload: AreaToOpen | null) => {

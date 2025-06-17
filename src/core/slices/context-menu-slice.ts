@@ -10,7 +10,10 @@ import { updateContextMenuPosition } from './actions/update-context-menu-positio
 import { updateContextMenuItems } from './actions/update-context-menu-items';
 import { clearContextMenuErrors } from './actions/clear-context-menu-errors';
 
-interface ContextMenuState {
+/**
+ * État du menu contextuel.
+ */
+export interface ContextMenuState {
     isVisible: boolean;
     position: IContextMenuPosition;
     items: ContextMenuItem[];
@@ -22,7 +25,10 @@ interface ContextMenuState {
     menuType?: 'default' | 'switchType' | 'custom';
 }
 
-interface ContextMenuActions {
+/**
+ * Actions du menu contextuel.
+ */
+export interface ContextMenuActions {
     openContextMenu: (payload: {
         position: IContextMenuPosition;
         items: ContextMenuItem[] | React.ReactNode;

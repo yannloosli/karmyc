@@ -2,7 +2,7 @@ import React from "react";
 import { AreaComponentProps } from "../types/areaTypes";
 import { t } from '../core/utils/translation';
 
-interface Props {
+export interface Props {
     component: React.ComponentType<AreaComponentProps<any>>;
     areaId: string;
     areaState: any;
@@ -15,7 +15,7 @@ interface Props {
     };
 }
 
-interface State {
+export interface State {
     hasError: boolean;
     error: Error | null;
 }

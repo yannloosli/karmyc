@@ -1,6 +1,6 @@
 import { WritableDraft } from "immer";
 import { Point } from "../../../types/math";
-import { RootStateType } from "../../../data/mainStore";
+import { RootStateType } from "../../store";
 
 
 export const updateAreaToOpenPosition = (set: any) => (position: Point) => {

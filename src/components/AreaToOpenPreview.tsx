@@ -6,7 +6,7 @@ import { AreaPreview } from "./AreaPreview";
 import { DropZone } from "./DropZone";
 
 
-interface OwnProps {}
+export interface OwnProps {}
 
 export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((): React.ReactElement | null => {
     // Lire chaque partie de l'état séparément pour éviter les problèmes de référence d'objet

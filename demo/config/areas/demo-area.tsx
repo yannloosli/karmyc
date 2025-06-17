@@ -4,7 +4,7 @@ import { areaRegistry } from "../../../src/core/registries/areaRegistry";
 import { useRegisterActionHandler } from "../../../src/hooks/useRegisterActionHandler";
 import { useAreaKeyboardShortcuts } from "../../../src/hooks/useAreaKeyboardShortcuts";
 import { useToolsSlot } from "../../../src/components/ToolsSlot";
-import { ReadmeArea } from "./ReadmeArea";
+import { ReadmeArea } from "../components/ReadmeArea";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { CircleSlash } from "lucide-react";

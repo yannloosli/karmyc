@@ -3,7 +3,6 @@ import { useKarmycStore } from '../../core/store';
 import { areaRegistry } from '../../core/registries/areaRegistry';
 import { t } from '../../core/utils/translation';
 import { AreaTypeValue, AREA_ROLE } from '../../core/types/actions';
-import { ControlledMenu } from '@szhsin/react-menu';
 import { useSpaceStore } from '../../core/spaceStore';
 import { useRegisterActionHandler } from '../../hooks/useRegisterActionHandler';
 import { CircleHelp } from 'lucide-react';
@@ -16,8 +15,6 @@ const getRoleMap = () => (areaRegistry as any)._roleMap || {};
 
 export const SwitchAreaTypeContextMenu: React.FC = () => {
     
-    const isVisible = useKarmycStore((state) => state.contextMenu.isVisible && state.contextMenu.menuType === 'switchType');
-    const position = useKarmycStore((state) => state.contextMenu.position);
     const closeContextMenu = useKarmycStore((state) => state.contextMenu.closeContextMenu);
     const targetId = useKarmycStore((state) => state.contextMenu.targetId) || "";
 
@@ -98,7 +95,7 @@ export const SwitchAreaTypeContextMenu: React.FC = () => {
                                         width: 12, 
                                         height: 12, 
                                         borderRadius: '50%', 
-                                        backgroundColor: space.sharedState?.color || '#666' 
+                                        backgroundColor: space.color || '#666' 
                                     }} />
                                     {t(`space.${spaceId}.name`, space.name)}
                                 </div>
