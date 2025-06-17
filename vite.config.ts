@@ -21,7 +21,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
+    outDir: 'demo/dist',
     lib: {
       entry: 'src/index.ts',
       formats: ['es', 'cjs'],
