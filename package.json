@@ -1,6 +1,6 @@
 {
     "name": "@gamesberry/karmyc-core",
-    "version": "1.0.0-beta11",
+    "version": "1.0.0-beta12",
     "description": "A flexible and powerful layout management system for React applications",
     "main": "dist/index.cjs.js",
     "module": "dist/index.esm.js",
@@ -79,8 +79,8 @@
         "jest": "^29.5.0",
         "jest-environment-jsdom": "^29.5.0",
         "prettier": "^2.0.0",
-        "react": "19.0.0",
-        "react-dom": "19.0.0",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
         "rollup": "^4.0.0",
         "rollup-plugin-css-only": "^4.5.2",
         "rollup-plugin-peer-deps-external": "^2.2.4",
@@ -90,10 +90,6 @@
         "vite": "^5.0.0",
         "vite-plugin-markdown": "^2.2.0",
         "vite-plugin-raw": "^1.0.3"
-    },
-    "peerDependencies": {
-        "react": "19.0.0",
-        "react-dom": "19.0.0"
     },
     "publishConfig": {
         "access": "public"

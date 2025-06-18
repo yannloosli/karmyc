@@ -272,6 +272,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                 {Object.values(layout).map((item) => {
                     console.log('item', item);
                     if (item.type === 'area_row') {
+
                         const rowLayout = item as AreaRowLayout;
                         const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
                         const areChildrenReady = rowLayout.areas.every(area => currentGlobalViewportMap[area.id]);
@@ -290,6 +291,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                 })}
 
                 {Object.entries(layout).map(([id]) => {
+                    console.log('id', id);
                     const visualViewport = getAreaVisualViewport(id);
                     if (visualViewport) {
                         return (
