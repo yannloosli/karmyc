@@ -34,9 +34,22 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
     const isDetached = useKarmycStore(state => state.screens[state.activeScreenId]?.isDetached);
 
+    // Ajout d'un flag d'hydratation Zustand
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => { setHydrated(true); }, []);
+    if (!hydrated) {
+        console.log('Karmyc: en attente de l\'hydratation Zustand');
+        return null;
+    }
+
+    // Logs de debug
+    console.log('Karmyc rendu');
+    console.log('activeScreenAreas', activeScreenAreas);
+    const layout = useMemo(() => activeScreenAreas?.layout ?? {}, [activeScreenAreas?.layout]);
+    console.log('layout', layout);
+
     // Memoize the derived state to avoid unnecessary re-renders
     const rootId = useMemo(() => activeScreenAreas?.rootId, [activeScreenAreas?.rootId]);
-    const layout = useMemo(() => activeScreenAreas?.layout ?? {}, [activeScreenAreas?.layout]);
     const joinPreview = useMemo(() => activeScreenAreas?.joinPreview, [activeScreenAreas?.joinPreview]);
     const areaToOpen = useMemo(() => activeScreenAreas?.areaToOpen, [activeScreenAreas?.areaToOpen]);
 
