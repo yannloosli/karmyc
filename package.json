@@ -104,5 +104,11 @@
         "workspace",
         "ui",
         "typescript"
-    ]
+    ],
+    "exports": {
+        ".": {
+            "import": "./dist/index.esm.js",
+            "require": "./dist/index.cjs.js"
+        }
+    }
 }
