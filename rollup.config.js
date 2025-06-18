@@ -14,13 +14,13 @@ const createRollupConfig = (pkg, options = {}) => {
     input: options.input || 'src/index.ts',
     output: [
       {
-        file: pkg.main,
+        file: 'dist/index.cjs.js',
         format: 'cjs',
         sourcemap: true,
         exports: 'named'
       },
       {
-        file: pkg.module,
+        file: 'dist/index.esm.js',
         format: 'esm',
         sourcemap: true,
         exports: 'named'
