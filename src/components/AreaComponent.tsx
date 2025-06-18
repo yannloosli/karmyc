@@ -160,8 +160,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                                 viewport={{
                                     left: 0,
                                     top: 0,
-                                    width: area?.enableFullscreen ? window.innerWidth : viewport.width,
-                                    height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
+                                    width: area?.enableFullscreen ? (typeof window !== 'undefined' ? window.innerWidth : viewport.width) : viewport.width,
+                                    height: area?.enableFullscreen ? (typeof window !== 'undefined' ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)) : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)
                                 }}
                             />
                         ) : (
@@ -170,8 +170,8 @@ export const AreaComponent: React.FC<AreaComponentOwnProps> = ({
                                     position: "absolute",
                                     left: 0,
                                     top: 0,
-                                    width: area?.enableFullscreen ? window.innerWidth : viewport.width,
-                                    height: area?.enableFullscreen ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0),
+                                    width: area?.enableFullscreen ? (typeof window !== 'undefined' ? window.innerWidth : viewport.width) : viewport.width,
+                                    height: area?.enableFullscreen ? (typeof window !== 'undefined' ? window.innerHeight : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0)) : viewport.height - (!isDetached ? TOOLBAR_HEIGHT : 0),
                                     backgroundColor: "#fff5f5",
                                     border: "1px solid #feb2b2",
                                     borderRadius: "4px",

@@ -59,7 +59,7 @@ export const useKarmycStore = create<RootStateType>()(
                         options: state.options,
                         layout_preset: state.layout_preset
                     }),
-                    storage: createJSONStorage(() => localStorage),
+                    storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
                     skipHydration: false,
                     onRehydrateStorage: () => (state) => {
                         if (!state) {

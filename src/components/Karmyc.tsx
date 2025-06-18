@@ -56,7 +56,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
             return { left: 0, top: 0, width: 800, height: 600 };
         } else {
             return getAreaRootViewport();
-        }      
+        }
     });
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
 

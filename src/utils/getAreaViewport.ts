@@ -18,6 +18,9 @@ let resizeStartTime = 0;
 const RESIZE_STABILITY_THRESHOLD = 500; // ms
 
 export const getAreaRootViewport = () => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+        return { top: 0, left: 0, width: 800, height: 600 };
+    }
     // Calculate current window dimensions
     const currentViewport: Rect = {
         top: 0,  // No offset as it's already handled by the flow
