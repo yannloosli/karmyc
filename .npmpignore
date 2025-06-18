@@ -1,0 +1,4 @@
+demo/
+__tests__/
+*.test.ts
+*.test.tsx

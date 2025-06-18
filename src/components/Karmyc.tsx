@@ -36,12 +36,6 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
 
     // Ajout d'un flag d'hydratation Zustand
     const [hydrated, setHydrated] = useState(false);
-    useEffect(() => { setHydrated(true); }, []);
-    if (!hydrated) {
-        console.log('Karmyc: en attente de l\'hydratation Zustand');
-        return null;
-    }
-
     // Logs de debug
     console.log('Karmyc rendu');
     console.log('activeScreenAreas', activeScreenAreas);
@@ -269,6 +263,12 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         }
         return baseViewport;
     }, [layout, resizePreview]);
+
+    useEffect(() => { setHydrated(true); }, []);
+    if (!hydrated) {
+        console.log('Karmyc: en attente de l\'hydratation Zustand');
+        return null;
+    }
 
     return (
         <>
