@@ -270,6 +270,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
             <DetachedWindowCleanup />
             <div className="area-root">
                 {Object.values(layout).map((item) => {
+                    console.log('item', item);
                     if (item.type === 'area_row') {
                         const rowLayout = item as AreaRowLayout;
                         const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
