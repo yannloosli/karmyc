@@ -43,7 +43,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     // Utiliser useRef pour stocker le dernier viewport calculé
     const lastViewportRef = useRef<Rect | null>(null);
     const [viewport, setViewport] = useState(() => {
-        if (isDetached) {
+        if (isDetached && typeof window !== 'undefined') {
             return {
                 left: 0,
                 top: 0,
@@ -51,7 +51,12 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                 height: window.innerHeight
             };
         }
-        return getAreaRootViewport();
+        // Valeurs par défaut côté serveur
+        if (typeof window === 'undefined') {
+            return { left: 0, top: 0, width: 800, height: 600 };
+        } else {
+            return getAreaRootViewport();
+        }      
     });
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
 
