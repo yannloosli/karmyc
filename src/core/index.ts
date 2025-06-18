@@ -6,12 +6,15 @@ export { useKarmycStore, initializeMainStore } from './store';
 export type { RootStateType } from './store';
 
 // Types
-export type { IKarmycCoreProviderProps, IKarmycOptions } from './types/karmyc';
-export type { IActionPlugin } from './types/actions';
+export * from './types/karmyc';
+export * from './types/actions';
+export * from './types/areas-type';
+export * from './types/context-menu-types';
 
 // Registries
 export { actionRegistry } from './registries/actionRegistry';
 export { keyboardShortcutRegistry } from './registries/keyboardShortcutRegistry';
+export { areaRegistry } from './registries/areaRegistry';
 
 // Plugins
 export { historyPlugin } from './plugins/historyPlugins';
