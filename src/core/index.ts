@@ -15,3 +15,10 @@ export { keyboardShortcutRegistry } from './registries/keyboardShortcutRegistry'
 
 // Plugins
 export { historyPlugin } from './plugins/historyPlugins';
+
+
+export type { CoreSlice } from './slices/core-slice';
+export type { ContextMenuSlice } from './slices/context-menu-slice';
+export type { ScreensSlice } from './slices/screens-slice';
+export type { AreasSlice } from './slices/areas-slice';
+export type { ActionRegistry } from './registries/actionRegistry';
