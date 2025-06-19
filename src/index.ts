@@ -19,3 +19,6 @@ export * from './utils';
 export type { PlaceArea } from './core/types/areas-type';
 export type { Space } from './core/spaceStore';
 export type { THistoryDiff } from './types/historyTypes';
+
+// Next.js compatibility
+export { KarmycNextWrapper } from './components/KarmycNextWrapper';

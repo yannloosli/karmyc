@@ -264,13 +264,12 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     if (!hydrated) {
         return null;
     }
-
+console.log('COUCOU')
     return (
         <>
             <DetachedWindowCleanup />
             <div className="area-root">
                 {Object.values(layout).map((item) => {
-                    console.log('item', item);
                     if (item.type === 'area_row') {
 
                         const rowLayout = item as AreaRowLayout;
@@ -291,7 +290,6 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                 })}
 
                 {Object.entries(layout).map(([id]) => {
-                    console.log('id', id);
                     const visualViewport = getAreaVisualViewport(id);
                     if (visualViewport) {
                         return (

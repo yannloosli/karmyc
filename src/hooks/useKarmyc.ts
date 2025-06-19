@@ -29,11 +29,18 @@ export interface IKarmycConfigWithLayouts {
 
 /**
  * Hook qui centralise toute la logique d'initialisation et de configuration du système Karmyc.
+ * Compatible avec Next.js en évitant les hooks pendant l'hydratation.
  */
 export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error) => void): IKarmycConfigWithLayouts {
     const { createArea } = useArea();
     const initialized = useRef(false);
     const optionsRef = useRef(options);
+    const isClient = useRef(false);
+
+    // Vérifier si on est côté client
+    useEffect(() => {
+        isClient.current = true;
+    }, []);
 
     // Mettre à jour la référence des options uniquement si elles changent réellement
     useEffect(() => {
@@ -72,9 +79,9 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
         };
     }, []); // Ne dépend plus des options directement
 
-    // Initialisation du système
+    // Initialisation du système - seulement côté client
     useEffect(() => {
-        if (initialized.current) {
+        if (!isClient.current || initialized.current) {
             return;
         }
         initialized.current = true;

@@ -95,7 +95,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
         width: adjustedViewport.width,
         height: adjustedViewport.height
     }), [adjustedViewport]);
-
+console.log('AREA ===>', id);
     return (
         (!id.includes('row-') || isStack) && (id !== 'root') &&
         (<div
