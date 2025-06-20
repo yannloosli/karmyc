@@ -4,7 +4,7 @@ import { useRegisterActionHandler } from "../../../src/hooks/useRegisterActionHa
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { CircleSlash } from "lucide-react";
-import { Draw } from "../components/Draw";
+import { Draw } from "../../shared/components/Draw";
 
 export const DrawArea = () => {
     const { updateArea } = useKarmycStore.getState();

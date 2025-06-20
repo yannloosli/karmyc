@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useKarmycStore } from './store';
 import { IKarmycCoreProviderProps } from './types/karmyc';
 import { keyboardShortcutRegistry } from './registries/keyboardShortcutRegistry';
@@ -23,9 +23,17 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
     const lastActiveScreenId = useRef<string | null>(null);
     const lastScreenCount = useRef<number>(0);
     const lastScreenOrder = useRef<string[]>([]);
+    const [isMounted, setIsMounted] = useState(false);
+
+    // S'assurer que le composant est monté avant d'utiliser les hooks
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Effect 1: Read URL on initial load and set active screen
     useEffect(() => {
+        if (!isMounted) return;
+
         const params = new URLSearchParams(window.location.search);
         const screenIdFromUrl = params.get('screen');
 
@@ -45,13 +53,13 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
             isInitialLoad.current = false;
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [isMounted]);
 
     // Effect 2: Update URL when activeScreenId changes
     const activeScreenId = useKarmycStore(state => state.activeScreenId);
     const screens = useKarmycStore(state => state.screens);
     useEffect(() => {
-        if (isInitialLoad.current || isUpdatingUrl.current) {
+        if (!isMounted || isInitialLoad.current || isUpdatingUrl.current) {
             return;
         }
 
@@ -111,10 +119,12 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
             isUpdatingUrl.current = false;
             lastActiveScreenId.current = activeScreenId;
         }
-    }, [activeScreenId, screens]);
+    }, [isMounted, activeScreenId, screens]);
 
     // Effect 3: Sync between tabs
     useEffect(() => {
+        if (!isMounted) return;
+
         let syncTimeout: NodeJS.Timeout | null = null;
         const SYNC_DEBOUNCE_MS = 50;
 
@@ -159,10 +169,12 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
             window.removeEventListener('storage', handleStorage);
             document.removeEventListener("contextmenu", (e) => e.preventDefault(), false);
         }
-    }, []);
+    }, [isMounted]);
 
     // Effect 4: Keyboard shortcuts
     useEffect(() => {
+        if (!isMounted) return;
+
         const handleKeyDown = (e: KeyboardEvent) => {
             const store = useKarmycStore.getState();
             if (!store.options.keyboardShortcutsEnabled) {
@@ -272,7 +284,7 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
 
         window.addEventListener('keydown', handleKeyDown, true);
         return () => window.removeEventListener('keydown', handleKeyDown, true);
-    }, [onError]);
+    }, [isMounted, onError]);
 
     return (
         <>

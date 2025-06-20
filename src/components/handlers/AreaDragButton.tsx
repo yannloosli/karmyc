@@ -1,4 +1,4 @@
-import { createElement, useRef, useState } from "react";
+import React, { createElement, useRef, useState } from "react";
 import { AreaTypeValue } from "../../core/types/actions";
 import { useKarmycStore } from "../../core/store";
 import { TOOLBAR_HEIGHT } from "../../utils/constants";

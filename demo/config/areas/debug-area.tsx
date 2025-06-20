@@ -4,7 +4,7 @@ import { useRegisterActionHandler } from "../../../src/hooks/useRegisterActionHa
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { Palette } from "lucide-react";
-import { Debug } from "../components/Debug";
+import { Debug } from "../../shared/components/Debug";
 
 export const DebugArea = () => {
     const { updateArea } = useKarmycStore.getState();

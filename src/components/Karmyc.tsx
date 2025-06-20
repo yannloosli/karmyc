@@ -58,7 +58,14 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         if (typeof window === 'undefined') {
             return { left: 0, top: 0, width: 800, height: 600 };
         } else {
-            return getAreaRootViewport();
+            // Utiliser les dimensions de la fenêtre par défaut au lieu de chercher .area-root
+            // qui n'existe pas encore au moment de l'initialisation
+            return {
+                left: 0,
+                top: 0,
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
         }
     });
     const [resizePreview, setResizePreview] = useState<ResizePreviewState | null>(null);
@@ -68,18 +75,42 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     // Effect pour initialiser le viewport après le montage
     useEffect(() => {
         if (!isDetached) {
-            const areaRoot = document.querySelector('.area-root');
-            if (areaRoot) {
-                const rect = areaRoot.getBoundingClientRect();
-                setViewport({
-                    left: 0,
-                    top: 0,
-                    width: rect.width,
-                    height: rect.height
-                });
+            // Utiliser une approche plus robuste pour obtenir les dimensions
+            const updateViewport = () => {
+                const areaRoot = document.querySelector('.area-root');
+                if (areaRoot) {
+                    const rect = areaRoot.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        setViewport({
+                            left: 0,
+                            top: 0,
+                            width: rect.width,
+                            height: rect.height
+                        });
+                    }
+                } else {
+                    // Si .area-root n'existe pas encore, utiliser les dimensions du conteneur parent
+                    const container = document.querySelector('.tools-container') || document.body;
+                    const rect = container.getBoundingClientRect();
+                    setViewport({
+                        left: 0,
+                        top: 0,
+                        width: rect.width,
+                        height: rect.height
+                    });
+                }
+            };
+
+            // Essayer immédiatement
+            updateViewport();
+
+            // Si les dimensions sont encore 0, réessayer après un court délai
+            if (viewport.width === 0 || viewport.height === 0) {
+                const timer = setTimeout(updateViewport, 100);
+                return () => clearTimeout(timer);
             }
         }
-    }, [isDetached]);
+    }, [isDetached, viewport.width, viewport.height]);
 
     // Ne mettre à jour le viewport que si nécessaire
     useEffect(() => {
@@ -97,9 +128,27 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                     setViewport(newViewport);
                 }
             } else {
+                // Utiliser la même approche robuste que l'initialisation
                 const areaRoot = document.querySelector('.area-root');
                 if (areaRoot) {
                     const rect = areaRoot.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        const newViewport = {
+                            left: 0,
+                            top: 0,
+                            width: rect.width,
+                            height: rect.height
+                        };
+                        if (!lastViewportRef.current ||
+                            newViewport.width !== lastViewportRef.current.width ||
+                            newViewport.height !== lastViewportRef.current.height) {
+                            setViewport(newViewport);
+                        }
+                    }
+                } else {
+                    // Fallback vers le conteneur parent
+                    const container = document.querySelector('.tools-container') || document.body;
+                    const rect = container.getBoundingClientRect();
                     const newViewport = {
                         left: 0,
                         top: 0,
@@ -134,6 +183,20 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
 
         // Vérifier que le viewport a des dimensions valides
         if (!viewport || viewport.width <= 0 || viewport.height <= 0) {
+            // Si les dimensions sont invalides, essayer d'utiliser des dimensions minimales
+            if (typeof window !== 'undefined') {
+                const fallbackViewport = {
+                    left: 0,
+                    top: 0,
+                    width: Math.max(viewport?.width || 0, window.innerWidth),
+                    height: Math.max(viewport?.height || 0, window.innerHeight)
+                };
+                
+                // Ne mettre à jour que si les dimensions de fallback sont valides
+                if (fallbackViewport.width > 0 && fallbackViewport.height > 0) {
+                    setViewport(fallbackViewport);
+                }
+            }
             return;
         }
 
@@ -169,7 +232,6 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         const state = useKarmycStore.getState();
         const activeScreen = state.screens[state.activeScreenId];
         const currentGlobalViewportMap = activeScreen?.areas.viewports || {};
-
         const baseViewport = currentGlobalViewportMap[areaId];
 
         // Si l'écran est détaché, retourner le viewport de base avec les dimensions de la fenêtre
@@ -264,14 +326,13 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
     if (!hydrated) {
         return null;
     }
-console.log('COUCOU')
+
     return (
         <>
             <DetachedWindowCleanup />
             <div className="area-root">
                 {Object.values(layout).map((item) => {
                     if (item.type === 'area_row') {
-
                         const rowLayout = item as AreaRowLayout;
                         const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
                         const areChildrenReady = rowLayout.areas.every(area => currentGlobalViewportMap[area.id]);

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { Clock, RotateCcw, RotateCw } from 'lucide-react';
 import { t } from '../../../src/core/utils/translation';
 import { actionRegistry } from '../../../src/core/registries/actionRegistry';
+import React from 'react';
 
 interface HistoryState {}
 

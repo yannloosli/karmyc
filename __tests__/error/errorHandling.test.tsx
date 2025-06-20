@@ -5,6 +5,7 @@ import { AREA_ROLE, AreaTypeValue } from '../../src/core/types/actions';
 import { IArea } from '../../src/types/areaTypes';
 import { ISpace } from '../../src/core/types/karmyc';
 import { 
+import React from 'react';
   TestComponent, 
   setupErrorTest, 
   resetKarmycStore, 

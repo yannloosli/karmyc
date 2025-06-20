@@ -31,7 +31,6 @@ export const AreaRowSeparators: React.FC<Props> = props => {
     const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
     const resizableAreas = useKarmycStore(state => state.options?.resizableAreas ?? true);
     
-
     // Do not render separators for stacked rows or if resizableAreas is false
     if (row.orientation === 'stack') {
         return null;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { type StateCreator, type StoreApi } from 'zustand';
 import { actionRegistry } from '../core/registries/actionRegistry';
 import { Action, IActionPlugin } from '../core/types/actions';

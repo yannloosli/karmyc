@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"],
+      "@gamesberry/karmyc-core": ["../../src"],
+      "@gamesberry/karmyc-core/style.css": ["../../style.css"],
+      "@gamesberry/karmyc-core/assets": ["../../assets"],
+      "@core": ["../../src/core"],
+      "@components": ["../../src/components"],
+      "@hooks": ["../../src/hooks"],
+      "@utils": ["../../src/utils"],
+      "@shared": ["../shared"],
+      "@assets": ["../assets"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "next.config.mjs"],
+  "exclude": ["node_modules"]
+} 

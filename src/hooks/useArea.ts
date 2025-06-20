@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { AreaTypeValue, AREA_ROLE } from '../core/types/actions';
 import { useKarmycStore } from '../core/store';
 import { IArea } from '../types/areaTypes';

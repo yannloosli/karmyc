@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { IKarmycOptions } from '../../src/core/types/karmyc';
 import { useKarmycStore } from '../../src/core/store';
+import React from 'react';
 
 interface TestWrapperProps {
   children: React.ReactNode;

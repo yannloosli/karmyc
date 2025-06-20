@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import readmeContent from '../../../README.md?raw';
+import React from 'react';
 
 export const ReadmeArea = () => {
 

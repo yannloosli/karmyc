@@ -12,6 +12,7 @@ import { SpaceManagerArea } from './areas/space-manager-area';
 import { ColorPickerArea } from './areas/color-picker-area';
 import { DebugArea } from './areas/debug-area';
 import iconSvg from '../assets/brand/icon.svg';
+import React from 'react';
 
 export const AreaInitializer = () => {
     const { registerComponent: registerTitleComponent } = useToolsSlot('apptitle', 'top-outer');

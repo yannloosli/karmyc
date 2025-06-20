@@ -9,6 +9,7 @@ import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/hooks/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/core/registries/actionRegistry';
 import { t } from '../../../src/core/utils/translation';
+import React from 'react';
 
 interface DrawingState { }
 

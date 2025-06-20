@@ -1,5 +1,6 @@
 import { render, act } from '@testing-library/react';
 import { 
+import React from 'react';
   TestComponent, 
   createGridAreas,
   measurePerformance,

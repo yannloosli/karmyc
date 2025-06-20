@@ -54,19 +54,11 @@ export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
     useEffect(() => {
         const leadArea = lastLeadAreaId ? allAreas[lastLeadAreaId] : null;
         const leadSpaceId = leadArea?.spaceId;
-        
-        console.log("Space Sync Effect:", {
-            lastLeadAreaId,
-            leadArea,
-            leadSpaceId,
-            currentSelectedSpace: selectedSpace
-        });
+    
 
         if (leadSpaceId && leadSpaceId !== selectedSpace) {
-            console.log("Updating selected space to:", leadSpaceId);
             setSelectedSpace(leadSpaceId);
         } else if (!leadSpaceId && activeSpaceId && activeSpaceId !== selectedSpace) {
-            console.log("Falling back to activeSpaceId:", activeSpaceId);
             setSelectedSpace(activeSpaceId);
         }
     }, [lastLeadAreaId, activeSpaceId, allAreas]);

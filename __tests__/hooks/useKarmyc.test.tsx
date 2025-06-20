@@ -6,6 +6,7 @@ import { AreaRole } from '../../src/core/types/karmyc';
 import { actionRegistry } from '../../src/core/registries/actionRegistry';
 import { TestWrapper } from '../utils/TestWrapper';
 import type { IArea } from '../../src/types/areaTypes';
+import React from 'react';
 
 // Composant de test pour wrapper le hook
 const TestComponent = ({ options }: { options: any }) => {

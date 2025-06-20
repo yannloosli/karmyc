@@ -1,60 +1,52 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KarmycCoreProvider } from '../core/KarmycCoreProvider';
-import { useKarmyc } from '../hooks/useKarmyc';
 import { IKarmycOptions } from '../core/types/karmyc';
 
 interface KarmycNextWrapperProps {
+  isClient: boolean;
   children: React.ReactNode;
-  options?: IKarmycOptions;
-  onError?: (error: Error) => void;
+  config: IKarmycOptions;
 }
 
 /**
  * Wrapper spécifique pour Next.js qui s'assure que les hooks React
  * sont utilisés dans le bon contexte et évite les erreurs d'hydratation.
  */
-export const KarmycNextWrapper: React.FC<KarmycNextWrapperProps> = ({
-  children,
-  options = {},
-  onError
-}) => {
-  const [isClient, setIsClient] = useState(false);
+export const KarmycNextWrapper: React.FC<KarmycNextWrapperProps> = ({ isClient, children, config }) => {
   const [isReady, setIsReady] = useState(false);
 
-  // S'assurer que le composant est monté côté client
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Initialiser Karmyc seulement côté client
   useEffect(() => {
     if (isClient) {
-      try {
-        // Initialiser Karmyc de manière sûre
-        const config = useKarmyc(options, onError);
+      // Attendre un tick pour s'assurer que le contexte React est prêt
+      const timer = setTimeout(() => {
         setIsReady(true);
-      } catch (error) {
-        console.error('Error initializing Karmyc:', error);
-        onError?.(error instanceof Error ? error : new Error(String(error)));
-      }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [isClient, options, onError]);
+  }, [isClient]);
 
-  // Ne rien rendre pendant l'hydratation
-  if (!isClient) {
-    return null;
-  }
+  if (!isClient || !isReady) {
+    return (
+        <div style={{ 
+            width: '100%', 
+            height: '100vh', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            backgroundColor: '#1a1a1a',
+            color: 'white',
+            fontSize: '18px'
+        }}>
+            Chargement de Karmyc...
+        </div>
+    );
+}
 
-  // Ne rien rendre tant que Karmyc n'est pas prêt
-  if (!isReady) {
-    return null;
-  }
-
-  return (
-    <KarmycCoreProvider onError={onError}>
-      {children}
+return (
+    <KarmycCoreProvider options={config}>
+        {children}
     </KarmycCoreProvider>
-  );
-};
+);
+}; 
 
 export default KarmycNextWrapper; 

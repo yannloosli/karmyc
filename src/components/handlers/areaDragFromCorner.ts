@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react'; 
+import React, { Dispatch, SetStateAction } from 'react'; 
 import { capToRange, Vec2 } from "../../utils";
 import { AREA_MIN_CONTENT_WIDTH } from "../../utils/constants";
 import { useKarmycStore } from "../../core/store"; 
@@ -71,7 +71,7 @@ export const handleAreaDragFromCorner = (
     setAreaResizing: (resizing: boolean) => void
 ) => {
     // Check if we are in a detached window
-    const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.isDetached;
+    const isDetached = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.isDetached;
     if (isDetached) {
         return;
     }

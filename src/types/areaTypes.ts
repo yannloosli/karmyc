@@ -1,4 +1,4 @@
-import { ComponentType } from "react";
+import React, { ComponentType } from "react";
 import { AreaTypeValue } from "../core/types/actions";
 import { AreaRole } from "../core/types/karmyc";
 import { Point, Rect } from ".";

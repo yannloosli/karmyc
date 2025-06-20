@@ -1,0 +1,33 @@
+{
+  "name": "karmyc-core-demo-ssr",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@gamesberry/karmyc-core": "file:../..",
+    "next": "14.0.0",
+    "next-images": "^1.8.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.4",
+    "@babel/plugin-transform-runtime": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "@svgr/webpack": "^8.1.0",
+    "@types/node": "^22.14.1",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "babel-loader": "^10.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "14.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { AREA_ROLE } from '@core/types/actions';
 import { useKarmycStore, initializeMainStore } from '@core/store';

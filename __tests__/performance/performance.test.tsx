@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, act } from '@testing-library/react';
 import { AreaRole, IKarmycOptions } from '../../src/core/types/karmyc';
 import { 

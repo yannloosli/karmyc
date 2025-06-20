@@ -7,6 +7,7 @@ import { useKarmycStore } from '../../../src/core/store';
 import { useSpaceStore } from '../../../src/core/spaceStore';
 import { t } from '../../../src/core/utils/translation';
 import { Plus, Trash2, Settings } from 'lucide-react';
+import React from 'react';
 
 interface SpaceType {
     id: string;

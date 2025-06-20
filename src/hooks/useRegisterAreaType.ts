@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { areaRegistry } from '../core/registries/areaRegistry';
 import { AreaRole } from '../core/types/karmyc';
 

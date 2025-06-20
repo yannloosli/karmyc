@@ -6,7 +6,7 @@ import { useToolsSlot } from "../../../src/components/ToolsSlot";
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { FolderOpenDot } from "lucide-react";
-import { SpaceManager } from "../components/SpaceManager";
+import { SpaceManager } from "../../shared/components/SpaceManager";
 import { useSpaceStore } from "../../../src/core/spaceStore";
 
 export const SpaceManagerArea = () => {

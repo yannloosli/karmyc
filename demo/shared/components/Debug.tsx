@@ -4,6 +4,7 @@ import { useSpace } from '../../../src/hooks';
 import { useSpaceStore } from '../../../src/core/spaceStore';
 import { t } from '../../../src/core/utils/translation';
 import { Info, Layers, Palette } from 'lucide-react';
+import React from 'react';
 
 interface DebugAreaProps {
     id: string;

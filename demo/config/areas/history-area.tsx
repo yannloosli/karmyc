@@ -4,7 +4,7 @@ import { useRegisterActionHandler } from "../../../src/hooks/useRegisterActionHa
 import { useRegisterAreaType } from "../../../src/hooks/useRegisterAreaType";
 import { AREA_ROLE } from "../../../src/core/types/actions";
 import { CircleSlash } from "lucide-react";
-import { History } from "../components/History";
+import { History } from "../../shared/components/History";
 
 export const HistoryArea = () => {
     const { updateArea } = useKarmycStore.getState();

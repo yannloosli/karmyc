@@ -1,6 +1,6 @@
 // Dans karmyc/karmyc/packages/core/src/hooks/useRegisterActionHandler.ts
 
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { actionRegistry } from '../core/registries/actionRegistry';
 
 interface ActionMetadata {

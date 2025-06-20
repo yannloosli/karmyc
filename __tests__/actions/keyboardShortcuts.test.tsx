@@ -4,6 +4,7 @@ import { keyboardShortcutRegistry, KeyboardShortcut } from '../../src/core/regis
 import { act } from '@testing-library/react';
 import { KarmycCoreProvider } from '../../src/core/KarmycCoreProvider';
 import { render } from '@testing-library/react';
+import React from 'react';
 
 describe('Keyboard Shortcuts', () => {
   let providerOptions = {
