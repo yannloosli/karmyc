@@ -5,6 +5,16 @@ export { KarmycCoreProvider } from './KarmycCoreProvider';
 export { useKarmycStore, initializeMainStore } from './store';
 export type { RootStateType } from './store';
 
+// Space Store
+export { useSpaceStore } from './spaceStore';
+export type { 
+    SpaceStateType, 
+    Space, 
+    SpaceState, 
+    SpaceActions, 
+    SpaceSharedState 
+} from './spaceStore';
+
 // Types
 export * from './types/karmyc';
 export * from './types/actions';
