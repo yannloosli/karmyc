@@ -7,12 +7,12 @@ export type { RootStateType } from './store';
 
 // Space Store
 export { useSpaceStore } from './spaceStore';
-export type { 
-    SpaceStateType, 
-    Space, 
-    SpaceState, 
-    SpaceActions, 
-    SpaceSharedState 
+export type {
+    SpaceStateType,
+    Space,
+    SpaceState,
+    SpaceActions,
+    SpaceSharedState
 } from './spaceStore';
 
 // Types
@@ -35,3 +35,5 @@ export type { ContextMenuSlice } from './slices/context-menu-slice';
 export type { ScreensSlice } from './slices/screens-slice';
 export type { AreasSlice } from './slices/areas-slice';
 export type { ActionRegistry } from './registries/actionRegistry';
+
+export { t } from './utils/translation';

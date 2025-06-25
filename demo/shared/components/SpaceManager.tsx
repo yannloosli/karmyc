@@ -12,8 +12,8 @@ import React from 'react';
 interface SpaceType {
     id: string;
     name: string;
+    color?: string;
     sharedState: {
-        color?: string;
         [key: string]: any;
     };
 }
@@ -52,7 +52,7 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
     viewport
 }) => {
     // Get actions and activeId from the hook
-    const { activeSpaceId, createSpace, deleteSpace, setActive, updateSharedState, pilotMode, setPilotMode } = useSpace();
+    const { activeSpaceId, createSpace, deleteSpace, setActive, updateSpaceProperties, pilotMode, setPilotMode } = useSpace();
 
     // Use useStoreWithEqualityFn and shallow comparison for selectors returning objects/arrays
     const spaces = useSpaceStore().getAllSpaces()
@@ -118,7 +118,7 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
 
     // Mettre à jour la couleur partagée d'un espace
     const handleColorChange = (spaceId: string, color: string) => {
-        updateSharedState(spaceId, { color });
+        updateSpaceProperties(spaceId, { color });
     };
 
     return (
@@ -204,7 +204,7 @@ export const SpaceManager: React.FC<AreaComponentProps> = ({
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <input
                                     type="color"
-                                    value={space.sharedState.color || '#1890ff'}
+                                    value={space.color || '#1890ff'}
                                     onChange={(e) => handleColorChange(spaceId, e.target.value)}
                                     title={t('space.color', 'Change space color')}
                                     style={{
