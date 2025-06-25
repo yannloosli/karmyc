@@ -5,15 +5,7 @@ import { useKarmycStore } from '../../core/store';
 import { MenuItem } from '@szhsin/react-menu';
 import { t } from '../../core/utils/translation';
 import { useContextMenu } from '../../hooks/useContextMenu';
-
-
-// Types pour les layouts
-export interface LayoutPreset {
-    id: string;
-    name: string;
-    config: any;
-    isBuiltIn: boolean;
-}
+import { LayoutPreset } from '../../types';
 
 const STORAGE_KEY = 'karmyc_custom_layouts';
 

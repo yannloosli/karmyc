@@ -1,14 +1,5 @@
 import { AREA_BORDER_WIDTH } from "./constants";
-
-/**
- * Représente un rectangle (viewport).
- */
-export interface Rect {
-    top: number;
-    left: number;
-    width: number;
-    height: number;
-}
+import { Rect } from "../types";
 
 // Storage for stable viewport dimensions
 let stableViewport: Rect | null = null;

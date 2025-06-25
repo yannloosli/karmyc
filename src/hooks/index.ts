@@ -9,6 +9,3 @@ export * from './useSpaceHistory'
 export * from './useRegisterAreaType'
 export * from './useRegisterActionHandler'
 export * from './useScreenManagement'
-
-// Export explicite de createPluginMiddleware pour plus de clarté
-export { createPluginMiddleware } from './usePluginSystem';

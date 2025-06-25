@@ -13,4 +13,6 @@ export * from './ScreenSwitcher';
 export * from './DetachedWindowCleanup';
 export * from './menus/SwitchAreaTypeContextMenu';
 export * from './menus/SpaceMenu'; 
+export * from './menus/LayoutMenu';
 export * from './ToolsSlot'
+export * from './KarmycNextWrapper'
