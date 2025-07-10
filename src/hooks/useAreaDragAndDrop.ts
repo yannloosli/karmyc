@@ -19,7 +19,7 @@ const isAreaChildOfStack = (areaId: string, layout: Record<string, any>) => {
     return Object.values(layout).some(layoutItem =>
         layoutItem.type === 'area_row' &&
         layoutItem.orientation === 'stack' &&
-        layoutItem.areas.some((area: { id: string }) => area.id === areaId)
+        layoutItem.areas.some((area: any) => area.id === areaId)
     );
 };
 
@@ -31,12 +31,16 @@ export const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     const cleanupTemporaryStates = useKarmycStore(state => state.cleanupTemporaryStates);
     const updateLayout = useKarmycStore(state => state.updateLayout);
 
-    // Select necessary state parts
-    const layout = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout);
-    const rootId = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.rootId);
-    const areas = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
-    const areaToOpen = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areaToOpen);
-    const areaToViewport = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.viewports);
+    // Optimized selectors for subscribeWithSelector
+    const activeScreenId = useKarmycStore(state => state.activeScreenId);
+    const activeScreenAreas = useKarmycStore(state => state.screens[state.activeScreenId]?.areas);
+    
+    // Extract specific parts from activeScreenAreas
+    const layout = activeScreenAreas?.layout;
+    const rootId = activeScreenAreas?.rootId;
+    const areas = activeScreenAreas?.areas;
+    const areaToOpen = activeScreenAreas?.areaToOpen;
+    const areaToViewport = activeScreenAreas?.viewports;
 
     const dragRef = useRef<{ startX: number; startY: number; sourceId: string | null } | null>(null);
     const lastUpdateRef = useRef<number>(performance.now());
@@ -46,18 +50,23 @@ export const useAreaDragAndDrop = (params?: UseAreaDragAndDropParams) => {
     const detectionDimensions = useMemo(() => Vec2.new(300, 200), []);
 
     const areaToOpenTargetId = useMemo(() => {
-        if (!areaToOpen || !rootId || !areaToViewport || Object.keys(areaToViewport).length === 0) return null;
+        if (!areaToOpen || !rootId || !areaToViewport || Object.keys(areaToViewport).length === 0) {
+            return null;
+        }
+        
         const currentPositionVec2 = Vec2.new(areaToOpen.position.x, areaToOpen.position.y);
-        return getHoveredAreaId(
+        const result = getHoveredAreaId(
             currentPositionVec2,
             { layout, rootId, areas, areaToOpen },
             areaToViewport,
             detectionDimensions
         );
+        
+        return result;
     }, [areaToOpen?.position.x, areaToOpen?.position.y, layout, rootId, areas, areaToViewport, detectionDimensions]);
 
     const areaToOpenTargetViewport = useMemo(() => {
-        return areaToOpenTargetId ? areaToViewport[areaToOpenTargetId] : null;
+        return areaToOpenTargetId ? areaToViewport?.[areaToOpenTargetId] : null;
     }, [areaToOpenTargetId, areaToViewport]);
 
     const calculatedPlacement = useMemo(() => {

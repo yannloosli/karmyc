@@ -79,5 +79,24 @@ export const areaRegistry = {
     // Unregistration method
     unregisterAreaType: (areaType: string) => {
         areaStorage.delete(areaType);
+    },
+
+    // Méthode pour vérifier si un type est enregistré
+    isRegistered: (areaType: string) => {
+        return areaStorage.has(areaType);
+    },
+
+    // Méthode pour obtenir un type par défaut si le type demandé n'existe pas
+    getFallbackType: (areaType: string) => {
+        if (areaStorage.has(areaType)) {
+            return areaType;
+        }
+        
+        // Dans karmyc-core, on retourne le type original si non enregistré
+        console.warn(`[AreaRegistry] Type "${areaType}" not registered, using original type`);
+        return areaType;
     }
 };
+
+// Pas d'initialisation automatique de types par défaut dans karmyc-core
+// Les types doivent être explicitement enregistrés par les applications utilisant karmyc-core

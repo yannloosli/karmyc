@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { SpaceMenu } from '../../src/components/menus/SpaceMenu';
 import { LayoutMenu } from '../../src/components/menus/LayoutMenu';
 import { useSpace } from '../../src/hooks/useSpace';
@@ -12,14 +12,13 @@ import { SpaceManagerArea } from './areas/space-manager-area';
 import { ColorPickerArea } from './areas/color-picker-area';
 import { DebugArea } from './areas/debug-area';
 import iconSvg from '../assets/brand/icon.svg';
-import React from 'react';
 
 export const AreaInitializer = () => {
     const { registerComponent: registerTitleComponent } = useToolsSlot('apptitle', 'top-outer');
     const { registerComponent: registerRootMenuComponent } = useToolsSlot('app', 'top-outer');
     const { registerComponent: registerRootStatusComponent } = useToolsSlot('app', 'bottom-outer');
 
-    useMemo(() => {
+    useEffect(() => {
         registerRootStatusComponent(
             () => <div style={{ color: 'white', padding: '8px' }}>Screen management 💪==&gt;</div>,
             { name: 'screen-status-bar', type: 'status' },

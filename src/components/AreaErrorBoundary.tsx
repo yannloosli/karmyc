@@ -73,7 +73,6 @@ export class AreaErrorBoundary extends React.Component<Props, State> {
                 state={this.props.areaState}
                 type={this.props.type}
                 viewport={this.props.viewport}
-                Component={Component}
             />
         );
     }

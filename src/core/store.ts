@@ -7,6 +7,7 @@ import { immer } from "zustand/middleware/immer";
 import { create } from "zustand";
 import { IKarmycOptions } from "./types/karmyc";
 import { createInitialScreenState } from "./utils/screens";
+import { subscribeWithSelector } from 'zustand/middleware';
 
 export type RootStateType =
     CoreSlice &
@@ -39,45 +40,47 @@ export const initializeMainStore = (optionsParam: Partial<IKarmycOptions> = {}) 
 };
 
 export const useKarmycStore = create<RootStateType>()(
-    immer(
-        devtools(
-            persist(
-                (...a) => ({
-                    ...createCoreSlice(...a),
-                    ...createContextMenuSlice(...a),
-                    ...createScreensSlice(...a),
-                    ...createAreasSlice(...a),
-                }),
-                {
-                    name: 'karmyc-store',
-                    partialize: (state) => ({
-                        areas: state.areas,
-                        screens: state.screens,
-                        activeScreenId: state.activeScreenId,
-                        nextScreenId: state.nextScreenId,
-                        lastUpdated: state.lastUpdated,
-                        options: state.options,
-                        layout_preset: state.layout_preset
+    subscribeWithSelector(
+        immer(
+            devtools(
+                persist(
+                    (...a) => ({
+                        ...createCoreSlice(...a),
+                        ...createContextMenuSlice(...a),
+                        ...createScreensSlice(...a),
+                        ...createAreasSlice(...a),
                     }),
-                    storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
-                    skipHydration: false,
-                    onRehydrateStorage: () => (state) => {
-                        if (!state) {
-                            console.warn('[KarmycStore] État invalide après hydratation, réinitialisation...');
-                            useKarmycStore.setState({
-                                screens: {
-                                    '1': createInitialScreenState()
-                                },
-                                activeScreenId: '1',
-                                nextScreenId: 2,
-                                lastUpdated: Date.now(),
-                                options: { allowStackMixedRoles: true }
-                            });
+                    {
+                        name: 'karmyc-store',
+                        partialize: (state) => ({
+                            areas: state.areas,
+                            screens: state.screens,
+                            activeScreenId: state.activeScreenId,
+                            nextScreenId: state.nextScreenId,
+                            lastUpdated: state.lastUpdated,
+                            options: state.options,
+                            layout_preset: state.layout_preset
+                        }),
+                        storage: typeof window !== 'undefined' ? createJSONStorage(() => localStorage) : undefined,
+                        skipHydration: false,
+                        onRehydrateStorage: () => (state) => {
+                            if (!state) {
+                                console.warn('[KarmycStore] État invalide après hydratation, réinitialisation...');
+                                useKarmycStore.setState({
+                                    screens: {
+                                        '1': createInitialScreenState()
+                                    },
+                                    activeScreenId: '1',
+                                    nextScreenId: 2,
+                                    lastUpdated: Date.now(),
+                                    options: { allowStackMixedRoles: true }
+                                });
+                            }
                         }
                     }
-                }
-            ),
-            { name: 'KarmycStore' }
+                ),
+                { name: 'KarmycStore' }
+            )
         )
     )
 );

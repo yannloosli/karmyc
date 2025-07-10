@@ -18,6 +18,10 @@ interface DebugAreaProps {
 }
 
 export const Debug: React.FC<DebugAreaProps> = ({
+    id,
+    state,
+    viewport,
+    type,
     targetSpace,
 }) => {
     const { activeSpaceId } = useSpace();

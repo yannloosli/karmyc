@@ -226,7 +226,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         } catch (error) {
             console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);
         }
-    }, [layout, rootId, viewport, resizePreview, setViewports]);
+    }, [layout, rootId, viewport, resizePreview, areaToOpen, setViewports]);
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
         const state = useKarmycStore.getState();
@@ -334,6 +334,10 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                 {Object.values(layout).map((item) => {
                     if (item.type === 'area_row') {
                         const rowLayout = item as AreaRowLayout;
+                        // Ne pas afficher les séparateurs pour les stacks
+                        if (rowLayout.orientation === 'stack') {
+                            return null;
+                        }
                         const currentGlobalViewportMap = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports || {};
                         const areChildrenReady = rowLayout.areas.every(area => currentGlobalViewportMap[area.id]);
                         if (areChildrenReady) {
@@ -343,6 +347,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                                     key={item.id}
                                     row={rowLayout}
                                     setResizePreview={setResizePreview}
+                                    resizePreview={resizePreview}
                                 />
                             );
                         }

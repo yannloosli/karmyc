@@ -2,6 +2,7 @@ export * from './useAreaDragAndDrop';
 export * from './useContextMenu'; 
 export * from './useKarmyc';
 export * from './useArea';
+export * from './useAreaOptimized';
 export * from './useAreaKeyboardShortcuts';
 export * from './usePluginSystem'
 export * from './useSpace'

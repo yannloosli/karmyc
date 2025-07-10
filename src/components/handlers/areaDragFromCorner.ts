@@ -8,6 +8,7 @@ import type { Rect } from "../../types";
 import { computeAreaToParentRow } from "../../core/utils/areaToParentRow";
 import { computeAreaToViewport } from "../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../utils/getAreaViewport";
+import { blockPointerEvents, restorePointerEvents } from "../../utils/pointerEvents";
 
 interface ResizePreviewState {
     rowId: string;
@@ -78,6 +79,9 @@ export const handleAreaDragFromCorner = (
 
     e.preventDefault();
     setAreaResizing(true);
+    
+    // Bloquer les événements de pointeur pour éviter les événements parasites
+    blockPointerEvents();
 
     const initialMousePosition = Vec2.fromEvent(e);
     let lastMousePosition: Vec2 = initialMousePosition;
@@ -91,11 +95,17 @@ export const handleAreaDragFromCorner = (
         return rootState.screens[rootState.activeScreenId]?.areas;
     };
 
+    // --- Helper function for cleanup ---
+    const cleanupResize = () => {
+        setAreaResizing(false);
+        restorePointerEvents();
+    };
+
     // --- Initial State Acquisition from ACTIVE SCREEN --- (Crucial change)
     const initialActiveScreenState = getActiveScreenState();
     if (!initialActiveScreenState) {
         console.error("handleAreaDragFromCorner: Could not get active screen state.");
-        setAreaResizing(false);
+        cleanupResize();
         return;
     }
     const initialLayout = initialActiveScreenState.layout;
@@ -103,7 +113,7 @@ export const handleAreaDragFromCorner = (
 
     if (!initialRootId || !initialLayout || !initialLayout[initialRootId]) { // Check layout itself too
         console.error("handleAreaDragFromCorner: Invalid initial active screen state (rootId or layout missing/invalid)");
-        setAreaResizing(false);
+        cleanupResize();
         return;
     }
 
@@ -128,7 +138,7 @@ export const handleAreaDragFromCorner = (
         const sourceAreaData = useKarmycStore.getState().getAreaById(areaId);
         if (!sourceAreaData) {
             console.error("Source area data not found");
-            setAreaResizing(false);
+            cleanupResize();
             return;
         }
 
@@ -156,7 +166,7 @@ export const handleAreaDragFromCorner = (
             const currentActiveScreenStateAfterSplit = getActiveScreenState();
             if (!currentActiveScreenStateAfterSplit) {
                 console.error("Failed to get active screen state after split");
-                setAreaResizing(false);
+                cleanupResize();
                 return;
             }
             
@@ -164,7 +174,7 @@ export const handleAreaDragFromCorner = (
 
             if (!newRowLayout || newRowLayout.type !== 'area_row') {
                 console.error(`Split seemed successful but row ${newRowId} not found or not a row in active screen state.`);
-                setAreaResizing(false);
+                cleanupResize();
                 return;
             }
 
@@ -172,7 +182,7 @@ export const handleAreaDragFromCorner = (
             const hasValidSizes = newRowLayout.areas.every(area => area.size >= 0.1);
             if (!hasValidSizes) {
                 console.error("Invalid sizes detected in new row layout");
-                setAreaResizing(false);
+                cleanupResize();
                 return;
             }
 
@@ -214,7 +224,7 @@ export const handleAreaDragFromCorner = (
         if (!areaBeforeId || !areaAfterId) {
             console.error("Cannot set up resize handlers: invalid separator index or missing areas.", { rowToResize, sepIndex });
             currentOnMove = null;
-            currentOnMouseUp = () => { setAreaResizing(false); };
+            currentOnMouseUp = () => { cleanupResize(); };
             return;
         }
 
@@ -225,14 +235,15 @@ export const handleAreaDragFromCorner = (
         if (sizeToShare <= 0) {
             console.error("Invalid total size for resize operation");
             currentOnMove = null;
-            currentOnMouseUp = () => { setAreaResizing(false); };
+            currentOnMouseUp = () => { cleanupResize(); };
             return;
         }
 
-        // --- Debounce Logic --- similar to areaDragResize
+        // --- Debounce Logic --- optimisé pour la fluidité
         let timeoutId: ReturnType<typeof setTimeout> | null = null;
-        const debounceDelay = 75; // ms
-        let lastT = 0.5; // Store last calculated t for final update
+        const debounceDelay = 32; // ~30fps pour le store global
+        let lastT = 0.5;
+        let animationFrameId: number | null = null;
 
         const performGlobalUpdate = (sizes: number[]) => {
             // Vérifier que les tailles sont valides avant la mise à jour
@@ -251,6 +262,23 @@ export const handleAreaDragFromCorner = (
             }
         };
 
+        const performFinalUpdate = (sizes: number[]) => {
+            // Vérifier que les tailles sont valides avant la mise à jour finale
+            const minSize = 0.1; // 10% minimum
+            const hasInvalidSizes = sizes.some(size => size < minSize);
+            
+            if (hasInvalidSizes) {
+                console.warn("Invalid sizes detected in final update, adjusting to minimum values");
+                // Ajuster les tailles pour respecter le minimum
+                const adjustedSizes = sizes.map(size => Math.max(size, minSize));
+                const total = adjustedSizes.reduce((sum, s) => sum + s, 0);
+                const normalizedSizes = adjustedSizes.map(s => s / total);
+                useKarmycStore.getState().setRowSizesFinal({ rowId: rowToResize.id, sizes: normalizedSizes });
+            } else {
+                useKarmycStore.getState().setRowSizesFinal({ rowId: rowToResize.id, sizes });
+            }
+        };
+
         const triggerDebouncedUpdate = (sizes: number[]) => {
             if (timeoutId !== null) {
                 clearTimeout(timeoutId);
@@ -266,8 +294,19 @@ export const handleAreaDragFromCorner = (
                 clearTimeout(timeoutId);
                 timeoutId = null;
             }
+            if (animationFrameId !== null) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
         };
-        // --- End Debounce Logic ---
+
+        // Animation frame pour la fluidité
+        const animate = () => {
+            if (lastMousePosition) {
+                currentOnMove?.(lastMousePosition);
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        };
 
         currentOnMove = (vec: Vec2) => {
             // Get FRESH ACTIVE screen state
@@ -316,14 +355,14 @@ export const handleAreaDragFromCorner = (
             // Store last t
             lastT = t;
 
-            // 1. Update PREVIEW state IMMEDIATELY
+            // 1. MISE À JOUR IMMÉDIATE DE LA PREVIEW (priorité absolue)
             setResizePreviewFn({
                 rowId: rowToResize.id,
                 separatorIndex: sepIndex,
                 t: t
             });
 
-            // 2. Trigger DEBOUNCED global state update
+            // 2. Calcul des tailles pour le store global (debounced)
             const tempSize0 = t * sizeToShare;
             const tempSize1 = (1 - t) * sizeToShare;
             const tempSizes = currentRow.areas.map((area, index) => {
@@ -354,6 +393,11 @@ export const handleAreaDragFromCorner = (
             }
         };
 
+        // Déclencher l'animation pour la fluidité
+        if (!animationFrameId) {
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
         currentOnMouseUp = () => {
             // 1. Cancel any pending debounced update
             cancelDebouncedUpdate();
@@ -367,7 +411,7 @@ export const handleAreaDragFromCorner = (
             if (!finalRowState || finalRowState.type !== 'area_row') {
                 console.error("Resize mouseup: Cannot find final row state.");
                 setResizePreviewFn(null); // Attempt cleanup
-                setAreaResizing(false);
+                cleanupResize();
                 currentOnMove = null;
                 currentOnMouseUp = null;
                 return;
@@ -391,13 +435,13 @@ export const handleAreaDragFromCorner = (
             }
 
             // 3. Update global state IMMEDIATELY with final sizes
-            performGlobalUpdate(finalNormalizedSizes);
+            performFinalUpdate(finalNormalizedSizes);
 
             // 4. Clean up preview state AFTER a tick
             setTimeout(() => setResizePreviewFn(null), 0);
 
             // 5. General cleanup
-            setAreaResizing(false);
+            cleanupResize();
             currentOnMove = null;
             currentOnMouseUp = null;
         };
@@ -411,14 +455,14 @@ export const handleAreaDragFromCorner = (
             console.error("Join/Move setup: Source area does not have a valid parent row. Cannot determine siblings.");
             // Cannot proceed with join logic without siblings
             currentOnMove = null;
-            currentOnMouseUp = () => { setAreaResizing(false); useKarmycStore.getState().setJoinPreview(null); }; // Basic cleanup
+            currentOnMouseUp = () => { cleanupResize(); useKarmycStore.getState().setJoinPreview(null); }; // Basic cleanup
             return;
         }
         const sourceAreaIndex = initialParentRow.areas.findIndex(a => a.id === areaId);
         if (sourceAreaIndex === -1) {
             console.error(`Join/Move setup: Source area ${areaId} not found within its supposed parent row ${parentRowId}.`);
             currentOnMove = null;
-            currentOnMouseUp = () => { setAreaResizing(false); useKarmycStore.getState().setJoinPreview(null); };
+            currentOnMouseUp = () => { cleanupResize(); useKarmycStore.getState().setJoinPreview(null); };
             return;
         }
 
@@ -499,7 +543,7 @@ export const handleAreaDragFromCorner = (
             if (getActiveScreenState()?.joinPreview !== null) {
                 useKarmycStore.getState().setJoinPreview(null);
             }
-            setAreaResizing(false);
+            cleanupResize();
             currentOnMove = null;
             currentOnMouseUp = null;
         };
@@ -562,7 +606,7 @@ export const handleAreaDragFromCorner = (
         document.removeEventListener('mouseup', handleMouseUp);
 
         if (!initialDirectionDetermined) {
-            setAreaResizing(false);
+            cleanupResize();
             // Ensure join preview is cleared if mouseup happens early
             if (getActiveScreenState()?.joinPreview !== null) {
                 useKarmycStore.getState().setJoinPreview(null);
@@ -571,7 +615,7 @@ export const handleAreaDragFromCorner = (
             currentOnMouseUp();
         } else {
             console.warn("Mouse up, direction determined but no final handler set.");
-            setAreaResizing(false);
+            cleanupResize();
         }
     };
 

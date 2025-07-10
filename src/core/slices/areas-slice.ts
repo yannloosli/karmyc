@@ -5,16 +5,21 @@ import { JoinPreviewState, setJoinPreview } from "./actions/areas-join-preview";
 import { Rect } from "../../types/math";
 import { Point } from "../../types/math";
 import { splitArea, SplitResult } from "./actions/area-split";
+import { splitAreaOptimized } from "./actions/area-split-optimized";
 import { CardinalDirection, IntercardinalDirection } from "../../types/directions";
 import { RootStateType } from "../store";
 import { StateCreator } from "zustand";
 import { PlaceArea } from "../types/areas-type";
 import { joinOrMoveArea } from "./actions/area-join-move";
+import { joinOrMoveAreaOptimized } from "./actions/area-join-move-optimized";
 import { addArea } from "./actions/add-area";
 import { removeArea } from "./actions/remove-area";
 import { finalizeAreaPlacement } from "./actions/area-finalize-placement";
+import { finalizeAreaPlacementOptimized } from "./actions/area-finalize-placement-optimized";
 import { setRowSizes } from "./actions/area-set-row-sizes";
+import { setRowSizesOptimized, setRowSizesFinal } from "./actions/area-set-row-sizes-optimized";
 import { updateLayout } from "./actions/area-update-layout";
+import { updateLayoutOptimized } from "./actions/area-update-layout-optimized";
 import { setActiveArea } from "./actions/set-active-area";
 import { updateArea } from "./actions/update-area";
 import { setAreaToOpen } from "./actions/set-area-to-open";
@@ -68,6 +73,7 @@ export interface AreasActions {
     cleanupTemporaryStates: () => void;
     setViewports: (viewports: Record<string, Rect>) => void;
     setRowSizes: (payload: { rowId: string; sizes: number[] }) => void;
+    setRowSizesFinal: (payload: { rowId: string; sizes: number[] }) => void;
     splitArea: (payload: {
         areaIdToSplit: string;
         parentRowId: string | null;
@@ -121,14 +127,15 @@ export const createAreasSlice: StateCreator<
     removeArea: removeArea(set),
     setActiveArea: setActiveArea(set),
     updateArea: updateArea(set),
-    updateLayout: updateLayout(set),
+    updateLayout: updateLayoutOptimized(set),
     setAreaToOpen: setAreaToOpen(set),
     updateAreaToOpenPosition: updateAreaToOpenPosition(set),
-    finalizeAreaPlacement: finalizeAreaPlacement(set, get),
+    finalizeAreaPlacement: finalizeAreaPlacementOptimized(set, get),
     cleanupTemporaryStates: cleanupTemporaryStates(set),
     setViewports: setViewports(set),
-    setRowSizes: setRowSizes(set),
-    joinOrMoveArea: joinOrMoveArea(set),
+    setRowSizes: setRowSizesOptimized(set),
+    setRowSizesFinal: setRowSizesFinal(set),
+    joinOrMoveArea: joinOrMoveAreaOptimized(set),
 
     getLastSplitResult: () => {
         // Selector needs access to active screen state via get()

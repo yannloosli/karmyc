@@ -9,7 +9,6 @@ export interface AreaComponentProps<T = any> {
     type: string;
     viewport: Rect;
     raised?: boolean;
-    Component: ComponentType<any>;
 }
 
 export interface IArea<T extends AreaTypeValue = AreaTypeValue> {

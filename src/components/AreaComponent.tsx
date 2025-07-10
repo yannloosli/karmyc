@@ -11,6 +11,7 @@ import { useSpaceStore } from "../core/spaceStore";
 import { AreaDragButton } from "./handlers/AreaDragButton";
 
 interface AreaComponentOwnProps extends AreaComponentProps {
+    Component: React.ComponentType<any>;
     setResizePreview: Dispatch<SetStateAction<ResizePreviewState | null>>;
     isChildOfStack: boolean;
     nbOfLines?: number;

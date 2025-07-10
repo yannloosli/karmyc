@@ -25,5 +25,5 @@
     ".",
     "../src",
     "../style.css"
-  ]
+, "../../website/app/(main-app)/[lng]/(pages)/karmyc/editor/components/AssetManager.tsx", "../../website/app/(main-app)/[lng]/(pages)/karmyc/editor/hooks/useAssets.ts", "../../website/app/(main-app)/[lng]/(pages)/karmyc/editor/hooks/useAssetUrl.ts", "../../website/app/(main-app)/[lng]/(pages)/karmyc/editor/primitives/types/assetTypes.ts"  ]
 } 

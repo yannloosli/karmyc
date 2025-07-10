@@ -36,8 +36,10 @@ function getContrastColor(hexColor: string): string {
 }
 
 export const ColorPicker: React.FC<ColorPickerAreaProps> = ({
+    id,
     state,
     viewport,
+    type,
     targetSpace,
 }) => {
     const { activeSpaceId, updateSpaceProperties } = useSpace();

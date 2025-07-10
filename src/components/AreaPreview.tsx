@@ -1,9 +1,8 @@
 import React from "react";
-import { AreaComponent } from "./AreaComponent";
+import { AreaErrorBoundary } from "./AreaErrorBoundary";
 import { areaRegistry } from "../core/registries/areaRegistry";
 import { Vec2 } from "../utils";
 import { AreaToOpen } from "../types/areaTypes";
-import { t } from '../core/utils/translation';
 
 export interface AreaPreviewProps {
     areaToOpen: AreaToOpen;
@@ -20,28 +19,30 @@ export const AreaPreview: React.FC<AreaPreviewProps> = React.memo(({ areaToOpen,
         <div
             className="area-preview"
             style={{
+                position: 'absolute',
                 left: areaToOpen.position.x,
                 top: areaToOpen.position.y,
+                width: dimensions.x,
+                height: dimensions.y,
+                zIndex: 1000,
+                pointerEvents: 'none',
+                border: '2px dashed #666',
+                borderRadius: '4px',
+                overflow: 'hidden'
             }}
         >
-            <AreaComponent
-                id="-1"
-                Component={Component}
-                raised
-                isChildOfStack={false}
-                state={areaToOpen.area.state}
+            <AreaErrorBoundary
+                component={Component}
+                areaId="-1"
+                areaState={areaToOpen.area.state}
                 type={areaToOpen.area.type}
                 viewport={{
                     left: 0,
                     top: 0,
-                    height: dimensions.y,
                     width: dimensions.x,
+                    height: dimensions.y
                 }}
-                setResizePreview={() => { }}
             />
-            <div className="area-preview-content">
-                {t(`area.preview.${areaToOpen.area.type}`, `Preview of ${areaToOpen.area.type}`)}
-            </div>
         </div>
     );
 }); 

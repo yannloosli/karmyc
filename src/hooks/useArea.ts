@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { AreaTypeValue, AREA_ROLE } from '../core/types/actions';
 import { useKarmycStore } from '../core/store';
 import { IArea } from '../types/areaTypes';
@@ -18,28 +18,41 @@ export interface Position {
  * Provides functions to manipulate areas and access their state
  */
 export function useArea() {
-    const {
-        addArea,
-        removeArea: removeAreaAction,
-        setActiveArea,
-        updateArea,
-        getActiveArea,
-        getAreaById,
-        getAllAreas,
-        getAreaErrors
-    } = useKarmycStore();
+    // Mémoriser les actions pour éviter les re-créations
+    const actions = useMemo(() => {
+        const {
+            addArea,
+            removeArea: removeAreaAction,
+            setActiveArea,
+            updateArea,
+            getActiveArea,
+            getAreaById,
+            getAllAreas,
+            getAreaErrors
+        } = useKarmycStore.getState();
+
+        return {
+            addArea,
+            removeAreaAction,
+            setActiveArea,
+            updateArea,
+            getActiveArea,
+            getAreaById,
+            getAllAreas,
+            getAreaErrors
+        };
+    }, []);
 
     const createArea = useCallback((type: AreaTypeValue, state: any, position?: Position, id?: string): string => {
-        // Vérifier si le type est valide
-        const registeredTypes = areaRegistry.getRegisteredTypes();
-        if (!registeredTypes.has(type)) {
-            // Au lieu de bloquer la création, on journalise une erreur et on poursuit.
-            console.error(`[useArea] Invalid area type: ${type}`);
+        // Vérifier si le type est valide et utiliser un fallback si nécessaire
+        const validType = areaRegistry.getFallbackType(type);
+        if (validType !== type) {
+            console.warn(`[useArea] Using fallback type "${validType}" for invalid type "${type}"`);
         }
 
         const area: IArea<AreaTypeValue> = {
             id: id || '',
-            type,
+            type: validType as AreaTypeValue,
             state,
             position
         };
@@ -64,36 +77,36 @@ export function useArea() {
                 }
             }
         }
-        return addArea(area);
-    }, [addArea]);
+        return actions.addArea(area);
+    }, [actions.addArea]);
 
     const removeArea = useCallback((id: string) => {
-        removeAreaAction(id);
-    }, [removeAreaAction]);
+        actions.removeAreaAction(id);
+    }, [actions.removeAreaAction]);
 
     const setActive = useCallback((id: string | null) => {
-        setActiveArea(id);
-    }, [setActiveArea]);
+        actions.setActiveArea(id);
+    }, [actions.setActiveArea]);
 
     const update = useCallback((id: string, changes: Partial<IArea<AreaTypeValue>>) => {
-        updateArea({ id, ...changes });
-    }, [updateArea]);
+        actions.updateArea({ id, ...changes });
+    }, [actions.updateArea]);
 
     const getActive = useCallback(() => {
-        return getActiveArea();
-    }, [getActiveArea]);
+        return actions.getActiveArea();
+    }, [actions.getActiveArea]);
 
     const getById = useCallback((id: string) => {
-        return getAreaById(id);
-    }, [getAreaById]);
+        return actions.getAreaById(id);
+    }, [actions.getAreaById]);
 
     const getAll = useCallback(() => {
-        return getAllAreas();
-    }, [getAllAreas]);
+        return actions.getAllAreas();
+    }, [actions.getAllAreas]);
 
     const getErrors = useCallback(() => {
-        return getAreaErrors();
-    }, [getAreaErrors]);
+        return actions.getAreaErrors();
+    }, [actions.getAreaErrors]);
 
     return {
         createArea,

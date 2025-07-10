@@ -2,8 +2,15 @@ import React from 'react';
 import { keyboardShortcutRegistry } from '../core/registries/keyboardShortcutRegistry';
 import { KeyboardShortcut } from '../core/registries/keyboardShortcutRegistry';
 import { t } from '../core/utils/translation';
+import { AreaComponentProps } from '../types/areaTypes';
 
-const KeyboardShortcutsViewer: React.FC = () => {
+const KeyboardShortcutsViewer: React.FC<AreaComponentProps> = ({
+    id: _id,
+    state: _state,
+    type: _type,
+    viewport,
+    raised: _raised
+}) => {
     
     const allShortcuts = keyboardShortcutRegistry.getAllShortcuts();
     

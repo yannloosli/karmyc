@@ -10,6 +10,7 @@ import { AreaStack } from "./AreaStack";
 import { AreaRowLayout } from "../types/areaTypes";
 import { AreaComponent } from "./AreaComponent";
 import { useAreaStack } from "../hooks/useAreaStack";
+import { useAreaById, useAreaLayoutById, useAllAreas, useActiveScreenId } from "../hooks/useAreaOptimized";
 
 interface OwnProps {
     id: string;
@@ -21,10 +22,11 @@ interface AreaContainerProps extends OwnProps {
 }
 
 export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, setResizePreview }) => {
-    const areaData = useKarmycStore(state => state.getAreaById(id));
-    const layoutData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.layout[id]);
-    const allAreasData = useKarmycStore(state => state.screens[state.activeScreenId]?.areas.areas);
-    const activeScreenId = useKarmycStore((state) => state.activeScreenId);
+    // Utilisation des hooks optimisés
+    const areaData = useAreaById(id);
+    const layoutData = useAreaLayoutById(id);
+    const allAreasData = useAllAreas();
+    const activeScreenId = useActiveScreenId();
     const isDetached = useKarmycStore((state) => state.screens[activeScreenId]?.isDetached) || false;
     const { isChildOfStack } = useAreaStack(id);
 
@@ -36,7 +38,7 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const Component = areaData?.type ? areaRegistry.getComponent(areaData.type) : null;
 
     let activeAreaIdForRender = id;
-    let dataForRender = areaData;
+    let dataForRender: any = areaData;
     let componentForRender = Component;
 
     if (isStack) {
@@ -56,76 +58,76 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     const { getComponents: getParentStatusComponents } = useToolsSlot(dataForRender?.type || '', 'bottom-outer');
     const parentMenuComponents = getParentMenuComponents();
     const parentStatusComponents = getParentStatusComponents();
+    const { lastChildOfRow } = useAreaStack(id);
 
     // Calculer les hauteurs des toolbars du parent
     const hasParentTopOuter = parentMenuComponents.length > 0;
     const hasParentBottomOuter = parentStatusComponents.length > 0;
     const parentTopOuterHeight = hasParentTopOuter ? TOOLBAR_HEIGHT : 0;
     const parentBottomOuterHeight = hasParentBottomOuter ? TOOLBAR_HEIGHT : 0;
-
+    
     const adjustedViewport = useMemo(() => {
         // Si l'écran est détaché, ne pas ajuster le viewport
         if (isDetached) {
             return viewport;
         }
-
         // Ajuster le viewport en fonction des toolbars du parent
         return {
             ...viewport,
             top: viewport.top /* + parentTopOuterHeight */,
-            height: viewport.height /* - parentTopOuterHeight - parentBottomOuterHeight */
-        };
+            height: viewport.height + (lastChildOfRow===id ? (- parentTopOuterHeight - parentBottomOuterHeight) : 0)
+};
     }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight]);
 
-    const containerStyle = useMemo(() => ({
-        position: 'absolute' as const,
-        left: adjustedViewport.left,
-        top: adjustedViewport.top,
-        width: adjustedViewport.width,
-        height: adjustedViewport.height,
-        display: 'flex',
-        flexDirection: isHorizontalOrVerticalRow 
-            ? (rowLayout?.orientation === 'horizontal' ? 'row' : 'column') 
-            : 'column' as 'row' | 'column',
-    }), [adjustedViewport, isHorizontalOrVerticalRow, rowLayout?.orientation]);
+const containerStyle = useMemo(() => ({
+    position: 'absolute' as const,
+    left: adjustedViewport.left,
+    top: adjustedViewport.top,
+    width: adjustedViewport.width,
+    height: adjustedViewport.height,
+    display: 'flex',
+    flexDirection: isHorizontalOrVerticalRow
+        ? (rowLayout?.orientation === 'horizontal' ? 'row' : 'column')
+        : 'column' as 'row' | 'column',
+}), [adjustedViewport, isHorizontalOrVerticalRow, rowLayout?.orientation]);
 
-    const contentViewport = useMemo(() => ({
-        left: 0,
-        top: 0,
-        width: adjustedViewport.width,
-        height: adjustedViewport.height
-    }), [adjustedViewport]);
+const contentViewport = useMemo(() => ({
+    left: 0,
+    top: 0,
+    width: adjustedViewport.width,
+    height: adjustedViewport.height
+}), [adjustedViewport]);
 
-    return (
-        (!id.includes('row-') || isStack) && (id !== 'root') &&
-        (<div
-            className={"area-container " + id}
-            style={containerStyle}
-            data-areaid={id}
-            data-testid={`area-${id}`}
-            data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
-        >
-            {isStack && rowLayout &&
-                (<AreaStack
-                    id={id}
-                    areas={allAreasData}
-                    layout={rowLayout}
-                    viewport={contentViewport}
-                    setResizePreview={setResizePreview}
-                />)
-            }
-            {!isLayoutRow && !isChildOfStack && componentForRender && dataForRender &&
-                <AreaComponent
-                    id={dataForRender.id}
-                    Component={componentForRender}
-                    state={dataForRender.state}
-                    type={dataForRender.type as AreaTypeValue}
-                    viewport={contentViewport}
-                    raised={!!dataForRender.raised}
-                    setResizePreview={setResizePreview}
-                    isChildOfStack={false}
-                />
-            }
-        </div>)
-    );
+return (
+    (!id.includes('row-') || isStack) && (id !== 'root') &&
+    (<div
+        className={"area-container " + id}
+        style={containerStyle}
+        data-areaid={id}
+        data-testid={`area-${id}`}
+        data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
+    >
+        {isStack && rowLayout &&
+            (<AreaStack
+                id={id}
+                areas={allAreasData}
+                layout={rowLayout}
+                viewport={contentViewport}
+                setResizePreview={setResizePreview}
+            />)
+        }
+        {!isLayoutRow && !isChildOfStack && componentForRender && dataForRender &&
+            <AreaComponent
+                id={dataForRender.id}
+                Component={componentForRender}
+                state={dataForRender.state}
+                type={dataForRender.type as AreaTypeValue}
+                viewport={contentViewport}
+                raised={!!dataForRender.raised}
+                setResizePreview={setResizePreview}
+                isChildOfStack={false}
+            />
+        }
+    </div>)
+);
 }); 

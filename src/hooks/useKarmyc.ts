@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 
 import { AREA_ROLE } from '@core/types/actions';
 import { useKarmycStore, initializeMainStore } from '@core/store';
@@ -47,21 +47,110 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
         optionsRef.current = options;
     }, [options]);
 
+    // Mémoriser la fonction de validation des zones
+    const validateAreaConfig = useCallback((area: any): boolean => {
+        // Vérifier si le rôle est valide
+        if (area.role && !Object.values(AREA_ROLE).includes(area.role)) {
+            console.warn(`Zone invalide ignorée: rôle "${area.role}" non reconnu`);
+            return false;
+        }
+        // Vérifier si le type est défini
+        if (!area.type) {
+            console.warn('Zone invalide ignorée: type non défini');
+            return false;
+        }
+        return true;
+    }, []);
+
+    // Mémoriser la fonction de création de zone
+    const createAreaWithValidation = useCallback((areaConfig: any, index: number, seenAreaIds: Set<string>): string | undefined => {
+        // Vérification des doublons d'ID de zone
+        if (areaConfig.id && seenAreaIds.has(areaConfig.id)) {
+            const error = new Error(`Duplicate area ID: ${areaConfig.id}`);
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error);
+            return undefined;
+        }
+
+        if (!areaConfig || typeof areaConfig !== 'object') {
+            const error = new Error(`Invalid area config at index ${index}`);
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error);
+            return undefined;
+        }
+
+        // Ajouter l'ID à l'ensemble après les vérifications structurelles de base
+        if (areaConfig.id) {
+            seenAreaIds.add(areaConfig.id);
+        }
+
+        if (!areaConfig.type || typeof areaConfig.type !== 'string') {
+            const error = new Error(`Invalid area type for area at index ${index}`);
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error);
+            return undefined;
+        }
+
+        // Valider la configuration de la zone
+        const validation = validateArea(areaConfig);
+        if (!validation.isValid) {
+            const error = new Error(`Invalid area configuration: ${validation.errors.join(', ')}`);
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error);
+            return undefined;
+        }
+
+        try {
+            return createArea(
+                areaConfig.type,
+                areaConfig.state || {},
+                undefined,
+                areaConfig.id
+            );
+        } catch (error) {
+            console.error('[KarmycInitializer] Invalid area config', error);
+            onError?.(error instanceof Error ? error : new Error(String(error)));
+            return undefined;
+        }
+    }, [createArea, onError]);
+
+    // Mémoriser la fonction d'initialisation des plugins
+    const initializePlugins = useCallback((plugins: IKarmycOptions['plugins'] = []) => {
+        const defaultPlugins = [historyPlugin];
+        const allPlugins = [...defaultPlugins, ...plugins];
+
+        allPlugins.forEach(plugin => {
+            if (plugin && typeof plugin === 'object' && plugin.id) {
+                actionRegistry.registerPlugin(plugin);
+            }
+        });
+    }, []);
+
+    // Mémoriser la fonction d'initialisation des validateurs
+    const initializeValidators = useCallback((validators: IKarmycOptions['validators'] = []) => {
+        validators.forEach(({ actionType, validator }) => {
+            if (actionType && typeof validator === 'function') {
+                actionRegistry.registerValidator(actionType, validator);
+            }
+        });
+    }, []);
+
+    // Mémoriser la fonction de validation des espaces
+    const validateSpaces = useCallback((spaces: IKarmycOptions['spaces'] = {}) => {
+        for (const [spaceId, spaceConfig] of Object.entries(spaces)) {
+            if (!spaceConfig || typeof spaceConfig !== 'object' || !spaceConfig.name) {
+                const error = new Error(`Invalid space configuration for space ${spaceId}`);
+                console.error('[KarmycInitializer] Invalid area config', error);
+                onError?.(error);
+                return false;
+            }
+        }
+        return true;
+    }, [onError]);
+
     const config = useMemo(() => {
         // Filtrer les zones invalides
-        const validAreas = (optionsRef.current.initialAreas ?? []).filter(area => {
-            // Vérifier si le rôle est valide
-            if (area.role && !Object.values(AREA_ROLE).includes(area.role)) {
-                console.warn(`Zone invalide ignorée: rôle "${area.role}" non reconnu`);
-                return false;
-            }
-            // Vérifier si le type est défini
-            if (!area.type) {
-                console.warn('Zone invalide ignorée: type non défini');
-                return false;
-            }
-            return true;
-        });
+        const validAreas = (optionsRef.current.initialAreas ?? []).filter(validateAreaConfig);
 
         return {
             plugins: optionsRef.current.plugins ?? [],
@@ -77,7 +166,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                 builtInLayouts: optionsRef.current.builtInLayouts ?? []
             }
         };
-    }, []); // Ne dépend plus des options directement
+    }, [validateAreaConfig]); // Dépendance optimisée
 
     // Initialisation du système - seulement côté client
     useEffect(() => {
@@ -96,37 +185,15 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                     setTranslationFunction(optionsRef.current.t);
                 }
 
-                // Enregistrer les plugins par défaut
-                const defaultPlugins = [historyPlugin];
-                const customPlugins = optionsRef.current.plugins || [];
-                const allPlugins = [...defaultPlugins, ...customPlugins];
+                // Initialiser les plugins
+                initializePlugins(optionsRef.current.plugins);
 
-                allPlugins.forEach(plugin => {
-                    if (plugin && typeof plugin === 'object' && plugin.id) {
-                        actionRegistry.registerPlugin(plugin);
-                    }
-                });
+                // Initialiser les validateurs
+                initializeValidators(optionsRef.current.validators);
 
-                // Enregistrer les validateurs
-                if (optionsRef.current.validators) {
-                    optionsRef.current.validators.forEach(({ actionType, validator }) => {
-                        if (actionType && typeof validator === 'function') {
-                            actionRegistry.registerValidator(actionType, validator);
-                        }
-                    });
-                }
-
-                // 1️⃣ Validation des espaces avant toute initialisation d'aires
-                if (optionsRef.current.spaces) {
-                    for (const [spaceId, spaceConfig] of Object.entries(optionsRef.current.spaces)) {
-                        if (!spaceConfig || typeof spaceConfig !== 'object' || !spaceConfig.name) {
-                            const error = new Error(`Invalid space configuration for space ${spaceId}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
-                            // Arrêter l'initialisation, aucune aire ne sera créée
-                            return;
-                        }
-                    }
+                // Validation des espaces avant toute initialisation d'aires
+                if (!validateSpaces(optionsRef.current.spaces)) {
+                    return; // Arrêter l'initialisation si validation échoue
                 }
 
                 // Initialiser les zones
@@ -142,62 +209,9 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                     const newAreaIds: string[] = [];
 
                     areasToInitialize.forEach((areaConfig, index) => {
-                        // Vérification des doublons d'ID de zone
-                        if (areaConfig.id && seenAreaIds.has(areaConfig.id)) {
-                            const error = new Error(`Duplicate area ID: ${areaConfig.id}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
-                            // On ignore simplement cette zone pour ne pas écraser l'instance existante
-                            return;
-                        }
-
-                        if (!areaConfig || typeof areaConfig !== 'object') {
-                            const error = new Error(`Invalid area config at index ${index}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
-                            return;
-                        }
-
-                        // Ajouter l'ID à l'ensemble après les vérifications structurelles de base
-                        if (areaConfig.id) {
-                            seenAreaIds.add(areaConfig.id);
-                        }
-
-                        if (!areaConfig.type || typeof areaConfig.type !== 'string') {
-                            const error = new Error(`Invalid area type for area at index ${index}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
-                            return;
-                        }
-
-                        // Valider la configuration de la zone
-                        const validation = validateArea(areaConfig);
-                        if (!validation.isValid) {
-                            const error = new Error(`Invalid area configuration: ${validation.errors.join(', ')}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
-                            return;
-                        }
-
-                        let newId: string | undefined;
-                        try {
-                            newId = createArea(
-                                areaConfig.type,
-                                areaConfig.state || {},
-                                undefined,
-                                areaConfig.id
-                            );
-                        } catch (error) {
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error instanceof Error ? error : new Error(String(error)));
-                            return;
-                        }
+                        const newId = createAreaWithValidation(areaConfig, index, seenAreaIds);
                         if (newId) {
                             newAreaIds.push(newId);
-                        } else {
-                            const error = new Error(`Failed to create area at index ${index}`);
-                            console.error('[KarmycInitializer] Invalid area config', error);
-                            onError?.(error);
                         }
                     });
 
@@ -284,7 +298,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                 onError?.(error instanceof Error ? error : new Error(String(error)));
             }
         };
-    }, [config, onError, createArea]);
+    }, [config, onError, createArea, initializePlugins, initializeValidators, validateSpaces, createAreaWithValidation]);
 
     return config;
 }

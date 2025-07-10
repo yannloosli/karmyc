@@ -39,8 +39,9 @@
         "**/*.ts",
         "**/*.tsx",
         "**/*.css",
-        "index.ts"
-, "demo/ssr-app/next.config.mjs"    ],
+        "index.ts",
+        "demo/ssr-app/next.config.mjs",
+    ],
     "exclude": [
         "node_modules",
         "**/dist",

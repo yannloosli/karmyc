@@ -23,10 +23,9 @@ export const useAreaStack = (areaId: string) => {
     const stackData = useKarmycStore(state => {
         const activeScreenLayout = state.screens[state.activeScreenId]?.areas.layout;
         if (!activeScreenLayout) return null;
-
+        
         for (const [layoutId, layoutItem] of Object.entries(activeScreenLayout)) {
             if (layoutItem.type === 'area_row' &&
-                layoutItem.orientation === 'stack' &&
                 layoutItem.areas.some(areaRef => areaRef.id === areaId)) {
                 return {
                     layoutId,
@@ -37,9 +36,25 @@ export const useAreaStack = (areaId: string) => {
         }
         return null;
     });
+    
+    const firstChildOfRow = () => {
+        if(!stackData) return null;
+        const areas = [...stackData.layout.areas];
+
+        return areas.shift()?.id;
+    };
+
+    const lastChildOfRow = () => {
+        if(!stackData) return null;
+        const areas = [...stackData.layout.areas];
+
+        return areas.pop()?.id;
+    };
 
     return {
         isChildOfStack,
-        stackData
+        stackData,
+        firstChildOfRow: firstChildOfRow(),
+        lastChildOfRow: lastChildOfRow()
     };
 }; 
