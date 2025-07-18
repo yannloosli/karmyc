@@ -54,49 +54,56 @@ export const Area: React.FC<AreaContainerProps> = React.memo(({ id, viewport, se
     }
 
     // Récupérer les toolbars du parent
-    const { getComponents: getParentMenuComponents } = useToolsSlot(dataForRender?.type || '', 'top-outer');
-    const { getComponents: getParentStatusComponents } = useToolsSlot(dataForRender?.type || '', 'bottom-outer');
+    const { getComponents: getParentMenuComponents, getLines: getParentMenuLines } = useToolsSlot(dataForRender?.id || '', 'top-outer');
+    const { getComponents: getParentStatusComponents, getLines: getParentStatusLines } = useToolsSlot(dataForRender?.id || '', 'bottom-outer');
     const parentMenuComponents = getParentMenuComponents();
     const parentStatusComponents = getParentStatusComponents();
+    const parentMenuLines = getParentMenuLines();
+    const parentStatusLines = getParentStatusLines();
     const { lastChildOfRow } = useAreaStack(id);
 
     // Calculer les hauteurs des toolbars du parent
     const hasParentTopOuter = parentMenuComponents.length > 0;
     const hasParentBottomOuter = parentStatusComponents.length > 0;
-    const parentTopOuterHeight = hasParentTopOuter ? TOOLBAR_HEIGHT : 0;
-    const parentBottomOuterHeight = hasParentBottomOuter ? TOOLBAR_HEIGHT : 0;
+    const parentTopOuterHeight = hasParentTopOuter ? TOOLBAR_HEIGHT * parentMenuLines : 0;
+    const parentBottomOuterHeight = hasParentBottomOuter ? TOOLBAR_HEIGHT * parentStatusLines : 0;
     
+    // Ne rendre les toolbars outer que si c'est une area racine (pas un enfant de stack)
+    const isRootArea = !isChildOfStack && id === 'root';
     const adjustedViewport = useMemo(() => {
         // Si l'écran est détaché, ne pas ajuster le viewport
         if (isDetached) {
             return viewport;
         }
-        // Ajuster le viewport en fonction des toolbars du parent
-        return {
-            ...viewport,
-            top: viewport.top /* + parentTopOuterHeight */,
-            height: viewport.height + (lastChildOfRow===id ? (- parentTopOuterHeight - parentBottomOuterHeight) : 0)
-};
-    }, [viewport, isDetached, parentTopOuterHeight, parentBottomOuterHeight]);
+        // Ajuster le viewport en fonction des toolbars du parent seulement si elles existent
+        if (hasParentTopOuter || hasParentBottomOuter) {
+            return {
+                ...viewport,
+                top: viewport.top + parentTopOuterHeight,
+                height: viewport.height - parentTopOuterHeight - parentBottomOuterHeight
+            };
+        }
+        return viewport;
+    }, [viewport, isDetached, hasParentTopOuter, hasParentBottomOuter, parentTopOuterHeight, parentBottomOuterHeight]);
 
 const containerStyle = useMemo(() => ({
     position: 'absolute' as const,
     left: adjustedViewport.left,
-    top: adjustedViewport.top,
+    top: adjustedViewport.top - (hasParentTopOuter ? parentTopOuterHeight : 0),
     width: adjustedViewport.width,
-    height: adjustedViewport.height,
+    height: adjustedViewport.height + (hasParentTopOuter ? parentTopOuterHeight : 0) + (hasParentBottomOuter ? parentBottomOuterHeight : 0),
     display: 'flex',
     flexDirection: isHorizontalOrVerticalRow
         ? (rowLayout?.orientation === 'horizontal' ? 'row' : 'column')
         : 'column' as 'row' | 'column',
-}), [adjustedViewport, isHorizontalOrVerticalRow, rowLayout?.orientation]);
+}), [adjustedViewport, isHorizontalOrVerticalRow, rowLayout?.orientation, hasParentTopOuter, hasParentBottomOuter, parentTopOuterHeight, parentBottomOuterHeight]);
 
 const contentViewport = useMemo(() => ({
     left: 0,
-    top: 0,
+    top: hasParentTopOuter ? parentTopOuterHeight : 0,
     width: adjustedViewport.width,
-    height: adjustedViewport.height
-}), [adjustedViewport]);
+    height: adjustedViewport.height - (hasParentBottomOuter ? parentBottomOuterHeight : 0)
+}), [adjustedViewport, hasParentTopOuter, hasParentBottomOuter, parentTopOuterHeight, parentBottomOuterHeight]);
 
 return (
     (!id.includes('row-') || isStack) && (id !== 'root') &&
@@ -107,6 +114,54 @@ return (
         data-testid={`area-${id}`}
         data-areatype={isStack ? 'stack-row' : isHorizontalOrVerticalRow ? `${rowLayout?.orientation}-row` : areaData?.type || 'unknown-leaf'}
     >
+        {isRootArea && hasParentTopOuter && (
+            <div
+                className="tools-bar tools-bar-top-outer"
+                style={{
+                    height: parentTopOuterHeight,
+                    position: 'absolute',
+                    top: -parentTopOuterHeight,
+                    left: 0,
+                    right: 0,
+                    zIndex: 10
+                }}
+            >
+                {parentMenuComponents.map((item, idx) => {
+                    const Component = item.component;
+                    return (
+                        <Component
+                            key={`${item.identifier.type}-${item.identifier.name}-${idx}`}
+                            areaState={dataForRender?.state}
+                        />
+                    );
+                })}
+            </div>
+        )}
+        
+        {isRootArea && hasParentBottomOuter && (
+            <div
+                className="tools-bar tools-bar-bottom-outer"
+                style={{
+                    height: parentBottomOuterHeight,
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 10
+                }}
+            >
+                {parentStatusComponents.map((item, idx) => {
+                    const Component = item.component;
+                    return (
+                        <Component
+                            key={`${item.identifier.type}-${item.identifier.name}-${idx}`}
+                            areaState={dataForRender?.state}
+                        />
+                    );
+                })}
+            </div>
+        )}
+        
         {isStack && rowLayout &&
             (<AreaStack
                 id={id}

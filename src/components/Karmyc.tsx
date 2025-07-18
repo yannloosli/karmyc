@@ -9,6 +9,8 @@ import { AreaToOpenPreview } from "./AreaToOpenPreview";
 import { JoinAreaPreview } from "./JoinAreaPreview";
 import { DetachedWindowCleanup } from "./DetachedWindowCleanup";
 import { areViewportMapsEqual } from "../utils/objectEquality";
+import { useToolsSlot } from './ToolsSlot';
+import { TOOLBAR_HEIGHT } from '../utils/constants';
 
 interface Rect {
     left: number;
@@ -29,7 +31,40 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
     return state.screens[state.activeScreenId]?.areas;
 };
 
+// Hook pour calculer l'offset total des toolbars outer
+function useOuterToolbarsOffset() {
+    // Récupérer les toolbars outer de tous les niveaux
+    const { getComponents: getAppTitleTopOuter, getLines: getAppTitleTopLines } = useToolsSlot('apptitle', 'top-outer');
+    const { getComponents: getAppTitleBottomOuter, getLines: getAppTitleBottomLines } = useToolsSlot('apptitle', 'bottom-outer');
+    const { getComponents: getAppTopOuter, getLines: getAppTopLines } = useToolsSlot('app', 'top-outer');
+    const { getComponents: getAppBottomOuter, getLines: getAppBottomLines } = useToolsSlot('app', 'bottom-outer');
+
+    return useMemo(() => {
+        const appTitleTopOuter = getAppTitleTopOuter();
+        const appTitleBottomOuter = getAppTitleBottomOuter();
+        const appTopOuter = getAppTopOuter();
+        const appBottomOuter = getAppBottomOuter();
+
+        const appTitleTopLines = getAppTitleTopLines();
+        const appTitleBottomLines = getAppTitleBottomLines();
+        const appTopLines = getAppTopLines();
+        const appBottomLines = getAppBottomLines();
+
+        const topOffset = (appTitleTopOuter.length > 0 ? TOOLBAR_HEIGHT * appTitleTopLines : 0) +
+                         (appTopOuter.length > 0 ? TOOLBAR_HEIGHT * appTopLines : 0);
+        const bottomOffset = (appTitleBottomOuter.length > 0 ? TOOLBAR_HEIGHT * appTitleBottomLines : 0) +
+                            (appBottomOuter.length > 0 ? TOOLBAR_HEIGHT * appBottomLines : 0);
+
+        return { topOffset, bottomOffset, totalOffset: topOffset + bottomOffset };
+    }, [getAppTitleTopOuter, getAppTitleBottomOuter, getAppTopOuter, getAppBottomOuter, 
+        getAppTitleTopLines, getAppTitleBottomLines, getAppTopLines, getAppBottomLines]);
+}
+
 export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
+    // Calculer dynamiquement l'offset des toolbars outer
+    const { topOffset, bottomOffset, totalOffset: dynamicOffset } = useOuterToolbarsOffset();
+    const totalOffset = offset + dynamicOffset;
+
     // Selectors for active screen state
     const activeScreenAreas = useKarmycStore(selectActiveScreenAreas);
     const isDetached = useKarmycStore(state => state.screens[state.activeScreenId]?.isDetached);
@@ -201,7 +236,14 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         }
 
         try {
-            const newViewportMap = computeAreaToViewport(layout, rootId, { ...viewport, top: viewport.top + offset });
+            // Ajuster le viewport de base pour tenir compte des toolbars outer
+            const adjustedViewport = {
+                ...viewport,
+                top: viewport.top,
+                height: viewport.height - topOffset - bottomOffset
+            };
+            
+            const newViewportMap = computeAreaToViewport(layout, rootId, adjustedViewport);
             const currentStoreViewports = useKarmycStore.getState().screens[useKarmycStore.getState().activeScreenId]?.areas.viewports;
 
             // Ne mettre à jour que si les viewports ont réellement changé
@@ -226,7 +268,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
         } catch (error) {
             console.error("[Karmyc] Erreur lors du calcul du viewportMap:", error);
         }
-    }, [layout, rootId, viewport, resizePreview, areaToOpen, setViewports]);
+    }, [layout, rootId, viewport, resizePreview, areaToOpen, setViewports, totalOffset]);
 
     const getAreaVisualViewport = useCallback((areaId: string): Rect | undefined => {
         const state = useKarmycStore.getState();
@@ -343,7 +385,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                         if (areChildrenReady) {
                             return (
                                 <AreaRowSeparators
-                                    offset={offset}
+                                    offset={0}
                                     key={item.id}
                                     row={rowLayout}
                                     setResizePreview={setResizePreview}
@@ -362,7 +404,7 @@ export const Karmyc: React.FC<{ offset?: number }> = ({ offset = 0 }) => {
                             <Area
                                 key={id}
                                 id={id}
-                                viewport={{ ...visualViewport, top: visualViewport.top - offset }}
+                                viewport={visualViewport}
                                 setResizePreview={setResizePreview}
                             />
                         );

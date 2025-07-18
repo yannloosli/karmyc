@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useKarmyc } from '../src/hooks/useKarmyc';
 import { KarmycCoreProvider } from '../src/core/KarmycCoreProvider';
 import { Tools } from '../src/components/ToolsSlot';
-import { TOOLBAR_HEIGHT } from '../src/utils/constants';
 
 import '../style.css';
 import { AreaInitializer } from './shared/config/AreaInitializer';
@@ -19,7 +18,7 @@ const App: React.FC = () => {
             <ContextMenu />
             <Tools areaType="apptitle">
                 <Tools areaType="app">
-                    <Karmyc offset={TOOLBAR_HEIGHT * 2} />
+                    <Karmyc />
                 </Tools>
             </Tools>
         </KarmycCoreProvider>

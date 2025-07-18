@@ -18,6 +18,14 @@ export interface ActionMetadata {
     isVisible?: () => boolean;
     order?: number;
     actionType?: string;
+    
+    // History Metadata
+    history?: {
+        enabled: boolean;           // If the action should be recorded in history
+        type: string;              // Action type for history (e.g. 'draw/addLine')
+        getDescription?: (params: any) => string;  // Function to generate the description
+        getPayload?: (params: any) => any;        // Function to extract the payload
+    };
 }
 
 /**
@@ -166,6 +174,24 @@ class ActionRegistry implements IActionRegistry {
     executeAction(actionId: string, params: any): boolean {
         const action = this.actionHandlers.get(actionId);
         if (action?.handler) {
+            // Vérifier si l'action doit être historisée
+            const shouldRecordHistory = action.metadata?.history?.enabled !== false;
+            
+            if (shouldRecordHistory) {
+                // Créer une action pour l'historique
+                const historyAction: Action = {
+                    type: action.metadata?.history?.type || actionId,
+                    payload: action.metadata?.history?.getPayload ? 
+                        action.metadata.history.getPayload(params) : 
+                        params,
+                    timestamp: Date.now()
+                };
+                
+                // Envoyer aux plugins (y compris le plugin d'historique)
+                this.handleAction(historyAction);
+            }
+            
+            // Exécuter le handler de l'action
             action.handler(params);
             return true;
         }

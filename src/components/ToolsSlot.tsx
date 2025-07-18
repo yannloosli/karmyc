@@ -373,14 +373,17 @@ export const Tools: React.FC<ToolsProps> = ({
             }}
             data-testid="tools-container"
         >
+            {hasTopOuter && renderToolbar(menuComponents, 'top-outer', menuNbOfLines)}
+            {hasBottomOuter && renderToolbar(statusComponents, 'bottom-outer', statusNbOfLines)}
+            
             <div
                 className="tools-content"
                 style={{
                     position: 'absolute',
-                    top: topOuterHeight,
+                    top: hasTopOuter ? topOuterHeight : 0,
                     left: 0,
                     right: 0,
-                    bottom: bottomOuterHeight,
+                    bottom: hasBottomOuter ? bottomOuterHeight : 0,
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column'
@@ -392,8 +395,6 @@ export const Tools: React.FC<ToolsProps> = ({
                 </div>
             </div>
 
-            {hasTopOuter && renderToolbar(menuComponents, 'top-outer', menuNbOfLines)}
-            {hasBottomOuter && renderToolbar(statusComponents, 'bottom-outer', statusNbOfLines)}
             {hasTopInner && renderToolbar(toolbarTopInnerComponents, 'top-inner', toolbarTopInnerNbOfLines)}
             {hasBottomInner && renderToolbar(toolbarBottomInnerComponents, 'bottom-inner', toolbarBottomInnerNbOfLines)}
         </div>

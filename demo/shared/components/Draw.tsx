@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useReducer, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks';
 import { useKarmycStore } from '../../../src/core/store';
 import { useSpaceStore, SpaceSharedState } from '../../../src/core/spaceStore';
+import { useEnhancedHistory } from '../../../src/hooks/useHistory';
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/hooks/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/core/registries/actionRegistry';
 import { t } from '../../../src/core/utils/translation';
-import React from 'react';
+import * as React from 'react';
 
 interface DrawingState { }
 
@@ -36,6 +37,9 @@ const defaultSharedState: DrawSharedState = {
 export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     id,
     viewport
+}: {
+    id: string;
+    viewport: { width: number; height: number };
 }) => {
     const currentArea = useKarmycStore(state => {
         const activeScreenAreas = state.screens[state.activeScreenId]?.areas;
@@ -44,85 +48,189 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     const currentSpaceId = currentArea?.spaceId ?? null;
     const { updateSharedState } = useSpace();
 
-    // --- Zustand selectors for reactive state and actions ---
-    const { undoSharedState, redoSharedState, getSpaceById } = useSpaceStore();
+    // --- Nouveau système d'historique amélioré ---
+    const history = currentSpaceId ? useEnhancedHistory(currentSpaceId) : null;
 
-    const { color, sharedState = defaultSharedState, canUndo, canRedo } = useSpaceStore(useShallow(state => {
+    // --- Zustand selectors for reactive state and actions ---
+    const { getSpaceById } = useSpaceStore();
+
+    // Correction de l'accès aux données avec la nouvelle structure
+    const { color, lines = [], strokeWidth = 3 } = useSpaceStore(state => {
         const space = currentSpaceId ? state.spaces[currentSpaceId] : null;
+        const currentState = space?.sharedState?.currentState || {};
+        // Forcer la réactivité en incluant les clés spécifiques
         return {
             color: space?.color ?? '#000000',
-            sharedState: (space?.sharedState ?? defaultSharedState) as DrawSharedState,
-            canUndo: (space?.sharedState?.pastDiffs?.length ?? 0) > 0,
-            canRedo: (space?.sharedState?.futureDiffs?.length ?? 0) > 0,
+            lines: currentState.lines || [],
+            strokeWidth: currentState.strokeWidth || 3,
+            // Ajouter des clés pour forcer la réactivité
+            currentStateKeys: Object.keys(currentState),
+            pastActionsLength: space?.sharedState?.pastActions?.length || 0,
+            futureActionsLength: space?.sharedState?.futureActions?.length || 0,
         }
-    }));
+    });
 
-    const { lines = [], strokeWidth = 3 } = sharedState;
+    // Debug: Afficher l'état actuel
+    useEffect(() => {
+        console.log('[Draw] État actuel:', {
+            currentSpaceId,
+            color,
+            lines: lines.length,
+            strokeWidth,
+            spaceExists: currentSpaceId ? !!getSpaceById(currentSpaceId) : false,
+            currentState: currentSpaceId ? getSpaceById(currentSpaceId)?.sharedState?.currentState : null,
+            linesContent: lines.slice(0, 3), // Afficher les 3 premières lignes pour debug
+            pastActionsLength: currentSpaceId ? getSpaceById(currentSpaceId)?.sharedState?.pastActions?.length || 0 : 0,
+            futureActionsLength: currentSpaceId ? getSpaceById(currentSpaceId)?.sharedState?.futureActions?.length || 0 : 0
+        });
+    }, [currentSpaceId, color, lines, strokeWidth, getSpaceById]);
+
+    // Initialiser l'état par défaut si nécessaire
+    useEffect(() => {
+        if (currentSpaceId) {
+            const space = getSpaceById(currentSpaceId);
+            const currentState = space?.sharedState?.currentState || {};
+            
+            console.log('[Draw] Vérification de l\'état:', {
+                spaceId: currentSpaceId,
+                hasSpace: !!space,
+                currentState,
+                hasLines: currentState.hasOwnProperty('lines'),
+                hasStrokeWidth: currentState.hasOwnProperty('strokeWidth')
+            });
+            
+            // Vérifier si l'état par défaut doit être initialisé
+            if (!currentState.hasOwnProperty('lines') || !currentState.hasOwnProperty('strokeWidth')) {
+                console.log('[Draw] Initialisation de l\'état par défaut pour l\'espace:', currentSpaceId);
+                updateSharedState(currentSpaceId, {
+                    lines: [],
+                    strokeWidth: 3
+                });
+            }
+        }
+    }, [currentSpaceId, getSpaceById, updateSharedState]);
 
     // Enregistrement des actions avec historique
     useRegisterActionHandler('draw/addLine', (params) => {
         const { line, spaceId } = params;
-        if (!spaceId) return;
-        const currentLines = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.lines ?? [];
-        updateSharedState(spaceId, {
-            lines: [...currentLines, line],
-            actionType: 'draw/addLine',
-            payload: { line }
-        });
-    }, {
-        history: {
-            enabled: true,
-            type: 'draw/addLine',
-            getDescription: () => 'Ajout d\'une ligne',
-            getPayload: (params) => ({ line: params.line })
+        console.log('[Draw] Action draw/addLine appelée:', { line, spaceId });
+        if (!spaceId || !history) {
+            console.error('[Draw] Pas d\'spaceId fourni ou pas d\'historique disponible pour draw/addLine');
+            return;
+        }
+        
+        // Utiliser le nouveau système d'historique
+        const currentState = getSpaceById(spaceId)?.sharedState?.currentState || {};
+        const currentLines = currentState.lines || [];
+        console.log('[Draw] Lignes actuelles:', currentLines.length, 'Nouvelle ligne:', line);
+        
+        // Créer une action avec le nouveau système d'historique
+        const diffs = [{
+            type: 'UPDATE',
+            path: ['lines'],
+            oldValue: currentLines,
+            newValue: [...currentLines, line],
+            metadata: {
+                allowIndexShift: false,
+                modifiedRelated: false,
+            }
+        }];
+
+        const result = history.createSimpleAction(
+            'DRAW_ADD_LINE',
+            diffs,
+            false,
+            ['lines', 'drawing']
+        );
+
+        console.log('[Draw] createSimpleAction résultat:', result);
+
+        if (result.success) {
+            // Mettre à jour l'espace via l'ancien système pour compatibilité
+            updateSharedState(spaceId, {
+                lines: [...currentLines, line]
+            });
+            console.log('[Draw] Ligne ajoutée avec succès via le nouveau système d\'historique');
+            
+            // Vérifier l'état de l'historique après création
+            setTimeout(() => {
+                console.log('[Draw] État de l\'historique après création d\'action:', {
+                    canUndo: history.canUndo(),
+                    canRedo: history.canRedo(),
+                    stats: history.stats,
+                    action: result.action
+                });
+            }, 50);
+        } else {
+            console.error('[Draw] Erreur lors de l\'ajout de ligne:', result.error);
+            // Fallback vers l'ancien système
+            updateSharedState(spaceId, {
+                lines: [...currentLines, line]
+            });
         }
     });
 
     useRegisterActionHandler('draw/updateStrokeWidth', (params) => {
         const { width, spaceId } = params;
         if (!spaceId) return;
-        const oldWidth = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.strokeWidth;
-        updateSharedState(spaceId, {
-            strokeWidth: width,
-            actionType: 'draw/updateStrokeWidth',
-            payload: {
-                oldValue: oldWidth,
-                newValue: width
-            }
-        });
+        
+        // Action sans historique - mise à jour directe
+        updateSharedState(spaceId, { strokeWidth: width });
+        console.log('[Draw] Épaisseur mise à jour sans historique:', width);
     }, {
         history: {
-            enabled: true,
-            type: 'draw/updateStrokeWidth',
-            getDescription: (params) => `Modification de l'épaisseur : ${params.oldWidth} → ${params.width}`,
-            getPayload: (params) => ({
-                oldValue: params.oldWidth,
-                newValue: params.width
-            })
+            enabled: false,  // Désactive l'historique pour cette action
+            type: 'draw/updateStrokeWidth'
+        }
+    });
+
+    useRegisterActionHandler('draw/updateColor', (params) => {
+        const { color, spaceId } = params;
+        if (!spaceId) return;
+        
+        // Action sans historique - mise à jour directe de la couleur
+        const { updateSpaceProperties } = useSpace();
+        updateSpaceProperties(spaceId, { color });
+        console.log('[Draw] Couleur mise à jour sans historique:', color);
+    }, {
+        history: {
+            enabled: false,  // Désactive l'historique pour cette action
+            type: 'draw/updateColor'
         }
     });
 
     useRegisterActionHandler('draw/clearCanvas', (params) => {
         const { spaceId } = params;
-        if (!spaceId) return;
-        const oldLines = (getSpaceById(spaceId)?.sharedState as DrawSharedState)?.lines ?? [];
-        updateSharedState(spaceId, {
-            lines: [],
-            actionType: 'draw/clearCanvas',
-            payload: {
-                oldValue: oldLines,
-                newValue: []
+        if (!spaceId || !history) return;
+        const currentState = getSpaceById(spaceId)?.sharedState?.currentState || {};
+        const oldLines = currentState.lines || [];
+        
+        // Créer une action avec le nouveau système d'historique
+        const diffs = [{
+            type: 'UPDATE',
+            path: ['lines'],
+            oldValue: oldLines,
+            newValue: [],
+            metadata: {
+                allowIndexShift: false,
+                modifiedRelated: false,
             }
-        });
-    }, {
-        history: {
-            enabled: true,
-            type: 'draw/clearCanvas',
-            getDescription: () => 'Effacement du dessin',
-            getPayload: (params) => ({
-                oldValue: (getSpaceById(params.spaceId)?.sharedState as DrawSharedState)?.lines ?? [],
-                newValue: []
-            })
+        }];
+
+        const result = history.createSimpleAction(
+            'DRAW_CLEAR_CANVAS',
+            diffs,
+            false,
+            ['lines', 'drawing']
+        );
+
+        if (result.success) {
+            updateSharedState(spaceId, { lines: [] });
+            console.log('[Draw] Canvas effacé avec succès via le nouveau système d\'historique');
+        } else {
+            console.error('[Draw] Erreur lors de l\'effacement du canvas:', result.error);
+            // Fallback vers l'ancien système
+            updateSharedState(spaceId, { lines: [] });
         }
     });
 
@@ -146,15 +254,72 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
         });
     }, [currentSpaceId]);
 
+    // Fonctions undo/redo avec le nouveau système d'historique
     const handleUndo = useCallback(() => {
-        if (!currentSpaceId) return;
-        undoSharedState(currentSpaceId);
-    }, [currentSpaceId, undoSharedState]);
+        if (!history) {
+            console.log('[Draw] handleUndo - Pas d\'historique disponible');
+            return;
+        }
+        
+        console.log('[Draw] handleUndo - État de l\'historique:', {
+            canUndo: history.canUndo(),
+            canRedo: history.canRedo(),
+            stats: history.stats,
+            currentSpaceId
+        });
+        
+        if (!history.canUndo()) {
+            console.log('[Draw] handleUndo - Pas d\'action à annuler');
+            return;
+        }
+        
+        console.log('[Draw] handleUndo appelé');
+        const result = history.undo();
+        console.log('[Draw] handleUndo - Résultat:', result);
+        
+        if (result.success) {
+            console.log('[Draw] Action annulée avec succès');
+            // Forcer un re-render du canvas
+            setTimeout(() => {
+                console.log('[Draw] Re-render forcé après undo');
+            }, 100);
+        } else {
+            console.error('[Draw] Erreur lors de l\'annulation:', result.error);
+        }
+    }, [history, currentSpaceId]);
 
     const handleRedo = useCallback(() => {
-        if (!currentSpaceId) return;
-        redoSharedState(currentSpaceId);
-    }, [currentSpaceId, redoSharedState]);
+        if (!history) {
+            console.log('[Draw] handleRedo - Pas d\'historique disponible');
+            return;
+        }
+        
+        console.log('[Draw] handleRedo - État de l\'historique:', {
+            canUndo: history.canUndo(),
+            canRedo: history.canRedo(),
+            stats: history.stats,
+            currentSpaceId
+        });
+        
+        if (!history.canRedo()) {
+            console.log('[Draw] handleRedo - Pas d\'action à refaire');
+            return;
+        }
+        
+        console.log('[Draw] handleRedo appelé');
+        const result = history.redo();
+        console.log('[Draw] handleRedo - Résultat:', result);
+        
+        if (result.success) {
+            console.log('[Draw] Action refaite avec succès');
+            // Forcer un re-render du canvas
+            setTimeout(() => {
+                console.log('[Draw] Re-render forcé après redo');
+            }, 100);
+        } else {
+            console.error('[Draw] Erreur lors du redo:', result.error);
+        }
+    }, [history, currentSpaceId]);
 
 
     const { registerComponent: registerStatusBar } = useToolsSlot(id, 'bottom-outer');
@@ -193,21 +358,82 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     }, [id, handleStrokeWidthChange, strokeWidth, registerStatusBar]);
 
     const { registerComponent: registerBottomToolBar } = useToolsSlot(id, 'bottom-inner');
-    useEffect(() => {
+    useMemo(() => {
         registerBottomToolBar(
             () => {
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={handleUndo} disabled={!canUndo} title={t('draw.undo', 'Undo')}><Undo /></button>
-                        <button onClick={handleRedo} disabled={!canRedo} title={t('draw.redo', 'Redo')}><Redo /></button>
-                        <button onClick={handleClearCanvas} title={t('draw.clear', 'Clear drawing')}><BrushCleaning /></button>
+                        <div 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUndo();
+                            }}
+                            title={t('draw.undo', 'Undo')}
+                            style={{
+                                opacity: history?.canUndo() ? 1 : 0.5,
+                                cursor: history?.canUndo() ? 'pointer' : 'not-allowed',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                userSelect: 'none'
+                            }}
+                        >
+                            <Undo />
+                        </div>
+                        <div 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleRedo();
+                            }}
+                            title={t('draw.redo', 'Redo')}
+                            style={{
+                                opacity: history?.canRedo() ? 1 : 0.5,
+                                cursor: history?.canRedo() ? 'pointer' : 'not-allowed',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                userSelect: 'none'
+                            }}
+                        >
+                            <Redo />
+                        </div>
+                        <div 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleClearCanvas();
+                            }}
+                            title={t('draw.clear', 'Clear drawing')}
+                            style={{
+                                cursor: 'pointer',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: '4px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                userSelect: 'none'
+                            }}
+                        >
+                            <BrushCleaning />
+                        </div>
+                        
+                   
                     </div>
                 );
             },
             { name: 'bottomInnerSlot', type: 'menu' },
             { order: 990, width: 'auto', alignment: 'center' }
         );
-    }, [id, handleUndo, handleRedo, handleClearCanvas, canUndo, canRedo, t, registerBottomToolBar]);
+    }, [id, handleUndo, handleRedo, handleClearCanvas, history?.canUndo(), history?.canRedo(), t, registerBottomToolBar, currentSpaceId, lines, strokeWidth, getSpaceById, updateSharedState]);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
@@ -215,6 +441,8 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
 
     // --- Redraw canvas based on lines from the store --- 
     useEffect(() => {
+        console.log(`[Draw] Redessinage du canvas - lines:`, lines.length, 'lignes');
+        
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
@@ -229,6 +457,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             return;
         }
 
+        console.log(`[Draw] Dessinage de ${lines.length} lignes`);
         lines.forEach((line: Line | null | undefined, index: number) => {
             if (!line || !Array.isArray(line.points) || line.points.length < 2) {
                 console.warn(`[DrawArea ${id}] Skipping invalid line data at index ${index}:`, line);
@@ -247,6 +476,8 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             ctx.lineJoin = 'round';
             ctx.stroke();
         });
+        
+        console.log(`[Draw] Canvas redessiné avec ${lines.length} lignes`);
     }, [lines, viewport.width, viewport.height, id]);
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -297,10 +528,11 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
         };
 
         // Utiliser l'action enregistrée
-        actionRegistry.executeAction('draw/addLine', {
+        const success = actionRegistry.executeAction('draw/addLine', {
             line: newLine,
             spaceId: currentSpaceId
         });
+
         setCurrentLinePoints([]);
     };
 
@@ -314,6 +546,8 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
             borderRadius: '4px',
             overflow: 'hidden'
         }}>
+
+            
             <canvas
                 ref={canvasRef}
                 onMouseDown={handleMouseDown}

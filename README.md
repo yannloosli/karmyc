@@ -11,11 +11,10 @@
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/your-username/karmyc/blob/main/LICENSE)
 [![npm downloads](https://img.shields.io/npm/dm/@gamesberry/karmyc-core.svg)](https://www.npmjs.com/package/@gamesberry/karmyc-core)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.0+-61DAFB.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19.0+-61DAFB.svg)](https://reactjs.org/)
 
 ## Table of Contents
 - [Overview](#overview)
-- [Features](#features)
 - [Quick Start](#quick-start)
 - [Core Concepts](#core-concepts)
 - [API Reference](#api-reference)
@@ -25,22 +24,10 @@
 
 ## Overview
 
-Karmyc Core is a React library that empowers you to build complex and interactive layouts with ease. It provides a robust set of tools for creating, managing, and customizing workspace areas in your application. Whether you're building a feature-rich IDE, a creative tool, or a dashboard, Karmyc Core offers the flexibility to design dynamic user interfaces.
+Karmyc Core is a React library that provides a flexible layout management system using Zustand for state management. It allows you to create dynamic, resizable workspace areas that can be arranged in rows and columns, with support for multiple screens, undo/redo functionality, and a plugin system.
 
 ### Demo
 A comprehensive demo is available [here](https://yannloosli.github.io/karmyc) showcasing Karmyc Core's key features.
-
-## Features
-- **Modular Layouts**: Create and arrange areas in flexible row/column configurations.
-- **Customizable Areas**: Build any type of area with your own React components and logic.
-- **Drag & Drop**: Intuitive drag-and-drop interface for rearranging and resizing areas.
-- **State Management**: Integrated state management for layouts and areas using Zustand.
-- **Multi-Screen Support**: Open areas in new browser windows and manage multiple workspaces.
-- **Undo/Redo**: Built-in history management for layout changes.
-- **Extensible Plugin System**: Enhance functionality with custom action handlers and validators.
-- **Dynamic Toolbars**: Add toolbars and buttons associated with specific area types.
-- **Keyboard Shortcuts**: Define global or area-specific keyboard shortcuts.
-- **Built-in Layouts**: Provide a selection of layouts that users can load.
 
 ## Quick Start
 
@@ -55,53 +42,60 @@ npm install @gamesberry/karmyc-core
 
 #### Dependencies
 Karmyc Core requires the following peer dependencies:
-- `react >= 18.2`
-- `react-dom >= 18.2`
+- `react >= 19.0`
+- `react-dom >= 19.0`
 
 ### 2. Basic Setup
-Wrap your application with the `KarmycCoreProvider` and configure your Karmyc instance using the `useKarmyc` hook.
-
 ```tsx
 // App.tsx
-import { KarmycCoreProvider, useKarmyc, Karmyc, TOOLBAR_HEIGHT } from '@gamesberry/karmyc-core';
+import { KarmycCoreProvider, useKarmyc, Karmyc, Tools } from '@gamesberry/karmyc-core';
 import { AreaInitializer } from './AreaInitializer';
 
 const App = () => {
   const karmycConfig = {
-    // ...see detailed configuration below
+    plugins: [],
+    validators: [],
+    initialAreas: [
+      { id: 'area-1', type: 'my-area', state: { initialData: 'default value' }, role: 'SELF' },
+    ],
+    keyboardShortcutsEnabled: true,
+    resizableAreas: true,
+    manageableAreas: true,
+    multiScreen: true,
+    allowStackMixedRoles: false,
+    builtInLayouts: [],
+    initialLayout: 'default',
   };
   const config = useKarmyc(karmycConfig);
 
   return (
     <KarmycCoreProvider options={config}>
       <AreaInitializer />
-      <Karmyc offset={TOOLBAR_HEIGHT} />
+      <Tools areaType="apptitle">
+        <Tools areaType="app">
+          <Karmyc />
+        </Tools>
+      </Tools>
     </KarmycCoreProvider>
   );
 };
 ```
 
-### 3. Area Initialization (`AreaInitializer`)
-Create an `AreaInitializer` component to centrally register your area types and other initial configurations. This component renders nothing.
-
+### 3. Area Initialization
 ```tsx
 // AreaInitializer.tsx
 import { MyArea } from './areas/MyArea';
-import { AnotherArea } from './areas/AnotherArea';
 
 export const AreaInitializer = () => {
   return (
     <>
       <MyArea />
-      <AnotherArea />
     </>
   );
 };
 ```
 
 ### 4. Defining an Area Type
-Each area type is defined in its own component. This component uses `useRegisterAreaType` to register the area and its configuration.
-
 ```tsx
 // areas/MyArea.tsx
 import { useRegisterAreaType, AREA_ROLE } from '@gamesberry/karmyc-core';
@@ -110,116 +104,492 @@ import { Icon } from 'lucide-react';
 
 export const MyArea = () => {
   useRegisterAreaType(
-    'my-area', // Unique identifier
-    MyAreaComponent, // The React component to render
-    { initialData: 'default value' }, // Initial state of the area
-    { // Options
+    'my-area',
+    MyAreaComponent,
+    { initialData: 'default value' },
+    {
       displayName: 'My Area',
       role: AREA_ROLE.LEAD,
       icon: Icon
     }
   );
-  return null; // This component does not render anything itself
+  return null;
 };
 ```
 
-### 5. `karmycConfig` Example
-Here is an example of a configuration object that you can pass to the `useKarmyc` hook.
+### 5. Area Component
+```tsx
+// MyAreaComponent.tsx
+import { AreaComponentProps } from '@gamesberry/karmyc-core';
 
-```ts
-const karmycConfig = {
-    plugins: [],
-    initialAreas: [
-        { id: 'area-1', type: 'my-area', state: {}, role: AREA_ROLE.SELF },
-        { id: 'area-2', type: 'another-area', state: {}, role: AREA_ROLE.LEAD },
-    ],
-    keyboardShortcutsEnabled: true,
-    builtInLayouts: [
-        {
-            id: 'default',
-            name: 'Default Layout',
-            config: { /* ... layout configuration ... */ }
-        }
-    ],
-    initialLayout: 'default',
-    resizableAreas: true,
-    manageableAreas: true,
-    multiScreen: true,
+interface MyAreaState {
+  initialData: string;
+}
+
+export const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
+  id,
+  state,
+  type,
+  viewport,
+  raised
+}) => {
+  return (
+    <div style={{ 
+      width: viewport.width, 
+      height: viewport.height, 
+      left: viewport.left, 
+      top: viewport.top 
+    }}>
+      <h2>My Area: {state.initialData}</h2>
+    </div>
+  );
 };
 ```
 
 ## Core Concepts
 
 ### Screens, Spaces, Areas, and Layouts
-- **Screen**: A top-level container, usually the main window or a detached window. Each screen has its own independent layout and state.
-- **Space**: A workspace within a screen. Each space has its own layout, action history, and areas. Users can switch between different spaces.
-- **Area**: A rectangular region in your layout that renders a specific component.
-- **Layout**: The arrangement of areas on the screen, defined by a tree of nested rows and columns.
 
-### Core Components
-- **`KarmycCoreProvider`**: The main provider that sets up the Karmyc environment. It initializes the state management store and makes it available to all child components.
-- **`Karmyc`**: The primary component that renders the layouts and areas. It orchestrates the display of the entire Karmyc UI.
+- **Screen**: A top-level container (main window or detached window) that contains areas and layout
+- **Area**: A rectangular region that renders a specific React component, organized within a screen
+- **Layout**: Tree structure of nested rows and columns defining area arrangement within a screen
+- **Space**: A logical workspace concept that can be associated with areas (especially LEAD areas) for shared state and history
 
-### `ToolsSlot`
-The `ToolsSlot` system allows you to inject components (like menus, buttons, or status indicators) into predefined slots in the UI. This is useful for creating dynamic, application-level, or area-specific toolbars. Use the `useToolsSlot` hook to register components in these slots.
-
-### State Management
-Karmyc uses [Zustand](https://github.com/pmndrs/zustand) for state management. The store is divided into several "slices," each responsible for a specific part of the state. It is recommended to use the provided hooks to interact with the state rather than accessing the store directly.
-
-### Plugin System
-Karmyc provides a plugin system to extend its functionality. You can create plugins to intercept actions, validate them, or add new behaviors. A plugin is an object that implements the `IActionPlugin` interface.
+### Area Roles
 
 ```typescript
-export interface IActionPlugin {
-  id: string;
-  actionTypes: string[]; // Action types the plugin should react to
-  handler: (action: Action) => void;
-  priority?: ActionPriority;
+const AREA_ROLE = {
+  LEAD: 'LEAD',      // Primary workspace areas with shared state
+  FOLLOW: 'FOLLOW',  // Secondary areas that follow LEAD areas
+  SELF: 'SELF'       // Independent areas with local state only
+} as const;
+```
+
+### Tools Slot System
+
+The tools slot system allows injecting components into predefined UI positions. The `Tools` component (alias for `ToolsSlot`) can be configured with different props:
+
+```tsx
+<Tools areaType="apptitle">
+  <Tools areaType="app">
+    <Karmyc />
+  </Tools>
+</Tools>
+```
+
+#### Tools Component Props
+
+```typescript
+interface ToolsProps {
+  areaId?: string;           // Specific area ID for targeted tools
+  areaType?: string;         // Area type for type-specific tools (default: 'app')
+  areaState?: any;           // Current area state
+  children: React.ReactNode; // Content to render
+  viewport?: Rect;           // Viewport dimensions
+  nbOfLines?: number;        // Number of toolbar lines (default: 1)
 }
 ```
 
 ## API Reference
 
-### Hooks
-- `useKarmyc(options, onError)`: Initializes the Karmyc system with the given options.
-- `useKarmycStore()`: Provides direct access to the Zustand store. Use with caution.
-- `useArea(id)`: Hook to access the state and actions of a specific area.
-- `useSpace(id)`: Hook to access the state of a specific space.
-- `useSpaceHistory(spaceId)`: Hook to access the action history of a space for undo/redo functionality.
-- `useRegisterAreaType(type, component, initialState, options)`: Registers a new type of area.
-- `useRegisterActionHandler(actionType, handler)`: Registers a handler for a specific action.
-- `useContextMenu()`: Hook to manage and interact with the context menu.
-- `useAreaDragAndDrop()`: Provides hooks and handlers for area drag-and-drop functionality.
-- `useAreaKeyboardShortcuts()`: Hook to manage keyboard shortcuts within an area.
-- `useToolsSlot(areaType, slotName)`: Returns a `registerComponent` function to add components to a tool slot.
-- `usePluginSystem()`: Hook to interact with the plugin system.
-- `t(key, ...args)`: Function for internationalization (i18n), exported alongside the hooks.
+### Core Hooks
+
+#### `useKarmyc(options, onError?)`
+Initializes the Karmyc system with configuration options.
+
+```typescript
+interface IKarmycOptions {
+  plugins?: IActionPlugin[];
+  validators?: Array<{
+    actionType: string;
+    validator: (action: any) => { valid: boolean; message?: string };
+  }>;
+  initialAreas?: IArea[];
+  keyboardShortcutsEnabled?: boolean;
+  resizableAreas?: boolean;
+  manageableAreas?: boolean;
+  multiScreen?: boolean;
+  allowStackMixedRoles?: boolean;
+  builtInLayouts?: LayoutPreset[];
+  initialLayout?: string;
+  t?: (key: string, fallback: string) => string;
+  spaces?: Record<string, ISpace>;
+}
+```
+
+#### `useArea()`
+Provides functions to manipulate areas and access their state.
+
+```typescript
+const {
+  createArea,
+  removeArea,
+  setActive,
+  update,
+  getActive,
+  getById,
+  getAll,
+  getErrors
+} = useArea();
+```
+
+#### `useSpace()`
+Access state for spaces.
+
+```typescript
+const { spaces, activeSpaceId, getSpaceById } = useSpace();
+```
+
+#### `useRegisterAreaType(type, component, initialState, options)`
+Register a new area type.
+
+```typescript
+useRegisterAreaType(
+  'my-area',
+  MyComponent,
+  { data: 'default' },
+  { displayName: 'My Area', role: AREA_ROLE.LEAD }
+);
+```
+
+#### Additional Hooks
+
+##### `useAreaOptimized()`
+Optimized hook for area management with enhanced performance and extended functionality.
+
+```typescript
+const { createArea, removeArea, splitArea, setRowSizes } = useAreaOptimized();
+```
+
+##### Specialized Area Hooks
+Granular hooks for optimal performance:
+
+```typescript
+const area = useAreaById(areaId);           // Get specific area
+const activeArea = useActiveArea();         // Get active area
+const allAreas = useAllAreas();             // Get all areas
+const layout = useAreaLayoutById(areaId);   // Get area layout
+const actions = useAreaActions();           // Get area actions
+```
+
+##### `useAreaDragAndDrop(areaId)`
+Provides drag and drop functionality for areas.
+
+```typescript
+const { isDragging, dragRef, dropRef } = useAreaDragAndDrop(areaId);
+```
+
+##### `useAreaKeyboardShortcuts(areaId)`
+Provides keyboard shortcuts for areas.
+
+```typescript
+useAreaKeyboardShortcuts(areaId);
+```
+
+##### `useContextMenu()`
+Provides context menu functionality.
+
+```typescript
+const { openContextMenu, closeContextMenu } = useContextMenu();
+```
+
+##### `useResizePreview()`
+Provides resize preview functionality.
+
+```typescript
+const { showPreview, hidePreview, previewState } = useResizePreview();
+```
+
+##### `useScreenManagement()`
+Provides screen management functionality.
+
+```typescript
+const { createScreen, removeScreen, switchScreen } = useScreenManagement();
+```
+
+##### `useAreaStack(areaId)`
+Provides area stacking functionality.
+
+```typescript
+const { isChildOfStack, stackArea, unstackArea } = useAreaStack(areaId);
+```
+
+##### `useSpaceHistory(spaceId)`
+Provides space history functionality.
+
+```typescript
+const { history, currentIndex, undo, redo } = useSpaceHistory(spaceId);
+```
+
+##### `useEnhancedHistory(spaceId)`
+Provides enhanced history functionality with advanced features like action batching, diff tracking, and typed actions.
+
+```typescript
+const {
+  // State
+  isActionInProgress,
+  currentActionId,
+  lastAction,
+  stats,
+  
+  // Actions
+  startAction,
+  submitAction,
+  cancelAction,
+  undo,
+  redo,
+  
+  // Utilities
+  createSimpleAction,
+  createSelectionAction,
+  createTransformAction,
+  
+  // Checks
+  canUndo,
+  canRedo,
+  
+  // Getters
+  getCurrentAction,
+  getHistoryLength,
+  getHistoryStats,
+  
+  // Management
+  clearHistory,
+  updateSelectionState
+} = useEnhancedHistory(spaceId);
+```
+
+##### `useActiveSpaceHistory()`
+Provides enhanced history functionality for the currently active space.
+
+```typescript
+const historyActions = useActiveSpaceHistory();
+```
+
+##### `useTypedHistoryActions(spaceId)`
+Provides typed history actions for common operations.
+
+```typescript
+const {
+  create, update, delete, move, copy, paste,
+  select, deselect, selectAll, deselectAll,
+  group, ungroup, transform, rotate, scale, translate,
+  timelineUpdate, keyframeAdd, keyframeRemove, keyframeUpdate,
+  custom
+} = useTypedHistoryActions(spaceId);
+```
+
+##### `usePluginSystem()`
+Provides plugin system functionality.
+
+```typescript
+const { registerPlugin, unregisterPlugin, getPlugins } = usePluginSystem();
+```
+
+### Core Components
+
+#### `KarmycCoreProvider`
+Main provider that sets up the Karmyc environment.
+
+```tsx
+<KarmycCoreProvider options={config}>
+  {children}
+</KarmycCoreProvider>
+```
+
+#### `Karmyc`
+Primary component that renders layouts and areas.
+
+```tsx
+<Karmyc />
+```
+
+#### `Tools`
+System for injecting components into predefined UI slots.
+
+```tsx
+<Tools areaType="app">
+  <Karmyc />
+</Tools>
+```
+
+#### Additional Components
+
+##### `AreaErrorBoundary`
+Error boundary component for areas.
+
+```tsx
+<AreaErrorBoundary component={MyAreaComponent} areaId="area-1" areaState={{}} type="my-area" viewport={{}} />
+```
+
+##### `AreaPreview`
+Preview component for areas.
+
+```tsx
+<AreaPreview areaId="area-1" />
+```
+
+##### `AreaTabs`
+Tab component for stacked areas.
+
+```tsx
+<AreaTabs areaId="area-1" />
+```
+
+##### `ScreenSwitcher`
+Component for switching between screens.
+
+```tsx
+<ScreenSwitcher />
+```
+
+##### `KeyboardShortcutsViewer`
+Component for displaying keyboard shortcuts.
+
+```tsx
+<KeyboardShortcutsViewer />
+```
+
+##### `ContextMenu`
+Context menu component.
+
+```tsx
+<ContextMenu />
+```
+
+### Configuration
+
+#### Built-in Layouts
+You can define built-in layouts that users can switch between:
+
+```typescript
+const builtInLayouts = [
+  {
+    id: 'default',
+    name: 'Default Layout',
+    config: { /* layout configuration */ },
+    isBuiltIn: true
+  }
+];
+```
+
+### Types and Interfaces
+
+#### Core Types
+
+```typescript
+// Area types
+interface IArea<T = any> {
+  id: string;
+  type: AreaTypeValue;
+  state?: Record<string, any>;
+  spaceId?: string | null;
+  viewport?: Rect;
+  position?: Point;
+  size?: { width: number; height: number };
+  raised?: boolean;
+  role?: AreaRole;
+  isLocked?: boolean;
+  enableFullscreen?: boolean;
+  previousLayout?: { [key: string]: AreaLayout | AreaRowLayout };
+  previousRootId?: string | null;
+}
+
+// Layout types
+interface LayoutNode {
+  id: string;
+  type: 'area' | 'area_row';
+  orientation?: 'horizontal' | 'vertical' | 'stack';
+  areas?: Array<{ id: string; size: number }>;
+}
+
+// Additional types
+interface Rect {
+  top: number;
+  left: number;
+  width: number | string;
+  height: number | string;
+}
+
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface AreaLayout {
+  // Layout configuration for areas
+}
+
+interface AreaRowLayout {
+  // Layout configuration for area rows
+}
+
+// Space types
+interface ISpace {
+  id: string;
+  name: string;
+  sharedState: any;
+  history: EnhancedHistoryAction[];
+}
+
+// Plugin types
+interface IActionPlugin {
+  id: string;
+  name: string;
+  onStoreChange?: (state: any, prevState: any) => void;
+  onStoreInit?: (store: StoreApi<any>) => void;
+  transformState?: (state: any) => Partial<any>;
+  actions?: Record<string, (...args: any[]) => void>;
+}
+```
+
+#### Enums and Constants
+
+```typescript
+const AREA_ROLE = {
+  LEAD: 'LEAD',
+  FOLLOW: 'FOLLOW',
+  SELF: 'SELF'
+} as const;
+
+const TOOLBAR_HEIGHT = 30;
+```
 
 ## Development
 
 ### Available Scripts
-- `yarn dev`: Start development mode with watch.
-- `yarn build`: Build the library.
-- `yarn bundle`: Create production bundle using Rollup.
-- `yarn demo:dev`: Start the demo application in development mode.
-- `yarn demo:build`: Build the demo application.
-- `yarn test`: Run tests.
-- `yarn test:watch`: Run tests in watch mode.
+- `yarn dev`: Start development mode with watch
+- `yarn build`: Build the library
+- `yarn bundle`: Build the library (alias for build)
+- `yarn test`: Run tests
+- `yarn test:watch`: Run tests in watch mode
+- `yarn test:coverage`: Run tests with coverage
+- `yarn demo:dev`: Start the demo application in development mode
+- `yarn demo:build`: Build the demo application
+- `yarn demo:ssr:dev`: Start the SSR demo application in development mode
+- `yarn demo:ssr:build`: Build the SSR demo application
+- `yarn demo:ssr:start`: Start the SSR demo application
 
 ### Project Structure
 ```
 karmyc-core/
 ├── src/                    # Source code
-│   ├── components/       # React components, including menus and handlers
-│   ├── core/             # Core logic, including state management, providers, and registries
+│   ├── components/       # React components
+│   │   ├── menus/       # Context menus
+│   │   └── handlers/    # Event handlers
+│   ├── core/             # Core logic and state management
+│   │   ├── plugins/     # Plugin system
+│   │   ├── registries/  # Component registries
+│   │   ├── slices/      # Zustand store slices
+│   │   └── types/       # Core type definitions
 │   ├── hooks/            # Custom React hooks
 │   ├── types/            # TypeScript type definitions
 │   ├── utils/            # Utility functions
-│   ├── index.ts          # Main entry point
-│   └── setupTests.ts     # Test configuration
+│   └── index.ts          # Main entry point
 ├── demo/                   # Demo application
-│   ├── config/           # Demo configuration (area initializers, etc.)
-└── dist/                   # Built files (generated)
+│   ├── config/           # Demo configuration
+│   └── shared/           # Shared demo components
+└── docs/                   # Documentation
 ```
 
 ## Acknowledgements

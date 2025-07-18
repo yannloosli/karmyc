@@ -1,3 +1,6 @@
+export { Area } from './Area';
+export { AreaComponent } from './AreaComponent';
+export { AreaFallback } from './AreaFallback';
 export { AreaStack } from './AreaStack';
 export { AreaErrorBoundary } from './AreaErrorBoundary';
 export { AreaPreview } from './AreaPreview';
@@ -14,5 +17,5 @@ export * from './DetachedWindowCleanup';
 export * from './menus/SwitchAreaTypeContextMenu';
 export * from './menus/SpaceMenu'; 
 export * from './menus/LayoutMenu';
-export * from './ToolsSlot'
-export * from './KarmycNextWrapper'
+export * from './ToolsSlot';
+export * from './KarmycNextWrapper';
