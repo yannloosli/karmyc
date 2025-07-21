@@ -88,10 +88,14 @@ export const AreaToOpenPreview: React.FC<OwnProps> = React.memo((): React.ReactE
 
     return (
         <>
-            <AreaPreview
-                areaToOpen={areaToOpen}
-                dimensions={areaToOpenDimensions}
-            />
+            {
+                useKarmycStore.getState().options.previewDuringDrag && (
+                    <AreaPreview
+                        areaToOpen={areaToOpen}
+                        dimensions={areaToOpenDimensions}
+                    />
+                )
+            }
             <DropZone />
         </>
     );

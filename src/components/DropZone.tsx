@@ -5,6 +5,7 @@ import { PlaceArea } from "../core/types/areas-type";
 import { useKarmycStore } from "../core/store";
 import { useAreaDragAndDrop } from "../hooks/useAreaDragAndDrop";
 import { AREA_PLACEMENT_TRESHOLD } from "../utils/constants";
+import { useOuterToolbarsOffset } from "./Karmyc";
 
 export const DropZone: React.FC = React.memo(() => {
     const setViewports = useKarmycStore(state => state.setViewports);
@@ -16,6 +17,8 @@ export const DropZone: React.FC = React.memo(() => {
         areaToOpenTargetViewport,
         calculatedPlacement
     } = useAreaDragAndDrop();
+
+    const { topOffset, bottomOffset } = useOuterToolbarsOffset();
 
     // Update viewports
     useEffect(() => {
@@ -56,6 +59,15 @@ export const DropZone: React.FC = React.memo(() => {
             className={`area-to-open-overlay`}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
+            style={{
+                position: 'absolute',
+                left: areaToOpenTargetViewport.left,
+                top: areaToOpenTargetViewport.top,
+                width: areaToOpenTargetViewport.width,
+                height: areaToOpenTargetViewport.height - topOffset - bottomOffset,
+                pointerEvents: 'auto',
+                zIndex: 1000,
+            }}
         >
 
             {areaToOpenTargetViewport && (
@@ -64,8 +76,8 @@ export const DropZone: React.FC = React.memo(() => {
                     height={areaToOpenTargetViewport.height}
                     className="area-to-open-overlay__placement"
                     style={{
-                        left: areaToOpenTargetViewport.left,
-                        top: areaToOpenTargetViewport.top,
+                        left: 0,
+                        top: 0,
                     }}
                 >
                     {placementLinesMemo.lines.map(([p0, p1], i) => (

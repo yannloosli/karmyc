@@ -1,7 +1,7 @@
 import { actionRegistry, IKarmycOptions } from "../..";
 import { StateCreator } from "zustand";
 import { RootStateType } from "../store";
-import { LayoutPreset } from "../../components/menus/LayoutMenu";
+import { LayoutPreset } from "../types/karmyc";
 import { IKarmycConfig } from "../types/karmyc";
 
 

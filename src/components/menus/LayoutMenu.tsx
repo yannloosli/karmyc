@@ -118,7 +118,7 @@ export const LayoutMenu: React.FC = () => {
                 viewports: currentScreen.areas.viewports,
                 areaToOpen: null,
                 lastSplitResultData: null,
-                lastLeadAreaId: currentScreen.areas.lastLeadAreaId
+                lastLeadAreaId: currentScreen.areas.lastLeadAreaId || null
             },
             isBuiltIn: false
         };

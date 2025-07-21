@@ -73,7 +73,10 @@ export const useKarmycStore = create<RootStateType>()(
                                     activeScreenId: '1',
                                     nextScreenId: 2,
                                     lastUpdated: Date.now(),
-                                    options: { allowStackMixedRoles: true }
+                                    options: { 
+                                        allowStackMixedRoles: true,
+                                        previewDuringDrag: false
+                                    }
                                 });
                             }
                         }

@@ -64,6 +64,7 @@ export interface IKarmycOptions {
     allowStackMixedRoles?: boolean;
     builtInLayouts?: LayoutPreset[];
     initialLayout?: string;
+    previewDuringDrag?: boolean;
     t?: (key: string, fallback: string) => string;
     spaces?: Record<string, ISpace>;
 

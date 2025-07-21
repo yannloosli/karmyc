@@ -63,6 +63,7 @@ const App = () => {
     manageableAreas: true,
     multiScreen: true,
     allowStackMixedRoles: false,
+    previewDuringDrag: false,
     builtInLayouts: [],
     initialLayout: 'default',
   };
@@ -210,6 +211,7 @@ interface IKarmycOptions {
   manageableAreas?: boolean;
   multiScreen?: boolean;
   allowStackMixedRoles?: boolean;
+  previewDuringDrag?: boolean;
   builtInLayouts?: LayoutPreset[];
   initialLayout?: string;
   t?: (key: string, fallback: string) => string;

@@ -32,7 +32,7 @@ const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getStat
 };
 
 // Hook pour calculer l'offset total des toolbars outer
-function useOuterToolbarsOffset() {
+export function useOuterToolbarsOffset() {
     // Récupérer les toolbars outer de tous les niveaux
     const { getComponents: getAppTitleTopOuter, getLines: getAppTitleTopLines } = useToolsSlot('apptitle', 'top-outer');
     const { getComponents: getAppTitleBottomOuter, getLines: getAppTitleBottomLines } = useToolsSlot('apptitle', 'bottom-outer');
