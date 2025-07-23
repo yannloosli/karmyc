@@ -54,7 +54,7 @@ export interface SpaceActions {
     openSpace: (id: string) => void; // Nouvelle action pour ouvrir un space
     closeSpace: (id: string) => void; // Nouvelle action pour fermer un space
     updateSpace: (spaceData: Partial<Space> & { id: string }) => void;
-    updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<Omit<EnhancedSpaceSharedState, 'pastActions' | 'futureActions'>> }) => void;
+    updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<Omit<EnhancedSpaceSharedState, 'pastActions' | 'futureActions'>>; actionName?: string; actionDescription?: string }) => void;
     clearErrors: () => void;
     
     // Actions d'historique améliorées
@@ -462,6 +462,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                             }
                         });
                         
+                        // Ajout : forcer la notification Zustand et l'événement custom
+                        const updatedSpace = get().spaces[spaceId];
+                        if (updatedSpace && typeof window !== 'undefined' && window.dispatchEvent) {
+                            window.dispatchEvent(new CustomEvent('openchakra-state-changed', {
+                                detail: { state: updatedSpace.sharedState.currentState }
+                            }));
+                        }
+                        
                         console.log(`[undoEnhanced] Après undo pour space ${spaceId}:`, {
                             newPastActionsLength: newPastActions.length,
                             futureActionsLength: get().spaces[spaceId]?.sharedState?.futureActions?.length || 0,
@@ -565,6 +573,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                                 currentSpace.sharedState.pastActions.push(actionToRedo);
                             }
                         });
+                        
+                        // Idem pour redoEnhanced
+                        const updatedSpaceRedo = get().spaces[spaceId];
+                        if (updatedSpaceRedo && typeof window !== 'undefined' && window.dispatchEvent) {
+                            window.dispatchEvent(new CustomEvent('openchakra-state-changed', {
+                                detail: { state: updatedSpaceRedo.sharedState.currentState }
+                            }));
+                        }
                         
                         console.log(`[redoEnhanced] Après redo pour space ${spaceId}:`, {
                             pastActionsLength: get().spaces[spaceId]?.sharedState?.pastActions?.length || 0,
@@ -752,7 +768,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                     // ============================================================================
                     
                     updateSpaceGenericSharedState: (payload) => {
-                        const { spaceId, changes } = payload;
+                        const { spaceId, changes, actionName, actionDescription } = payload;
                         const space = get().spaces[spaceId];
             
                         if (!space) {
@@ -764,7 +780,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                         }
             
                         const prevState = space.sharedState.currentState;
-                        const actionType = (changes as any).actionType || 'UPDATE_SHARED_STATE';
+                        const actionType = (changes as any).actionType || actionName || 'UPDATE_SHARED_STATE';
                         const actionPayload = (changes as any).payload || {};
                         
                         set(state => {
@@ -786,19 +802,10 @@ export const useSpaceStore = create<SpaceStateType>()(
                             return;
                         }
                         
-                        console.log(`[updateSpaceGenericSharedState] Création d'action pour space ${spaceId}:`, {
-                            actionType,
-                            actionPayload,
-                            prevState,
-                            nextState,
-                            pastActionsLength: space.sharedState.pastActions?.length || 0,
-                            futureActionsLength: space.sharedState.futureActions?.length || 0
-                        });
-                        
                         // Créer une action d'historique améliorée avec l'état avant ET après
                         const historyAction = createEnhancedHistoryAction(
                             `${actionType}-${Date.now()}`,
-                            actionType,
+                            actionDescription || actionType, // Utiliser la description spécifique si fournie
                             [], // Diffs à implémenter
                             prevState, // État AVANT les modifications (pour undo)
                             false,
@@ -811,19 +818,12 @@ export const useSpaceStore = create<SpaceStateType>()(
                             nextState: nextState // État APRÈS les modifications (pour redo)
                         };
                         
-                        console.log(`[updateSpaceGenericSharedState] Action créée:`, historyAction);
-                        
                         set(state => {
                             const currentSpace = state.spaces[spaceId];
                             if (currentSpace) {
                                 currentSpace.sharedState.pastActions.push(historyAction);
                                 currentSpace.sharedState.futureActions = [];
                             }
-                        });
-                        
-                        console.log(`[updateSpaceGenericSharedState] Après ajout pour space ${spaceId}:`, {
-                            pastActionsLength: get().spaces[spaceId]?.sharedState?.pastActions?.length || 0,
-                            futureActionsLength: get().spaces[spaceId]?.sharedState?.futureActions?.length || 0
                         });
                     },
                     

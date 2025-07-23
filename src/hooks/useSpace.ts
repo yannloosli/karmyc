@@ -76,8 +76,8 @@ export function useSpace() {
         closeSpaceAction(id);
     }, [closeSpaceAction]);
 
-    const updateSharedState = useCallback((spaceId: string, changes: Partial<Record<string, any>>) => {
-        updateSpaceGenericSharedStateAction({ spaceId, changes });
+    const updateSharedState = useCallback((spaceId: string, changes: Partial<Record<string, any>>, actionName?: string, actionDescription?: string) => {
+        updateSpaceGenericSharedStateAction({ spaceId, changes, actionName, actionDescription });
     }, [updateSpaceGenericSharedStateAction]);
 
     const updateSpaceProperties = useCallback((id: string, changes: Partial<Omit<Space, 'id'>>) => {
