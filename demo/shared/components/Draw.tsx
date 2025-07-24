@@ -322,6 +322,41 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     }, [history, currentSpaceId]);
 
 
+    const { registerComponent: registerTopsBar } = useToolsSlot(id, 'top-outer', 2);
+    useEffect(() => {
+        registerTopsBar(
+            () => {
+                return (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'white' }}>
+                        <Radius />
+                        <input
+                            ref={inputRef}
+                            id={`stroke-width-${id}`}
+                            type="range"
+                            min="1"
+                            max="20"
+                            value={strokeWidth}
+                            onChange={handleStrokeWidthChange}
+                            style={{
+                                width: '100px',
+                                cursor: 'pointer',
+                                WebkitAppearance: 'none',
+                                appearance: 'none',
+                                height: '4px',
+                                borderRadius: '2px',
+                                background: '#ffffff'
+                            }}
+                            className="custom-range"
+                        />
+                        <span>{strokeWidth}</span>
+                    </div>
+                );
+            },
+            { name: 'topOuterSlot', type: 'menu' },
+            { order: 990, width: 'auto', alignment: 'right' }
+        );
+    }, [id, handleStrokeWidthChange, strokeWidth, registerTopsBar]);
+
     const { registerComponent: registerStatusBar } = useToolsSlot(id, 'bottom-outer');
     useEffect(() => {
         registerStatusBar(

@@ -135,13 +135,13 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
     const toolbarBottomInnerById = useToolsSlot(areaId || '', 'bottom-inner', nbOfLines);
     const toolbarBottomInnerByType = useToolsSlot(areaType || '', 'bottom-inner', nbOfLines);
 
-    // Mémoriser les résultats des combinaisons
+    // Mémoriser les résultats des combinaisons avec re-calcul forcé quand areaId ou areaType changent
     const menuComponents = useMemo(() =>
         combineAndDedupe(
             menuById.getComponents(),
             menuByType.getComponents()
         ),
-        [menuById, menuByType]
+        [menuById, menuByType, areaId, areaType]
     );
 
     const menuNbOfLines = useMemo(() =>
@@ -149,7 +149,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             menuById.getLines(),
             menuByType.getLines()
         ),
-        [menuById, menuByType]
+        [menuById, menuByType, areaId, areaType]
     );
 
     const statusComponents = useMemo(() =>
@@ -157,7 +157,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             statusById.getComponents(),
             statusByType.getComponents()
         ),
-        [statusById, statusByType]
+        [statusById, statusByType, areaId, areaType]
     );
 
     const statusNbOfLines = useMemo(() =>
@@ -165,7 +165,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             statusById.getLines(),
             statusByType.getLines()
         ),
-        [statusById, statusByType]
+        [statusById, statusByType, areaId, areaType]
     );
 
     const toolbarTopInnerComponents = useMemo(() =>
@@ -173,7 +173,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             toolbarTopInnerById.getComponents(),
             toolbarTopInnerByType.getComponents()
         ),
-        [toolbarTopInnerById, toolbarTopInnerByType]
+        [toolbarTopInnerById, toolbarTopInnerByType, areaId, areaType]
     );
 
     const toolbarTopInnerNbOfLines = useMemo(() =>
@@ -181,7 +181,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             toolbarTopInnerById.getLines(),
             toolbarTopInnerByType.getLines()
         ),
-        [toolbarTopInnerById, toolbarTopInnerByType]
+        [toolbarTopInnerById, toolbarTopInnerByType, areaId, areaType]
     );
 
     const toolbarBottomInnerComponents = useMemo(() =>
@@ -189,7 +189,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             toolbarBottomInnerById.getComponents(),
             toolbarBottomInnerByType.getComponents()
         ),
-        [toolbarBottomInnerById, toolbarBottomInnerByType]
+        [toolbarBottomInnerById, toolbarBottomInnerByType, areaId, areaType]
     );
 
     const toolbarBottomInnerNbOfLines = useMemo(() =>
@@ -197,7 +197,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
             toolbarBottomInnerById.getLines(),
             toolbarBottomInnerByType.getLines()
         ),
-        [toolbarBottomInnerById, toolbarBottomInnerByType]
+        [toolbarBottomInnerById, toolbarBottomInnerByType, areaId, areaType]
     );
 
     return {
