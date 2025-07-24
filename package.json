@@ -1,6 +1,6 @@
 {
     "name": "@gamesberry/karmyc-core",
-    "version": "1.0.0-beta19",
+    "version": "1.0.0-beta20",
     "description": "A flexible and powerful layout management system for React applications",
     "main": "dist/index.cjs.js",
     "module": "dist/index.esm.js",

@@ -98,14 +98,14 @@ const containerStyle = useMemo(() => ({
         : 'column' as 'row' | 'column',
 }), [adjustedViewport, isHorizontalOrVerticalRow, rowLayout?.orientation, hasParentTopOuter, hasParentBottomOuter, parentTopOuterHeight, parentBottomOuterHeight]);
 
+const hasStackContent = isStack && rowLayout && allAreasData;
 const contentViewport = useMemo(() => ({
     left: 0,
-    top: hasParentTopOuter ? parentTopOuterHeight : 0,
+    top: hasParentTopOuter && !hasStackContent ? parentTopOuterHeight : 0,
     width: adjustedViewport.width,
-    height: adjustedViewport.height - (hasParentBottomOuter ? parentBottomOuterHeight : 0)
+    height: adjustedViewport.height - (hasParentBottomOuter && !hasStackContent ? parentBottomOuterHeight : 0)
 }), [adjustedViewport, hasParentTopOuter, hasParentBottomOuter, parentTopOuterHeight, parentBottomOuterHeight]);
 
-const hasStackContent = isStack && rowLayout && allAreasData;
 const hasComponentContent = !isLayoutRow && !isChildOfStack && componentForRender && dataForRender;
 const shouldRenderContainer = hasStackContent || hasComponentContent;
 
@@ -172,11 +172,11 @@ return (
                 id={id}
                 areas={allAreasData}
                 layout={rowLayout}
-                viewport={viewport}
+                viewport={contentViewport}
                 setResizePreview={setResizePreview}
             />)
         }
-        {hasComponentContent &&
+        {componentForRender && hasComponentContent &&
             <AreaComponent
                 id={dataForRender.id}
                 Component={componentForRender}
