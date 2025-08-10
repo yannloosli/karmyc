@@ -9,8 +9,8 @@ interface KarmycNextWrapperProps {
 }
 
 /**
- * Wrapper spécifique pour Next.js qui s'assure que les hooks React
- * sont utilisés dans le bon contexte et évite les erreurs d'hydratation.
+ * Next.js-specific wrapper ensuring React hooks are used in the
+ * right context and avoiding hydration errors.
  */
 export const KarmycNextWrapper: React.FC<KarmycNextWrapperProps> = ({ isClient, children, config }) => {
   const [isReady, setIsReady] = useState(false);
@@ -37,7 +37,7 @@ export const KarmycNextWrapper: React.FC<KarmycNextWrapperProps> = ({ isClient, 
             color: 'white',
             fontSize: '18px'
         }}>
-            Chargement de Karmyc...
+            Loading Karmyc...
         </div>
     );
 }

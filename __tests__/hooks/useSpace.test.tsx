@@ -49,10 +49,11 @@ describe('useSpace', () => {
       result.current.updateSharedState(spaceId!, { color: '#00ff00' });
     });
 
-    assertStoreState(useSpaceStore, {
-      [`spaces.${spaceId}.sharedState.color`]: '#00ff00',
-      [`spaces.${spaceId}.sharedState.pastDiffs`]: expect.any(Array),
-      [`spaces.${spaceId}.sharedState.futureDiffs`]: []
+  assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}.sharedState.currentState.color`]: '#00ff00',
+      // Enhanced history arrays now
+      [`spaces.${spaceId}.sharedState.pastActions`]: expect.any(Array),
+      [`spaces.${spaceId}.sharedState.futureActions`]: []
     });
   });
 
@@ -107,10 +108,10 @@ describe('useSpace', () => {
       result.current.updateSharedState(spaceId!, { color: '#00ff00' });
     });
 
-    assertStoreState(useSpaceStore, {
-      [`spaces.${spaceId}.sharedState.color`]: '#00ff00',
-      [`spaces.${spaceId}.sharedState.pastDiffs`]: expect.any(Array),
-      [`spaces.${spaceId}.sharedState.futureDiffs`]: []
+  assertStoreState(useSpaceStore, {
+      [`spaces.${spaceId}.sharedState.currentState.color`]: '#00ff00',
+      [`spaces.${spaceId}.sharedState.pastActions`]: expect.any(Array),
+      [`spaces.${spaceId}.sharedState.futureActions`]: []
     });
   });
 

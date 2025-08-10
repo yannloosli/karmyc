@@ -61,27 +61,24 @@ interface MyAreaState {
 }
 
 export const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  areaState,
-  width,
-  height,
-  left,
-  top
+  id,
+  state,
+  viewport
 }) => {
   return (
     <div 
       style={{ 
-        width, 
-        height, 
-        left, 
-        top,
+        width: viewport.width, 
+        height: viewport.height, 
+        left: viewport.left, 
+        top: viewport.top,
         border: '1px solid #ccc',
         padding: '10px'
       }}
     >
-      <h3>My Area: {areaId}</h3>
-      <p>Data: {areaState.data}</p>
-      <p>Count: {areaState.count}</p>
+      <h3>My Area: {id}</h3>
+      <p>Data: {state.data}</p>
+      <p>Count: {state.count}</p>
     </div>
   );
 };
@@ -146,19 +143,18 @@ Use the specialized optimized hooks to access area state with optimal performanc
 import { useAreaById, useAreaActions } from '@gamesberry/karmyc-core';
 
 const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  areaState,
-  // ... other props
+  id,
+  state,
 }) => {
   // Get area data with optimized selector (only re-renders when this area changes)
-  const area = useAreaById(areaId);
+  const area = useAreaById(id);
   
   // Get actions (stable reference, no re-renders)
   const actions = useAreaActions();
   
   const handleUpdateData = () => {
     actions.updateArea({
-      id: areaId,
+      id,
       state: {
         ...area?.state,
         data: 'Updated data',
@@ -184,19 +180,15 @@ You can also use the main `useAreaOptimized` hook which provides both actions an
 ```tsx
 import { useAreaOptimized, useAreaById } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  areaState,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id, state }) => {
   // Get area data with optimized selector
-  const area = useAreaById(areaId);
+  const area = useAreaById(id);
   
   // Get optimized actions and additional functionality
   const { update, splitArea, setRowSizes } = useAreaOptimized();
   
   const handleUpdateData = () => {
-    update(areaId, {
+    update(id, {
       state: {
         ...area?.state,
         data: 'Updated data',
@@ -206,7 +198,7 @@ const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
   };
   
   const handleSplitArea = () => {
-    splitArea(areaId, 'horizontal');
+    splitArea(id, 'horizontal');
   };
   
   return (
@@ -410,12 +402,11 @@ Area components receive viewport information as props:
 
 ```tsx
 interface AreaComponentProps<T = any> {
-  areaId: string;
-  areaState: T;
-  width: number;    // Width in pixels
-  height: number;   // Height in pixels
-  left: number;     // Left position in pixels
-  top: number;      // Top position in pixels
+  id: string;
+  state: T;
+  type: string;
+  viewport: { left: number; top: number; width: number; height: number };
+  raised?: boolean;
 }
 ```
 
@@ -424,22 +415,16 @@ interface AreaComponentProps<T = any> {
 Areas automatically resize based on their container. Use the viewport props for responsive layouts:
 
 ```tsx
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  width,
-  height,
-  left,
-  top,
-  areaState
-}) => {
-  const isSmall = width < 300;
-  const isMedium = width >= 300 && width < 600;
-  const isLarge = width >= 600;
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ viewport, state }) => {
+  const isSmall = viewport.width < 300;
+  const isMedium = viewport.width >= 300 && viewport.width < 600;
+  const isLarge = viewport.width >= 600;
   
   return (
-    <div style={{ width, height, left, top }}>
-      {isSmall && <SmallLayout data={areaState} />}
-      {isMedium && <MediumLayout data={areaState} />}
-      {isLarge && <LargeLayout data={areaState} />}
+    <div style={{ width: viewport.width, height: viewport.height, left: viewport.left, top: viewport.top }}>
+      {isSmall && <SmallLayout data={state} />}
+      {isMedium && <MediumLayout data={state} />}
+      {isLarge && <LargeLayout data={state} />}
     </div>
   );
 };
@@ -454,16 +439,13 @@ Enable drag and drop for areas using the `useAreaDragAndDrop` hook:
 ```tsx
 import { useAreaDragAndDrop } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
   const {
     isDragging,
     dragPreview,
     handleDragStart,
     handleDragEnd
-  } = useAreaDragAndDrop(areaId);
+  } = useAreaDragAndDrop({ id, type: 'my-area', state: {} });
   
   return (
     <div
@@ -490,10 +472,7 @@ Areas can have context menus for additional actions:
 ```tsx
 import { useContextMenu } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
   const { showContextMenu, hideContextMenu } = useContextMenu();
   
   const handleContextMenu = (event: React.MouseEvent) => {
@@ -525,11 +504,8 @@ Areas can respond to keyboard shortcuts:
 ```tsx
 import { useAreaKeyboardShortcuts } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
-  useAreaKeyboardShortcuts(areaId);
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
+  useAreaKeyboardShortcuts(id);
   
   // The area will automatically respond to keyboard shortcuts
   // like Ctrl+Z (undo), Ctrl+Y (redo), etc.
@@ -552,12 +528,9 @@ Wrap area components with error boundaries:
 ```tsx
 import { AreaErrorBoundary } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
   return (
-    <AreaErrorBoundary areaId={areaId}>
+    <AreaErrorBoundary areaId={id}>
       <div>
         <h3>My Area</h3>
         {/* Your area content */}
@@ -625,30 +598,24 @@ Areas receive CSS classes for styling:
 Apply custom styles to your area components:
 
 ```tsx
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  width,
-  height,
-  left,
-  top,
-  areaState
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ viewport, state }) => {
   return (
     <div
       className="my-custom-area"
       style={{
-        width,
-        height,
-        left,
-        top,
-        backgroundColor: areaState.theme === 'dark' ? '#333' : '#fff',
-        color: areaState.theme === 'dark' ? '#fff' : '#333',
+        width: viewport.width,
+        height: viewport.height,
+        left: viewport.left,
+        top: viewport.top,
+        backgroundColor: state.theme === 'dark' ? '#333' : '#fff',
+        color: state.theme === 'dark' ? '#fff' : '#333',
         padding: '16px',
         borderRadius: '8px',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}
     >
       <h3>Custom Styled Area</h3>
-      <p>Theme: {areaState.theme}</p>
+      <p>Theme: {state.theme}</p>
     </div>
   );
 };
@@ -665,27 +632,20 @@ const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
 ```tsx
 import React, { memo, useMemo } from 'react';
 
-const MyAreaComponent = memo<AreaComponentProps<MyAreaState>>(({
-  areaId,
-  areaState,
-  width,
-  height,
-  left,
-  top
-}) => {
+const MyAreaComponent = memo<AreaComponentProps<MyAreaState>>(({ viewport, state }) => {
   // Memoize expensive calculations
   const processedData = useMemo(() => {
-    return expensiveCalculation(areaState.data);
-  }, [areaState.data]);
+    return expensiveCalculation(state.data);
+  }, [state.data]);
   
   // Memoize styles
   const styles = useMemo(() => ({
-    width,
-    height,
-    left,
-    top,
-    backgroundColor: areaState.theme === 'dark' ? '#333' : '#fff'
-  }), [width, height, left, top, areaState.theme]);
+    width: viewport.width,
+    height: viewport.height,
+    left: viewport.left,
+    top: viewport.top,
+    backgroundColor: state.theme === 'dark' ? '#333' : '#fff'
+  }), [viewport.width, viewport.height, viewport.left, viewport.top, state.theme]);
   
   return (
     <div style={styles}>
@@ -805,10 +765,7 @@ Areas can be stacked in tabs:
 ```tsx
 import { AreaTabs } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
   const areas = [
     { id: 'tab1', type: 'my-area', state: { data: 'Tab 1' } },
     { id: 'tab2', type: 'my-area', state: { data: 'Tab 2' } }
@@ -829,15 +786,11 @@ Show previews when dragging areas:
 ```tsx
 import { AreaPreview } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  areaState,
-  // ... other props
-}) => {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id, state }) => {
   return (
     <div>
       <h3>My Area</h3>
-      <AreaPreview area={{ id: areaId, type: 'my-area', state: areaState }} />
+      <AreaPreview area={{ id, type: 'my-area', state }} />
     </div>
   );
 };
@@ -850,11 +803,8 @@ Areas can be joined together:
 ```tsx
 import { JoinAreaPreview } from '@gamesberry/karmyc-core';
 
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  // ... other props
-}) => {
-  const sourceArea = { id: areaId, type: 'my-area', state: {} };
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id }) => {
+  const sourceArea = { id, type: 'my-area', state: {} };
   const targetArea = { id: 'target-area', type: 'my-area', state: {} };
   
   return (
@@ -873,19 +823,19 @@ Each area should have a single responsibility:
 
 ```tsx
 // Good: Focused area
-const DataViewerArea: React.FC<AreaComponentProps> = ({ areaState }) => (
+const DataViewerArea: React.FC<AreaComponentProps> = ({ state }) => (
   <div>
     <h3>Data Viewer</h3>
-    <DataTable data={areaState.data} />
+    <DataTable data={state.data} />
   </div>
 );
 
 // Bad: Too many responsibilities
-const ComplexArea: React.FC<AreaComponentProps> = ({ areaState }) => (
+const ComplexArea: React.FC<AreaComponentProps> = ({ state }) => (
   <div>
     <h3>Complex Area</h3>
-    <DataTable data={areaState.data} />
-    <Chart data={areaState.chartData} />
+    <DataTable data={state.data} />
+    <Chart data={state.chartData} />
     <Form onSubmit={handleSubmit} />
     <SettingsPanel />
   </div>
@@ -924,11 +874,8 @@ interface BadAreaState {
 Always provide error boundaries and fallbacks:
 
 ```tsx
-const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
-  areaId,
-  areaState
-}) => {
-  if (!areaState.data) {
+const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({ id, state }) => {
+  if (!state.data) {
     return <div>No data available</div>;
   }
   
@@ -936,7 +883,7 @@ const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
     return (
       <div>
         <h3>My Area</h3>
-        <DataComponent data={areaState.data} />
+        <DataComponent data={state.data} />
       </div>
     );
   } catch (error) {
@@ -950,24 +897,17 @@ const MyAreaComponent: React.FC<AreaComponentProps<MyAreaState>> = ({
 Use React optimization techniques:
 
 ```tsx
-const MyAreaComponent = memo<AreaComponentProps<MyAreaState>>(({
-  areaId,
-  areaState,
-  width,
-  height,
-  left,
-  top
-}) => {
+const MyAreaComponent = memo<AreaComponentProps<MyAreaState>>(({ viewport, state }) => {
   const styles = useMemo(() => ({
-    width,
-    height,
-    left,
-    top
-  }), [width, height, left, top]);
+    width: viewport.width,
+    height: viewport.height,
+    left: viewport.left,
+    top: viewport.top
+  }), [viewport.width, viewport.height, viewport.left, viewport.top]);
   
   const processedData = useMemo(() => {
-    return processData(areaState.data);
-  }, [areaState.data]);
+    return processData(state.data);
+  }, [state.data]);
   
   return (
     <div style={styles}>

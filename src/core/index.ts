@@ -11,8 +11,7 @@ export type {
     SpaceStateType,
     Space,
     SpaceState,
-    SpaceActions,
-    SpaceSharedState
+    SpaceActions
 } from './spaceStore';
 
 // Types

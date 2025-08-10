@@ -2,18 +2,14 @@ import React, { Dispatch, SetStateAction } from 'react';
 import { capToRange, interpolate, Vec2 } from "../../utils";
 import { AREA_MIN_CONTENT_WIDTH } from "../../utils/constants";
 import { useKarmycStore } from "../../core/store";
-import { AreaRowLayout } from "../../types/areaTypes";
+import { AreaRowLayout, ResizePreviewState } from "../../types/areaTypes";
 import type { Rect } from "../../types";
 import { computeAreaRowToMinSize } from "../../utils/areaRowToMinSize";
 import { computeAreaToViewport } from "../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../utils/getAreaViewport";
 import { blockPointerEvents, restorePointerEvents } from "../../utils/pointerEvents";
 
-interface ResizePreviewState {
-    rowId: string;
-    separatorIndex: number;
-    t: number;
-}
+// Type imported from ../../types/areaTypes
 
 function simpleDragHandler(
     onDrag: (e: MouseEvent) => void,
@@ -30,7 +26,7 @@ function simpleDragHandler(
         document.removeEventListener('mouseup', handleMouseUp);
         // Re-enable text selection at the end of drag
         document.body.style.userSelect = '';
-        // Restaurer les événements de pointeur
+        // Restore pointer events
         restorePointerEvents();
         onDragEnd();
     };
@@ -51,7 +47,7 @@ export const handleDragAreaResize = (
         return;
     }
 
-    // Bloquer les événements de pointeur pour éviter les événements parasites
+    // Block pointer events to avoid unwanted interactions
     blockPointerEvents();
 
     // Input validation
@@ -156,9 +152,9 @@ export const handleDragAreaResize = (
     const minUpdateInterval = 32; // ~30fps pour le store global (moins agressif)
     let animationFrameId: number | null = null;
     let lastMousePosition: Vec2 | null = null;
-    let lastT: number = 0.5; // Stockage de la dernière valeur t
+    let lastT: number = 0.5; // Store last t value
 
-    // Fonction pour mettre à jour le store global (debounced)
+    // Debounced function to update the global store
     const performGlobalUpdate = (sizes: number[]) => {
         const now = performance.now();
         if (now - lastUpdateTime < minUpdateInterval) {
@@ -168,14 +164,14 @@ export const handleDragAreaResize = (
         useKarmycStore.getState().setRowSizes({ rowId: row.id, sizes });
     };
 
-    // Fonction pour la mise à jour finale (synchrone)
+    // Final synchronous update function
     const performFinalUpdate = (sizes: number[]) => {
         useKarmycStore.getState().setRowSizesFinal({ rowId: row.id, sizes });
     };
 
-    // Fonction principale de mise à jour - PRIORITÉ À LA PREVIEW LOCALE
+    // Main update function - PRIORITY TO LOCAL PREVIEW
     const updateFromMousePosition = (vec: Vec2) => {
-        // Calcul de la position relative dans le viewport partagé
+        // Compute relative position in the shared viewport
         const t0 = horizontal ? sharedViewport.left : sharedViewport.top;
         const t1 = horizontal
             ? sharedViewport.left + sharedViewport.width
@@ -183,10 +179,10 @@ export const handleDragAreaResize = (
         const val = horizontal ? vec.x : vec.y;
         const t = capToRange(tMin0, 1 - tMin1, (val - t0) / (t1 - t0));
 
-        // Stockage de la dernière valeur t
+        // Store last t value
         lastT = t;
 
-        // 1. MISE À JOUR IMMÉDIATE DE LA PREVIEW LOCALE (priorité absolue)
+        // 1. IMMEDIATE UPDATE OF LOCAL PREVIEW (absolute priority)
         setResizePreview({
             rowId: row.id,
             separatorIndex: areaIndex,
@@ -213,24 +209,24 @@ export const handleDragAreaResize = (
         }
     };
 
-    // Animation frame pour la fluidité (seulement pour le store global)
+    // Animation frame for smoothness (only for global store)
     const animate = () => {
-        // La preview est déjà mise à jour immédiatement
-        // Cette animation sert seulement pour le store global
+        // Preview is already updated immediately
+        // This animation is only for the global store
         animationFrameId = requestAnimationFrame(animate);
     };
 
-    // Déclenchement de l'animation avec debounce pour le store
+    // Trigger animation with debounce for the store
     const triggerDebouncedUpdate = (vec: Vec2) => {
         lastMousePosition = vec;
-        // Mise à jour immédiate de la preview (pas de délai)
+        // Immediate preview update (no delay)
         updateFromMousePosition(vec);
         if (!animationFrameId) {
             animationFrameId = requestAnimationFrame(animate);
         }
     };
 
-    // Annulation des mises à jour
+    // Cancel pending updates
     const cancelDebouncedUpdate = () => {
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
@@ -253,7 +249,7 @@ export const handleDragAreaResize = (
         () => {
             cancelDebouncedUpdate();
             
-            // Calcul final basé sur la dernière position
+            // Final calculation based on the last position
             if (lastMousePosition) {
                 const t0 = horizontal ? sharedViewport.left : sharedViewport.top;
                 const t1 = horizontal
@@ -280,7 +276,7 @@ export const handleDragAreaResize = (
                 }
             }
             
-            // Nettoyage de la preview après un délai
+            // Cleanup preview after a short delay
             setTimeout(() => setResizePreview(null), 0);
         }
     );

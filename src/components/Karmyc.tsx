@@ -19,12 +19,7 @@ interface Rect {
     height: number;
 }
 
-// Définir le type ResizePreviewState ici ou l'importer
-interface ResizePreviewState {
-    rowId: string;
-    separatorIndex: number;
-    t: number;
-}
+import type { ResizePreviewState } from "../types/areaTypes";
 
 // Helper function to select active screen area state
 const selectActiveScreenAreas = (state: ReturnType<typeof useKarmycStore.getState>) => {

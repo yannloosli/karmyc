@@ -3,7 +3,7 @@ import { AREA_ROLE } from '../../src/core/types/actions';
 import { create } from 'zustand';
 import { act } from '@testing-library/react';
 import { IKarmycOptions } from '../../src/core/types/karmyc';
-import { Space, SpaceSharedState } from '../../src/core/spaceStore';
+import { Space } from '../../src/core/spaceStore';
 import { SpaceStateType } from '../../src/core/spaceStore';
 
 // Créer une version simplifiée du store pour les tests
@@ -14,7 +14,7 @@ const createTestSpaceStore = () => {
     openSpaceIds: [],
     errors: [],
     pilotMode: 'AUTO',
-    addSpace: (spaceData: { name: string; description?: string | undefined; color?: string; sharedState?: Partial<Omit<SpaceSharedState, "pastDiffs" | "futureDiffs">> | undefined; }) => {
+    addSpace: (spaceData: { name: string; description?: string | undefined; color?: string; sharedState?: any | undefined; }) => {
       const newId = 'test-space';
       set((state: SpaceStateType) => ({
         spaces: {
@@ -26,8 +26,13 @@ const createTestSpaceStore = () => {
             color: spaceData.color ?? '#ff0000',
             sharedState: {
               ...(spaceData.sharedState || {}),
-              pastDiffs: [],
-              futureDiffs: []
+              currentState: {},
+              pastActions: [],
+              futureActions: [],
+              isActionInProgress: false,
+              currentActionId: null,
+              actionMetadata: {},
+              subscribers: []
             }
           }
         },
@@ -88,8 +93,21 @@ const createTestSpaceStore = () => {
       }));
     },
     clearErrors: () => set({ errors: [] }),
-    undoSharedState: () => {},
-    redoSharedState: () => {},
+    // Enhanced history actions placeholders for tests
+    startAction: () => ({ success: true }),
+    submitAction: () => ({ success: true }),
+    cancelAction: () => ({ success: true }),
+    undoEnhanced: () => ({ success: true }),
+    redoEnhanced: () => ({ success: true }),
+    setSelectionState: () => {},
+    subscribeToHistory: () => () => {},
+    canUndo: () => false,
+    canRedo: () => false,
+    getCurrentAction: () => null,
+    getHistoryLength: () => 0,
+    getHistoryStats: () => ({ totalActions: 0, pastActions: 0, futureActions: 0, memoryUsage: 0, lastActionTime: 0, averageActionDuration: 0 }),
+    clearHistory: () => {},
+    migrateSpaceHistory: () => {},
     getSpaceById: (id: string) => get().spaces[id],
     getAllSpaces: () => get().spaces,
     getActiveSpace: () => {

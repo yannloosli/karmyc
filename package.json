@@ -1,6 +1,6 @@
 {
     "name": "@gamesberry/karmyc-core",
-    "version": "1.0.0-beta21",
+    "version": "1.0.0-beta22",
     "description": "A flexible and powerful layout management system for React applications",
     "main": "dist/index.cjs.js",
     "module": "dist/index.esm.js",
@@ -108,10 +108,13 @@
     ],
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.esm.js",
-            "require": "./dist/index.cjs.js"
+            "require": "./dist/index.cjs.js",
+            "default": "./dist/index.esm.js"
         },
-        "./style.css": "./style.css"
+        "./style.css": "./style.css",
+        "./package.json": "./package.json"
     },
     "resolutions": {
         "react": "^19.0.0",

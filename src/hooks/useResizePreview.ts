@@ -1,11 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { AreaRowLayout } from '../types/areaTypes';
-
-export interface ResizePreviewState {
-    rowId: string;
-    separatorIndex: number;
-    t: number;
-}
+import { AreaRowLayout, ResizePreviewState } from '../types/areaTypes';
 
 /**
  * Hook pour gérer la preview locale de redimensionnement

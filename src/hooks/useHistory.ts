@@ -11,8 +11,8 @@ import {
 } from '../types/historyTypes';
 
 /**
- * Hook pour utiliser le système d'historique amélioré
- * Inspiré du système robuste de l'éditeur d'animation
+ * Hook to use the enhanced history system
+ * Inspired by a robust animation editor system
  */
 export const useEnhancedHistory = (spaceId: string) => {
     const {
@@ -46,7 +46,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     const actionStartTime = useRef<number>(0);
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
-    // S'abonner aux changements d'historique
+    // Subscribe to history changes
     useEffect(() => {
         const unsubscribe = subscribeToHistory(spaceId, (action: EnhancedHistoryAction) => {
             setLastAction(action);
@@ -55,7 +55,7 @@ export const useEnhancedHistory = (spaceId: string) => {
 
         unsubscribeRef.current = unsubscribe;
 
-        // Initialiser les stats
+        // Initialize stats
         setStats(getHistoryStats(spaceId));
 
         return () => {
@@ -65,7 +65,7 @@ export const useEnhancedHistory = (spaceId: string) => {
         };
     }, [spaceId, subscribeToHistory, getHistoryStats]);
 
-    // Nettoyer l'action en cours lors du démontage
+    // Cleanup in-progress action on unmount
     useEffect(() => {
         return () => {
             if (isActionInProgress) {
@@ -75,7 +75,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [isActionInProgress, spaceId, cancelAction]);
 
     /**
-     * Démarrer une nouvelle action
+     * Start a new action
      */
     const startNewAction = useCallback((actionId: string): HistoryResult => {
         const result = startAction(spaceId, actionId);
@@ -88,7 +88,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [spaceId, startAction]);
 
     /**
-     * Soumettre l'action en cours
+     * Submit the current action
      */
     const submitCurrentAction = useCallback((
         name: string, 
@@ -101,10 +101,10 @@ export const useEnhancedHistory = (spaceId: string) => {
             setIsActionInProgress(false);
             setCurrentActionId(null);
             
-            // Calculer la durée de l'action
+            // Compute action duration
             const duration = Date.now() - actionStartTime.current;
             if (result.action) {
-                // Créer une copie de l'action pour éviter les erreurs de lecture seule
+                // Create a copy of the action to avoid read-only errors
                 result.action = {
                     ...result.action,
                     metadata: {
@@ -118,7 +118,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [spaceId, submitAction]);
 
     /**
-     * Annuler l'action en cours
+     * Cancel the current action
      */
     const cancelCurrentAction = useCallback((): HistoryResult => {
         const result = cancelAction(spaceId);
@@ -130,56 +130,56 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [spaceId, cancelAction]);
 
     /**
-     * Effectuer un undo
+     * Perform an undo
      */
     const undo = useCallback((): HistoryResult => {
         return undoEnhanced(spaceId);
     }, [spaceId, undoEnhanced]);
 
     /**
-     * Effectuer un redo
+     * Perform a redo
      */
     const redo = useCallback((): HistoryResult => {
         return redoEnhanced(spaceId);
     }, [spaceId, redoEnhanced]);
 
     /**
-     * Vérifier si on peut faire un undo
+     * Check if undo is possible
      */
     const canUndoAction = useCallback((): boolean => {
         return canUndo(spaceId);
     }, [spaceId, canUndo]);
 
     /**
-     * Vérifier si on peut faire un redo
+     * Check if redo is possible
      */
     const canRedoAction = useCallback((): boolean => {
         return canRedo(spaceId);
     }, [spaceId, canRedo]);
 
     /**
-     * Obtenir l'action en cours
+     * Get the current action
      */
     const getCurrentActionData = useCallback((): EnhancedHistoryAction | null => {
         return getCurrentAction(spaceId);
     }, [spaceId, getCurrentAction]);
 
     /**
-     * Obtenir la longueur de l'historique
+     * Get history length
      */
     const getHistoryLengthData = useCallback((): number => {
         return getHistoryLength(spaceId);
     }, [spaceId, getHistoryLength]);
 
     /**
-     * Obtenir les statistiques d'historique
+     * Get history statistics
      */
     const getHistoryStatsData = useCallback((): HistoryStats => {
         return getHistoryStats(spaceId);
     }, [spaceId, getHistoryStats]);
 
     /**
-     * Effacer l'historique
+     * Clear history
      */
     const clearHistoryData = useCallback((): void => {
         clearHistory(spaceId);
@@ -187,14 +187,14 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [spaceId, clearHistory, getHistoryStats]);
 
     /**
-     * Mettre à jour l'état de sélection
+     * Update selection state
      */
     const updateSelectionState = useCallback((selectionState: any): void => {
         setSelectionState(spaceId, selectionState);
     }, [spaceId, setSelectionState]);
 
     /**
-     * Créer une action simple (start + submit automatique)
+     * Create a simple action (start + auto submit)
      */
     const createSimpleAction = useCallback((
         name: string,
@@ -213,7 +213,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [startNewAction, submitCurrentAction]);
 
     /**
-     * Créer une action de sélection
+     * Create a selection action
      */
     const createSelectionAction = useCallback((
         name: string,
@@ -229,7 +229,7 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [createSimpleAction]);
 
     /**
-     * Créer une action de transformation
+     * Create a transform action
      */
     const createTransformAction = useCallback((
         name: string,
@@ -245,25 +245,25 @@ export const useEnhancedHistory = (spaceId: string) => {
     }, [createSimpleAction]);
 
     return {
-        // État
+        // State
         isActionInProgress,
         currentActionId,
         lastAction,
         stats,
         
-        // Actions principales
+        // Main actions
         startAction: startNewAction,
         submitAction: submitCurrentAction,
         cancelAction: cancelCurrentAction,
         undo,
         redo,
         
-        // Actions utilitaires
+        // Utility actions
         createSimpleAction,
         createSelectionAction,
         createTransformAction,
         
-        // Vérifications
+        // Checks
         canUndo: canUndoAction,
         canRedo: canRedoAction,
         
@@ -272,15 +272,20 @@ export const useEnhancedHistory = (spaceId: string) => {
         getHistoryLength: getHistoryLengthData,
         getHistoryStats: getHistoryStatsData,
         
-        // Actions de gestion
+        // Management actions
         clearHistory: clearHistoryData,
         updateSelectionState,
         
-        // Constantes
+        // Constants
         ACTION_TYPES: HISTORY_ACTION_TYPES,
         EVENTS: HISTORY_EVENTS,
     };
 };
+
+/**
+ * Public alias: useHistory (Enhanced is now the only system)
+ */
+export const useHistory = (spaceId: string) => useEnhancedHistory(spaceId);
 
 /**
  * Hook pour utiliser l'historique avec un espace actif automatique
@@ -293,14 +298,14 @@ export const useActiveSpaceHistory = () => {
         throw new Error('No active space found. Please select a space first.');
     }
     
-    return useEnhancedHistory(activeSpaceId);
+    return useHistory(activeSpaceId);
 };
 
 /**
  * Hook pour créer des actions d'historique typées
  */
 export const useTypedHistoryActions = (spaceId: string) => {
-    const { createSimpleAction, createSelectionAction, createTransformAction } = useEnhancedHistory(spaceId);
+    const { createSimpleAction, createSelectionAction, createTransformAction } = useHistory(spaceId);
 
     return {
         // Actions de base

@@ -136,12 +136,12 @@ const { spaces, activeSpaceId, getSpaceById } = useSpace();
 const activeSpace = activeSpaceId ? getSpaceById(activeSpaceId) : null;
 ```
 
-### `useEnhancedHistory(spaceId: string)`
+### `useHistory(spaceId: string)`
 
 Access enhanced history functionality for undo/redo operations.
 
 ```typescript
-function useEnhancedHistory(spaceId: string): {
+function useHistory(spaceId: string): {
   // State
   isActionInProgress: boolean;
   currentActionId: string | null;
@@ -180,7 +180,7 @@ function useEnhancedHistory(spaceId: string): {
 
 #### Example
 ```typescript
-const history = useEnhancedHistory('space-1');
+const history = useHistory('space-1');
 
 // Start a new action
 history.startAction('Update Area');
@@ -261,31 +261,31 @@ const pluginSystem = usePluginSystem(spaceStore, [myPlugin]);
 
 ## Additional Hooks
 
-### `useAreaDragAndDrop(areaId)`
+### `useAreaDragAndDrop(params?)`
 
-Provides drag and drop functionality for areas.
+Drag & drop management for areas and the placement overlay.
 
 ```typescript
-function useAreaDragAndDrop(areaId: string): {
-  isDragging: boolean;
-  dragPreview: React.ReactNode | null;
-  handleDragStart: (event: DragEvent) => void;
-  handleDragEnd: (event: DragEvent) => void;
+type UseAreaDragAndDropParams = {
+  type?: AreaTypeValue;
+  id?: string;
+  state?: any;
+};
+
+function useAreaDragAndDrop(params?: UseAreaDragAndDropParams): {
+  handleDragStart: (e: React.DragEvent) => void;
+  handleDragOver: (e: React.DragEvent) => void;
+  handleDragEnd: () => void;
+  handleDrop: (e: React.DragEvent) => void;
+  areaToOpenTargetId: string | null;
+  areaToOpenTargetViewport: { left: number; top: number; width: number; height: number } | null;
+  calculatedPlacement: 'left' | 'right' | 'top' | 'bottom' | 'stack';
 }
 ```
 
-#### Parameters
-- `areaId: string` - ID of the area to enable drag and drop for
-
-#### Example
-```typescript
-const {
-  isDragging,
-  dragPreview,
-  handleDragStart,
-  handleDragEnd
-} = useAreaDragAndDrop('area-1');
-```
+#### Notes
+- Provide `params` (type, id, state) when the drag originates from a menubar or an external source to the area.
+- The drop overlay is rendered by `DropZone`/`AreaToOpenPreview` within `Karmyc`.
 
 ### `useAreaOptimized()`
 
@@ -617,25 +617,20 @@ const {
 } = useToolsState('area-1');
 ```
 
-### `useSpaceHistory()`
+### `useActiveSpaceHistory()`
 
-Provides space history functionality.
+Provides enhanced history functionality for the currently active space.
 
 ```typescript
-function useSpaceHistory(spaceId: string): {
-  history: EnhancedHistoryAction[];
-  currentIndex: number;
-  undo: () => void;
-  redo: () => void;
-}
+function useActiveSpaceHistory(): ReturnType<typeof useHistory>
 ```
 
-### `useEnhancedHistory(spaceId)`
+### `useHistory(spaceId)`
 
 Provides enhanced history functionality with advanced features like action batching, diff tracking, and typed actions.
 
 ```typescript
-function useEnhancedHistory(spaceId: string): {
+function useHistory(spaceId: string): {
   // State
   isActionInProgress: boolean;
   currentActionId: string | null;
@@ -674,7 +669,7 @@ function useEnhancedHistory(spaceId: string): {
 
 #### Example
 ```typescript
-const history = useEnhancedHistory('space-1');
+const history = useHistory('space-1');
 
 // Create a simple action
 const result = history.createSimpleAction('Update Item', [
@@ -701,7 +696,7 @@ if (history.canUndo()) {
 Provides enhanced history functionality for the currently active space.
 
 ```typescript
-function useActiveSpaceHistory(): ReturnType<typeof useEnhancedHistory>
+function useActiveSpaceHistory(): ReturnType<typeof useHistory>
 ```
 
 ### `useTypedHistoryActions(spaceId)`
@@ -784,14 +779,19 @@ interface KarmycProps {
 <Karmyc offset={TOOLBAR_HEIGHT} />
 ```
 
-### `ToolsSlot`
+### `Tools` (ToolsSlot)
 
-System for injecting components into predefined UI slots.
+System for injecting tools into predefined UI slots/positions.
 
 ```tsx
-interface ToolsSlotProps {
-  areaType: string;
+interface ToolsProps {
+  areaId?: string;
+  areaType?: string; // default: 'app'
+  areaState?: any;
   children: React.ReactNode;
+  style?: React.CSSProperties;
+  viewport?: Rect;
+  nbOfLines?: number; // number of toolbar rows (top/bottom)
 }
 
 <Tools areaType="app">
@@ -804,14 +804,13 @@ interface ToolsSlotProps {
 Error boundary for area components.
 
 ```tsx
-interface AreaErrorBoundaryProps {
-  areaId: string;
-  children: React.ReactNode;
-}
-
-<AreaErrorBoundary areaId="area-1">
-  <MyAreaComponent />
-</AreaErrorBoundary>
+<AreaErrorBoundary
+  component={MyAreaComponent}
+  areaId="area-1"
+  areaState={{}}
+  type="my-area"
+  viewport={{ left: 0, top: 0, width: 300, height: 200 }}
+/> 
 ```
 
 ### `AreaTabs`
@@ -819,12 +818,7 @@ interface AreaErrorBoundaryProps {
 Tabbed interface for areas.
 
 ```tsx
-interface AreaTabsProps {
-  areas: IArea[];
-  onTabChange?: (areaId: string) => void;
-}
-
-<AreaTabs areas={areas} onTabChange={handleTabChange} />
+// Used inside AreaStack, no stable public API
 ```
 
 ### `ScreenSwitcher`
@@ -837,79 +831,65 @@ Component for switching between screens.
 
 ### `AreaStack`
 
-Component for stacked areas.
+Tabs renderer for stacked areas.
 
 ```tsx
 interface AreaStackProps {
-  areas: IArea[];
+  id: string;
+  layout: AreaRowLayout; // orientation: 'stack'
+  areas: Record<string, IArea>;
+  viewport: { left: number; top: number; width: number; height: number };
+  setResizePreview: React.Dispatch<React.SetStateAction<ResizePreviewState | null>>;
 }
 
-<AreaStack areas={areas} />
+<AreaStack id={row.id} layout={row} areas={areas} viewport={vp} setResizePreview={setResizePreview} />
 ```
 
 ### `AreaPreview`
 
-Preview component for areas.
+Preview component used during drag (internal). Exposes:
 
 ```tsx
 interface AreaPreviewProps {
-  area: IArea;
+  areaToOpen: { position: { x: number; y: number }; area: { type: string; state: any } };
+  dimensions: { x: number; y: number };
 }
-
-<AreaPreview area={area} />
 ```
 
 ### `AreaToOpenPreview`
 
-Preview component for areas to be opened.
+Drop overlay component (no props, wired to the store).
 
 ```tsx
-interface AreaToOpenPreviewProps {
-  area: IArea;
-}
-
-<AreaToOpenPreview area={area} />
+<AreaToOpenPreview />
 ```
 
 ### `JoinAreaPreview`
 
-Preview component for joining areas.
+Join preview between two areas (used by `Karmyc`).
 
 ```tsx
 interface JoinAreaPreviewProps {
-  sourceArea: IArea;
-  targetArea: IArea;
+  viewport: { left: number; top: number; width: number; height: number };
+  movingInDirection: 'n' | 's' | 'e' | 'w';
 }
-
-<JoinAreaPreview sourceArea={sourceArea} targetArea={targetArea} />
 ```
 
 ### `DropZone`
 
-Drop zone component for drag and drop.
-
-```tsx
-interface DropZoneProps {
-  onDrop: (areaId: string) => void;
-  children: React.ReactNode;
-}
-
-<DropZone onDrop={handleDrop}>
-  {children}
-</DropZone>
-```
+Drop zone automatically displayed by `Karmyc` (no public props).
 
 ### `AreaRowSeparators`
 
-Component for area row separators.
+Interactive row/column separators (used by `Karmyc`).
 
 ```tsx
 interface AreaRowSeparatorsProps {
-  rowId: string;
-  orientation: 'horizontal' | 'vertical';
+  row: AreaRowLayout;
+  setResizePreview: React.Dispatch<React.SetStateAction<ResizePreviewState | null>>;
+  resizePreview: ResizePreviewState | null;
+  offset?: number;
 }
-
-<AreaRowSeparators rowId={rowId} orientation="horizontal" />
 ```
 
 ### `KeyboardShortcutsViewer`
@@ -930,14 +910,16 @@ Component for cleaning up detached windows.
 
 ### `KarmycNextWrapper`
 
-Wrapper component for Next.js compatibility.
+Next.js-specific wrapper (safe client-side hydration).
 
 ```tsx
 interface KarmycNextWrapperProps {
+  isClient: boolean;
+  config: IKarmycOptions;
   children: React.ReactNode;
 }
 
-<KarmycNextWrapper>
+<KarmycNextWrapper isClient={true} config={config}>
   {children}
 </KarmycNextWrapper>
 ```
@@ -1038,12 +1020,11 @@ interface LayoutConfig {
 
 ```typescript
 interface AreaComponentProps<T = any> {
-  areaId: string;
-  areaState: T;
-  width: number;
-  height: number;
-  left: number;
-  top: number;
+  id: string;
+  state: T;
+  type: string;
+  viewport: { left: number; top: number; width: number; height: number };
+  raised?: boolean;
 }
 ```
 
@@ -1101,5 +1082,5 @@ enum AREA_ROLE {
   SELF = 'SELF'
 }
 
-const TOOLBAR_HEIGHT = 40;
+const TOOLBAR_HEIGHT = 30;
 ```

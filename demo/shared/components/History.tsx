@@ -1,6 +1,6 @@
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks/useSpace';
-import { useEnhancedHistory } from '../../../src/hooks/useHistory';
+import { useHistory } from '../../../src/hooks/useHistory';
 import { useSpaceStore } from '../../../src/core/spaceStore';
 import { useCallback, useState, useEffect } from 'react';
 import { 
@@ -82,7 +82,7 @@ export const History: React.FC<AreaComponentProps<HistoryState>> = ({
         // Constantes
         ACTION_TYPES,
         EVENTS
-    } = useEnhancedHistory(activeSpaceId || '');
+    } = useHistory(activeSpaceId || '');
 
     // Utiliser les vraies données d'historique du store
     const { pastDiffs, futureDiffs } = useSpaceStore(state => {

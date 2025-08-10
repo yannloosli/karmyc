@@ -2,7 +2,7 @@ import React, { Dispatch, SetStateAction } from 'react';
 import { capToRange, Vec2 } from "../../utils";
 import { AREA_MIN_CONTENT_WIDTH } from "../../utils/constants";
 import { useKarmycStore } from "../../core/store"; 
-import { AreaRowLayout } from "../../types/areaTypes";
+import { AreaRowLayout, ResizePreviewState } from "../../types/areaTypes";
 import { CardinalDirection, IntercardinalDirection } from "../../types/directions";
 import type { Rect } from "../../types";
 import { computeAreaToParentRow } from "../../core/utils/areaToParentRow";
@@ -10,11 +10,7 @@ import { computeAreaToViewport } from "../../utils/areaToViewport";
 import { getAreaRootViewport } from "../../utils/getAreaViewport";
 import { blockPointerEvents, restorePointerEvents } from "../../utils/pointerEvents";
 
-interface ResizePreviewState {
-    rowId: string;
-    separatorIndex: number;
-    t: number;
-}
+// Type importé depuis ../../types/areaTypes
 
 
 // Function to determine if the movement is toward the inside of the area

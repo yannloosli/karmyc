@@ -37,7 +37,7 @@ export interface ToolsBarComponent {
     callback?: (() => void)[];
 }
 
-// Hook pour enregistrer les composants
+// Hook to register components into a tools bar position
 export function useToolsSlot(
     key: string,
     position: ToolsBarPosition,
@@ -45,7 +45,7 @@ export function useToolsSlot(
 ) {
     const registryKey = `${key}:${position}`;
 
-    // Déplacer la mise à jour du registre dans un useEffect
+    // Move lines registry update into a useEffect
     useEffect(() => {
         if (nbOfLines !== undefined) {
             const currentValue = toolsBarLinesRegistry[registryKey] ?? 1;
@@ -111,7 +111,7 @@ export function useToolsSlot(
     };
 }
 
-// Fonction utilitaire pour combiner et dédupliquer les composants
+// Utility to combine and deduplicate components
 const combineAndDedupe = (...componentArrays: ToolsBarComponent[][]) => {
     const componentMap = new Map<string, ToolsBarComponent>();
     componentArrays.flat().forEach(comp => {
@@ -123,9 +123,9 @@ const combineAndDedupe = (...componentArrays: ToolsBarComponent[][]) => {
     return Array.from(componentMap.values()).sort((a, b) => a.order - b.order);
 };
 
-// Hook pour utiliser les composants enregistrés
+// Hook to consume registered components
 function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: number) {
-    // Appeler les hooks au niveau supérieur
+    // Call hooks at the top level
     const menuById = useToolsSlot(areaId || '', 'top-outer', nbOfLines);
     const menuByType = useToolsSlot(areaType || '', 'top-outer', nbOfLines);
     const statusById = useToolsSlot(areaId || '', 'bottom-outer', nbOfLines);
@@ -135,7 +135,7 @@ function useToolsComponents(areaId?: string, areaType?: string, nbOfLines?: numb
     const toolbarBottomInnerById = useToolsSlot(areaId || '', 'bottom-inner', nbOfLines);
     const toolbarBottomInnerByType = useToolsSlot(areaType || '', 'bottom-inner', nbOfLines);
 
-    // Mémoriser les résultats des combinaisons avec re-calcul forcé quand areaId ou areaType changent
+    // Memoize combined results; force recompute when areaId/areaType change
     const menuComponents = useMemo(() =>
         combineAndDedupe(
             menuById.getComponents(),

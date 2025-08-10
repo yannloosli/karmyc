@@ -82,6 +82,25 @@ const App = () => {
 };
 ```
 
+### 2b. Next.js / SSR usage
+
+When using Next.js, wrap your app with `KarmycNextWrapper` to ensure safe client-side hydration:
+
+```tsx
+// app/providers.tsx or pages/_app.tsx
+import { KarmycNextWrapper, useKarmyc } from '@gamesberry/karmyc-core';
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  const config = useKarmyc({ initialAreas: [] });
+  const isClient = typeof window !== 'undefined';
+  return (
+    <KarmycNextWrapper isClient={isClient} config={config}>
+      {children}
+    </KarmycNextWrapper>
+  );
+}
+```
+
 ### 3. Area Initialization
 ```tsx
 // AreaInitializer.tsx
@@ -186,6 +205,7 @@ interface ToolsProps {
   areaType?: string;         // Area type for type-specific tools (default: 'app')
   areaState?: any;           // Current area state
   children: React.ReactNode; // Content to render
+  style?: React.CSSProperties; // Inline style for container
   viewport?: Rect;           // Viewport dimensions
   nbOfLines?: number;        // Number of toolbar lines (default: 1)
 }
@@ -274,11 +294,12 @@ const layout = useAreaLayoutById(areaId);   // Get area layout
 const actions = useAreaActions();           // Get area actions
 ```
 
-##### `useAreaDragAndDrop(areaId)`
-Provides drag and drop functionality for areas.
+##### `useAreaDragAndDrop(params?)`
+Provides drag and drop functionality for areas and placement overlay.
 
 ```typescript
-const { isDragging, dragRef, dropRef } = useAreaDragAndDrop(areaId);
+const { isDragging, handleDragStart, handleDragOver, handleDragEnd, handleDrop } =
+  useAreaDragAndDrop({ id: 'area-1', type: 'my-area', state: {} });
 ```
 
 ##### `useAreaKeyboardShortcuts(areaId)`
@@ -316,14 +337,14 @@ Provides area stacking functionality.
 const { isChildOfStack, stackArea, unstackArea } = useAreaStack(areaId);
 ```
 
-##### `useSpaceHistory(spaceId)`
-Provides space history functionality.
+##### `useActiveSpaceHistory()`
+Enhanced history bound to the active space.
 
 ```typescript
-const { history, currentIndex, undo, redo } = useSpaceHistory(spaceId);
+const history = useActiveSpaceHistory();
 ```
 
-##### `useEnhancedHistory(spaceId)`
+##### `useHistory(spaceId)`
 Provides enhanced history functionality with advanced features like action batching, diff tracking, and typed actions.
 
 ```typescript
@@ -358,7 +379,7 @@ const {
   // Management
   clearHistory,
   updateSelectionState
-} = useEnhancedHistory(spaceId);
+} = useHistory(spaceId);
 ```
 
 ##### `useActiveSpaceHistory()`
@@ -421,22 +442,24 @@ System for injecting components into predefined UI slots.
 Error boundary component for areas.
 
 ```tsx
-<AreaErrorBoundary component={MyAreaComponent} areaId="area-1" areaState={{}} type="my-area" viewport={{}} />
+<AreaErrorBoundary
+  component={MyAreaComponent}
+  areaId="area-1"
+  areaState={{}}
+  type="my-area"
+  viewport={{ left: 0, top: 0, width: 300, height: 200 }}
+/>
 ```
 
 ##### `AreaPreview`
-Preview component for areas.
+Preview component used during drag operations.
 
 ```tsx
-<AreaPreview areaId="area-1" />
+<AreaPreview areaToOpen={{ position: { x: 100, y: 50 }, area: { type: 'my-area', state: {} } }} dimensions={{ x: 320, y: 200 }} />
 ```
 
 ##### `AreaTabs`
-Tab component for stacked areas.
-
-```tsx
-<AreaTabs areaId="area-1" />
-```
+Tab component for stacked areas (internal usage via `AreaStack`).
 
 ##### `ScreenSwitcher`
 Component for switching between screens.
@@ -509,8 +532,8 @@ interface LayoutNode {
 interface Rect {
   top: number;
   left: number;
-  width: number | string;
-  height: number | string;
+  width: number;
+  height: number;
 }
 
 interface Point {

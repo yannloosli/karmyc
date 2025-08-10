@@ -1,5 +1,23 @@
 # Documentation Changelog - Karmyc Core
 
+## Unreleased
+
+### Breaking Changes (Hard Clean)
+- Removed legacy history API and types:
+  - Deleted legacy types: `IHistoryOptions`, `THistoryState`, `THistoryChange`, `THistoryDiff`, `THistoryAction`, `IHistoryState`, `TUndoableOptions`, `HistoryConfig`.
+  - Removed legacy `SpaceSharedState` and `pastDiffs`/`futureDiffs` usage.
+  - Removed `undoSharedState`/`redoSharedState` from `spaceStore` (use `undoEnhanced`/`redoEnhanced`).
+- Deprecated hook `useSpaceHistory` now throws an error directing to `useHistory` or `useActiveSpaceHistory`.
+
+### Docs
+- Updated README and API reference to reference `useHistory` (renamed from `useEnhancedHistory`).
+
+### Naming Simplification
+- Hook rename: `useEnhancedHistory` → `useHistory` (a backward-compatible alias `useEnhancedHistory` still exists, but docs/examples use `useHistory`).
+- Docs files renamed:
+  - `README_ENHANCED_HISTORY.md` → `README_HISTORY.md`
+  - `ENHANCED_HISTORY_EXAMPLES.md` → `HISTORY_EXAMPLES.md`
+
 ## Version 1.0.0-beta18 - Documentation Update
 
 ### Overview
@@ -96,7 +114,7 @@ This update clarifies the significant architectural differences between the two 
 - `useArea()`: Now returns action functions instead of state/actions object
 - `useSpace()`: Simplified to return all spaces and active space
 - `useKarmyc()`: Updated configuration interface with new options
-- `useEnhancedHistory()`: Enhanced with additional utility functions
+- `useHistory()`: Enhanced with additional utility functions
 
 #### Component Interfaces
 - `AreaComponentProps`: Updated to match current implementation
@@ -165,8 +183,8 @@ This update clarifies the significant architectural differences between the two 
 - `docs/CORE_CONCEPTS.md`: Architecture and concepts
 - `docs/AREA_GUIDE.md`: Area development guide
 - `docs/PLUGIN_SYSTEM.md`: Plugin development (unchanged)
-- `docs/README_ENHANCED_HISTORY.md`: History system (unchanged)
-- `docs/ENHANCED_HISTORY_EXAMPLES.md`: History examples (unchanged)
+- `docs/README_HISTORY.md`: History system
+- `docs/HISTORY_EXAMPLES.md`: History examples
 - `docs/PLUGIN_GUIDE.md`: Plugin guide (unchanged)
 
 ### Quality Improvements

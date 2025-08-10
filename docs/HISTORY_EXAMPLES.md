@@ -21,13 +21,13 @@ This document provides practical examples for using the robust enhanced history 
 
 ```typescript
 // Basic hook for a specific space
-import { useEnhancedHistory } from '../hooks/useEnhancedHistory';
+import { useHistory } from '../hooks/useHistory';
 
 // Hook for active space
-import { useActiveSpaceHistory } from '../hooks/useEnhancedHistory';
+import { useActiveSpaceHistory } from '../hooks/useHistory';
 
 // Hook for typed actions
-import { useActiveSpaceTypedActions } from '../hooks/useEnhancedHistory';
+import { useActiveSpaceTypedActions } from '../hooks/useHistory';
 ```
 
 ### 2. Basic Configuration
@@ -47,7 +47,7 @@ const MyComponent = () => {
         redo,
         canUndo,
         canRedo,
-    } = useEnhancedHistory(spaceId);
+    } = useHistory(spaceId);
 
     // Your logic here...
 };
@@ -55,14 +55,14 @@ const MyComponent = () => {
 
 ## Basic Hooks
 
-### useEnhancedHistory
+### useHistory
 
 Main hook for managing the history of a specific space.
 
 ```typescript
 const MyComponent = () => {
     const spaceId = 'my-space-id';
-    const history = useEnhancedHistory(spaceId);
+    const history = useHistory(spaceId);
     
     return (
         <div>
@@ -507,7 +507,7 @@ const MyComponent = () => {
 
 ```typescript
 // ✅ New system
-import { useActiveSpaceHistory } from '../hooks/useEnhancedHistory';
+import { useActiveSpaceHistory } from '../hooks/useHistory';
 
 const MyComponent = () => {
     const { undo, redo, canUndo, canRedo } = useActiveSpaceHistory();

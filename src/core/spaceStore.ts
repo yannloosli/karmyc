@@ -3,7 +3,6 @@ import { devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { generateDiff, applyDiff, invertDiff } from '../utils/history';
 import { 
-    THistoryDiff, 
     EnhancedSpaceSharedState, 
     EnhancedHistoryAction, 
     Diff,
@@ -15,27 +14,14 @@ import {
 } from '../types/historyTypes';
 import { v4 as uuidv4 } from 'uuid';
 
-// ============================================================================
-// TYPES LEGACY (à déprécier progressivement)
-// ============================================================================
-
-/**
- * État partagé d'un espace (space) - LEGACY
- * @deprecated Use EnhancedSpaceSharedState instead
- */
-export interface SpaceSharedState {
-    pastDiffs: THistoryDiff[];
-    futureDiffs: THistoryDiff[];
-    actionType?: string;
-    payload?: Record<string, any>;
-}
+// Legacy space shared state removed (hard clean). Use EnhancedSpaceSharedState instead.
 
 export interface Space {
     id: string;
     name: string;
     color?: string;
     description?: string;
-    sharedState: EnhancedSpaceSharedState; // Mise à jour vers le nouveau système
+    sharedState: EnhancedSpaceSharedState; // Updated to the new system
 }
 
 export interface SpaceState {
@@ -57,14 +43,14 @@ export interface SpaceActions {
     updateSpaceGenericSharedState: (payload: { spaceId: string; changes: Partial<Omit<EnhancedSpaceSharedState, 'pastActions' | 'futureActions'>>; actionName?: string; actionDescription?: string }) => void;
     clearErrors: () => void;
     
-    // Actions d'historique améliorées
+    // Enhanced history actions
     startAction: (spaceId: string, actionId: string) => HistoryResult;
     submitAction: (spaceId: string, name: string, diffs?: Diff[], allowIndexShift?: boolean, modifiedKeys?: string[]) => HistoryResult;
     cancelAction: (spaceId: string) => HistoryResult;
     undoEnhanced: (spaceId: string) => HistoryResult;
     redoEnhanced: (spaceId: string) => HistoryResult;
     
-    // Gestion des sélections
+    // Selection management
     setSelectionState: (spaceId: string, selectionState: any) => void;
     
     // Notifications
@@ -78,19 +64,15 @@ export interface SpaceActions {
     getHistoryStats: (spaceId: string) => HistoryStats;
     clearHistory: (spaceId: string) => void;
     migrateSpaceHistory: (spaceId: string) => void;
-    
-    // Actions legacy (à déprécier)
-    undoSharedState: (spaceId: string) => void;
-    redoSharedState: (spaceId: string) => void;
 
     // Selectors
     getSpaceById: (id: string) => Space | undefined;
     getAllSpaces: () => Record<string, Space>;
     getActiveSpace: () => Space | null;
     getActiveSpaceId: () => string | null;
-    getOpenSpaces: () => Space[]; // Nouveau sélecteur pour obtenir la liste des espaces ouverts
+    getOpenSpaces: () => Space[]; // New selector to get the list of open spaces
     getSpaceErrors: () => string[];
-    getPilotMode: () => 'MANUAL' | 'AUTO'; // Nouveau sélecteur
+    getPilotMode: () => 'MANUAL' | 'AUTO'; // New selector
 
     // =========================================================================
     // TIME TRAVEL: JUMP TO ACTION
@@ -105,7 +87,7 @@ export type SpaceStateType = SpaceState & SpaceActions;
 // ============================================================================
 
 /**
- * Créer un état partagé d'espace amélioré par défaut
+ * Create a default enhanced shared state for space
  */
 const createDefaultEnhancedSharedState = (): EnhancedSpaceSharedState => ({
     currentState: {},
@@ -118,7 +100,7 @@ const createDefaultEnhancedSharedState = (): EnhancedSpaceSharedState => ({
 });
 
 /**
- * Créer une action d'historique améliorée
+ * Create an enhanced history action
  */
 const createEnhancedHistoryAction = (
     id: string,
@@ -325,7 +307,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                         set(state => {
                             const currentSpace = state.spaces[spaceId];
                             if (currentSpace) {
-                                // Supprimer l'historique après l'index actuel
+                                // Remove history after the current index
                                 currentSpace.sharedState.pastActions.push(historyAction);
                                 currentSpace.sharedState.futureActions = [];
                                 currentSpace.sharedState.isActionInProgress = false;
@@ -385,14 +367,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                             };
                         }
                         
-                        console.log(`[undoEnhanced] Début pour space ${spaceId}:`, {
+                        console.log(`[undoEnhanced] Start for space ${spaceId}:`, {
                             pastActionsLength: space.sharedState.pastActions?.length || 0,
                             futureActionsLength: space.sharedState.futureActions?.length || 0,
                             pastActions: space.sharedState.pastActions,
                             futureActions: space.sharedState.futureActions
                         });
                         
-                        // Vérification de sécurité pour s'assurer que pastActions est un tableau
+                        // Safety check to ensure pastActions is an array
                         if (!Array.isArray(space.sharedState.pastActions)) {
                             console.warn(`Space ${spaceId} has invalid pastActions, initializing...`);
                             set(state => {
@@ -409,14 +391,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                         }
                         
                         if (space.sharedState.pastActions.length === 0) {
-                            console.log(`[undoEnhanced] Aucune action à annuler pour space ${spaceId}`);
+                            console.log(`[undoEnhanced] No action to undo for space ${spaceId}`);
                             return {
                                 success: false,
                                 error: 'No actions to undo',
                             };
                         }
                         
-                        // Vérification supplémentaire avant pop()
+                        // Additional check before pop()
                         const pastActions = space.sharedState.pastActions;
                         if (!Array.isArray(pastActions) || pastActions.length === 0) {
                             console.error(`Space ${spaceId} has invalid pastActions after validation:`, pastActions);
@@ -444,10 +426,10 @@ export const useSpaceStore = create<SpaceStateType>()(
                             };
                         }
                         
-                        console.log(`[undoEnhanced] Action à annuler:`, actionToUndo);
-                        console.log(`[undoEnhanced] État à restaurer:`, actionToUndo.state);
+                        console.log(`[undoEnhanced] Action to undo:`, actionToUndo);
+                        console.log(`[undoEnhanced] State to restore:`, actionToUndo.state);
                         
-                        // Créer un nouveau tableau sans l'élément au lieu de modifier l'existant
+                        // Create a new array without the element instead of mutating existing one
                         const newPastActions = pastActions.slice(0, lastIndex);
                         
                         set(state => {
@@ -465,12 +447,12 @@ export const useSpaceStore = create<SpaceStateType>()(
                         // Ajout : forcer la notification Zustand et l'événement custom
                         const updatedSpace = get().spaces[spaceId];
                         if (updatedSpace && typeof window !== 'undefined' && window.dispatchEvent) {
-                            window.dispatchEvent(new CustomEvent('openchakra-state-changed', {
+                            window.dispatchEvent(new CustomEvent('karmyc-state-changed', {
                                 detail: { state: updatedSpace.sharedState.currentState }
                             }));
                         }
                         
-                        console.log(`[undoEnhanced] Après undo pour space ${spaceId}:`, {
+                        console.log(`[undoEnhanced] After undo for space ${spaceId}:`, {
                             newPastActionsLength: newPastActions.length,
                             futureActionsLength: get().spaces[spaceId]?.sharedState?.futureActions?.length || 0,
                             restoredState: get().spaces[spaceId]?.sharedState?.currentState
@@ -494,14 +476,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                             };
                         }
                         
-                        console.log(`[redoEnhanced] Début pour space ${spaceId}:`, {
+                        console.log(`[redoEnhanced] Start for space ${spaceId}:`, {
                             pastActionsLength: space.sharedState.pastActions?.length || 0,
                             futureActionsLength: space.sharedState.futureActions?.length || 0,
                             pastActions: space.sharedState.pastActions,
                             futureActions: space.sharedState.futureActions
                         });
                         
-                        // Vérification de sécurité pour s'assurer que futureActions est un tableau
+                        // Safety check to ensure futureActions is an array
                         if (!Array.isArray(space.sharedState.futureActions)) {
                             console.warn(`Space ${spaceId} has invalid futureActions, initializing...`);
                             set(state => {
@@ -518,14 +500,14 @@ export const useSpaceStore = create<SpaceStateType>()(
                         }
                         
                         if (space.sharedState.futureActions.length === 0) {
-                            console.log(`[redoEnhanced] Aucune action à refaire pour space ${spaceId}`);
+                            console.log(`[redoEnhanced] No action to redo for space ${spaceId}`);
                             return {
                                 success: false,
                                 error: 'No actions to redo',
                             };
                         }
                         
-                        // Vérification supplémentaire avant pop()
+                        // Additional check before pop()
                         const futureActions = space.sharedState.futureActions;
                         if (!Array.isArray(futureActions) || futureActions.length === 0) {
                             console.error(`Space ${spaceId} has invalid futureActions after validation:`, futureActions);
@@ -553,11 +535,11 @@ export const useSpaceStore = create<SpaceStateType>()(
                             };
                         }
                         
-                        console.log(`[redoEnhanced] Action à refaire:`, actionToRedo);
+                        console.log(`[redoEnhanced] Action to redo:`, actionToRedo);
                         
                         // Utiliser l'état après les modifications pour le redo
                         const stateToRestore = actionToRedo.metadata?.nextState || actionToRedo.state;
-                        console.log(`[redoEnhanced] État à restaurer pour redo:`, stateToRestore);
+                        console.log(`[redoEnhanced] State to restore for redo:`, stateToRestore);
                         
                         // Créer un nouveau tableau sans l'élément au lieu de modifier l'existant
                         const newFutureActions = futureActions.slice(0, lastIndex);
@@ -566,7 +548,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                             const currentSpace = state.spaces[spaceId];
                             if (currentSpace) {
                                 currentSpace.sharedState.futureActions = newFutureActions;
-                                currentSpace.sharedState.currentState = stateToRestore; // Restaurer l'état après les modifications
+                                currentSpace.sharedState.currentState = stateToRestore; // Restore state after modifications
                                 if (!Array.isArray(currentSpace.sharedState.pastActions)) {
                                     currentSpace.sharedState.pastActions = [];
                                 }
@@ -577,12 +559,12 @@ export const useSpaceStore = create<SpaceStateType>()(
                         // Idem pour redoEnhanced
                         const updatedSpaceRedo = get().spaces[spaceId];
                         if (updatedSpaceRedo && typeof window !== 'undefined' && window.dispatchEvent) {
-                            window.dispatchEvent(new CustomEvent('openchakra-state-changed', {
+                            window.dispatchEvent(new CustomEvent('karmyc-state-changed', {
                                 detail: { state: updatedSpaceRedo.sharedState.currentState }
                             }));
                         }
                         
-                        console.log(`[redoEnhanced] Après redo pour space ${spaceId}:`, {
+                        console.log(`[redoEnhanced] After redo for space ${spaceId}:`, {
                             pastActionsLength: get().spaces[spaceId]?.sharedState?.pastActions?.length || 0,
                             newFutureActionsLength: newFutureActions.length
                         });
@@ -621,7 +603,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                             }
                         });
                         
-                        // Retourner une fonction de désabonnement
+                        // Return an unsubscribe function
                         return () => {
                             set(state => {
                                 const space = state.spaces[spaceId];
@@ -642,7 +624,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                         const space = get().spaces[spaceId];
                         if (!space) return false;
                         
-                        // Migration automatique si nécessaire
+                        // Automatic migration if needed
                         if (!Array.isArray(space.sharedState.pastActions)) {
                             get().migrateSpaceHistory(spaceId);
                             return false;
@@ -655,7 +637,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                         const space = get().spaces[spaceId];
                         if (!space) return false;
                         
-                        // Migration automatique si nécessaire
+                        // Automatic migration if needed
                         if (!Array.isArray(space.sharedState.futureActions)) {
                             get().migrateSpaceHistory(spaceId);
                             return false;
@@ -727,7 +709,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                         set(state => {
                             const space = state.spaces[spaceId];
                             if (space) {
-                                // S'assurer que les tableaux d'historique sont correctement initialisés
+                                // Ensure history arrays are properly initialized
                                 if (!Array.isArray(space.sharedState.pastActions)) {
                                     space.sharedState.pastActions = [];
                                 }
@@ -735,7 +717,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                                     space.sharedState.futureActions = [];
                                 }
                                 
-                                // S'assurer que les autres propriétés sont initialisées
+                                // Ensure other properties are initialized
                                 if (typeof space.sharedState.isActionInProgress !== 'boolean') {
                                     space.sharedState.isActionInProgress = false;
                                 }
@@ -764,7 +746,7 @@ export const useSpaceStore = create<SpaceStateType>()(
                     },
                     
                     // ============================================================================
-                    // ACTIONS LEGACY (à déprécier)
+                    // LEGACY ACTIONS (to be deprecated)
                     // ============================================================================
                     
                     updateSpaceGenericSharedState: (payload) => {
@@ -802,12 +784,12 @@ export const useSpaceStore = create<SpaceStateType>()(
                             return;
                         }
                         
-                        // Créer une action d'historique améliorée avec l'état avant ET après
+                        // Create an enhanced history action with both BEFORE and AFTER states
                         const historyAction = createEnhancedHistoryAction(
                             `${actionType}-${Date.now()}`,
-                            actionDescription || actionType, // Utiliser la description spécifique si fournie
-                            [], // Diffs à implémenter
-                            prevState, // État AVANT les modifications (pour undo)
+                            actionDescription || actionType, // Use specific description if provided
+                            [], // Diffs to implement
+                            prevState, // State BEFORE modifications (for undo)
                             false,
                             []
                         );
@@ -825,20 +807,6 @@ export const useSpaceStore = create<SpaceStateType>()(
                                 currentSpace.sharedState.futureActions = [];
                             }
                         });
-                    },
-                    
-                    undoSharedState: (spaceId: string) => {
-                        const result = get().undoEnhanced(spaceId);
-                        if (!result.success) {
-                            console.error('Undo failed:', result.error);
-                        }
-                    },
-                    
-                    redoSharedState: (spaceId: string) => {
-                        const result = get().redoEnhanced(spaceId);
-                        if (!result.success) {
-                            console.error('Redo failed:', result.error);
-                        }
                     },
                     
                     // =========================================================================

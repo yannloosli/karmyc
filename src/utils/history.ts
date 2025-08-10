@@ -1,4 +1,4 @@
-import { THistoryDiff } from '../types/historyTypes';
+// Legacy types removed: THistoryDiff no longer used. Keeping only generic diffs here.
 
 export interface IStateDiff {
     path: string[];
@@ -66,7 +66,7 @@ export function getValueAtPath(state: any, path: string[]): unknown {
 }
 
 // Apply a diff to a state (simplified version)
-export function applyDiff<T>(state: T, diff: THistoryDiff): T {
+export function applyDiff<T>(state: T, diff: { changes: IStateDiff[] }): T {
     let newState = { ...state } as any;
     diff.changes.forEach(change => {
         let obj = newState;
@@ -79,13 +79,12 @@ export function applyDiff<T>(state: T, diff: THistoryDiff): T {
 }
 
 // Reverse a diff (simplified version)
-export function invertDiff(diff: THistoryDiff): THistoryDiff {
+export function invertDiff(diff: { changes: IStateDiff[] }): { changes: IStateDiff[] } {
     return {
-        ...diff,
         changes: diff.changes.map(change => ({
-            ...change,
+            path: change.path,
             oldValue: change.newValue,
             newValue: change.oldValue,
         })),
     };
-} 
+}

@@ -6,7 +6,6 @@ export * from './useAreaOptimized';
 export * from './useAreaKeyboardShortcuts';
 export * from './usePluginSystem';
 export * from './useSpace';
-export * from './useSpaceHistory';
 export * from './useRegisterAreaType';
 export * from './useRegisterActionHandler';
 export * from './useScreenManagement';

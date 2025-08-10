@@ -1,83 +1,4 @@
-import { IAction } from '../core/types/actions';
-
-// ============================================================================
-// TYPES LEGACY (à déprécier progressivement)
-// ============================================================================
-
-/**
- * Options for the history system (LEGACY)
- * @deprecated Use EnhancedHistoryOptions instead
- */
-export interface IHistoryOptions {
-    limit?: number;
-    undoType?: string;
-    redoType?: string;
-    clearHistoryType?: string;
-    jumpToFutureType?: string;
-    jumpToPastType?: string;
-    includeActions?: string[];
-    excludeActions?: string[];
-    groupBy?: (action: IAction) => string;
-}
-
-/**
- * State with history (LEGACY)
- * @deprecated Use EnhancedHistoryState instead
- */
-export interface THistoryState<T> {
-    past: T[];
-    present: T;
-    future: T[];
-}
-
-/**
- * Représente un changement dans l'historique (LEGACY)
- * @deprecated Use Diff interface instead
- */
-export interface THistoryChange {
-    path: string[];
-    oldValue: any;
-    newValue: any;
-}
-
-/**
- * Difference between two states (LEGACY)
- * @deprecated Use EnhancedHistoryAction instead
- */
-export interface THistoryDiff {
-    timestamp: number;
-    actionType: string;
-    changes: THistoryChange[];
-}
-
-/**
- * History action with metadata (LEGACY)
- * @deprecated Use EnhancedHistoryAction instead
- */
-export interface THistoryAction {
-    id: string;
-    type: string;
-    timestamp: number;
-    diffs: THistoryChange[];
-    metadata?: Record<string, any>;
-}
-
-/**
- * History system state (LEGACY)
- * @deprecated Use EnhancedHistoryState instead
- */
-export interface IHistoryState {
-    actions: THistoryAction[];
-    currentIndex: number;
-    isUndoing: boolean;
-    isRedoing: boolean;
-}
-
-/**
- * Options for the undoable reducer (LEGACY)
- * @deprecated Use EnhancedHistoryOptions instead
- */
-export type TUndoableOptions = Omit<IHistoryOptions, 'groupBy'>;
+// Legacy history types removed as part of hard clean.
 
 export interface HistoryAction {
     id: string;
@@ -104,7 +25,7 @@ export interface HistoryState {
 }
 
 /**
- * Configuration de l'historique (LEGACY)
+ * History configuration (LEGACY)
  * @deprecated Use EnhancedHistoryConfig instead
  */
 export interface HistoryConfig<S = any> {
@@ -114,12 +35,12 @@ export interface HistoryConfig<S = any> {
 }
 
 // ============================================================================
-// NOUVEAUX TYPES ENHANCED (SYSTÈME ROBUSTE)
+// NEW ENHANCED TYPES (ROBUST SYSTEM)
 // ============================================================================
 
 /**
- * Diff typé pour la granularité fine des actions
- * Inspiré du système de l'éditeur d'animation
+ * Typed diff for fine-grained actions
+ * Inspired by the animation editor system
  */
 export interface Diff {
     type: string;
@@ -134,8 +55,8 @@ export interface Diff {
 }
 
 /**
- * Action d'historique améliorée avec capture d'état complet
- * Inspirée du système robuste de l'éditeur d'animation
+ * Enhanced history action with full state capture
+ * Inspired by the robust animation editor system
  */
 export interface EnhancedHistoryAction {
     id: string;
@@ -168,58 +89,58 @@ export interface EnhancedHistoryAction {
 }
 
 /**
- * État d'historique amélioré avec gestion des actions en cours
+ * Enhanced history state with in-progress action management
  */
 export interface EnhancedHistoryState<T = any> {
-    // État actuel pour performance
+     // Current state for performance
     current: T;
     
-    // Historique robuste
+     // Robust history
     history: EnhancedHistoryAction[];
     index: number;
     
-    // Gestion des actions en cours
+     // In-progress action management
     isActionInProgress: boolean;
     currentActionId: string | null;
     
-    // Type d'action (normal ou sélection)
+     // Action type (normal or selection)
     type: 'normal' | 'selection';
     
-    // Direction pour navigation
+     // Navigation direction
     indexDirection: -1 | 1;
 }
 
 /**
- * État partagé d'espace amélioré avec système d'historique robuste
+ * Enhanced space shared state with robust history system
  */
 export interface EnhancedSpaceSharedState {
-    // État actuel pour performance
+     // Current state for performance
     currentState: any;
     
-    // Historique robuste
+     // Robust history
     pastActions: EnhancedHistoryAction[];
     futureActions: EnhancedHistoryAction[];
     
-    // Gestion des actions en cours
+     // In-progress action management
     isActionInProgress: boolean;
     currentActionId: string | null;
     
-    // Métadonnées pour granularité
+     // Metadata for granularity
     actionMetadata: Record<string, any>;
     
-    // Support des sélections
+     // Selections support
     selectionState?: {
         allowIndexShift: boolean;
         modifiedRelated: boolean;
         type: 'normal' | 'selection';
     };
     
-    // Notifications de changements
+     // Change notifications
     subscribers: Array<(action: EnhancedHistoryAction) => void>;
 }
 
 /**
- * Options pour le système d'historique amélioré
+ * Options for the enhanced history system
  */
 export interface EnhancedHistoryOptions {
     enabled?: boolean;
@@ -231,7 +152,7 @@ export interface EnhancedHistoryOptions {
 }
 
 /**
- * Configuration pour le système d'historique amélioré
+ * Configuration for the enhanced history system
  */
 export interface EnhancedHistoryConfig {
     maxHistorySize?: number;
@@ -243,26 +164,26 @@ export interface EnhancedHistoryConfig {
 }
 
 /**
- * Callback pour les notifications d'historique
+ * Callback for history notifications
  */
 export type HistorySubscriber = (action: EnhancedHistoryAction) => void;
 
 /**
- * Callback pour les filtres d'historique
+ * Callback for history filters
  */
 export type HistoryFilter = (action: EnhancedHistoryAction) => boolean;
 
 /**
- * Callback pour le groupement d'historique
+ * Callback for history grouping
  */
 export type HistoryGrouper = (action: EnhancedHistoryAction) => string;
 
 // ============================================================================
-// TYPES UTILITAIRES
+// UTILITY TYPES
 // ============================================================================
 
 /**
- * Résultat d'une opération d'historique
+ * Result of a history operation
  */
 export interface HistoryResult {
     success: boolean;
@@ -272,7 +193,7 @@ export interface HistoryResult {
 }
 
 /**
- * Statistiques d'historique
+ * History statistics
  */
 export interface HistoryStats {
     totalActions: number;
@@ -284,7 +205,7 @@ export interface HistoryStats {
 }
 
 /**
- * Événements d'historique
+ * History events
  */
 export type HistoryEvent = 
     | 'action-started'
@@ -296,7 +217,7 @@ export type HistoryEvent =
     | 'state-restored';
 
 /**
- * Payload pour les événements d'historique
+ * Payload for history events
  */
 export interface HistoryEventPayload {
     event: HistoryEvent;
@@ -306,11 +227,11 @@ export interface HistoryEventPayload {
 }
 
 // ============================================================================
-// CONSTANTES
+// CONSTANTS
 // ============================================================================
 
 /**
- * Types d'actions d'historique prédéfinis
+ * Predefined history action types
  */
 export const HISTORY_ACTION_TYPES = {
     // Actions de base
@@ -348,7 +269,7 @@ export const HISTORY_ACTION_TYPES = {
 } as const;
 
 /**
- * Types d'événements d'historique
+ * History event types
  */
 export const HISTORY_EVENTS = {
     ACTION_STARTED: 'action-started',
@@ -361,7 +282,7 @@ export const HISTORY_EVENTS = {
 } as const;
 
 /**
- * Configuration par défaut
+ * Default configuration
  */
 export const DEFAULT_HISTORY_CONFIG: EnhancedHistoryConfig = {
     maxHistorySize: 100,

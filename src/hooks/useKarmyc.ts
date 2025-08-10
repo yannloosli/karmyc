@@ -10,7 +10,7 @@ import { validateArea } from '@core/utils/validation';
 import { useArea } from '../hooks/useArea';
 
 /**
- * Configuration Karmyc avec layouts.
+ * Karmyc configuration with layouts.
  */
 export interface IKarmycConfigWithLayouts {
     plugins: IKarmycOptions['plugins'];
@@ -28,8 +28,8 @@ export interface IKarmycConfigWithLayouts {
 }
 
 /**
- * Hook qui centralise toute la logique d'initialisation et de configuration du système Karmyc.
- * Compatible avec Next.js en évitant les hooks pendant l'hydratation.
+ * Hook that centralizes Karmyc initialization and configuration logic.
+ * Next.js compatible by avoiding hooks during hydration.
  */
 export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error) => void): IKarmycConfigWithLayouts {
     const { createArea } = useArea();
@@ -37,34 +37,34 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
     const optionsRef = useRef(options);
     const isClient = useRef(false);
 
-    // Vérifier si on est côté client
+    // Detect client-side
     useEffect(() => {
         isClient.current = true;
     }, []);
 
-    // Mettre à jour la référence des options uniquement si elles changent réellement
+    // Update options ref only when they truly change
     useEffect(() => {
         optionsRef.current = options;
     }, [options]);
 
-    // Mémoriser la fonction de validation des zones
+    // Memoized area validation function
     const validateAreaConfig = useCallback((area: any): boolean => {
-        // Vérifier si le rôle est valide
+        // Validate role
         if (area.role && !Object.values(AREA_ROLE).includes(area.role)) {
-            console.warn(`Zone invalide ignorée: rôle "${area.role}" non reconnu`);
+            console.warn(`Invalid area ignored: unrecognized role "${area.role}"`);
             return false;
         }
-        // Vérifier si le type est défini
+        // Ensure type is defined
         if (!area.type) {
-            console.warn('Zone invalide ignorée: type non défini');
+            console.warn('Invalid area ignored: missing type');
             return false;
         }
         return true;
     }, []);
 
-    // Mémoriser la fonction de création de zone
+    // Memoized area creation with validation
     const createAreaWithValidation = useCallback((areaConfig: any, index: number, seenAreaIds: Set<string>): string | undefined => {
-        // Vérification des doublons d'ID de zone
+        // Check for duplicate area IDs
         if (areaConfig.id && seenAreaIds.has(areaConfig.id)) {
             const error = new Error(`Duplicate area ID: ${areaConfig.id}`);
             console.error('[KarmycInitializer] Invalid area config', error);
@@ -79,7 +79,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
             return undefined;
         }
 
-        // Ajouter l'ID à l'ensemble après les vérifications structurelles de base
+        // Add ID to the set after basic structural checks
         if (areaConfig.id) {
             seenAreaIds.add(areaConfig.id);
         }
@@ -91,7 +91,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
             return undefined;
         }
 
-        // Valider la configuration de la zone
+        // Validate area configuration
         const validation = validateArea(areaConfig);
         if (!validation.isValid) {
             const error = new Error(`Invalid area configuration: ${validation.errors.join(', ')}`);
@@ -114,7 +114,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
         }
     }, [createArea, onError]);
 
-    // Mémoriser la fonction d'initialisation des plugins
+    // Memoized plugin initialization
     const initializePlugins = useCallback((plugins: IKarmycOptions['plugins'] = []) => {
         const defaultPlugins = [historyPlugin];
         const allPlugins = [...defaultPlugins, ...plugins];
@@ -126,7 +126,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
         });
     }, []);
 
-    // Mémoriser la fonction d'initialisation des validateurs
+    // Memoized validators initialization
     const initializeValidators = useCallback((validators: IKarmycOptions['validators'] = []) => {
         validators.forEach(({ actionType, validator }) => {
             if (actionType && typeof validator === 'function') {
@@ -135,7 +135,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
         });
     }, []);
 
-    // Mémoriser la fonction de validation des espaces
+    // Memoized spaces validation
     const validateSpaces = useCallback((spaces: IKarmycOptions['spaces'] = {}) => {
         for (const [spaceId, spaceConfig] of Object.entries(spaces)) {
             if (!spaceConfig || typeof spaceConfig !== 'object' || !spaceConfig.name) {
@@ -149,7 +149,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
     }, [onError]);
 
     const config = useMemo(() => {
-        // Filtrer les zones invalides
+        // Filter invalid areas
         const validAreas = (optionsRef.current.initialAreas ?? []).filter(validateAreaConfig);
 
         return {
@@ -166,9 +166,9 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                 builtInLayouts: optionsRef.current.builtInLayouts ?? []
             }
         };
-    }, [validateAreaConfig]); // Dépendance optimisée
+    }, [validateAreaConfig]); // Optimized dependency
 
-    // Initialisation du système - seulement côté client
+    // System initialization - client-side only
     useEffect(() => {
         if (!isClient.current || initialized.current) {
             return;
@@ -177,33 +177,33 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
 
         const initializeSystem = async () => {
             try {
-                // Initialiser le store
+                // Initialize store
                 initializeMainStore(optionsRef.current);
 
-                // Initialiser le système de traduction
+                // Initialize translation system
                 if (optionsRef.current.t) {
                     setTranslationFunction(optionsRef.current.t);
                 }
 
-                // Initialiser les plugins
+                // Initialize plugins
                 initializePlugins(optionsRef.current.plugins);
 
-                // Initialiser les validateurs
+                // Initialize validators
                 initializeValidators(optionsRef.current.validators);
 
-                // Validation des espaces avant toute initialisation d'aires
+                // Validate spaces before initializing areas
                 if (!validateSpaces(optionsRef.current.spaces)) {
-                    return; // Arrêter l'initialisation si validation échoue
+                    return; // Stop initialization if validation fails
                 }
 
-                // Initialiser les zones
+                // Initialize areas
                 const storeState = useKarmycStore.getState();
                 const activeScreenId = storeState.activeScreenId;
                 const activeScreenAreasState = storeState.screens[activeScreenId]?.areas;
                 const isAlreadyInitialized = activeScreenAreasState?.rootId || Object.keys(activeScreenAreasState?.areas || {}).length > 0;
 
                 if (!isAlreadyInitialized) {
-                    // Conserver les IDs déjà rencontrés afin de détecter les doublons
+                    // Track seen IDs to detect duplicates
                     const seenAreaIds = new Set<string>();
                     const areasToInitialize = config.initialAreas;
                     const newAreaIds: string[] = [];
@@ -259,7 +259,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
                     }
                 }
 
-                // Mettre à jour les options du store
+                // Update store options
                 useKarmycStore.setState(state => ({
                     ...state,
                     options: {
@@ -272,7 +272,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
             } catch (error) {
                 console.error('[KarmycInitializer] Error during initialization:', error);
                 onError?.(error instanceof Error ? error : new Error(String(error)));
-                // Réinitialiser le store en cas d'erreur
+                // Reset store in case of error
                 useKarmycStore.setState(state => ({
                     ...state,
                     options: createDefaultConfig().options
@@ -282,7 +282,7 @@ export function useKarmyc(options: IKarmycOptions = {}, onError?: (error: Error)
 
         initializeSystem();
 
-        // Nettoyage lors du démontage
+        // Cleanup on unmount
         return () => {
             try {
                 const storeState = useKarmycStore.getState();

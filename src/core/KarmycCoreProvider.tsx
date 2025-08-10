@@ -7,12 +7,12 @@ import { checkShouldPreventDefault, ModifierKey } from '../utils/keyboard';
 const WINDOW_ID = Math.random().toString(36).slice(2);
 
 /**
- * Composant principal qui fournit le contexte global pour le système de layout
- * 
- * Ce composant gère :
- * - La synchronisation entre les onglets
- * - Les raccourcis clavier
- * - La synchronisation de l'URL
+ * Main provider exposing the global context for the layout system.
+ *
+ * This component manages:
+ * - Cross-tab synchronization
+ * - Keyboard shortcuts
+ * - URL synchronization
  */
 export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
     children,
@@ -25,7 +25,7 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
     const lastScreenOrder = useRef<string[]>([]);
     const [isMounted, setIsMounted] = useState(false);
 
-    // S'assurer que le composant est monté avant d'utiliser les hooks
+    // Ensure the component is mounted before using hooks
     useEffect(() => {
         setIsMounted(true);
     }, []);
@@ -163,11 +163,12 @@ export const KarmycCoreProvider: React.FC<IKarmycCoreProviderProps> = ({
         }
 
         window.addEventListener('storage', handleStorage);
-        document.addEventListener("contextmenu", (e) => e.preventDefault(), false);
+        const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+        document.addEventListener("contextmenu", handleContextMenu, false);
 
         return () => {
             window.removeEventListener('storage', handleStorage);
-            document.removeEventListener("contextmenu", (e) => e.preventDefault(), false);
+            document.removeEventListener("contextmenu", handleContextMenu, false);
         }
     }, [isMounted]);
 

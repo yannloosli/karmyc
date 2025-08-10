@@ -4,8 +4,8 @@ import { BrushCleaning, Radius, Redo, Undo } from 'lucide-react';
 import { AreaComponentProps } from '../../../src/types/areaTypes';
 import { useSpace } from '../../../src/hooks';
 import { useKarmycStore } from '../../../src/core/store';
-import { useSpaceStore, SpaceSharedState } from '../../../src/core/spaceStore';
-import { useEnhancedHistory } from '../../../src/hooks/useHistory';
+import { useSpaceStore } from '../../../src/core/spaceStore';
+import { useHistory } from '../../../src/hooks/useHistory';
 import { useToolsSlot } from '../../../src/components/ToolsSlot';
 import { useRegisterActionHandler } from '../../../src/hooks/useRegisterActionHandler';
 import { actionRegistry } from '../../../src/core/registries/actionRegistry';
@@ -14,7 +14,7 @@ import * as React from 'react';
 
 interface DrawingState { }
 
-export interface DrawSharedState extends SpaceSharedState {
+export interface DrawSharedState {
     lines: Line[];
     strokeWidth: number;
 }
@@ -30,8 +30,6 @@ export interface Line {
 const defaultSharedState: DrawSharedState = {
     lines: [],
     strokeWidth: 3,
-    pastDiffs: [],
-    futureDiffs: [],
 };
 
 export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
@@ -49,7 +47,7 @@ export const Draw: React.FC<AreaComponentProps<DrawingState>> = ({
     const { updateSharedState } = useSpace();
 
     // --- Nouveau système d'historique amélioré ---
-    const history = currentSpaceId ? useEnhancedHistory(currentSpaceId) : null;
+    const history = currentSpaceId ? useHistory(currentSpaceId) : null;
 
     // --- Zustand selectors for reactive state and actions ---
     const { getSpaceById } = useSpaceStore();

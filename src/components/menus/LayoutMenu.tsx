@@ -2,10 +2,10 @@ import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { Layout, FileUp, FileDown, Edit, Trash2, Plus } from 'lucide-react';
 import { actionRegistry } from '../../core/registries/actionRegistry';
 import { useKarmycStore } from '../../core/store';
-import { MenuItem } from '@szhsin/react-menu';
 import { t } from '../../core/utils/translation';
 import { useContextMenu } from '../../hooks/useContextMenu';
 import { LayoutPreset } from '../../types';
+import type { ContextMenuItem } from '../../core/types/context-menu-types';
 
 const STORAGE_KEY = 'karmyc_custom_layouts';
 
@@ -178,53 +178,58 @@ export const LayoutMenu: React.FC = () => {
     const handleContextMenu = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
 
-        const menuItems: React.ReactNode = (
-            <>
-                {allPresets.map(preset => (
-                    <MenuItem key={preset.id} onClick={() => handleApplyPreset(preset.id)}>
-                        <div className="preset-item">
-                            <span>{preset.name}</span>
-                            {!preset.isBuiltIn && (
-                                <div className="preset-actions">
-                                    <button onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleExportPreset(preset);
-                                    }} title={t('layout.export', 'Exporter le layout')}>
-                                        <FileUp size={16} />
-                                    </button>
-                                    <button onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleRenamePreset(preset);
-                                    }} title={t('layout.rename', 'Renommer le layout')}>
-                                        <Edit size={16} />
-                                    </button>
-                                    <button onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeletePreset(preset);
-                                    }} title={t('layout.delete', 'Supprimer le layout')}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </MenuItem>
-                ))}
-                <MenuItem onClick={handleSaveCurrentLayout} title={t('layout.save', 'Save current layout')}>
-                    <Plus size={16} /> {t('layout.save', 'Save current layout')}
-                </MenuItem>
-                <MenuItem onClick={handleImportPreset} title={t('layout.import', 'Import a layout')}>
-                    <FileDown size={16} /> {t('layout.import', 'Import a layout')}
-                </MenuItem>
-            </>
-        );
+        // Construire un menu strictement typé pour éviter les enfants React invalides
+        const items: ContextMenuItem[] = [
+            // Liste des presets
+            ...allPresets.map<ContextMenuItem>(preset => ({
+                id: `preset-${preset.id}`,
+                label: preset.name,
+                actionId: 'layout.apply',
+                metadata: { presetId: preset.id },
+                // Sous-menu d'actions pour les presets non intégrés
+                children: preset.isBuiltIn ? undefined : [
+                    {
+                        id: `preset-${preset.id}-export`,
+                        label: t('layout.export', 'Exporter le layout'),
+                        actionId: 'layout.export',
+                        metadata: { preset }
+                    },
+                    {
+                        id: `preset-${preset.id}-rename`,
+                        label: t('layout.rename', 'Renommer le layout'),
+                        actionId: 'layout.rename',
+                        metadata: { preset }
+                    },
+                    {
+                        id: `preset-${preset.id}-delete`,
+                        label: t('layout.delete', 'Supprimer le layout'),
+                        actionId: 'layout.delete',
+                        metadata: { preset }
+                    }
+                ]
+            })),
+            // Séparateur simple
+            { id: 'separator-actions', label: '---', actionId: 'area.separator' },
+            // Actions globales
+            {
+                id: 'save-current-layout',
+                label: t('layout.save', 'Save current layout'),
+                actionId: 'layout.save'
+            },
+            {
+                id: 'import-layout',
+                label: t('layout.import', 'Import a layout'),
+                actionId: 'layout.import'
+            }
+        ];
 
         open({
             position: { x: e.clientX, y: e.clientY },
-            items: menuItems,
+            items,
             menuClassName: 'context-menu layout-context-menu',
             menuType: 'default'
         });
-    }, [open, handleApplyPreset, handleExportPreset, handleRenamePreset, handleDeletePreset, handleSaveCurrentLayout, handleImportPreset]);
+    }, [open, allPresets, t]);
 
     return (
         <>

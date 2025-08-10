@@ -147,11 +147,10 @@ graph LR
         B --> E[Local State]
         B --> F[Shared State]
         
-        C --> G[width]
-        C --> H[height]
-        C --> I[left]
-        C --> J[top]
-        C --> K[areaId]
+        C --> G[id]
+        C --> H[state]
+        C --> I[type]
+        C --> J[viewport]
         
         D --> L[State Updates]
         D --> M[Event Handlers]

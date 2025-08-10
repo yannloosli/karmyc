@@ -7,15 +7,9 @@ import { handleDragAreaResize } from "./handlers/areaDragResize";
 import { Ellipsis, EllipsisVertical } from 'lucide-react';
 import { t } from '../core/utils/translation';
 import { useResizePreview } from '../hooks/useResizePreview';
+import type { ResizePreviewState } from '../types/areaTypes';
 
-/**
- * État de l'aperçu du redimensionnement d'une ligne.
- */
-export interface ResizePreviewState {
-    rowId: string;
-    separatorIndex: number;
-    t: number;
-}
+// Type imported from ../types/areaTypes
 
 interface Props {
     row: AreaRowLayout;
@@ -35,7 +29,7 @@ export const AreaRowSeparators: React.FC<Props> = ({
         state.screens[state.activeScreenId]?.isDetached
     );
     
-    // Récupérer les données depuis le store
+    // Retrieve data from the store
     const layout = useKarmycStore(state => 
         state.screens[state.activeScreenId]?.areas.layout ?? {}
     );
@@ -43,32 +37,32 @@ export const AreaRowSeparators: React.FC<Props> = ({
         state.screens[state.activeScreenId]?.areas.viewports ?? {}
     );
 
-    // Pas de force re-render - on utilise directement resizePreview qui est mis à jour en temps réel
+    // No forced re-render - rely on resizePreview which updates in real time
 
-    // Fonction pour calculer le viewport d'une area en tenant compte de la preview locale
-    // Pas de useCallback pour garantir une mise à jour en temps réel
+    // Compute an area's viewport considering local resize preview
+    // Avoid useCallback to ensure real-time updates
     const getAreaViewportWithPreview = (areaId: string): Rect | undefined => {
         const baseViewport = areaToViewport[areaId];
         if (!baseViewport) return undefined;
 
-        // Si pas de preview active pour cette row, retourner le viewport de base
+        // If no active preview for this row, return base viewport
         if (!resizePreview || resizePreview.rowId !== row.id) {
             return baseViewport;
         }
 
-        // Trouver l'index de l'area dans la row
+        // Find area index within the row
         const areaIndex = row.areas.findIndex(area => area.id === areaId);
         if (areaIndex === -1) return baseViewport;
 
         const { separatorIndex, t } = resizePreview;
         const separatorAreaIndex = separatorIndex - 1;
 
-        // Si cette area n'est pas affectée par le redimensionnement, retourner le viewport de base
+        // If area is not affected by resizing, return base viewport
         if (areaIndex !== separatorAreaIndex && areaIndex !== separatorAreaIndex + 1) {
             return baseViewport;
         }
 
-        // Calculer les nouvelles dimensions basées sur la preview
+        // Compute new dimensions based on preview
         const isFirst = areaIndex === separatorAreaIndex;
         const area1 = row.areas[separatorAreaIndex];
         const area2 = row.areas[separatorAreaIndex + 1];
@@ -138,7 +132,7 @@ export const AreaRowSeparators: React.FC<Props> = ({
         let separatorRect: Rect;
 
         if (horizontal) {
-            // Position du séparateur basée sur les viewports mis à jour (incluant la preview)
+            // Separator position based on updated viewports (including preview)
             separatorRect = {
                 left: nextViewport.left - AREA_BORDER_WIDTH,
                 top: nextViewport.top + TOOLBAR_HEIGHT - offset - 5,
@@ -146,7 +140,7 @@ export const AreaRowSeparators: React.FC<Props> = ({
                 height: Math.max(nextViewport.height - TOOLBAR_HEIGHT + 10, 5)
             };
         } else {
-            // Position du séparateur basée sur les viewports mis à jour (incluant la preview)
+            // Separator position based on updated viewports (including preview)
             separatorRect = {
                 left: nextViewport.left,
                 top: nextViewport.top - AREA_BORDER_WIDTH - offset,
@@ -168,7 +162,7 @@ export const AreaRowSeparators: React.FC<Props> = ({
             handleDragAreaResize(row, horizontal, i + 1, setResizePreview);
         };
 
-        // Ajouter une classe CSS pour indiquer si c'est la séparateur actuellement redimensionnée
+        // Add CSS class when the separator is currently being resized
         const isCurrentlyResizing = resizePreview && 
             resizePreview.rowId === row.id && 
             resizePreview.separatorIndex === i + 1;
